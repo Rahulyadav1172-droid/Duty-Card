@@ -275,18 +275,16 @@ export default function DutyCard({
           <div className="flex-1 flex flex-col justify-between text-slate-900 py-0.5 min-w-0">
             <div>
               <span className="text-[10px] sm:text-[11px] font-bold text-slate-500">अधिकारी / कर्मचारी:</span>
-              <div className="text-sm sm:text-lg font-black text-slate-950 flex items-center gap-1.5 sm:gap-2 mt-0.5 flex-wrap">
-                <span className="break-words">{duty.name}</span>
-                <span className="text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.2 sm:py-0.5 rounded bg-amber-100 text-amber-900 border border-amber-300 font-bold shrink-0">
-                  {duty.rank || 'जवान'}
-                </span>
+              <div className="text-sm sm:text-lg font-black text-slate-950 mt-0.5 break-words">
+                {(duty.name || '').split(',')[0].trim()}
               </div>
-              <div className="text-xs font-mono font-bold text-slate-800 mt-0.5">
-                📱 {duty.mobile || 'मोबाइल अनुपलब्ध'}
+              <div className="text-xs font-mono font-bold text-slate-800 mt-1 flex items-center gap-1.5">
+                <span>📱</span>
+                <span>{duty.mobile || 'मोबाइल अनुपलब्ध'}</span>
               </div>
             </div>
 
-            <div className="text-[10px] sm:text-xs text-slate-600 border-t border-slate-200 pt-1 flex flex-wrap items-center justify-between gap-1">
+            <div className="text-[10px] sm:text-xs text-slate-600 border-t border-slate-200 pt-1.5 flex flex-wrap items-center justify-between gap-1">
               <div>P.No: <strong className="font-mono text-slate-950">{duty.id}</strong></div>
               <div>मूल तैनाती: <strong className="text-slate-950">{duty.posting || '-'}</strong> {duty.district ? `(${duty.district})` : ''}</div>
             </div>

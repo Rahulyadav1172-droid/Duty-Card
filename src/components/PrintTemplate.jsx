@@ -43,11 +43,11 @@ export default function PrintTemplate({
 
         <div className="flex-1 text-xs">
           <div className="font-bold text-sm text-black">
-            {duty.name} <span className="font-normal text-[11px]">({duty.rank || 'जवान'})</span>
+            {(duty.name || '').split(',')[0].trim()}
           </div>
           <div className="font-mono text-black font-bold">📱 {duty.mobile}</div>
           <div className="text-[10px] text-gray-800">
-            P.No: <strong>{duty.id}</strong> | मूल तैनाती: <strong>{duty.posting || ''}</strong> ({duty.district || ''})
+            P.No: <strong>{duty.id}</strong> | मूल तैनाती: <strong>{duty.posting || ''}</strong> {duty.district ? `(${duty.district})` : ''}
           </div>
         </div>
       </div>
