@@ -413,124 +413,126 @@ export default function App() {
     <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col font-sans selection:bg-amber-500 selection:text-slate-950 font-devanagari">
       {/* Top Header - Deep Navy & Gold Accent Touch */}
       <header className="sticky top-0 z-40 bg-[#0b132b] text-white border-b border-slate-800 shadow-md">
-        <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
+        <div className="max-w-5xl mx-auto px-3 sm:px-4 py-2.5 sm:py-3 flex items-center justify-between gap-2 sm:gap-3">
           {/* Logo & Title */}
-          <div className="flex items-center gap-3">
-            <img src="/badge.png" alt="Badge" className="w-10 h-10 object-contain drop-shadow-md shrink-0" />
-            <div>
-              <h1 className="text-base sm:text-lg font-black text-white leading-tight flex items-center gap-2">
-                अयोध्या पुलिस ड्यूटी पास
-                <span className="text-[10px] px-2 py-0.5 rounded bg-amber-500 text-slate-950 font-mono font-black truncate max-w-[160px]">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+            <img src="/badge.png" alt="Badge" className="w-8 h-8 sm:w-10 sm:h-10 object-contain drop-shadow-md shrink-0" />
+            <div className="min-w-0">
+              <h1 className="text-sm sm:text-lg font-black text-white leading-tight flex items-center gap-1.5 sm:gap-2">
+                <span className="truncate">अयोध्या पुलिस ड्यूटी पास</span>
+                <span className="text-[9px] sm:text-[10px] px-1.5 sm:px-2 py-0.5 rounded bg-amber-500 text-slate-950 font-mono font-black truncate max-w-[110px] sm:max-w-[160px] shrink-0">
                   {currentEvent.title}
                 </span>
               </h1>
-              <p className="text-[11px] text-slate-300 font-medium">उत्तर प्रदेश पुलिस सुरक्षा व्यवस्था</p>
+              <p className="text-[10px] sm:text-[11px] text-slate-300 font-medium truncate">उत्तर प्रदेश पुलिस सुरक्षा व्यवस्था</p>
             </div>
           </div>
 
-          {/* Navigation Controls & Login */}
-          <div className="flex items-center gap-2">
-            {userRole !== 'guest' && (
-              <nav className="flex items-center gap-1 bg-slate-800/80 p-1 rounded-xl border border-slate-700 text-xs font-bold">
-                <button
-                  onClick={() => handleTabClick('search')}
-                  className={`px-3 py-1.5 rounded-lg transition flex items-center gap-1 cursor-pointer ${
-                    activeTab === 'search' ? 'bg-amber-500 text-slate-950 font-black shadow-xs' : 'text-slate-300 hover:text-white'
-                  }`}
-                >
-                  <Search className="w-3.5 h-3.5" />
-                  कार्ड खोजें
-                </button>
-
-                <button
-                  onClick={() => handleTabClick('filter')}
-                  className={`px-3 py-1.5 rounded-lg transition flex items-center gap-1 cursor-pointer ${
-                    activeTab === 'filter' ? 'bg-amber-500 text-slate-950 font-black shadow-xs' : 'text-slate-300 hover:text-white'
-                  }`}
-                >
-                  <MapPin className="w-3.5 h-3.5" />
-                  पॉइंट फ़िल्टर
-                </button>
-
-                <button
-                  onClick={() => handleTabClick('booklet')}
-                  className={`px-3 py-1.5 rounded-lg transition flex items-center gap-1 cursor-pointer ${
-                    activeTab === 'booklet' ? 'bg-amber-500 text-slate-950 font-black shadow-xs' : 'text-slate-300 hover:text-white'
-                  }`}
-                >
-                  <BookOpen className="w-3.5 h-3.5" />
-                  बुकलेट PDF
-                </button>
-
-                {userRole === 'admin' && (
-                  <button
-                    onClick={() => handleTabClick('events')}
-                    className={`px-3 py-1.5 rounded-lg transition flex items-center gap-1 cursor-pointer ${
-                      activeTab === 'events' ? 'bg-amber-500 text-slate-950 font-black shadow-xs' : 'text-slate-300 hover:text-white'
-                    }`}
-                  >
-                    <Calendar className="w-3.5 h-3.5" />
-                    इवेंट्स मैनेजर
-                  </button>
-                )}
-
-                {userRole === 'admin' && (
-                  <button
-                    onClick={() => handleTabClick('force')}
-                    className={`px-3 py-1.5 rounded-lg transition flex items-center gap-1 cursor-pointer ${
-                      activeTab === 'force' ? 'bg-amber-500 text-slate-950 font-black shadow-xs' : 'text-slate-300 hover:text-white'
-                    }`}
-                  >
-                    <Users className="w-3.5 h-3.5" />
-                    मास्टर फ़ोर्स
-                  </button>
-                )}
-
-                {userRole === 'admin' && (
-                  <button
-                    onClick={() => handleTabClick('upload')}
-                    className={`px-3 py-1.5 rounded-lg transition flex items-center gap-1 cursor-pointer ${
-                      activeTab === 'upload' ? 'bg-amber-500 text-slate-950 font-black shadow-xs' : 'text-slate-300 hover:text-white'
-                    }`}
-                  >
-                    <FileSpreadsheet className="w-3.5 h-3.5" />
-                    अपलोड / सेटिंग्स
-                  </button>
-                )}
-              </nav>
-            )}
-
-            {/* Login / Logout Trigger */}
+          {/* Login / Logout Trigger */}
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             {userRole !== 'guest' ? (
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-bold px-2.5 py-1 rounded-lg bg-amber-500 text-slate-950 flex items-center gap-1">
-                  {userRole === 'admin' ? <Lock className="w-3.5 h-3.5" /> : <UserCheck className="w-3.5 h-3.5" />}
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <span className="text-[10px] sm:text-xs font-bold px-2 sm:px-2.5 py-1 rounded-lg bg-amber-500 text-slate-950 flex items-center gap-1">
+                  {userRole === 'admin' ? <Lock className="w-3 h-3 sm:w-3.5 sm:h-3.5" /> : <UserCheck className="w-3 h-3 sm:w-3.5 sm:h-3.5" />}
                   <span>{userRole === 'admin' ? 'एडमिन' : 'अधिकारी'}</span>
                 </span>
                 <button
                   onClick={handleLogout}
-                  className="px-2.5 py-1.5 bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/40 rounded-lg text-xs font-bold flex items-center gap-1 transition cursor-pointer"
+                  className="px-2 sm:px-2.5 py-1 sm:py-1.5 bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/40 rounded-lg text-[10px] sm:text-xs font-bold flex items-center gap-1 transition cursor-pointer"
                   title="लॉग आउट करें"
                 >
-                  <LogOut className="w-3.5 h-3.5" />
+                  <LogOut className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                   <span className="hidden sm:inline">लॉग आउट</span>
                 </button>
               </div>
             ) : (
               <button
                 onClick={() => setIsLoginModalOpen(true)}
-                className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black rounded-xl text-xs sm:text-sm flex items-center gap-1.5 transition shadow-xs cursor-pointer"
+                className="px-3 sm:px-4 py-1.5 sm:py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black rounded-xl text-xs sm:text-sm flex items-center gap-1.5 transition shadow-xs cursor-pointer"
               >
-                <LogIn className="w-4 h-4" />
+                <LogIn className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 लॉगिन
               </button>
             )}
           </div>
         </div>
+
+        {/* Logged in Navigation Bar (Horizontally scrollable for mobile) */}
+        {userRole !== 'guest' && (
+          <div className="border-t border-slate-800/80 bg-slate-900/95 px-2 sm:px-4 py-1">
+            <div className="max-w-5xl mx-auto flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
+              <button
+                onClick={() => handleTabClick('search')}
+                className={`px-3 py-1.5 rounded-lg transition flex items-center gap-1 text-xs whitespace-nowrap cursor-pointer shrink-0 ${
+                  activeTab === 'search' ? 'bg-amber-500 text-slate-950 font-black shadow-xs' : 'text-slate-300 hover:text-white font-bold'
+                }`}
+              >
+                <Search className="w-3.5 h-3.5" />
+                कार्ड खोजें
+              </button>
+
+              <button
+                onClick={() => handleTabClick('filter')}
+                className={`px-3 py-1.5 rounded-lg transition flex items-center gap-1 text-xs whitespace-nowrap cursor-pointer shrink-0 ${
+                  activeTab === 'filter' ? 'bg-amber-500 text-slate-950 font-black shadow-xs' : 'text-slate-300 hover:text-white font-bold'
+                }`}
+              >
+                <MapPin className="w-3.5 h-3.5" />
+                पॉइंट फ़िल्टर
+              </button>
+
+              <button
+                onClick={() => handleTabClick('booklet')}
+                className={`px-3 py-1.5 rounded-lg transition flex items-center gap-1 text-xs whitespace-nowrap cursor-pointer shrink-0 ${
+                  activeTab === 'booklet' ? 'bg-amber-500 text-slate-950 font-black shadow-xs' : 'text-slate-300 hover:text-white font-bold'
+                }`}
+              >
+                <BookOpen className="w-3.5 h-3.5" />
+                बुकलेट PDF
+              </button>
+
+              {userRole === 'admin' && (
+                <button
+                  onClick={() => handleTabClick('events')}
+                  className={`px-3 py-1.5 rounded-lg transition flex items-center gap-1 text-xs whitespace-nowrap cursor-pointer shrink-0 ${
+                    activeTab === 'events' ? 'bg-amber-500 text-slate-950 font-black shadow-xs' : 'text-slate-300 hover:text-white font-bold'
+                  }`}
+                >
+                  <Calendar className="w-3.5 h-3.5" />
+                  इवेंट्स मैनेजर
+                </button>
+              )}
+
+              {userRole === 'admin' && (
+                <button
+                  onClick={() => handleTabClick('force')}
+                  className={`px-3 py-1.5 rounded-lg transition flex items-center gap-1 text-xs whitespace-nowrap cursor-pointer shrink-0 ${
+                    activeTab === 'force' ? 'bg-amber-500 text-slate-950 font-black shadow-xs' : 'text-slate-300 hover:text-white font-bold'
+                  }`}
+                >
+                  <Users className="w-3.5 h-3.5" />
+                  मास्टर फ़ोर्स
+                </button>
+              )}
+
+              {userRole === 'admin' && (
+                <button
+                  onClick={() => handleTabClick('upload')}
+                  className={`px-3 py-1.5 rounded-lg transition flex items-center gap-1 text-xs whitespace-nowrap cursor-pointer shrink-0 ${
+                    activeTab === 'upload' ? 'bg-amber-500 text-slate-950 font-black shadow-xs' : 'text-slate-300 hover:text-white font-bold'
+                  }`}
+                >
+                  <FileSpreadsheet className="w-3.5 h-3.5" />
+                  अपलोड / सेटिंग्स
+                </button>
+              )}
+            </div>
+          </div>
+        )}
       </header>
 
       {/* Main Page Content */}
-      <main className="flex-1 max-w-5xl w-full mx-auto p-4 sm:p-6 space-y-6">
+      <main className="flex-1 max-w-5xl w-full mx-auto p-3 sm:p-6 space-y-5 sm:space-y-6">
         {/* PUBLICLY ACCESSIBLE SEARCH TAB */}
         {activeTab === 'search' && (
           <div className="max-w-xl mx-auto space-y-5">
