@@ -1,4 +1,4 @@
-// Dedicated high-speed isolated Legal print engine supporting both 4-in-1 and 6-in-1 layouts
+// Dedicated high-speed isolated Legal print engine supporting balanced 4-in-1 and 6-in-1 layouts
 export function printLegalBulk({
   records = [],
   eventTitle = 'श्रावण झूला मेला',
@@ -91,7 +91,7 @@ export function printLegalBulk({
               </div>
             </div>
 
-            <!-- 3. Assignment Table: Automatically fills available space -->
+            <!-- 3. Assignment Table: Evenly Balanced Rows -->
             <div class="table-container">
               <table class="card-table">
                 <tbody>
@@ -244,6 +244,7 @@ export function printLegalBulk({
             padding: ${is4In1 ? '8px 10px' : '5px 6px'};
             display: flex;
             flex-direction: column;
+            justify-content: space-between;
             background: #ffffff;
             box-sizing: border-box;
             height: 100%;
@@ -274,8 +275,8 @@ export function printLegalBulk({
             flex-shrink: 0;
           }
           .badge-icon {
-            width: ${is4In1 ? '34px' : '28px'};
-            height: ${is4In1 ? '34px' : '28px'};
+            width: ${is4In1 ? '40px' : '28px'};
+            height: ${is4In1 ? '40px' : '28px'};
             object-fit: contain;
             flex-shrink: 0;
           }
@@ -285,31 +286,31 @@ export function printLegalBulk({
             line-height: 1.15;
           }
           .title-main {
-            font-size: ${is4In1 ? '14px' : '12.5px'};
+            font-size: ${is4In1 ? '15px' : '12.5px'};
             font-weight: 900;
             color: #000000;
             letter-spacing: 0.2px;
           }
           .title-sub {
-            font-size: ${is4In1 ? '10px' : '9px'};
+            font-size: ${is4In1 ? '11px' : '9px'};
             font-weight: 800;
             color: #334155;
           }
 
-          /* 2. Officer Profile Box */
+          /* 2. Officer Profile Box (Enlarged and balanced in 4-in-1) */
           .officer-card {
             display: flex;
-            gap: ${is4In1 ? '8px' : '6px'};
+            gap: ${is4In1 ? '10px' : '6px'};
             border: 1.2px solid #000000;
             padding: ${is4In1 ? '6px 8px' : '4px 6px'};
-            border-radius: 5px;
+            border-radius: 6px;
             background: #f8fafc;
             flex-shrink: 0;
-            margin: ${is4In1 ? '5px 0' : '3px 0'};
+            margin: ${is4In1 ? '4px 0' : '3px 0'};
           }
           .photo-frame {
-            width: ${is4In1 ? '52px' : '44px'};
-            height: ${is4In1 ? '66px' : '56px'};
+            width: ${is4In1 ? '58px' : '44px'};
+            height: ${is4In1 ? '72px' : '56px'};
             border: 1px dashed #000000;
             border-radius: 4px;
             background: #ffffff;
@@ -331,15 +332,15 @@ export function printLegalBulk({
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            font-size: 6.5px;
+            font-size: ${is4In1 ? '8px' : '6.5px'};
             font-weight: bold;
             color: #475569;
-            line-height: 1;
+            line-height: 1.1;
             gap: 1px;
           }
           .photo-svg {
-            width: 16px;
-            height: 16px;
+            width: ${is4In1 ? '22px' : '16px'};
+            height: ${is4In1 ? '22px' : '16px'};
             color: #64748b;
           }
 
@@ -356,56 +357,50 @@ export function printLegalBulk({
             color: #475569;
           }
           .officer-name {
-            font-size: ${is4In1 ? '13px' : '11.5px'};
+            font-size: ${is4In1 ? '14.5px' : '11.5px'};
             font-weight: 900;
             color: #000000;
-            line-height: 1.2;
+            line-height: 1.25;
             word-break: break-word;
             margin: 1px 0;
           }
           .officer-mobile {
-            font-size: ${is4In1 ? '11.5px' : '10.5px'};
+            font-size: ${is4In1 ? '13px' : '10.5px'};
             font-family: monospace;
             font-weight: 900;
             color: #000000;
             display: flex;
             align-items: center;
-            gap: 2px;
+            gap: 3px;
           }
           .officer-sub-bar {
-            font-size: ${is4In1 ? '9.5px' : '8.5px'};
+            font-size: ${is4In1 ? '10.5px' : '8.5px'};
             color: #1e293b;
             border-top: 1px solid #cbd5e1;
-            padding-top: 2px;
+            padding-top: 3px;
             display: flex;
             justify-content: space-between;
-            gap: 3px;
+            gap: 4px;
             font-weight: 700;
           }
 
-          /* 3. Duty Assignments Table: Expands to 100% of remaining vertical height */
+          /* 3. Duty Assignments Table: Evenly Balanced across all rows */
           .table-container {
-            flex: 1;
             display: flex;
             flex-direction: column;
             width: 100%;
-            margin-bottom: 3px;
-            min-height: 0;
+            margin: ${is4In1 ? '4px 0' : '2px 0'};
           }
           .card-table {
             width: 100%;
-            height: 100%;
             border-collapse: collapse;
-            font-size: ${is4In1 ? '10.5px' : '9.5px'};
+            font-size: ${is4In1 ? '11.5px' : '9.5px'};
             border: 1.2px solid #000000;
           }
-          .card-table tr {
-            height: 100%;
-          }
           .card-table td {
-            padding: ${is4In1 ? '4px 6px' : '3px 5px'};
+            padding: ${is4In1 ? '5px 7px' : '3px 5px'};
             border-bottom: 1px solid #000000;
-            line-height: 1.25;
+            line-height: 1.3;
             vertical-align: middle;
           }
           .td-lbl {
@@ -422,7 +417,7 @@ export function printLegalBulk({
             background: #fef3c7;
           }
           .td-duty-val {
-            font-size: ${is4In1 ? '11.5px' : '10.5px'};
+            font-size: ${is4In1 ? '13px' : '10.5px'};
             font-weight: 900;
             color: #78350f;
           }
@@ -433,7 +428,7 @@ export function printLegalBulk({
             background: #fff1f2;
           }
           .note-val {
-            font-size: ${is4In1 ? '9px' : '8.5px'};
+            font-size: ${is4In1 ? '10px' : '8.5px'};
             color: #9f1239;
           }
           .font-bold {
@@ -443,7 +438,7 @@ export function printLegalBulk({
           /* 4. Footer Authorization */
           .card-footer {
             border-top: 1.5px solid #000000;
-            padding-top: 3px;
+            padding-top: ${is4In1 ? '4px' : '3px'};
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -455,7 +450,7 @@ export function printLegalBulk({
             flex-direction: column;
           }
           .verified-pill {
-            font-size: ${is4In1 ? '9px' : '8px'};
+            font-size: ${is4In1 ? '9.5px' : '8px'};
             font-weight: 900;
             color: #047857;
             display: flex;
@@ -464,7 +459,7 @@ export function printLegalBulk({
           }
           .dot {
             color: #10b981;
-            font-size: 10px;
+            font-size: ${is4In1 ? '11px' : '10px'};
           }
           .pass-code {
             font-size: ${is4In1 ? '8px' : '7px'};
@@ -476,8 +471,8 @@ export function printLegalBulk({
             text-align: right;
           }
           .sign-img {
-            height: ${is4In1 ? '20px' : '18px'};
-            max-width: 60px;
+            height: ${is4In1 ? '22px' : '18px'};
+            max-width: 70px;
             object-fit: contain;
             margin-left: auto;
           }
@@ -487,7 +482,7 @@ export function printLegalBulk({
             color: #475569;
           }
           .signatory-title {
-            font-size: ${is4In1 ? '9.5px' : '8.5px'};
+            font-size: ${is4In1 ? '10px' : '8.5px'};
             font-weight: 900;
             color: #000000;
             line-height: 1.1;
