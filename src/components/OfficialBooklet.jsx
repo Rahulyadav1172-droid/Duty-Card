@@ -51,10 +51,10 @@ export default function OfficialBooklet({ records, instructions, onBack }) {
             <img src="/badge.png" alt="Police Emblem" className="w-16 h-16 object-contain" />
           </div>
           <h1 className="text-lg sm:text-xl font-extrabold tracking-tight uppercase">
-            कार्यालय वरिष्ठ पुलिस अधीक्षक, जनपद अयोध्या / पुलिस मुख्यालय
+            कार्यालय वरिष्ठ पुलिस अधीक्षक, जनपद अयोध्या
           </h1>
           <h2 className="text-sm font-bold text-gray-800">
-            विशेष सुरक्षा व्यवस्था ड्यूटी आदेश पुस्तिका 2026
+            ड्यूटी आदेश पुस्तिका 2026
           </h2>
           <div className="flex justify-between items-center text-xs font-mono pt-2 px-2 text-gray-700 font-bold border-t border-gray-300 mt-2">
             <span>पत्रांक: सुरक्षा-2026/VIP-ड्यूटी/842</span>
