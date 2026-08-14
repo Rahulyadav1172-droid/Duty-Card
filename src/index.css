@@ -59,11 +59,6 @@
 
 /* Pristine 1-Page Official Government Card Print CSS */
 @media print {
-  @page {
-    size: A4 portrait;
-    margin: 8mm 12mm;
-  }
-
   html, body {
     background: #ffffff !important;
     color: #000000 !important;
@@ -120,5 +115,17 @@
 
   #printable-duty-card td {
     border-color: #000000 !important;
+  }
+
+  /* 4-in-1 Bulk Legal Print Pages */
+  .bulk-legal-print-page {
+    display: grid !important;
+    visibility: visible !important;
+    page-break-after: always !important;
+    break-after: page !important;
+  }
+
+  .bulk-legal-print-page * {
+    visibility: visible !important;
   }
 }
