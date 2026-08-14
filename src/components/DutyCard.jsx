@@ -93,11 +93,39 @@ export default function DutyCard({
 
     try {
       setIsDownloadingPDF(true);
+
+      // Ensure fonts are fully loaded before rendering to canvas
+      if (document.fonts) {
+        await document.fonts.ready;
+      }
+
       const canvas = await html2canvas(element, {
-        scale: 2.5,
+        scale: 3,
         useCORS: true,
         backgroundColor: '#ffffff',
-        logging: false
+        logging: false,
+        onclone: (clonedDoc) => {
+          const card = clonedDoc.getElementById('printable-duty-card');
+          if (card) {
+            // Apply standard fixed dimensions for pristine PDF rendering
+            card.style.width = '640px';
+            card.style.maxWidth = '640px';
+            card.style.margin = '0 auto';
+            card.style.padding = '24px';
+            card.style.letterSpacing = 'normal';
+
+            // Ensure no clipped ligatures or broken matras in cloned tree
+            const textNodes = card.querySelectorAll('h1, h2, h3, h4, span, td, div, p');
+            textNodes.forEach((node) => {
+              node.style.letterSpacing = 'normal';
+              node.style.overflow = 'visible';
+              node.style.textOverflow = 'clip';
+              node.style.whiteSpace = 'normal';
+              node.style.lineHeight = '1.45';
+              node.style.fontFamily = "'Noto Sans Devanagari', sans-serif";
+            });
+          }
+        }
       });
 
       const imgData = canvas.toDataURL('image/png');
@@ -108,7 +136,7 @@ export default function DutyCard({
       });
 
       const pdfWidth = pdf.internal.pageSize.getWidth();
-      const margin = 12;
+      const margin = 14;
       const printWidth = pdfWidth - (margin * 2);
       const printHeight = (canvas.height * printWidth) / canvas.width;
 
@@ -194,26 +222,26 @@ export default function DutyCard({
       {/* Main Printable Duty Card Container */}
       <div
         id="printable-duty-card"
-        className="bg-white text-slate-900 p-3.5 sm:p-6 rounded-xl sm:rounded-2xl border-2 border-slate-900 shadow-md space-y-3 sm:space-y-4"
+        className="bg-white text-slate-900 p-4 sm:p-6 rounded-xl sm:rounded-2xl border-2 border-slate-900 shadow-md space-y-3.5 sm:space-y-4"
       >
         {/* Pass Header */}
-        <div className="border-b-2 border-slate-900 pb-2 sm:pb-3 flex items-center justify-between gap-1.5 sm:gap-3">
-          <img src="/badge.png" alt="Police Badge Left" className="w-9 h-9 sm:w-14 sm:h-14 object-contain shrink-0" />
+        <div className="border-b-2 border-slate-900 pb-2.5 sm:pb-3.5 flex items-center justify-between gap-2 sm:gap-3">
+          <img src="/badge.png" alt="Police Badge Left" className="w-10 h-10 sm:w-14 sm:h-14 object-contain shrink-0" />
           
-          <div className="flex-1 text-center min-w-0">
-            <h1 className="text-base sm:text-2xl font-black text-slate-950 tracking-tight leading-tight truncate">
+          <div className="flex-1 text-center min-w-0 px-1">
+            <h1 className="text-base sm:text-2xl font-black text-slate-950 leading-normal">
               {eventTitle}
             </h1>
-            <h2 className="text-xs sm:text-base font-bold text-slate-700 mt-0.5 truncate">
+            <h2 className="text-xs sm:text-base font-bold text-slate-700 mt-1 leading-normal">
               {eventSubtitle}
             </h2>
           </div>
 
-          <img src="/badge.png" alt="Police Badge Right" className="w-9 h-9 sm:w-14 sm:h-14 object-contain shrink-0" />
+          <img src="/badge.png" alt="Police Badge Right" className="w-10 h-10 sm:w-14 sm:h-14 object-contain shrink-0" />
         </div>
 
         {/* Officer Identity & Passport Photo Block */}
-        <div className="flex items-stretch gap-2 sm:gap-3 border border-slate-300 p-2 sm:p-3 rounded-lg sm:rounded-xl bg-slate-50/80">
+        <div className="flex items-stretch gap-2.5 sm:gap-3 border border-slate-300 p-2.5 sm:p-3 rounded-lg sm:rounded-xl bg-slate-50/80">
           {/* Photo Frame */}
           <div
             onClick={() => photoInputRef.current?.click()}
@@ -271,65 +299,65 @@ export default function DutyCard({
             <tbody className="divide-y divide-slate-200">
               {duty.event_name ? (
                 <tr>
-                  <td className="w-[38%] sm:w-1/3 bg-slate-50 font-bold p-1.5 sm:p-2.5 border-r border-slate-200 text-slate-700 text-[11px] sm:text-sm">
+                  <td className="w-[38%] sm:w-1/3 bg-slate-50 font-bold p-2 sm:p-2.5 border-r border-slate-200 text-slate-700 text-[11px] sm:text-sm leading-relaxed">
                     ड्यूटी का प्रकार
                   </td>
-                  <td className="p-1.5 sm:p-2.5 font-bold text-slate-900 bg-white text-[11px] sm:text-sm break-words">
+                  <td className="p-2 sm:p-2.5 font-bold text-slate-900 bg-white text-[11px] sm:text-sm break-words leading-relaxed">
                     {duty.event_name}
                   </td>
                 </tr>
               ) : null}
 
               <tr>
-                <td className="w-[38%] sm:w-1/3 bg-slate-50 font-bold p-1.5 sm:p-2.5 border-r border-slate-200 text-slate-700 text-[11px] sm:text-sm">
+                <td className="w-[38%] sm:w-1/3 bg-slate-50 font-bold p-2 sm:p-2.5 border-r border-slate-200 text-slate-700 text-[11px] sm:text-sm leading-relaxed">
                   ड्यूटी का स्थान
                 </td>
-                <td className="p-1.5 sm:p-2.5 font-black text-xs sm:text-base text-amber-950 bg-amber-50/50 break-words">
+                <td className="p-2 sm:p-2.5 font-black text-xs sm:text-base text-amber-950 bg-amber-50/50 break-words leading-relaxed">
                   {duty.duty_place || ''}
                 </td>
               </tr>
 
               <tr>
-                <td className="bg-slate-50 font-bold p-1.5 sm:p-2.5 border-r border-slate-200 text-slate-700 text-[11px] sm:text-sm">
+                <td className="bg-slate-50 font-bold p-2 sm:p-2.5 border-r border-slate-200 text-slate-700 text-[11px] sm:text-sm leading-relaxed">
                   दिनाँक व समय
                 </td>
-                <td className="p-1.5 sm:p-2.5 font-bold text-slate-900 bg-white text-[11px] sm:text-sm break-words">
+                <td className="p-2 sm:p-2.5 font-bold text-slate-900 bg-white text-[11px] sm:text-sm break-words leading-relaxed">
                   {duty.shift || ''}
                 </td>
               </tr>
 
               <tr>
-                <td className="bg-slate-50 font-bold p-1.5 sm:p-2.5 border-r border-slate-200 text-slate-700 text-[11px] sm:text-sm">
+                <td className="bg-slate-50 font-bold p-2 sm:p-2.5 border-r border-slate-200 text-slate-700 text-[11px] sm:text-sm leading-relaxed">
                   जोन / व्यवस्था
                 </td>
-                <td className="p-1.5 sm:p-2.5 font-semibold text-slate-800 bg-white text-[11px] sm:text-sm break-words">
+                <td className="p-2 sm:p-2.5 font-semibold text-slate-800 bg-white text-[11px] sm:text-sm break-words leading-relaxed">
                   {duty.zone || ''}
                 </td>
               </tr>
 
               <tr>
-                <td className="bg-slate-50 font-bold p-1.5 sm:p-2.5 border-r border-slate-200 text-slate-700 text-[11px] sm:text-sm">
+                <td className="bg-slate-50 font-bold p-2 sm:p-2.5 border-r border-slate-200 text-slate-700 text-[11px] sm:text-sm leading-relaxed">
                   जोनाल प्रभारी
                 </td>
-                <td className="p-1.5 sm:p-2.5 font-semibold text-slate-800 bg-white text-[11px] sm:text-sm break-words">
+                <td className="p-2 sm:p-2.5 font-semibold text-slate-800 bg-white text-[11px] sm:text-sm break-words leading-relaxed">
                   {duty.zonal_incharge || duty.zonal || ''}
                 </td>
               </tr>
 
               <tr>
-                <td className="bg-slate-50 font-bold p-1.5 sm:p-2.5 border-r border-slate-200 text-slate-700 text-[11px] sm:text-sm">
+                <td className="bg-slate-50 font-bold p-2 sm:p-2.5 border-r border-slate-200 text-slate-700 text-[11px] sm:text-sm leading-relaxed">
                   सेक्टर
                 </td>
-                <td className="p-1.5 sm:p-2.5 font-semibold text-slate-800 bg-white text-[11px] sm:text-sm break-words">
+                <td className="p-2 sm:p-2.5 font-semibold text-slate-800 bg-white text-[11px] sm:text-sm break-words leading-relaxed">
                   {duty.sector || ''}
                 </td>
               </tr>
 
               <tr>
-                <td className="bg-slate-50 font-bold p-1.5 sm:p-2.5 border-r border-slate-200 text-slate-700 text-[11px] sm:text-sm">
+                <td className="bg-slate-50 font-bold p-2 sm:p-2.5 border-r border-slate-200 text-slate-700 text-[11px] sm:text-sm leading-relaxed">
                   सेक्टर प्रभारी
                 </td>
-                <td className="p-1.5 sm:p-2.5 font-semibold text-slate-800 bg-white text-[11px] sm:text-sm break-words">
+                <td className="p-2 sm:p-2.5 font-semibold text-slate-800 bg-white text-[11px] sm:text-sm break-words leading-relaxed">
                   {duty.sector_incharge || ''}
                 </td>
               </tr>
@@ -337,10 +365,10 @@ export default function DutyCard({
               {/* Briefing Location Row */}
               {activeBriefingPlace && (
                 <tr className="bg-amber-50/70 border-t-2 border-amber-200">
-                  <td className="bg-amber-100/60 font-black p-1.5 sm:p-2.5 border-r border-amber-200 text-amber-950 text-[11px] sm:text-sm">
+                  <td className="bg-amber-100/60 font-black p-2 sm:p-2.5 border-r border-amber-200 text-amber-950 text-[11px] sm:text-sm leading-relaxed">
                     ब्रीफिंग स्थान
                   </td>
-                  <td className="p-1.5 sm:p-2.5 font-bold text-amber-950 bg-amber-50/70 text-[11px] sm:text-sm break-words">
+                  <td className="p-2 sm:p-2.5 font-bold text-amber-950 bg-amber-50/70 text-[11px] sm:text-sm break-words leading-relaxed">
                     {activeBriefingPlace}
                   </td>
                 </tr>
@@ -349,10 +377,10 @@ export default function DutyCard({
               {/* Special Note Row */}
               {activeNote && (
                 <tr className="bg-amber-50/70 border-t-2 border-amber-200">
-                  <td className="bg-amber-100/60 font-black p-1.5 sm:p-2.5 border-r border-amber-200 text-amber-950 text-[11px] sm:text-sm">
+                  <td className="bg-amber-100/60 font-black p-2 sm:p-2.5 border-r border-amber-200 text-amber-950 text-[11px] sm:text-sm leading-relaxed">
                     विशेष नोट
                   </td>
-                  <td className="p-1.5 sm:p-2.5 font-bold text-amber-950 bg-amber-50/70 text-[11px] sm:text-sm leading-relaxed break-words">
+                  <td className="p-2 sm:p-2.5 font-bold text-amber-950 bg-amber-50/70 text-[11px] sm:text-sm leading-relaxed break-words">
                     {activeNote}
                   </td>
                 </tr>
@@ -362,7 +390,7 @@ export default function DutyCard({
         </div>
 
         {/* Footer Authority & QR Block */}
-        <div className="pt-2 border-t-2 border-slate-900 flex flex-row items-center justify-between gap-2">
+        <div className="pt-2.5 border-t-2 border-slate-900 flex flex-row items-center justify-between gap-2">
           {/* QR Code with Verification Trigger */}
           <div
             onClick={() => setIsVerifyModalOpen(true)}
