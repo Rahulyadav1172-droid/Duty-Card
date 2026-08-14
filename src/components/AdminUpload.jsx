@@ -460,7 +460,7 @@ export default function AdminUpload({
             title="लीगल पेपर पर 4-इन-1 बल्क PDF डाउनलोड करें"
           >
             <FileDown className="w-4 h-4 text-amber-400" />
-            <span>4-इन-1 बल्क PDF (Legal)</span>
+            <span>6-इन-1 बल्क PDF (Legal)</span>
           </button>
 
           <button
@@ -872,7 +872,7 @@ export default function AdminUpload({
               title="लीगल पेपर पर प्रति पेज 4 कार्ड PDF डाउनलोड करें"
             >
               <FileDown className="w-4 h-4 text-amber-400" />
-              बल्क Legal PDF (4-इन-1)
+              बल्क Legal PDF (6-इन-1)
             </button>
 
             <button

@@ -48,7 +48,7 @@ export default function BulkLegalPdfModal({
     ? validRecords
     : validRecords.filter(r => (r.duty_place || '').trim() === selectedPointFilter);
 
-  const totalPossiblePages = Math.max(1, Math.ceil(targetRecords.length / 4));
+  const totalPossiblePages = Math.max(1, Math.ceil(targetRecords.length / 6));
 
   // Determine active slice for JS PDF generator
   const actualStart = rangeMode === 'custom' ? Math.max(1, parseInt(startPage) || 1) : 1;
@@ -104,16 +104,16 @@ export default function BulkLegalPdfModal({
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = pdf.internal.pageSize.getHeight();
 
-      const pageStartIdx = (actualStart - 1) * 4;
-      const pageEndIdx = actualEnd * 4;
+      const pageStartIdx = (actualStart - 1) * 6;
+      const pageEndIdx = actualEnd * 6;
       const recordsToProcess = targetRecords.slice(pageStartIdx, pageEndIdx);
-      const totalBatchPages = Math.ceil(recordsToProcess.length / 4);
+      const totalBatchPages = Math.ceil(recordsToProcess.length / 6);
 
       for (let p = 0; p < totalBatchPages; p++) {
-        const batch = recordsToProcess.slice(p * 4, (p + 1) * 4);
+        const batch = recordsToProcess.slice(p * 6, (p + 1) * 6);
         setActiveBatch(batch);
         setProgress({
-          current: Math.min((p + 1) * 4, recordsToProcess.length),
+          current: Math.min((p + 1) * 6, recordsToProcess.length),
           total: recordsToProcess.length,
           page: p + 1,
           totalPages: totalBatchPages
@@ -306,10 +306,10 @@ export default function BulkLegalPdfModal({
               </div>
               <div>
                 <h3 className="text-base font-black text-white leading-tight">
-                  4-इन-1 बल्क ड्यूटी पास (Legal Paper)
+                  6-इन-1 बल्क ड्यूटी पास (Legal Paper)
                 </h3>
                 <p className="text-xs text-amber-400 font-bold mt-0.5">
-                  Legal Size (8.5 × 14 inch) - प्रति पेज 4 कार्ड
+                  Legal Size (8.5 × 14 inch) - प्रति पेज 6 कार्ड (2x3 ग्रिड)
                 </p>
               </div>
             </div>
@@ -339,14 +339,14 @@ export default function BulkLegalPdfModal({
                 </span>
               </div>
               <p className="text-[11px] text-emerald-800 font-medium leading-relaxed">
-                सीधे ब्राउज़र के नेटिव प्रिंट इंजन से <strong>सभी 1100+ कार्ड (284 पेज)</strong> मात्र 2 सेकंड में "Save as PDF" या सीधे प्रिंटर पर भेजें।
+                सीधे ब्राउज़र के नेटिव प्रिंट इंजन से <strong>सभी 1100+ कार्ड ({totalPossiblePages} पेज)</strong> मात्र 2 सेकंड में "Save as PDF" या सीधे प्रिंटर पर भेजें।
               </p>
               <button
                 onClick={handleInstantBrowserPrint}
                 className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs sm:text-sm rounded-xl shadow flex items-center justify-center gap-2 transition active:scale-98 cursor-pointer"
               >
                 <Printer className="w-4 h-4" />
-                <span>🖨️ तुरंत 1-क्लिक Legal PDF / प्रिंट करें (सभी {targetRecords.length} कार्ड)</span>
+                <span>🖨️ तुरंत 1-क्लिक Legal PDF / प्रिंट करें (प्रति पेज 6 कार्ड)</span>
               </button>
             </div>
 
@@ -365,7 +365,7 @@ export default function BulkLegalPdfModal({
               <div className="flex justify-between items-center text-slate-600 font-semibold">
                 <span>कुल लीगल पेज (Legal Pages):</span>
                 <span className="font-mono text-xs px-2 py-0.5 rounded bg-blue-100 text-blue-900 font-black">
-                  {totalPossiblePages} पेज (4 कार्ड / पेज)
+                  {totalPossiblePages} पेज (6 कार्ड / पेज)
                 </span>
               </div>
             </div>
@@ -467,7 +467,7 @@ export default function BulkLegalPdfModal({
                 ) : (
                   <>
                     <FileDown className="w-4 h-4 text-amber-400" />
-                    <span>📥 PDF फ़ाइल बनाएं ({selectedSlicePages} लीगल पेज / {selectedSlicePages * 4} कार्ड)</span>
+                    <span>📥 PDF फ़ाइल बनाएं ({selectedSlicePages} लीगल पेज / {selectedSlicePages * 6} कार्ड)</span>
                   </>
                 )}
               </button>
