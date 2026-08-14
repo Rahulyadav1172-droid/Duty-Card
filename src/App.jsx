@@ -98,20 +98,24 @@ export default function App() {
   const [activeEventId, setActiveEventId] = useState(() => {
     try {
       const savedId = localStorage.getItem(ACTIVE_EVENT_ID_KEY);
-      if (savedId && events.some(e => e.id === savedId)) return savedId;
+      if (savedId) return savedId;
     } catch (e) {}
-    return events[0]?.id || 'event-shravan-2026';
+    return 'event-shravan-2026';
   });
 
-  // Current Active Event Object
-  const currentEvent = events.find(e => e.id === activeEventId) || events[0] || {
-    id: 'default',
+  // Current Active Event Object (Guaranteed fallback)
+  const currentEvent = (Array.isArray(events) && events.find(e => e.id === activeEventId)) || (Array.isArray(events) && events[0]) || {
+    id: 'event-shravan-2026',
     title: 'श्रावण झूला मेला',
     subtitle: 'ड्यूटी कार्ड अयोध्या-2026',
     status: 'active',
     signatoryText: 'वरिष्ठ पुलिस अधीक्षक, अयोध्या',
     signatureImg: '',
-    records: [],
+    note: '',
+    isNoteEnabled: false,
+    briefing: '',
+    isBriefingEnabled: false,
+    records: initialData || [],
     attendanceMap: {}
   };
 
