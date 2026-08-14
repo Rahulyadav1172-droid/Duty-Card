@@ -736,7 +736,7 @@ export default function App() {
       {/* Footer */}
       <footer className="bg-white border-t border-slate-200 py-3.5 px-4 text-center text-xs text-slate-500 space-y-0.5 mt-auto">
         <p className="font-bold text-slate-700">अयोध्या पुलिस ड्यूटी व पास प्रबंधन प्रणाली © 2026</p>
-        <p className="text-[11px] text-slate-400">उत्तर प्रदेश पुलिस सुरक्षा व्यवस्था</p>
+        <p className="text-[11px] font-semibold text-slate-500">Designed & Developed by Smart Cell Ayodhya</p>
       </footer>
     </div>
   );
