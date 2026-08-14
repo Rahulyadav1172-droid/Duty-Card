@@ -28,7 +28,11 @@ export function printLegalBulk({
       for (let c = 0; c < 4; c++) {
         const duty = pageRecords[c];
         if (!duty) {
-          cardsHtml += `<div class="card-empty"></div>`;
+          cardsHtml += `
+            <div class="duty-card empty-slot">
+              <div class="empty-text">स्थान रिक्त (Blank Slot)</div>
+            </div>
+          `;
           continue;
         }
 
@@ -37,7 +41,15 @@ export function printLegalBulk({
 
         const photoHtml = duty.photo
           ? `<img src="${duty.photo}" class="officer-photo" />`
-          : `<div class="photo-placeholder">फोटो<br/>चस्पा करें</div>`;
+          : `
+            <div class="photo-placeholder">
+              <svg class="photo-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+              </svg>
+              <span>पासपोर्ट फोटो<br/>चस्पा करें</span>
+            </div>
+          `;
 
         const signHtml = signatureImg
           ? `<img src="${signatureImg}" class="sign-img" />`
@@ -47,73 +59,82 @@ export function printLegalBulk({
           <div class="duty-card">
             <!-- Card Header -->
             <div class="card-header">
-              <img src="/badge.png" class="badge-icon" />
+              <img src="/badge.png" class="badge-icon" alt="UP Police" />
               <div class="header-titles">
-                <div class="title-main">${escapeHtml(eventTitle)}</div>
-                <div class="title-sub">${escapeHtml(eventSubtitle)}</div>
+                <h2 class="title-main">${escapeHtml(eventTitle)}</h2>
+                <p class="title-sub">${escapeHtml(eventSubtitle)}</p>
               </div>
-              <img src="/badge.png" class="badge-icon" />
+              <img src="/badge.png" class="badge-icon" alt="UP Police" />
             </div>
 
-            <!-- Officer Info Box -->
-            <div class="officer-box">
-              <div class="photo-wrapper">
+            <!-- Officer Profile Section -->
+            <div class="officer-card">
+              <div class="photo-frame">
                 ${photoHtml}
               </div>
-              <div class="officer-details">
+              <div class="officer-info">
                 <div>
-                  <div class="label-muted">अधिकारी / कर्मचारी:</div>
-                  <div class="officer-name">${escapeHtml(duty.name || '-')}</div>
-                  <div class="officer-phone">📱 ${escapeHtml(duty.mobile || '-')}</div>
+                  <span class="officer-tag">अधिकारी / कर्मचारी विवरण:</span>
+                  <h3 class="officer-name">${escapeHtml(duty.name || '-')}</h3>
+                  <div class="officer-mobile">
+                    <span>📱</span>
+                    <strong>${escapeHtml(duty.mobile || 'मोबाइल अनुपलब्ध')}</strong>
+                  </div>
                 </div>
-                <div class="officer-meta">
-                  <span>P.No: <strong>${escapeHtml(duty.id || '-')}</strong></span>
-                  <span>मूल तैनाती: <strong>${escapeHtml(duty.posting || '-')}</strong> ${duty.district ? `(${escapeHtml(duty.district)})` : ''}</span>
+                <div class="officer-sub-bar">
+                  <div>P.No: <strong>${escapeHtml(duty.id || '-')}</strong></div>
+                  <div>मूल तैनाती: <strong>${escapeHtml(duty.posting || '-')}</strong> ${duty.district ? `(${escapeHtml(duty.district)})` : ''}</div>
                 </div>
               </div>
             </div>
 
-            <!-- Details Table -->
-            <table class="card-table">
-              <tbody>
-                <tr>
-                  <td class="td-label">ड्यूटी का स्थान</td>
-                  <td class="td-val-highlight">${escapeHtml(duty.duty_place || '-')}</td>
-                </tr>
-                <tr>
-                  <td class="td-label">दिनाँक व समय</td>
-                  <td class="td-val font-bold">${escapeHtml(duty.shift || '-')}</td>
-                </tr>
-                <tr>
-                  <td class="td-label">जोन / प्रभारी</td>
-                  <td class="td-val">${escapeHtml(duty.zone || '-')} / ${escapeHtml(duty.zonal_incharge || duty.zonal || '-')}</td>
-                </tr>
-                <tr>
-                  <td class="td-label">सेक्टर / प्रभारी</td>
-                  <td class="td-val">${escapeHtml(duty.sector || '-')} / ${escapeHtml(duty.sector_incharge || '-')}</td>
-                </tr>
-                ${activeBriefing ? `
-                <tr class="row-highlight">
-                  <td class="td-label">ब्रीफिंग</td>
-                  <td class="td-val font-bold">${escapeHtml(activeBriefing)}</td>
-                </tr>` : ''}
-                ${activeNote ? `
-                <tr class="row-highlight">
-                  <td class="td-label">विशेष नोट</td>
-                  <td class="td-val note-text font-bold">${escapeHtml(activeNote)}</td>
-                </tr>` : ''}
-              </tbody>
-            </table>
+            <!-- Table of Assignments -->
+            <div class="table-container">
+              <table class="card-table">
+                <tbody>
+                  <tr class="row-duty-place">
+                    <td class="td-lbl">ड्यूटी का स्थान</td>
+                    <td class="td-val td-duty-val">${escapeHtml(duty.duty_place || '-')}</td>
+                  </tr>
+                  <tr>
+                    <td class="td-lbl">दिनाँक व समय</td>
+                    <td class="td-val font-bold">${escapeHtml(duty.shift || '-')}</td>
+                  </tr>
+                  <tr>
+                    <td class="td-lbl">जोन / प्रभारी</td>
+                    <td class="td-val">${escapeHtml(duty.zone || '-')} / <strong>${escapeHtml(duty.zonal_incharge || duty.zonal || '-')}</strong></td>
+                  </tr>
+                  <tr>
+                    <td class="td-lbl">सेक्टर / प्रभारी</td>
+                    <td class="td-val">${escapeHtml(duty.sector || '-')} / <strong>${escapeHtml(duty.sector_incharge || '-')}</strong></td>
+                  </tr>
+                  ${activeBriefing ? `
+                  <tr class="row-briefing">
+                    <td class="td-lbl">ब्रीफिंग स्थान</td>
+                    <td class="td-val font-bold">${escapeHtml(activeBriefing)}</td>
+                  </tr>` : ''}
+                  ${activeNote ? `
+                  <tr class="row-note">
+                    <td class="td-lbl">विशेष निर्देश</td>
+                    <td class="td-val font-bold note-val">${escapeHtml(activeNote)}</td>
+                  </tr>` : ''}
+                </tbody>
+              </table>
+            </div>
 
-            <!-- Card Footer -->
+            <!-- Card Bottom Authorization -->
             <div class="card-footer">
               <div class="footer-left">
-                <div class="verified-badge">✓ सत्यापित पास (UP Police)</div>
-                <div class="pass-id">PASS ID: ${escapeHtml(duty.id || '-')}</div>
+                <div class="verified-pill">
+                  <span class="dot">●</span>
+                  <span>डिजिटल सत्यापित पास (UP POLICE)</span>
+                </div>
+                <div class="pass-code">PASS REF: ${escapeHtml(duty.id || '-')}</div>
               </div>
+
               <div class="footer-right">
                 ${signHtml}
-                <div class="signatory-name">${escapeHtml(signatoryText)}</div>
+                <div class="signatory-title">${escapeHtml(signatoryText)}</div>
               </div>
             </div>
           </div>
@@ -122,6 +143,9 @@ export function printLegalBulk({
 
       pagesHtml += `
         <div class="legal-page">
+          <!-- Horizontal & Vertical Cut Guidelines -->
+          <div class="cut-line-h"></div>
+          <div class="cut-line-v"></div>
           ${cardsHtml}
         </div>
       `;
@@ -136,7 +160,7 @@ export function printLegalBulk({
         <style>
           @page {
             size: legal portrait;
-            margin: 6mm;
+            margin: 5mm;
           }
           * {
             box-sizing: border-box;
@@ -144,81 +168,124 @@ export function printLegalBulk({
             padding: 0;
           }
           body {
-            font-family: 'Noto Sans Devanagari', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-family: 'Noto Sans Devanagari', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             background: #ffffff;
-            color: #000000;
+            color: #020617;
             -webkit-print-color-adjust: exact;
             print-color-adjust: exact;
           }
+
+          /* 1 Legal Page (215.9mm x 355.6mm) holding 4 cards (2x2 grid) */
           .legal-page {
-            width: 203.9mm;
-            height: 343.6mm;
+            width: 205.9mm;
+            height: 345.6mm;
             display: grid;
             grid-template-columns: 1fr 1fr;
             grid-template-rows: 1fr 1fr;
-            gap: 5mm;
+            gap: 6mm;
             padding: 2mm;
             page-break-after: always;
             break-after: page;
             box-sizing: border-box;
+            position: relative;
+            background: #ffffff;
           }
+
+          /* ✂️ Cut markers */
+          .cut-line-h {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            border-top: 1px dashed #94a3b8;
+            pointer-events: none;
+            z-index: 10;
+          }
+          .cut-line-v {
+            position: absolute;
+            left: 50%;
+            top: 0;
+            bottom: 0;
+            border-left: 1px dashed #94a3b8;
+            pointer-events: none;
+            z-index: 10;
+          }
+
+          /* Each Individual Police Duty Card */
           .duty-card {
-            border: 1.5px solid #000000;
-            border-radius: 8px;
-            padding: 7px 8px;
+            border: 2px solid #0f172a;
+            border-radius: 10px;
+            padding: 8px 10px;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
             background: #ffffff;
             box-sizing: border-box;
+            height: 100%;
             overflow: hidden;
           }
-          .card-empty {
-            border: 1px dashed #cbd5e1;
-            border-radius: 8px;
+
+          .empty-slot {
+            border: 1.5px dashed #cbd5e1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f8fafc;
           }
+          .empty-text {
+            font-size: 11px;
+            font-weight: bold;
+            color: #94a3b8;
+          }
+
+          /* Header Section */
           .card-header {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            border-bottom: 1.5px solid #000000;
-            padding-bottom: 3px;
+            border-bottom: 2px solid #0f172a;
+            padding-bottom: 5px;
+            gap: 6px;
           }
           .badge-icon {
-            width: 30px;
-            height: 30px;
+            width: 38px;
+            height: 38px;
             object-fit: contain;
+            flex-shrink: 0;
           }
           .header-titles {
             text-align: center;
             flex: 1;
-            padding: 0 4px;
+            line-height: 1.2;
           }
           .title-main {
-            font-size: 11.5px;
+            font-size: 14.5px;
             font-weight: 900;
             color: #000000;
-            line-height: 1.15;
+            letter-spacing: 0.2px;
           }
           .title-sub {
-            font-size: 8.5px;
+            font-size: 10.5px;
             font-weight: bold;
-            color: #333333;
+            color: #334155;
+            margin-top: 1px;
           }
-          .officer-box {
+
+          /* Officer Profile Box */
+          .officer-card {
             display: flex;
-            gap: 6px;
-            border: 1px solid #94a3b8;
-            padding: 4px;
-            border-radius: 6px;
+            gap: 8px;
+            border: 1.5px solid #64748b;
+            padding: 6px;
+            border-radius: 8px;
             background: #f8fafc;
-            margin: 3px 0;
+            margin: 5px 0;
           }
-          .photo-wrapper {
-            width: 44px;
-            height: 54px;
-            border: 1px dashed #64748b;
-            border-radius: 4px;
+          .photo-frame {
+            width: 58px;
+            height: 72px;
+            border: 1.5px dashed #475569;
+            border-radius: 6px;
             background: #ffffff;
             display: flex;
             flex-direction: column;
@@ -234,116 +301,165 @@ export function printLegalBulk({
             object-fit: cover;
           }
           .photo-placeholder {
-            font-size: 7px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 7.5px;
             font-weight: bold;
             color: #64748b;
-            line-height: 1.1;
+            line-height: 1.15;
+            gap: 2px;
           }
-          .officer-details {
+          .photo-svg {
+            width: 20px;
+            height: 20px;
+            color: #94a3b8;
+          }
+
+          .officer-info {
             flex: 1;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
             min-width: 0;
           }
-          .label-muted {
-            font-size: 7px;
-            font-weight: bold;
-            color: #64748b;
+          .officer-tag {
+            font-size: 8.5px;
+            font-weight: 800;
+            color: #475569;
+            text-transform: uppercase;
           }
           .officer-name {
-            font-size: 9.5px;
+            font-size: 12.5px;
             font-weight: 900;
-            color: #000000;
-            line-height: 1.2;
+            color: #020617;
+            line-height: 1.25;
             word-break: break-word;
+            margin: 1px 0;
           }
-          .officer-phone {
-            font-size: 8.5px;
+          .officer-mobile {
+            font-size: 11px;
             font-family: monospace;
-            font-weight: bold;
-            color: #1e293b;
+            font-weight: 800;
+            color: #0f172a;
+            display: flex;
+            align-items: center;
+            gap: 3px;
           }
-          .officer-meta {
-            font-size: 7.5px;
+          .officer-sub-bar {
+            font-size: 9.5px;
             color: #334155;
             border-top: 1px solid #cbd5e1;
-            padding-top: 2px;
+            padding-top: 3px;
             display: flex;
             justify-content: space-between;
+            gap: 4px;
+            flex-wrap: wrap;
+          }
+
+          /* Duty Assignments Table */
+          .table-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            margin: 4px 0;
           }
           .card-table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 8.5px;
-            border: 1px solid #cbd5e1;
-            margin: 2px 0;
+            font-size: 10px;
+            border: 1.5px solid #475569;
           }
           .card-table td {
-            padding: 2px 4px;
+            padding: 3.5px 6px;
             border-bottom: 1px solid #cbd5e1;
+            line-height: 1.3;
           }
-          .td-label {
-            width: 34%;
+          .td-lbl {
+            width: 33%;
             background: #f1f5f9;
-            font-weight: bold;
-            border-right: 1px solid #cbd5e1;
+            font-weight: 800;
+            color: #0f172a;
+            border-right: 1.5px solid #cbd5e1;
           }
           .td-val {
-            color: #000000;
+            color: #020617;
           }
-          .td-val-highlight {
-            background: #fffbeb;
+          .row-duty-place {
+            background: #fef3c7;
+          }
+          .td-duty-val {
+            font-size: 11.5px;
             font-weight: 900;
-            color: #000000;
+            color: #78350f;
           }
-          .row-highlight {
-            background: #fffbeb;
+          .row-briefing {
+            background: #f8fafc;
+          }
+          .row-note {
+            background: #fff1f2;
+          }
+          .note-val {
+            font-size: 9px;
+            color: #9f1239;
           }
           .font-bold {
             font-weight: bold;
           }
-          .note-text {
-            font-size: 7.5px;
-          }
+
+          /* Footer Authorization */
           .card-footer {
-            border-top: 1.5px solid #000000;
-            padding-top: 3px;
+            border-top: 2px solid #0f172a;
+            padding-top: 4px;
             display: flex;
             align-items: center;
             justify-content: space-between;
+            gap: 6px;
           }
           .footer-left {
             display: flex;
             flex-direction: column;
+            gap: 1px;
           }
-          .verified-badge {
-            font-size: 7px;
+          .verified-pill {
+            font-size: 8.5px;
             font-weight: 900;
             color: #065f46;
+            display: flex;
+            align-items: center;
+            gap: 3px;
           }
-          .pass-id {
-            font-size: 6.5px;
+          .dot {
+            color: #10b981;
+            font-size: 11px;
+          }
+          .pass-code {
+            font-size: 7.5px;
             font-family: monospace;
-            color: #475569;
+            font-weight: 700;
+            color: #64748b;
           }
           .footer-right {
             text-align: right;
           }
           .sign-img {
-            height: 16px;
-            max-width: 60px;
+            height: 20px;
+            max-width: 70px;
             object-fit: contain;
             margin-left: auto;
           }
           .sign-text {
-            font-size: 7px;
+            font-size: 8px;
             font-style: italic;
+            color: #475569;
           }
-          .signatory-name {
-            font-size: 7.5px;
+          .signatory-title {
+            font-size: 9.5px;
             font-weight: 900;
-            line-height: 1.1;
+            color: #020617;
+            line-height: 1.15;
           }
         </style>
       </head>
