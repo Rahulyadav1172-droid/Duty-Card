@@ -407,16 +407,13 @@ export default function App() {
   }, [searchQuery, currentEvent]);
 
   const handlePrintTrigger = () => {
-    setIsPrintModalOpen(true);
-    setTimeout(() => {
-      window.print();
-    }, 300);
+    window.print();
   };
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col font-sans selection:bg-amber-500 selection:text-slate-950 font-devanagari">
       {/* Top Header - Deep Navy & Gold Accent Touch */}
-      <header className="sticky top-0 z-40 bg-[#0b132b] text-white border-b border-slate-800 shadow-md">
+      <header className="sticky top-0 z-40 bg-[#0b132b] text-white border-b border-slate-800 shadow-md no-print">
         <div className="max-w-5xl mx-auto px-3 sm:px-4 py-2.5 sm:py-3 flex items-center justify-between gap-2 sm:gap-3">
           {/* Logo & Title */}
           <div className="flex items-center gap-2 sm:gap-3 min-w-0">
@@ -540,15 +537,17 @@ export default function App() {
         {/* PUBLICLY ACCESSIBLE SEARCH TAB */}
         {activeTab === 'search' && (
           <div className="max-w-xl mx-auto space-y-5">
-            <SearchSection
-              searchQuery={searchQuery}
-              setSearchQuery={setSearchQuery}
-              onSearchSubmit={() => {}}
-              totalRecords={currentEvent.records?.length || 0}
-              events={events}
-              activeEventId={activeEventId}
-              onSelectActiveEvent={handleSelectActiveEvent}
-            />
+            <div className="no-print">
+              <SearchSection
+                searchQuery={searchQuery}
+                setSearchQuery={setSearchQuery}
+                onSearchSubmit={() => {}}
+                totalRecords={currentEvent.records?.length || 0}
+                events={events}
+                activeEventId={activeEventId}
+                onSelectActiveEvent={handleSelectActiveEvent}
+              />
+            </div>
 
             {activeDuty ? (
               <DutyCard
@@ -677,64 +676,8 @@ export default function App() {
         onLoginSuccess={handleLoginSuccess}
       />
 
-      {/* Print Overlay Modal */}
-      {isPrintModalOpen && activeDuty && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 overflow-y-auto p-4 flex flex-col items-center justify-center no-print">
-          <div className="bg-white border border-slate-300 p-4 rounded-2xl max-w-lg w-full space-y-4 mb-4 shadow-2xl">
-            <div className="flex items-center justify-between text-slate-900 font-bold text-sm">
-              <span>प्रिंट प्रीव्यू (Print Preview)</span>
-              <button
-                onClick={() => setIsPrintModalOpen(false)}
-                className="px-3 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs cursor-pointer"
-              >
-                बंद करें
-              </button>
-            </div>
-            
-            <div className="bg-white rounded-lg p-2 text-black border border-slate-200">
-              <PrintTemplate
-                duty={activeDuty}
-                customNote={currentEvent.note || ''}
-                isNoteEnabled={currentEvent.isNoteEnabled}
-                customBriefing={currentEvent.briefing || ''}
-                isBriefingEnabled={currentEvent.isBriefingEnabled}
-                eventTitle={currentEvent.title}
-                eventSubtitle={currentEvent.subtitle}
-                signatureImg={currentEvent.signatureImg || ''}
-                signatoryText={currentEvent.signatoryText || 'वरिष्ठ पुलिस अधीक्षक, अयोध्या'}
-              />
-            </div>
-
-            <div className="flex justify-end gap-2 pt-2">
-              <button
-                onClick={() => window.print()}
-                className="px-5 py-2.5 bg-amber-500 text-slate-950 font-black text-xs rounded-xl flex items-center gap-2 shadow-sm cursor-pointer"
-              >
-                <Printer className="w-4 h-4" />
-                अभी प्रिंट करें (Print Now)
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Print only template */}
-      <div className="hidden print:block">
-        <PrintTemplate
-          duty={activeDuty}
-          customNote={currentEvent.note || ''}
-          isNoteEnabled={currentEvent.isNoteEnabled}
-          customBriefing={currentEvent.briefing || ''}
-          isBriefingEnabled={currentEvent.isBriefingEnabled}
-          eventTitle={currentEvent.title}
-          eventSubtitle={currentEvent.subtitle}
-          signatureImg={currentEvent.signatureImg || ''}
-          signatoryText={currentEvent.signatoryText || 'वरिष्ठ पुलिस अधीक्षक, अयोध्या'}
-        />
-      </div>
-
       {/* Footer */}
-      <footer className="bg-white border-t border-slate-200 py-3.5 px-4 text-center text-xs text-slate-500 space-y-0.5 mt-auto">
+      <footer className="bg-white border-t border-slate-200 py-3.5 px-4 text-center text-xs text-slate-500 space-y-0.5 mt-auto no-print">
         <p className="font-bold text-slate-700">अयोध्या पुलिस ड्यूटी व पास प्रबंधन प्रणाली © 2026</p>
         <p className="text-[11px] font-semibold text-slate-500">Designed & Developed by Smart Cell Ayodhya</p>
       </footer>

@@ -57,12 +57,68 @@
   background: #94a3b8;
 }
 
+/* Pristine 1-Page Official Government Card Print CSS */
 @media print {
-  body {
+  @page {
+    size: A4 portrait;
+    margin: 8mm 12mm;
+  }
+
+  html, body {
     background: #ffffff !important;
     color: #000000 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    overflow: visible !important;
   }
+
+  /* Completely hide all website chrome, headers, footers, search, modals and toolbars */
+  header,
+  footer,
+  nav,
   .no-print {
     display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  main {
+    padding: 0 !important;
+    margin: 0 !important;
+    max-width: 100% !important;
+    width: 100% !important;
+  }
+
+  /* Single clean duty card container */
+  #printable-duty-card {
+    display: block !important;
+    visibility: visible !important;
+    width: 100% !important;
+    max-width: 650px !important;
+    margin: 0 auto !important;
+    padding: 16px 20px !important;
+    border: 2px solid #000000 !important;
+    border-radius: 12px !important;
+    box-shadow: none !important;
+    background-color: #ffffff !important;
+    color: #000000 !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  #printable-duty-card * {
+    visibility: visible !important;
+    color: #000000 !important;
+  }
+
+  #printable-duty-card table {
+    border-color: #000000 !important;
+  }
+
+  #printable-duty-card td {
+    border-color: #000000 !important;
   }
 }
