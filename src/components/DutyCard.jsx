@@ -276,7 +276,7 @@ export default function DutyCard({
             <div>
               <span className="text-[10px] sm:text-[11px] font-bold text-slate-500">अधिकारी / कर्मचारी:</span>
               <div className="text-sm sm:text-lg font-black text-slate-950 mt-0.5 break-words">
-                {(duty.name || '').split(',')[0].trim()}
+                {duty.name}
               </div>
               <div className="text-xs font-mono font-bold text-slate-800 mt-1 flex items-center gap-1.5">
                 <span>📱</span>
