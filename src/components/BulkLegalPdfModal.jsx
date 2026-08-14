@@ -10,7 +10,8 @@ import {
   Sparkles,
   Zap,
   Filter,
-  Check
+  Check,
+  Grid
 } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import jsPDF from 'jspdf';
@@ -34,6 +35,7 @@ export default function BulkLegalPdfModal({
   const [progress, setProgress] = useState({ current: 0, total: 0, page: 0, totalPages: 0 });
   const [selectedPointFilter, setSelectedPointFilter] = useState('ALL');
   const [rangeMode, setRangeMode] = useState('all'); // 'all' | 'custom'
+  const [layoutMode, setLayoutMode] = useState(6); // 4 or 6 cards per page
   const [startPage, setStartPage] = useState(1);
   const [endPage, setEndPage] = useState(25);
   const [activeBatch, setActiveBatch] = useState([]);
@@ -48,7 +50,7 @@ export default function BulkLegalPdfModal({
     ? validRecords
     : validRecords.filter(r => (r.duty_place || '').trim() === selectedPointFilter);
 
-  const totalPossiblePages = Math.max(1, Math.ceil(targetRecords.length / 6));
+  const totalPossiblePages = Math.max(1, Math.ceil(targetRecords.length / layoutMode));
 
   // Determine active slice for JS PDF generator
   const actualStart = rangeMode === 'custom' ? Math.max(1, parseInt(startPage) || 1) : 1;
@@ -73,7 +75,8 @@ export default function BulkLegalPdfModal({
       customNote,
       isNoteEnabled,
       customBriefing,
-      isBriefingEnabled
+      isBriefingEnabled,
+      layoutMode
     });
   };
 
@@ -104,16 +107,16 @@ export default function BulkLegalPdfModal({
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = pdf.internal.pageSize.getHeight();
 
-      const pageStartIdx = (actualStart - 1) * 6;
-      const pageEndIdx = actualEnd * 6;
+      const pageStartIdx = (actualStart - 1) * layoutMode;
+      const pageEndIdx = actualEnd * layoutMode;
       const recordsToProcess = targetRecords.slice(pageStartIdx, pageEndIdx);
-      const totalBatchPages = Math.ceil(recordsToProcess.length / 6);
+      const totalBatchPages = Math.ceil(recordsToProcess.length / layoutMode);
 
       for (let p = 0; p < totalBatchPages; p++) {
-        const batch = recordsToProcess.slice(p * 6, (p + 1) * 6);
+        const batch = recordsToProcess.slice(p * layoutMode, (p + 1) * layoutMode);
         setActiveBatch(batch);
         setProgress({
-          current: Math.min((p + 1) * 6, recordsToProcess.length),
+          current: Math.min((p + 1) * layoutMode, recordsToProcess.length),
           total: recordsToProcess.length,
           page: p + 1,
           totalPages: totalBatchPages
@@ -126,7 +129,7 @@ export default function BulkLegalPdfModal({
         if (!element) continue;
 
         const canvas = await html2canvas(element, {
-          scale: 1.4, // Optimized for 3x speed while retaining crisp text
+          scale: 1.4,
           useCORS: true,
           backgroundColor: '#ffffff',
           logging: false
@@ -147,7 +150,7 @@ export default function BulkLegalPdfModal({
       }
 
       const safeTitle = (eventTitle || 'DutyPass').replace(/\s+/g, '_');
-      pdf.save(`Bulk_Duty_Cards_Legal_${safeTitle}_Pages_${actualStart}_to_${actualEnd}.pdf`);
+      pdf.save(`Bulk_Duty_Cards_Legal_${layoutMode}in1_${safeTitle}_Pages_${actualStart}_to_${actualEnd}.pdf`);
       onClose();
     } catch (err) {
       console.error('Fast PDF Generation Error:', err);
@@ -159,7 +162,7 @@ export default function BulkLegalPdfModal({
     }
   };
 
-  // Helper to render individual card
+  // Helper to render individual card for background canvas
   const renderSingleCard = (duty, idx) => {
     if (!duty) return <div key={idx} style={{ border: '1px dashed #cbd5e1', borderRadius: '8px' }} />;
 
@@ -180,7 +183,7 @@ export default function BulkLegalPdfModal({
         style={{
           border: '1.5px solid #000000',
           borderRadius: '8px',
-          padding: '8px',
+          padding: '6px 8px',
           backgroundColor: '#ffffff',
           color: '#000000',
           display: 'flex',
@@ -207,7 +210,7 @@ export default function BulkLegalPdfModal({
 
         {/* Officer Photo & Info Row */}
         <div style={{ display: 'flex', gap: '6px', border: '1px solid #94a3b8', padding: '4px', borderRadius: '6px', backgroundColor: '#f8fafc', margin: '3px 0' }}>
-          <div style={{ width: '46px', height: '56px', border: '1px dashed #64748b', borderRadius: '4px', backgroundColor: '#ffffff', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', flexShrink: 0, overflow: 'hidden' }}>
+          <div style={{ width: '44px', height: '56px', border: '1px dashed #64748b', borderRadius: '4px', backgroundColor: '#ffffff', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', flexShrink: 0, overflow: 'hidden' }}>
             {duty.photo ? (
               <img src={duty.photo} alt={duty.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             ) : (
@@ -306,10 +309,10 @@ export default function BulkLegalPdfModal({
               </div>
               <div>
                 <h3 className="text-base font-black text-white leading-tight">
-                  6-इन-1 बल्क ड्यूटी पास (Legal Paper)
+                  बल्क ड्यूटी पास प्रिंट / PDF (Legal Paper)
                 </h3>
                 <p className="text-xs text-amber-400 font-bold mt-0.5">
-                  Legal Size (8.5 × 14 inch) - प्रति पेज 6 कार्ड (2x3 ग्रिड)
+                  Legal Size (8.5 × 14 inch) - 4-इन-1 या 6-इन-1 लेआउट
                 </p>
               </div>
             </div>
@@ -325,13 +328,42 @@ export default function BulkLegalPdfModal({
 
           {/* Content Body */}
           <div className="p-5 space-y-4 text-slate-800 text-xs max-h-[75vh] overflow-y-auto">
+            {/* 🌟 LAYOUT TOGGLE (4-IN-1 VS 6-IN-1) */}
+            <div className="bg-slate-100 p-1.5 rounded-xl border border-slate-300 flex items-center gap-1.5">
+              <button
+                type="button"
+                onClick={() => setLayoutMode(6)}
+                className={`flex-1 py-2.5 px-3 rounded-lg text-xs font-black flex items-center justify-center gap-1.5 transition cursor-pointer ${
+                  layoutMode === 6
+                    ? 'bg-amber-500 text-slate-950 shadow-sm'
+                    : 'bg-transparent text-slate-700 hover:bg-slate-200'
+                }`}
+              >
+                <span>6 कार्ड / Legal पेज (2x3)</span>
+                {layoutMode === 6 && <Check className="w-3.5 h-3.5 stroke-[3]" />}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setLayoutMode(4)}
+                className={`flex-1 py-2.5 px-3 rounded-lg text-xs font-black flex items-center justify-center gap-1.5 transition cursor-pointer ${
+                  layoutMode === 4
+                    ? 'bg-amber-500 text-slate-950 shadow-sm'
+                    : 'bg-transparent text-slate-700 hover:bg-slate-200'
+                }`}
+              >
+                <span>4 कार्ड / Legal पेज (2x2)</span>
+                {layoutMode === 4 && <Check className="w-3.5 h-3.5 stroke-[3]" />}
+              </button>
+            </div>
+
             {/* FAST OPTION 1: 1-CLICK INSTANT PRINT / SAVE AS PDF */}
             <div className="p-4 bg-emerald-50 border-2 border-emerald-500/50 rounded-2xl space-y-2.5 shadow-xs">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Zap className="w-5 h-5 text-emerald-600 fill-emerald-500" />
                   <strong className="text-emerald-950 text-sm">
-                    ⚡ 1-सेकंड सुपरफास्ट विधि (अनुशंसित / Recommended):
+                    ⚡ 1-सेकंड सुपरफास्ट प्रिंट ({layoutMode}-इन-1):
                   </strong>
                 </div>
                 <span className="text-[10px] bg-emerald-200 text-emerald-900 px-2 py-0.5 rounded-full font-black">
@@ -339,14 +371,14 @@ export default function BulkLegalPdfModal({
                 </span>
               </div>
               <p className="text-[11px] text-emerald-800 font-medium leading-relaxed">
-                सीधे ब्राउज़र के नेटिव प्रिंट इंजन से <strong>सभी 1100+ कार्ड ({totalPossiblePages} पेज)</strong> मात्र 2 सेकंड में "Save as PDF" या सीधे प्रिंटर पर भेजें।
+                सीधे ब्राउज़र के नेटिव प्रिंट इंजन से <strong>सभी {targetRecords.length} कार्ड ({totalPossiblePages} लीगल पेज)</strong> मात्र 2 सेकंड में "Save as PDF" या सीधे प्रिंट करें।
               </p>
               <button
                 onClick={handleInstantBrowserPrint}
                 className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs sm:text-sm rounded-xl shadow flex items-center justify-center gap-2 transition active:scale-98 cursor-pointer"
               >
                 <Printer className="w-4 h-4" />
-                <span>🖨️ तुरंत 1-क्लिक Legal PDF / प्रिंट करें (प्रति पेज 6 कार्ड)</span>
+                <span>🖨️ तुरंत प्रिंट / Save PDF ({layoutMode} कार्ड प्रति Legal पेज)</span>
               </button>
             </div>
 
@@ -365,7 +397,7 @@ export default function BulkLegalPdfModal({
               <div className="flex justify-between items-center text-slate-600 font-semibold">
                 <span>कुल लीगल पेज (Legal Pages):</span>
                 <span className="font-mono text-xs px-2 py-0.5 rounded bg-blue-100 text-blue-900 font-black">
-                  {totalPossiblePages} पेज (6 कार्ड / पेज)
+                  {totalPossiblePages} पेज ({layoutMode} कार्ड / पेज)
                 </span>
               </div>
             </div>
@@ -394,7 +426,7 @@ export default function BulkLegalPdfModal({
             {/* DIRECT FILE DOWNLOAD SECTION WITH BATCH RANGE */}
             <div className="border border-slate-200 rounded-xl p-3.5 bg-slate-50/50 space-y-3">
               <div className="flex items-center justify-between">
-                <span className="font-bold text-slate-900">📥 डायरेक्ट PDF फाइल डाउनलोड:</span>
+                <span className="font-bold text-slate-900">📥 डायरेक्ट PDF फाइल डाउनलोड ({layoutMode}-इन-1):</span>
                 <div className="flex items-center gap-1 bg-slate-200 p-0.5 rounded-lg text-[10px] font-bold">
                   <button
                     onClick={() => setRangeMode('all')}
@@ -467,7 +499,7 @@ export default function BulkLegalPdfModal({
                 ) : (
                   <>
                     <FileDown className="w-4 h-4 text-amber-400" />
-                    <span>📥 PDF फ़ाइल बनाएं ({selectedSlicePages} लीगल पेज / {selectedSlicePages * 6} कार्ड)</span>
+                    <span>📥 PDF फ़ाइल बनाएं ({selectedSlicePages} लीगल पेज / {selectedSlicePages * layoutMode} कार्ड)</span>
                   </>
                 )}
               </button>
@@ -505,7 +537,7 @@ export default function BulkLegalPdfModal({
           backgroundColor: '#ffffff',
           display: 'grid',
           gridTemplateColumns: '1fr 1fr',
-          gridTemplateRows: '1fr 1fr',
+          gridTemplateRows: layoutMode === 4 ? '1fr 1fr' : '1fr 1fr 1fr',
           gap: '8px',
           padding: '8px',
           boxSizing: 'border-box',
