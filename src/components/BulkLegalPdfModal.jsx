@@ -15,6 +15,7 @@ import {
 import { QRCodeSVG } from 'qrcode.react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
+import { printLegalBulk } from '../utils/printLegalBulk';
 
 export default function BulkLegalPdfModal({
   isOpen,
@@ -36,7 +37,6 @@ export default function BulkLegalPdfModal({
   const [startPage, setStartPage] = useState(1);
   const [endPage, setEndPage] = useState(25);
   const [activeBatch, setActiveBatch] = useState([]);
-  const [isInstantPrintMode, setIsInstantPrintMode] = useState(false);
   const printContainerRef = useRef(null);
 
   if (!isOpen) return null;
@@ -61,14 +61,20 @@ export default function BulkLegalPdfModal({
   ).sort();
 
   // -------------------------------------------------------------
-  // METHOD 1: ULTRA-FAST 1-CLICK BROWSER PRINT / SAVE AS PDF (2 SECONDS)
+  // METHOD 1: ULTRA-FAST ISOLATED LEGAL PRINT / SAVE AS PDF (1 SECOND)
   // -------------------------------------------------------------
   const handleInstantBrowserPrint = () => {
-    setIsInstantPrintMode(true);
-    setTimeout(() => {
-      window.print();
-      setIsInstantPrintMode(false);
-    }, 200);
+    printLegalBulk({
+      records: targetRecords,
+      eventTitle,
+      eventSubtitle,
+      signatureImg,
+      signatoryText,
+      customNote,
+      isNoteEnabled,
+      customBriefing,
+      isBriefingEnabled
+    });
   };
 
   // -------------------------------------------------------------
