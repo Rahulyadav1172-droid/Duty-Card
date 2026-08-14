@@ -1,0 +1,72 @@
+[
+  {
+    "id": "DUTY-0001",
+    "name": "अमित कुमार",
+    "rank": "नि0",
+    "mobile": "9876543210",
+    "posting": "थाना कोतवाली",
+    "district": "Varanasi / वाराणसी",
+    "duty_place": "गंगा द्वार - गेट नंबर 1",
+    "zone": "जोन-01 (म",
+    "sector": "सेक्टर-01 (ग",
+    "shift": "06:00 AM - 02:00 PM",
+    "event_name": "काशी विश्वनाथ मंदिर सुरक्षा व्यवस्था / VIP Security Duty 2026",
+    "status": "Active"
+  },
+  {
+    "id": "DUTY-0002",
+    "name": "Rajesh Singh / राजेश सिंह",
+    "rank": "उ0नि0",
+    "mobile": "9812345678",
+    "posting": "च्वसाबम ल्ादमे टंतंदंेा",
+    "district": "Varanasi / वाराणसी",
+    "duty_place": "Chowk Crossing / चौक चौराहा",
+    "zone": "जोन-01 (म",
+    "sector": "सेक्टर-01 (ग",
+    "shift": "06:00 AM - 02:00 PM",
+    "event_name": "काशी विश्वनाथ मंदिर सुरक्षा व्यवस्था / VIP Security Duty 2026",
+    "status": "Active"
+  },
+  {
+    "id": "DUTY-0003",
+    "name": "रामेश्वर प्रसाद",
+    "rank": "हे0का0",
+    "mobile": "9935123456",
+    "posting": "थाना दशाश्वमेध",
+    "district": "Varanasi / वाराणसी",
+    "duty_place": "दशाश्वमेध धाट टप्च् स्टेज",
+    "zone": "जोन-02 (घ",
+    "sector": "सेक्टर-02 (दश",
+    "shift": "06:00 AM - 02:00 PM",
+    "event_name": "काशी विश्वनाथ मंदिर सुरक्षा व्यवस्था / VIP Security Duty 2026",
+    "status": "Active"
+  },
+  {
+    "id": "DUTY-0004",
+    "name": "Priyanka Sharma / प्रियंका शर्मा",
+    "rank": "म0का0",
+    "mobile": "9798765432",
+    "posting": "ठवउमद च्वसाबम श्ूंूावद",
+    "district": "Varanasi / वाराणसी",
+    "duty_place": "काशी विश्वनाथ मंदिर गेट 2 चेकिंग प्वाइंट",
+    "zone": "जोन-02 (घ",
+    "sector": "सेक्टर-02 (दश",
+    "shift": "06:00 AM - 02:00 PM",
+    "event_name": "काशी विश्वनाथ मंदिर सुरक्षा व्यवस्था / VIP Security Duty 2026",
+    "status": "Active"
+  },
+  {
+    "id": "DUTY-0005",
+    "name": "सुनील कुमार",
+    "rank": "का0",
+    "mobile": "9415098765",
+    "posting": "थाना लंकरा",
+    "district": "Varanasi / वाराणसी",
+    "duty_place": "ीभ्न् म्ंाद ग्ंूम बैरियर",
+    "zone": "जोन-02 (घ",
+    "sector": "सेक्टर-02 (दश",
+    "shift": "06:00 AM - 02:00 PM",
+    "event_name": "काशी विश्वनाथ मंदिर सुरक्षा व्यवस्था / VIP Security Duty 2026",
+    "status": "Active"
+  }
+]
