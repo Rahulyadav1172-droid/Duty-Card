@@ -1,4 +1,4 @@
-// Dedicated high-speed isolated Legal 6-in-1 print engine - Perfectly proportioned with zero clipping
+// Dedicated high-speed isolated Legal 6-in-1 print engine - 100% Space Filled, Zero Blank Gap
 export function printLegalBulk({
   records = [],
   eventTitle = 'श्रावण झूला मेला',
@@ -90,7 +90,7 @@ export function printLegalBulk({
               </div>
             </div>
 
-            <!-- 3. Assignment Table -->
+            <!-- 3. Assignment Table: Stretches down 100% to meet the footer -->
             <div class="table-container">
               <table class="card-table">
                 <tbody>
@@ -185,7 +185,7 @@ export function printLegalBulk({
             display: grid;
             grid-template-columns: 1fr 1fr;
             grid-template-rows: 1fr 1fr 1fr;
-            gap: 3mm;
+            gap: 3.5mm;
             padding: 1mm;
             page-break-after: always;
             break-after: page;
@@ -223,14 +223,13 @@ export function printLegalBulk({
             z-index: 10;
           }
 
-          /* Individual Police Duty Card: Fully self-adjusting, zero clipping */
+          /* Individual Police Duty Card: Fills 100% height without any dead whitespace */
           .duty-card {
             border: 1.5px solid #000000;
             border-radius: 8px;
-            padding: 4px 6px;
+            padding: 5px 6px;
             display: flex;
             flex-direction: column;
-            justify-content: space-between;
             background: #ffffff;
             box-sizing: border-box;
             height: 100%;
@@ -272,13 +271,13 @@ export function printLegalBulk({
             line-height: 1.15;
           }
           .title-main {
-            font-size: 12px;
+            font-size: 12.5px;
             font-weight: 900;
             color: #000000;
             letter-spacing: 0.2px;
           }
           .title-sub {
-            font-size: 8.5px;
+            font-size: 9px;
             font-weight: 800;
             color: #334155;
           }
@@ -288,15 +287,15 @@ export function printLegalBulk({
             display: flex;
             gap: 6px;
             border: 1.2px solid #000000;
-            padding: 3px 5px;
+            padding: 4px 6px;
             border-radius: 5px;
             background: #f8fafc;
             flex-shrink: 0;
-            margin: 2px 0;
+            margin: 3px 0;
           }
           .photo-frame {
-            width: 40px;
-            height: 50px;
+            width: 44px;
+            height: 56px;
             border: 1px dashed #000000;
             border-radius: 4px;
             background: #ffffff;
@@ -318,15 +317,15 @@ export function printLegalBulk({
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            font-size: 6px;
+            font-size: 6.5px;
             font-weight: bold;
             color: #475569;
             line-height: 1;
             gap: 1px;
           }
           .photo-svg {
-            width: 14px;
-            height: 14px;
+            width: 16px;
+            height: 16px;
             color: #64748b;
           }
 
@@ -338,20 +337,20 @@ export function printLegalBulk({
             min-width: 0;
           }
           .officer-tag {
-            font-size: 7px;
+            font-size: 7.5px;
             font-weight: 800;
             color: #475569;
           }
           .officer-name {
-            font-size: 10.5px;
+            font-size: 11.5px;
             font-weight: 900;
             color: #000000;
-            line-height: 1.15;
+            line-height: 1.2;
             word-break: break-word;
             margin: 1px 0;
           }
           .officer-mobile {
-            font-size: 9.5px;
+            font-size: 10.5px;
             font-family: monospace;
             font-weight: 900;
             color: #000000;
@@ -360,7 +359,7 @@ export function printLegalBulk({
             gap: 2px;
           }
           .officer-sub-bar {
-            font-size: 8px;
+            font-size: 8.5px;
             color: #1e293b;
             border-top: 1px solid #cbd5e1;
             padding-top: 2px;
@@ -370,24 +369,29 @@ export function printLegalBulk({
             font-weight: 700;
           }
 
-          /* 3. Duty Assignments Table */
+          /* 3. Duty Assignments Table: Expands to 100% of remaining vertical height */
           .table-container {
             flex: 1;
             display: flex;
             flex-direction: column;
             width: 100%;
-            margin: 2px 0;
+            margin-bottom: 3px;
+            min-height: 0;
           }
           .card-table {
             width: 100%;
+            height: 100%;
             border-collapse: collapse;
-            font-size: 9px;
+            font-size: 9.5px;
             border: 1.2px solid #000000;
           }
+          .card-table tr {
+            height: 100%;
+          }
           .card-table td {
-            padding: 2px 4px;
+            padding: 3px 5px;
             border-bottom: 1px solid #000000;
-            line-height: 1.2;
+            line-height: 1.25;
             vertical-align: middle;
           }
           .td-lbl {
@@ -404,7 +408,7 @@ export function printLegalBulk({
             background: #fef3c7;
           }
           .td-duty-val {
-            font-size: 10px;
+            font-size: 10.5px;
             font-weight: 900;
             color: #78350f;
           }
@@ -415,17 +419,17 @@ export function printLegalBulk({
             background: #fff1f2;
           }
           .note-val {
-            font-size: 8px;
+            font-size: 8.5px;
             color: #9f1239;
           }
           .font-bold {
             font-weight: bold;
           }
 
-          /* 4. Footer Authorization: Never clipped */
+          /* 4. Footer Authorization */
           .card-footer {
             border-top: 1.5px solid #000000;
-            padding-top: 2px;
+            padding-top: 3px;
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -437,7 +441,7 @@ export function printLegalBulk({
             flex-direction: column;
           }
           .verified-pill {
-            font-size: 7.5px;
+            font-size: 8px;
             font-weight: 900;
             color: #047857;
             display: flex;
@@ -446,10 +450,10 @@ export function printLegalBulk({
           }
           .dot {
             color: #10b981;
-            font-size: 9px;
+            font-size: 10px;
           }
           .pass-code {
-            font-size: 6.5px;
+            font-size: 7px;
             font-family: monospace;
             font-weight: 700;
             color: #475569;
@@ -458,18 +462,18 @@ export function printLegalBulk({
             text-align: right;
           }
           .sign-img {
-            height: 16px;
-            max-width: 55px;
+            height: 18px;
+            max-width: 60px;
             object-fit: contain;
             margin-left: auto;
           }
           .sign-text {
-            font-size: 7px;
+            font-size: 7.5px;
             font-style: italic;
             color: #475569;
           }
           .signatory-title {
-            font-size: 8px;
+            font-size: 8.5px;
             font-weight: 900;
             color: #000000;
             line-height: 1.1;
