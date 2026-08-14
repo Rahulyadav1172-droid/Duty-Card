@@ -29,6 +29,7 @@ import {
 } from 'lucide-react';
 import { parseDutyFile } from '../utils/fileParser';
 import * as XLSX from 'xlsx';
+import BulkLegalPdfModal from './BulkLegalPdfModal';
 
 export default function AdminUpload({
   records,
@@ -74,6 +75,9 @@ export default function AdminUpload({
   const [signText, setSignText] = useState(signatoryText);
   const [signaturePreview, setSignaturePreview] = useState(signatureImg);
   const [signatureSaved, setSignatureSaved] = useState(false);
+
+  // Bulk Legal PDF Modal State
+  const [isBulkPdfModalOpen, setIsBulkPdfModalOpen] = useState(false);
 
   // Duty Edit/Add Modal State
   const [isDutyModalOpen, setIsDutyModalOpen] = useState(false);
@@ -449,7 +453,16 @@ export default function AdminUpload({
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            onClick={() => setIsBulkPdfModalOpen(true)}
+            className="px-4 py-2 bg-[#0b132b] hover:bg-slate-800 text-white rounded-xl text-xs font-black flex items-center gap-1.5 shadow-sm transition active:scale-95 cursor-pointer"
+            title="लीगल पेपर पर 4-इन-1 बल्क PDF डाउनलोड करें"
+          >
+            <FileDown className="w-4 h-4 text-amber-400" />
+            <span>4-इन-1 बल्क PDF (Legal)</span>
+          </button>
+
           <button
             onClick={handleExportJSON}
             className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-900 border border-slate-300 rounded-xl text-xs font-black flex items-center gap-1.5 transition cursor-pointer"
@@ -854,6 +867,15 @@ export default function AdminUpload({
 
           <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
             <button
+              onClick={() => setIsBulkPdfModalOpen(true)}
+              className="px-3.5 py-2 bg-[#0b132b] hover:bg-slate-800 text-white font-black text-xs rounded-xl flex items-center gap-1.5 shadow transition active:scale-95 cursor-pointer"
+              title="लीगल पेपर पर प्रति पेज 4 कार्ड PDF डाउनलोड करें"
+            >
+              <FileDown className="w-4 h-4 text-amber-400" />
+              बल्क Legal PDF (4-इन-1)
+            </button>
+
+            <button
               onClick={() => handleOpenDutyModal(null)}
               className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs rounded-xl flex items-center gap-1.5 shadow transition active:scale-95 cursor-pointer"
             >
@@ -1168,6 +1190,21 @@ export default function AdminUpload({
           </div>
         </div>
       )}
+
+      {/* Bulk Legal 4-in-1 PDF Download Modal */}
+      <BulkLegalPdfModal
+        isOpen={isBulkPdfModalOpen}
+        onClose={() => setIsBulkPdfModalOpen(false)}
+        records={records}
+        eventTitle={eventTitle}
+        eventSubtitle={eventSubtitle}
+        signatureImg={signaturePreview || signatureImg}
+        signatoryText={signText || signatoryText}
+        customNote={noteText}
+        isNoteEnabled={noteToggle}
+        customBriefing={briefingText}
+        isBriefingEnabled={briefingToggle}
+      />
     </div>
   );
 }
