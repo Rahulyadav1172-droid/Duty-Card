@@ -489,39 +489,7 @@ export default function BulkLegalPdfModal({
       </div>
 
       {/* ========================================================================= */}
-      {/* 1. INSTANT BROWSER PRINT CONTAINER (Used when clicking 1-Click Print)       */}
-      {/* ========================================================================= */}
-      {isInstantPrintMode && (
-        <div className="hidden print:block font-devanagari">
-          {Array.from({ length: totalPossiblePages }).map((_, pIdx) => {
-            const pageBatch = targetRecords.slice(pIdx * 4, (pIdx + 1) * 4);
-            return (
-              <div
-                key={pIdx}
-                className="bulk-legal-print-page"
-                style={{
-                  pageBreakAfter: 'always',
-                  breakAfter: 'page',
-                  width: '215.9mm',
-                  minHeight: '355.6mm',
-                  padding: '5mm',
-                  display: 'grid',
-                  gridTemplateColumns: '1fr 1fr',
-                  gridTemplateRows: '1fr 1fr',
-                  gap: '4mm',
-                  boxSizing: 'border-box',
-                  backgroundColor: '#ffffff'
-                }}
-              >
-                {pageBatch.map((duty, idx) => renderSingleCard(duty, idx))}
-              </div>
-            );
-          })}
-        </div>
-      )}
-
-      {/* ========================================================================= */}
-      {/* 2. FAST JS-PDF RENDER CONTAINER (Positioned in-viewport, zero opacity)      */}
+      {/* FAST JS-PDF RENDER CONTAINER (Positioned in-viewport, zero opacity)        */}
       {/* ========================================================================= */}
       <div
         ref={printContainerRef}
