@@ -29,6 +29,7 @@ import MasterForceManager from './components/MasterForceManager';
 import EventManager from './components/EventManager';
 import DutyAllocationHub from './components/DutyAllocationHub';
 import ForceAamadManager from './components/ForceAamadManager';
+import ChangePasswordModal from './components/ChangePasswordModal';
 
 import initialData from './data/duty_data.json';
 import {
@@ -105,21 +106,14 @@ export default function App() {
     return 'event-shravan-2026';
   });
 
-  // Current Active Event Object (Guaranteed fallback)
-  const currentEvent = (Array.isArray(events) && events.find(e => e.id === activeEventId)) || (Array.isArray(events) && events[0]) || {
-    id: 'event-shravan-2026',
-    title: 'श्रावण झूला मेला',
-    subtitle: 'ड्यूटी कार्ड अयोध्या-2026',
-    status: 'active',
-    signatoryText: 'वरिष्ठ पुलिस अधीक्षक, अयोध्या',
-    signatureImg: '',
-    note: '',
-    isNoteEnabled: false,
-    briefing: '',
-    isBriefingEnabled: false,
-    records: initialData || [],
-    attendanceMap: {}
-  };
+  // Role Authentication State: 'guest' | 'senior' | 'admin'
+  const [userRole, setUserRole] = useState(() => {
+    try {
+      return sessionStorage.getItem(ROLE_SESSION_KEY) || 'guest';
+    } catch (e) {
+      return 'guest';
+    }
+  });
 
   // Master Force Register State (Global)
   const [forceRecords, setForceRecords] = useState(() => {
@@ -140,16 +134,8 @@ export default function App() {
     }));
   });
 
-  // Role Authentication State: 'guest' | 'senior' | 'admin'
-  const [userRole, setUserRole] = useState(() => {
-    try {
-      return sessionStorage.getItem(ROLE_SESSION_KEY) || 'guest';
-    } catch (e) {
-      return 'guest';
-    }
-  });
-
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
   const [pendingTab, setPendingTab] = useState(null);
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -157,6 +143,35 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('search');
   const [searchAttempted, setSearchAttempted] = useState(false);
   const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
+
+  // Current Active Event Object (Guaranteed fallback, respects active status for public search)
+  const activeEventsList = (Array.isArray(events) ? events : []).filter(e => e.status !== 'archived');
+
+  const currentEvent = (() => {
+    if (!Array.isArray(events) || events.length === 0) {
+      return {
+        id: 'event-shravan-2026',
+        title: 'श्रावण झूला मेला',
+        subtitle: 'ड्यूटी कार्ड अयोध्या-2026',
+        status: 'active',
+        signatoryText: 'वरिष्ठ पुलिस अधीक्षक, अयोध्या',
+        signatureImg: '',
+        note: '',
+        isNoteEnabled: false,
+        briefing: '',
+        isBriefingEnabled: false,
+        records: initialData || [],
+        attendanceMap: {}
+      };
+    }
+
+    if (userRole === 'admin' || userRole === 'senior') {
+      return events.find(e => e.id === activeEventId) || events[0];
+    }
+
+    // For public guest searching duty cards: strictly pick an active event
+    return activeEventsList.find(e => e.id === activeEventId) || activeEventsList[0] || events[0];
+  })();
 
   // Load from Supabase on mount & subscribe to realtime changes
   useEffect(() => {
@@ -259,6 +274,18 @@ export default function App() {
       }
       return e;
     });
+
+    // If active event was archived, switch activeEventId to the first remaining active event
+    if (toggledObj?.status === 'archived' && activeEventId === id) {
+      const firstActive = updated.find(e => e.status !== 'archived');
+      if (firstActive) {
+        setActiveEventId(firstActive.id);
+        try {
+          localStorage.setItem(ACTIVE_EVENT_ID_KEY, firstActive.id);
+        } catch (e) {}
+      }
+    }
+
     saveEvents(updated, toggledObj);
   };
 
@@ -445,6 +472,14 @@ export default function App() {
                   {userRole === 'admin' ? <Lock className="w-3 h-3 sm:w-3.5 sm:h-3.5" /> : <UserCheck className="w-3 h-3 sm:w-3.5 sm:h-3.5" />}
                   <span>{userRole === 'admin' ? 'एडमिन' : 'अधिकारी'}</span>
                 </span>
+                <button
+                  onClick={() => setIsChangePasswordOpen(true)}
+                  className="px-2 sm:px-2.5 py-1 sm:py-1.5 bg-slate-800 hover:bg-slate-700 text-amber-400 border border-slate-700 rounded-lg text-[10px] sm:text-xs font-bold flex items-center gap-1 transition cursor-pointer"
+                  title="पासवर्ड बदलें"
+                >
+                  <KeyRound className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                  <span className="hidden sm:inline">पासवर्ड बदलें</span>
+                </button>
                 <button
                   onClick={handleLogout}
                   className="px-2 sm:px-2.5 py-1 sm:py-1.5 bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/40 rounded-lg text-[10px] sm:text-xs font-bold flex items-center gap-1 transition cursor-pointer"
@@ -731,6 +766,13 @@ export default function App() {
           setPendingTab(null);
         }}
         onLoginSuccess={handleLoginSuccess}
+      />
+
+      {/* In-App Change Password Modal */}
+      <ChangePasswordModal
+        isOpen={isChangePasswordOpen}
+        onClose={() => setIsChangePasswordOpen(false)}
+        userRole={userRole}
       />
 
       {/* Footer */}

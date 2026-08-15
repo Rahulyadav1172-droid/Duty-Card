@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import { Search, Smartphone, ShieldCheck, X, Calendar, ChevronDown } from 'lucide-react';
+import { Search, Smartphone, ShieldCheck, X, Calendar, ChevronDown, CheckCircle2 } from 'lucide-react';
 
 export default function SearchSection({
   searchQuery,
@@ -16,63 +16,84 @@ export default function SearchSection({
     inputRef.current?.focus();
   };
 
-  const activeEventsList = events.filter(e => e.status !== 'archived');
-  const selectedEvent = events.find(e => e.id === activeEventId) || events[0];
+  // Strictly filter active (non-archived) events
+  const activeEventsList = (events || []).filter(e => e.status !== 'archived');
+  
+  // Ensure selected event is always an active event
+  const selectedEvent = activeEventsList.find(e => e.id === activeEventId) || activeEventsList[0];
 
   return (
-    <div className="w-full max-w-xl mx-auto font-devanagari space-y-3 px-1 sm:px-0">
+    <div className="w-full max-w-xl mx-auto font-devanagari space-y-3 px-2 sm:px-0">
       {/* Duty Type Interactive Dropdown Bar (Mobile Responsive) */}
-      {activeEventsList.length > 0 && (
-        <div className="bg-white border border-slate-200 rounded-2xl p-3 sm:p-3.5 shadow-sm flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 sm:gap-3">
+      {activeEventsList.length > 0 ? (
+        <div className="bg-white border border-slate-200/90 rounded-2xl p-3 sm:p-3.5 shadow-sm flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 sm:gap-3 transition">
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-700 shrink-0">
-              <Calendar className="w-4 h-4" />
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-amber-50 border border-amber-200 text-amber-700 flex items-center justify-center shrink-0 shadow-2xs">
+              <Calendar className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.5]" />
             </div>
             <div className="min-w-0 flex-1">
-              <span className="text-[10px] sm:text-[11px] font-bold text-slate-500 uppercase tracking-wider block">
-                ड्यूटी का प्रकार (Duty Event):
-              </span>
-              <span className="text-xs sm:text-sm font-black text-slate-900 truncate block">
+              <div className="flex items-center gap-1.5">
+                <span className="text-[10px] sm:text-[11px] font-bold text-slate-500 uppercase tracking-wider block">
+                  सक्रिय ड्यूटी मेला:
+                </span>
+                <span className="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[9px] font-black">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                  सक्रिय
+                </span>
+              </div>
+              <span className="text-xs sm:text-sm font-black text-slate-900 truncate block mt-0.5">
                 {selectedEvent?.title || 'इवेंट चुनें'}
               </span>
             </div>
           </div>
 
-          <div className="relative w-full sm:w-auto shrink-0">
-            <select
-              value={activeEventId}
-              onChange={(e) => onSelectActiveEvent?.(e.target.value)}
-              className="w-full sm:w-auto appearance-none bg-slate-50 hover:bg-slate-100 border border-slate-300 text-slate-900 text-xs font-black rounded-xl pl-3 pr-8 py-2 focus:outline-none focus:ring-2 focus:ring-amber-500 cursor-pointer shadow-2xs transition"
-            >
-              {activeEventsList.map((evt) => (
-                <option key={evt.id} value={evt.id}>
-                  {evt.title}
-                </option>
-              ))}
-            </select>
-            <ChevronDown className="absolute right-2.5 top-2.5 w-3.5 h-3.5 text-slate-500 pointer-events-none" />
-          </div>
+          {/* If multiple active events, provide sleek selector dropdown */}
+          {activeEventsList.length > 1 && (
+            <div className="relative w-full sm:w-auto shrink-0">
+              <select
+                value={selectedEvent?.id || activeEventId}
+                onChange={(e) => onSelectActiveEvent?.(e.target.value)}
+                className="w-full sm:w-auto appearance-none bg-slate-50 hover:bg-slate-100 border border-slate-300 text-slate-900 text-xs font-black rounded-xl pl-3 pr-8 py-2 sm:py-2.5 focus:outline-none focus:ring-2 focus:ring-amber-500 cursor-pointer shadow-2xs transition"
+              >
+                {activeEventsList.map((evt) => (
+                  <option key={evt.id} value={evt.id} className="font-bold text-slate-900">
+                    {evt.title}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="absolute right-2.5 top-2.5 sm:top-3 w-4 h-4 text-slate-500 pointer-events-none" />
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className="bg-amber-50 border border-amber-200/90 rounded-2xl p-4 text-center space-y-1 shadow-2xs">
+          <p className="text-xs font-black text-amber-950">
+            ⚠️ वर्तमान में कोई सक्रिय ड्यूटी मेला उपलब्ध नहीं है।
+          </p>
+          <p className="text-[11px] font-medium text-amber-800">
+            समस्त ड्यूटी इवेंट्स पूर्ण/आर्काइव कर दिए गए हैं।
+          </p>
         </div>
       )}
 
-      {/* Main Search Card */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-6 shadow-sm space-y-3.5 sm:space-y-4 text-center">
+      {/* Main Search Card (Optimized for Mobile Touch) */}
+      <div className="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-6 shadow-sm space-y-3.5 sm:space-y-4 text-center">
         {/* Title & Tagline */}
         <div className="space-y-1">
-          <div className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full bg-amber-50 border border-amber-200/80 text-amber-900 text-[11px] sm:text-xs font-bold">
+          <div className="inline-flex items-center gap-1.5 px-3 py-0.5 sm:py-1 rounded-full bg-amber-50 border border-amber-200/80 text-amber-900 text-[11px] sm:text-xs font-bold shadow-2xs">
             <ShieldCheck className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-            <span>अयोध्या पुलिस ड्यूटी कार्ड पोर्टल</span>
+            <span>अयोध्या पुलिस डिजिटल ड्यूटी पास</span>
           </div>
 
-          <h2 className="text-lg sm:text-2xl font-black text-slate-900 tracking-tight pt-0.5">
+          <h2 className="text-lg sm:text-2xl font-black text-slate-900 tracking-tight pt-1">
             अपना ड्यूटी कार्ड खोजें
           </h2>
           <p className="text-[11px] sm:text-xs text-slate-600 font-medium max-w-md mx-auto leading-relaxed">
-            10-अंकीय मोबाइल नंबर या अपना नाम दर्ज करें और तुरंत डिजिटल पास प्राप्त करें
+            10-अंकीय मोबाइल नंबर या अपना नाम दर्ज करें और तुरंत अपना ड्यूटी पास प्राप्त करें
           </p>
         </div>
 
-        {/* Centered Search Box with Non-Overlapping Icon */}
+        {/* Centered Search Box with Mobile-friendly Touch Sizing */}
         <div className="relative flex items-center">
           {/* Left Search/Phone Icon */}
           <div className="absolute left-3.5 sm:left-4 flex items-center justify-center pointer-events-none text-slate-400">
