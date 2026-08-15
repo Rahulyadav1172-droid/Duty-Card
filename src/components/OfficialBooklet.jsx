@@ -28,6 +28,15 @@ export default function OfficialBooklet({
     groupedData[z][s][p].push(rec);
   });
 
+  const handlePrint = () => {
+    const prevTitle = document.title;
+    document.title = `${(eventTitle || 'ड्यूटी_पुस्तिका').replace(/\s+/g, '_')}_आधिकारिक_सुरक्षा_आदेश_अयोध्या`;
+    window.print();
+    setTimeout(() => {
+      document.title = prevTitle;
+    }, 1000);
+  };
+
   return (
     <div className="w-full max-w-5xl mx-auto space-y-6 font-devanagari">
       {/* Top Action Bar (hidden on print) */}
@@ -44,7 +53,7 @@ export default function OfficialBooklet({
 
         <div className="flex items-center gap-2 ml-auto">
           <button
-            onClick={() => window.print()}
+            onClick={handlePrint}
             className="px-5 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-xs sm:text-sm rounded-xl flex items-center gap-2 shadow transition active:scale-95 cursor-pointer"
           >
             <Printer className="w-4 h-4" />
@@ -110,47 +119,50 @@ export default function OfficialBooklet({
                     return (
                       <div
                         key={pIdx}
-                        className="space-y-1.5 bg-gray-50 rounded border border-black overflow-hidden break-inside-avoid print:mb-4"
+                        className="bg-white rounded-lg border-2 border-black overflow-hidden break-inside-avoid print:mb-4 shadow-xs"
                       >
-                        {/* Duty Point Header with Duty Time on the Same Line */}
-                        <div className="text-xs font-bold text-black flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 bg-gray-200 p-2 border-b border-black">
-                          <div className="flex items-center gap-1.5 font-black text-xs sm:text-sm">
-                            <MapPin className="w-3.5 h-3.5 text-black shrink-0" />
-                            <span><strong>ड्यूटी स्थल:</strong> {placeName}</span>
-                          </div>
-
-                          <div className="flex items-center gap-2 flex-wrap">
-                            {placeShift && (
-                              <span className="font-mono text-[10px] sm:text-[11px] font-bold bg-white text-black px-2 py-0.5 rounded border border-gray-400">
-                                ⏱️ <strong>समय:</strong> {placeShift}
-                              </span>
-                            )}
-                            <span className="font-mono text-[10px] sm:text-[11px] font-bold bg-amber-200 text-slate-950 px-2 py-0.5 rounded border border-amber-400">
-                              बल: {placeRecords.length}
+                        {/* Elegant 2-Row Official Duty Point Header */}
+                        <div className="bg-slate-100 p-2.5 sm:p-3 border-b-2 border-black space-y-1">
+                          {/* Row 1: Duty Place Name + Total Personnel Badge */}
+                          <div className="flex items-start sm:items-center justify-between gap-2">
+                            <div className="flex items-center gap-1.5 font-black text-xs sm:text-sm text-black">
+                              <MapPin className="w-4 h-4 text-black shrink-0" />
+                              <span><strong>ड्यूटी स्थल:</strong> {placeName}</span>
+                            </div>
+                            <span className="font-mono text-[11px] sm:text-xs font-black bg-black text-white px-2.5 py-0.5 rounded shrink-0">
+                              तैनात बल: {placeRecords.length}
                             </span>
                           </div>
+
+                          {/* Row 2: Clean Duty Shift & Time */}
+                          {placeShift && (
+                            <div className="flex items-center gap-1.5 text-[11px] sm:text-xs font-bold text-gray-800 pt-0.5">
+                              <Clock className="w-3.5 h-3.5 text-gray-700 shrink-0" />
+                              <span><strong>ड्यूटी समय / पाली:</strong> {placeShift}</span>
+                            </div>
+                          )}
                         </div>
 
                         {/* Clean 4-Column A4 Table Layout */}
-                        <div className="p-1.5 bg-white">
-                          <table className="w-full text-xs border-collapse border border-black text-left">
+                        <div className="p-0 bg-white">
+                          <table className="w-full text-xs border-collapse border-0 text-left">
                             <thead>
-                              <tr className="bg-gray-100 text-black border-b border-black font-bold">
-                                <th className="border border-black p-1.5 w-12 text-center">क्र०सं०</th>
-                                <th className="border border-black p-1.5">नाम एवं पदनाम</th>
-                                <th className="border border-black p-1.5 font-mono w-32">मोबाईल नंबर</th>
-                                <th className="border border-black p-1.5 w-48">मूल तैनाती / जनपद</th>
+                              <tr className="bg-gray-200 text-black border-b border-black font-bold">
+                                <th className="border-r border-black p-2 w-12 text-center">क्र०सं०</th>
+                                <th className="border-r border-black p-2">नाम एवं पदनाम</th>
+                                <th className="border-r border-black p-2 font-mono w-32">मोबाईल नंबर</th>
+                                <th className="p-2 w-48">मूल तैनाती / जनपद</th>
                               </tr>
                             </thead>
                             <tbody>
                               {placeRecords.map((row, rIdx) => (
-                                <tr key={rIdx} className="border-b border-gray-300 hover:bg-gray-50">
-                                  <td className="border border-black p-1.5 text-center font-mono font-bold">{rIdx + 1}</td>
-                                  <td className="border border-black p-1.5 font-extrabold text-black">
+                                <tr key={rIdx} className="border-b border-gray-300 hover:bg-gray-50 last:border-b-0">
+                                  <td className="border-r border-gray-300 p-2 text-center font-mono font-bold">{rIdx + 1}</td>
+                                  <td className="border-r border-gray-300 p-2 font-extrabold text-black">
                                     {row.name} {row.rank ? `(${row.rank})` : ''}
                                   </td>
-                                  <td className="border border-black p-1.5 font-mono font-bold text-black">{row.mobile}</td>
-                                  <td className="border border-black p-1.5">{row.posting || ''} {row.district ? `(${row.district})` : ''}</td>
+                                  <td className="border-r border-gray-300 p-2 font-mono font-bold text-black">{row.mobile}</td>
+                                  <td className="p-2 text-gray-800">{row.posting || ''} {row.district ? `(${row.district})` : ''}</td>
                                 </tr>
                               ))}
                             </tbody>

@@ -1,15 +1,33 @@
 import React, { useState, useMemo } from 'react';
-import { MapPin, Users, Phone, Search, ShieldCheck, Filter, Layers, ChevronDown } from 'lucide-react';
+import {
+  MapPin,
+  Users,
+  Phone,
+  Search,
+  ShieldCheck,
+  Filter,
+  Layers,
+  ChevronDown,
+  CheckCircle2,
+  XCircle,
+  Clock,
+  UserCheck,
+  AlertCircle
+} from 'lucide-react';
 
 export default function DutyPointFilterSection({
-  records,
+  records = [],
   events = [],
   activeEventId = '',
   onSelectActiveEvent,
-  eventTitle = ''
+  eventTitle = '',
+  attendanceMap = {},
+  onMarkAttendance,
+  userRole = 'guest'
 }) {
   const [selectedPoint, setSelectedPoint] = useState('ALL');
   const [pointSearchQuery, setPointSearchQuery] = useState('');
+  const [attendanceFilter, setAttendanceFilter] = useState('ALL'); // 'ALL' | 'present' | 'absent' | 'pending'
 
   // Extract all unique duty points and their count
   const dutyPointStats = useMemo(() => {
@@ -25,9 +43,26 @@ export default function DutyPointFilterSection({
 
   const uniqueDutyPoints = useMemo(() => Object.keys(dutyPointStats).sort(), [dutyPointStats]);
 
-  // Selected personnel list based on duty point filter
+  // Selected personnel list based on duty point filter & attendance filter
   const displayedPersonnel = useMemo(() => {
     let list = selectedPoint === 'ALL' ? (records || []) : (dutyPointStats[selectedPoint] || []);
+
+    if (attendanceFilter !== 'ALL') {
+      list = list.filter(p => {
+        const att = attendanceMap[p.id];
+        if (attendanceFilter === 'present') {
+          return att?.status === 'present' || (att?.reported && att?.status !== 'absent');
+        }
+        if (attendanceFilter === 'absent') {
+          return att?.status === 'absent';
+        }
+        if (attendanceFilter === 'pending') {
+          return !att;
+        }
+        return true;
+      });
+    }
+
     if (pointSearchQuery.trim()) {
       const q = pointSearchQuery.trim().toLowerCase();
       list = list.filter(p =>
@@ -39,7 +74,23 @@ export default function DutyPointFilterSection({
       );
     }
     return list;
-  }, [records, selectedPoint, dutyPointStats, pointSearchQuery]);
+  }, [records, selectedPoint, dutyPointStats, pointSearchQuery, attendanceFilter, attendanceMap]);
+
+  // Point Attendance Statistics
+  const pointTotal = selectedPoint === 'ALL' ? records.length : (dutyPointStats[selectedPoint]?.length || 0);
+  const pointPersonnelList = selectedPoint === 'ALL' ? records : (dutyPointStats[selectedPoint] || []);
+  
+  const presentCount = pointPersonnelList.filter(p => {
+    const att = attendanceMap[p.id];
+    return att?.status === 'present' || (att?.reported && att?.status !== 'absent');
+  }).length;
+
+  const absentCount = pointPersonnelList.filter(p => {
+    const att = attendanceMap[p.id];
+    return att?.status === 'absent';
+  }).length;
+
+  const pendingCount = Math.max(0, pointTotal - (presentCount + absentCount));
 
   return (
     <div className="w-full max-w-5xl mx-auto space-y-6 font-devanagari text-slate-900">
@@ -85,10 +136,10 @@ export default function DutyPointFilterSection({
             </div>
             <div>
               <h2 className="text-lg font-black text-slate-900">
-                ड्यूटी पॉइंट आधारित बल फ़िल्टर (Duty Point Inspector)
+                ड्यूटी पॉइंट आधारित बल फ़िल्टर एवं लाइव उपस्थिति
               </h2>
               <p className="text-xs text-slate-500 font-medium">
-                किसी भी ड्यूटी स्थान का चयन करके वहां तैनात समस्त पुलिस बल की सूची देखें
+                ड्यूटी स्थल का चयन करें और तैनात पुलिसकर्मियों की उपस्थिति/गैरहाजिरी लाइव मार्क करें
               </p>
             </div>
           </div>
@@ -145,6 +196,62 @@ export default function DutyPointFilterSection({
             </div>
           </div>
         </div>
+
+        {/* Realtime Attendance Metric Chips / Filter */}
+        <div className="pt-2 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              onClick={() => setAttendanceFilter('ALL')}
+              className={`px-3 py-1.5 rounded-xl text-xs font-black transition cursor-pointer flex items-center gap-1.5 ${
+                attendanceFilter === 'ALL'
+                  ? 'bg-slate-900 text-white shadow-xs'
+                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+              }`}
+            >
+              <span>समस्त बल ({pointTotal})</span>
+            </button>
+
+            <button
+              onClick={() => setAttendanceFilter('present')}
+              className={`px-3 py-1.5 rounded-xl text-xs font-black transition cursor-pointer flex items-center gap-1.5 ${
+                attendanceFilter === 'present'
+                  ? 'bg-emerald-600 text-white shadow-xs'
+                  : 'bg-emerald-50 text-emerald-800 border border-emerald-200 hover:bg-emerald-100'
+              }`}
+            >
+              <CheckCircle2 className="w-3.5 h-3.5" />
+              <span>🟢 उपस्थित ({presentCount})</span>
+            </button>
+
+            <button
+              onClick={() => setAttendanceFilter('absent')}
+              className={`px-3 py-1.5 rounded-xl text-xs font-black transition cursor-pointer flex items-center gap-1.5 ${
+                attendanceFilter === 'absent'
+                  ? 'bg-rose-600 text-white shadow-xs'
+                  : 'bg-rose-50 text-rose-800 border border-rose-200 hover:bg-rose-100'
+              }`}
+            >
+              <XCircle className="w-3.5 h-3.5" />
+              <span>🔴 गैरहाजिर ({absentCount})</span>
+            </button>
+
+            <button
+              onClick={() => setAttendanceFilter('pending')}
+              className={`px-3 py-1.5 rounded-xl text-xs font-black transition cursor-pointer flex items-center gap-1.5 ${
+                attendanceFilter === 'pending'
+                  ? 'bg-amber-500 text-slate-950 shadow-xs'
+                  : 'bg-amber-50 text-amber-900 border border-amber-200 hover:bg-amber-100'
+              }`}
+            >
+              <Clock className="w-3.5 h-3.5" />
+              <span>⚪ शेष / लंबित ({pendingCount})</span>
+            </button>
+          </div>
+
+          <div className="text-[11px] font-bold text-slate-500">
+            📡 रियल-टाइम क्लाउड सिंक सक्रिय
+          </div>
+        </div>
       </div>
 
       {/* Selected Duty Point Force Table / Grid */}
@@ -164,55 +271,135 @@ export default function DutyPointFilterSection({
         </div>
 
         {/* Personnel Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
           {displayedPersonnel.length > 0 ? (
-            displayedPersonnel.map((p, idx) => (
-              <div
-                key={idx}
-                className="p-3.5 bg-slate-50 rounded-xl border border-slate-200 hover:border-slate-300 transition flex flex-col justify-between gap-2.5 shadow-2xs"
-              >
-                <div className="space-y-1">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="font-bold text-slate-900 text-sm truncate">{p.name}</span>
-                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-100 text-amber-900 font-bold shrink-0">
-                      {p.rank || 'जवान'}
-                    </span>
-                  </div>
+            displayedPersonnel.map((p, idx) => {
+              const att = attendanceMap[p.id];
+              const isPresent = att?.status === 'present' || (att?.reported && att?.status !== 'absent');
+              const isAbsent = att?.status === 'absent';
+              const canMark = userRole === 'senior' || userRole === 'admin';
 
-                  <div className="text-xs text-slate-600">
-                    थाना: <strong className="text-slate-800">{p.posting || 'थाना कोतवाली'}</strong> {p.district ? `(${p.district})` : ''}
-                  </div>
+              return (
+                <div
+                  key={p.id || idx}
+                  className={`p-4 rounded-2xl border transition flex flex-col justify-between gap-3 shadow-xs relative ${
+                    isPresent
+                      ? 'bg-emerald-50/60 border-emerald-300 ring-1 ring-emerald-400/30'
+                      : isAbsent
+                      ? 'bg-rose-50/60 border-rose-300 ring-1 ring-rose-400/30'
+                      : 'bg-white border-slate-200 hover:border-slate-300'
+                  }`}
+                >
+                  {/* Top Row: Serial Number Badge & Rank */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between gap-2 border-b border-slate-100 pb-2">
+                      <div className="flex items-center gap-2">
+                        <span className="w-7 h-7 rounded-lg bg-slate-900 text-amber-400 font-mono font-black text-xs flex items-center justify-center shrink-0 shadow-2xs">
+                          #{idx + 1}
+                        </span>
+                        <span className="font-mono text-[11px] font-bold text-slate-500">
+                          ID: <strong className="text-slate-800">{p.id}</strong>
+                        </span>
+                      </div>
 
-                  <div className="text-xs text-slate-500 font-mono">
-                    ID: <strong>{p.id}</strong> | {p.zone || '-'} / {p.sector || '-'}
-                  </div>
-
-                  {selectedPoint === 'ALL' && (
-                    <div className="text-xs text-amber-900 font-bold truncate bg-amber-50 p-1 rounded">
-                      📍 {p.duty_place}
+                      <span className="text-[11px] px-2 py-0.5 rounded-md bg-amber-100 text-amber-950 font-black shrink-0 border border-amber-300">
+                        {p.rank || 'जवान'}
+                      </span>
                     </div>
-                  )}
-                </div>
 
-                <div className="flex items-center justify-between pt-1 border-t border-slate-200">
-                  <span className="text-xs font-mono font-bold text-slate-800">
-                    📱 {p.mobile || '-'}
-                  </span>
+                    {/* Officer Name & Posting */}
+                    <div>
+                      <h4 className="font-black text-slate-950 text-sm leading-snug">
+                        {p.name}
+                      </h4>
+                      <p className="text-xs text-slate-600 font-medium mt-0.5">
+                        थाना: <strong className="text-slate-900">{p.posting || 'थाना कोतवाली'}</strong> {p.district ? `(${p.district})` : ''}
+                      </p>
+                    </div>
 
-                  {p.mobile && (
-                    <a
-                      href={`tel:${p.mobile}`}
-                      className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-lg flex items-center gap-1 shadow-2xs"
-                    >
-                      <Phone className="w-3 h-3" />
-                      कॉल
-                    </a>
-                  )}
+                    <div className="text-[11px] text-slate-500 font-mono">
+                      {p.zone || '-'} / {p.sector || '-'}
+                    </div>
+
+                    {selectedPoint === 'ALL' && (
+                      <div className="text-[11px] text-amber-950 font-bold truncate bg-amber-50 p-1.5 rounded-lg border border-amber-200 flex items-center gap-1">
+                        <MapPin className="w-3 h-3 text-amber-700 shrink-0" />
+                        <span className="truncate">{p.duty_place}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Attendance Status & Action Controls */}
+                  <div className="space-y-2 pt-2 border-t border-slate-200">
+                    {/* Status Badge */}
+                    <div className="flex items-center justify-between text-xs">
+                      {isPresent ? (
+                        <div className="flex items-center gap-1.5 font-bold text-emerald-800">
+                          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                          <span>🟢 उपस्थित</span>
+                          {att?.time && <span className="font-mono text-[10px] text-emerald-600">({att.time})</span>}
+                        </div>
+                      ) : isAbsent ? (
+                        <div className="flex items-center gap-1.5 font-bold text-rose-800">
+                          <XCircle className="w-4 h-4 text-rose-600 shrink-0" />
+                          <span>🔴 गैरहाजिर</span>
+                          {att?.time && <span className="font-mono text-[10px] text-rose-600">({att.time})</span>}
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-1 text-slate-500 font-bold text-[11px]">
+                          <Clock className="w-3.5 h-3.5 text-slate-400" />
+                          <span>⚪ उपस्थिति लंबित</span>
+                        </div>
+                      )}
+
+                      {p.mobile && (
+                        <a
+                          href={`tel:${p.mobile}`}
+                          className="px-2.5 py-1 bg-slate-900 hover:bg-slate-800 text-amber-400 text-xs font-bold rounded-lg flex items-center gap-1 shadow-2xs transition"
+                          title="कॉल करें"
+                        >
+                          <Phone className="w-3 h-3" />
+                          <span className="font-mono text-[11px]">{p.mobile}</span>
+                        </a>
+                      )}
+                    </div>
+
+                    {/* Attendance Mark Buttons for Senior Officer & Admin */}
+                    {canMark && (
+                      <div className="grid grid-cols-2 gap-1.5 pt-1">
+                        <button
+                          type="button"
+                          onClick={() => onMarkAttendance?.(p.id, p.name, isPresent ? 'unmarked' : 'present')}
+                          className={`py-1.5 px-2 rounded-xl font-black text-xs flex items-center justify-center gap-1 transition cursor-pointer active:scale-95 ${
+                            isPresent
+                              ? 'bg-emerald-600 text-white shadow-xs ring-2 ring-emerald-500/30'
+                              : 'bg-emerald-50 text-emerald-900 border border-emerald-300 hover:bg-emerald-100'
+                          }`}
+                        >
+                          <CheckCircle2 className="w-3.5 h-3.5" />
+                          <span>{isPresent ? '✓ उपस्थित' : 'उपस्थित'}</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => onMarkAttendance?.(p.id, p.name, isAbsent ? 'unmarked' : 'absent')}
+                          className={`py-1.5 px-2 rounded-xl font-black text-xs flex items-center justify-center gap-1 transition cursor-pointer active:scale-95 ${
+                            isAbsent
+                              ? 'bg-rose-600 text-white shadow-xs ring-2 ring-rose-500/30'
+                              : 'bg-rose-50 text-rose-900 border border-rose-300 hover:bg-rose-100'
+                          }`}
+                        >
+                          <XCircle className="w-3.5 h-3.5" />
+                          <span>{isAbsent ? '✕ गैरहाजिर' : 'गैरहाजिर'}</span>
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))
+              );
+            })
           ) : (
-            <div className="col-span-full p-8 text-center text-slate-400 font-bold">
+            <div className="col-span-full p-8 text-center text-slate-400 font-bold bg-slate-50 rounded-2xl border border-dashed border-slate-300">
               इस फ़िल्टर के अंतर्गत कोई पुलिसकर्मी नहीं मिला।
             </div>
           )}

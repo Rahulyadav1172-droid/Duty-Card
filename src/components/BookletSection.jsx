@@ -145,9 +145,9 @@ export default function BookletSection({
 
   return (
     <div className="w-full max-w-5xl mx-auto space-y-6 font-devanagari text-slate-900">
-      {/* Event Selector for Senior Officers */}
+      {/* Event Selector for Senior Officers (Hidden on Print) */}
       {events.length > 0 && (
-        <div className="bg-slate-900 text-white p-4 rounded-2xl border border-slate-800 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <div className="bg-slate-900 text-white p-4 rounded-2xl border border-slate-800 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 no-print">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 shrink-0">
               <Layers className="w-5 h-5" />
@@ -175,8 +175,8 @@ export default function BookletSection({
         </div>
       )}
 
-      {/* Top Banner & Mode Switcher */}
-      <div className="bg-white p-5 sm:p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+      {/* Top Banner & Mode Switcher (Hidden on Print) */}
+      <div className="bg-white p-5 sm:p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4 no-print">
         <div className="flex items-center gap-3.5">
           <div className="w-12 h-12 rounded-xl bg-amber-50 border border-amber-200 text-amber-700 flex items-center justify-center shrink-0">
             <BookOpen className="w-6 h-6" />
@@ -215,7 +215,7 @@ export default function BookletSection({
       </div>
 
       {statusMsg && (
-        <div className={`p-4 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-between gap-2 shadow-xs ${
+        <div className={`p-4 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-between gap-2 shadow-xs no-print ${
           statusMsg.type === 'success' ? 'bg-emerald-50 text-emerald-900 border border-emerald-200' : 'bg-rose-50 text-rose-900 border border-rose-200'
         }`}>
           <div className="flex items-center gap-2">
@@ -228,7 +228,7 @@ export default function BookletSection({
 
       {/* VIEW MODE 1: OFFICIAL UPLOADED PDF BOOKLETS */}
       {viewMode === 'pdf' && (
-        <div className="space-y-6">
+        <div className="space-y-6 no-print">
           <div className="bg-white p-6 rounded-2xl border border-slate-200 space-y-4 shadow-sm">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-slate-200 pb-4">
               <div>

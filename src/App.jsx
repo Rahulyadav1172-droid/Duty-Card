@@ -297,7 +297,7 @@ export default function App() {
     saveEvents(updated, updatedObj);
   };
 
-  const handleMarkAttendance = (id, name) => {
+  const handleMarkAttendance = (id, name, status = 'present') => {
     const now = new Date().toLocaleString('hi-IN', {
       day: '2-digit',
       month: 'short',
@@ -306,17 +306,23 @@ export default function App() {
       hour12: true
     });
 
-    const newAttendance = {
-      ...(currentEvent.attendanceMap || {}),
-      [id]: {
-        reported: true,
-        name: name,
-        time: now
-      }
-    };
+    let newAttendance = { ...(currentEvent.attendanceMap || {}) };
 
-    const updated = events.map(e => e.id === currentEvent.id ? { ...e, attendanceMap: newAttendance } : e);
-    saveEvents(updated);
+    if (status === 'unmarked') {
+      delete newAttendance[id];
+    } else {
+      newAttendance[id] = {
+        status: status, // 'present' | 'absent'
+        reported: status === 'present',
+        name: name,
+        time: now,
+        markedBy: userRole === 'admin' ? 'सुपर एडमिन' : 'वरिष्ठ अधिकारी'
+      };
+    }
+
+    const updatedObj = { ...currentEvent, attendanceMap: newAttendance };
+    const updated = events.map(e => e.id === currentEvent.id ? updatedObj : e);
+    saveEvents(updated, updatedObj);
   };
 
   const handleUpdateDutyPhoto = (id, base64Photo) => {
@@ -615,6 +621,9 @@ export default function App() {
             activeEventId={activeEventId}
             onSelectActiveEvent={handleSelectActiveEvent}
             eventTitle={currentEvent.title}
+            attendanceMap={currentEvent.attendanceMap || {}}
+            onMarkAttendance={handleMarkAttendance}
+            userRole={userRole}
           />
         )}
 

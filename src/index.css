@@ -128,4 +128,22 @@
   .bulk-legal-print-page * {
     visibility: visible !important;
   }
+
+  /* Official Dynamic Duty Booklet A4 Print Styling */
+  #printable-official-booklet {
+    display: block !important;
+    visibility: visible !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    background-color: #ffffff !important;
+    color: #000000 !important;
+  }
+
+  #printable-official-booklet * {
+    visibility: visible !important;
+  }
 }
