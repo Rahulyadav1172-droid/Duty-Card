@@ -15,9 +15,11 @@ import {
   Eye,
   CheckCircle2,
   AlertCircle,
-  Layers
+  Layers,
+  PlusCircle,
+  Files
 } from 'lucide-react';
-import { saveBookletPDF, getBookletPDF, deleteBookletPDF } from '../utils/pdfStorage';
+import { saveBookletPDF, getAllBookletPDFs, deleteBookletPDFById } from '../utils/pdfStorage';
 import OfficialBooklet from './OfficialBooklet';
 
 export default function BookletSection({
@@ -30,7 +32,8 @@ export default function BookletSection({
   eventTitle = '',
   eventSubtitle = ''
 }) {
-  const [pdfData, setPdfData] = useState(null);
+  const [pdfList, setPdfList] = useState([]);
+  const [selectedPdfId, setSelectedPdfId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -39,58 +42,67 @@ export default function BookletSection({
   const fileInputRef = useRef(null);
 
   useEffect(() => {
-    async function loadStoredPDF() {
+    async function loadStoredPDFs() {
       try {
-        const stored = await getBookletPDF();
-        if (stored) {
-          setPdfData(stored);
+        const stored = await getAllBookletPDFs();
+        if (stored && stored.length > 0) {
+          setPdfList(stored);
+          setSelectedPdfId(stored[0].id);
+        } else {
+          setPdfList([]);
+          setSelectedPdfId(null);
         }
       } catch (err) {
-        console.error('Error loading PDF booklet:', err);
+        console.error('Error loading PDF booklets:', err);
       } finally {
         setLoading(false);
       }
     }
-    loadStoredPDF();
+    loadStoredPDFs();
   }, []);
 
   const handleFileUpload = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
 
-    if (file.type !== 'application/pdf') {
-      setStatusMsg({ type: 'error', text: 'कृपया केवल वैध PDF फ़ाइल (.pdf) अपलोड करें।' });
+    const validFiles = Array.from(files).filter(f => f.type === 'application/pdf' || f.name.endsWith('.pdf'));
+    if (validFiles.length === 0) {
+      setStatusMsg({ type: 'error', text: 'कृपया केवल वैध PDF फ़ाइलें (.pdf) चुनें।' });
       return;
     }
 
     if (!isAdminAuthenticated) {
       onRequestAdminAuth(() => {
-        processUpload(file);
+        processMultipleUpload(validFiles);
       });
       return;
     }
 
-    processUpload(file);
+    processMultipleUpload(validFiles);
   };
 
-  const processUpload = async (file) => {
+  const processMultipleUpload = async (files) => {
     try {
       setUploading(true);
       setStatusMsg(null);
 
-      const metadata = {
-        name: file.name,
-        size: file.size,
-        uploadedAt: new Date().toISOString()
-      };
+      let lastAddedId = null;
+      for (const file of files) {
+        const res = await saveBookletPDF(file);
+        if (res && res.id) lastAddedId = res.id;
+      }
 
-      await saveBookletPDF(file, metadata);
-      const updated = await getBookletPDF();
-      setPdfData(updated);
+      const updatedList = await getAllBookletPDFs();
+      setPdfList(updatedList);
+      if (lastAddedId) {
+        setSelectedPdfId(lastAddedId);
+      } else if (updatedList.length > 0) {
+        setSelectedPdfId(updatedList[0].id);
+      }
 
       setStatusMsg({
         type: 'success',
-        text: `🎉 आधिकारिक ड्यूटी बुकलेट "${file.name}" सफलतापूर्वक अपलोड एवं सुरक्षित की गई!`
+        text: `🎉 सफलता! ${files.length} आधिकारिक ड्यूटी बुकलेट PDF सुरक्षित की गईं!`
       });
     } catch (err) {
       console.error('Upload failed:', err);
@@ -101,34 +113,34 @@ export default function BookletSection({
     }
   };
 
-  const handleDeletePDF = async () => {
-    if (!window.confirm('क्या आप अपलोड की गई आधिकारिक PDF बुकलेट को हटाना चाहते हैं?')) return;
+  const handleDeletePDFById = async (id, name) => {
+    if (!window.confirm(`क्या आप PDF बुकलेट "${name}" को हटाना चाहते हैं?`)) return;
 
     if (!isAdminAuthenticated) {
-      onRequestAdminAuth(() => executeDelete());
+      onRequestAdminAuth(() => executeDeleteById(id));
       return;
     }
 
-    executeDelete();
+    executeDeleteById(id);
   };
 
-  const executeDelete = async () => {
+  const executeDeleteById = async (id) => {
     try {
-      await deleteBookletPDF();
-      setPdfData(null);
-      setStatusMsg({ type: 'success', text: 'अपलोड की गई बुकलेट PDF हटा दी गई है।' });
+      await deleteBookletPDFById(id);
+      const updatedList = await getAllBookletPDFs();
+      setPdfList(updatedList);
+      if (updatedList.length > 0) {
+        setSelectedPdfId(updatedList[0].id);
+      } else {
+        setSelectedPdfId(null);
+      }
+      setStatusMsg({ type: 'success', text: 'PDF बुकलेट हटा दी गई है।' });
     } catch (err) {
       setStatusMsg({ type: 'error', text: 'हटाने में विफल।' });
     }
   };
 
-  const filteredRecords = records.filter(r =>
-    (r.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (r.mobile || '').includes(searchQuery) ||
-    (r.duty_place || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (r.zone || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (r.sector || '').toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const activePdf = pdfList.find(p => p.id === selectedPdfId) || (pdfList.length > 0 ? pdfList[0] : null);
 
   return (
     <div className="w-full max-w-5xl mx-auto space-y-6 font-devanagari text-slate-900">
@@ -187,7 +199,7 @@ export default function BookletSection({
             }`}
           >
             <FileText className="w-4 h-4" />
-            अपलोड की गई PDF
+            अपलोड की गई PDF {pdfList.length > 0 && `(${pdfList.length})`}
           </button>
           <button
             onClick={() => setViewMode('interactive')}
@@ -213,7 +225,7 @@ export default function BookletSection({
         </div>
       )}
 
-      {/* VIEW MODE 1: OFFICIAL UPLOADED PDF BOOKLET */}
+      {/* VIEW MODE 1: OFFICIAL UPLOADED PDF BOOKLETS */}
       {viewMode === 'pdf' && (
         <div className="space-y-6">
           <div className="bg-white p-6 rounded-2xl border border-slate-200 space-y-4 shadow-sm">
@@ -221,73 +233,147 @@ export default function BookletSection({
               <div>
                 <h3 className="text-base font-black text-slate-900 flex items-center gap-2">
                   <span>मुख्यालय द्वारा जारी मूल PDF बुकलेट</span>
-                  {pdfData && (
+                  {pdfList.length > 0 && (
                     <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-mono font-bold">
-                      VERIFIED PDF 🟢
+                      {pdfList.length} VERIFIED PDF 🟢
                     </span>
                   )}
                 </h3>
                 <p className="text-xs text-slate-500 mt-0.5">
-                  वरिष्ठ अधिकारियों व जोनल प्रभारियों हेतु मूल पीडीएफ फाइल का ऑनलाइन पूर्वावलोकन
+                  वरिष्ठ अधिकारियों व जोनल प्रभारियों हेतु मूल पीडीएफ फाइलों का ऑनलाइन पूर्वावलोकन
                 </p>
               </div>
 
-              {/* Upload Trigger */}
-              <div className="flex items-center gap-2">
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="application/pdf"
-                  onChange={handleFileUpload}
-                  className="hidden"
-                  id="booklet-pdf-upload"
-                />
-                <label
-                  htmlFor="booklet-pdf-upload"
-                  className="cursor-pointer px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-black rounded-xl flex items-center gap-1.5 shadow-xs transition active:scale-95"
-                >
-                  <Upload className="w-4 h-4" />
-                  <span>{pdfData ? 'नई PDF बदलें' : 'PDF बुकलेट अपलोड करें'}</span>
-                </label>
-
-                {pdfData && (
-                  <button
-                    onClick={handleDeletePDF}
-                    className="p-2 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-xl transition cursor-pointer"
-                    title="PDF हटाएं"
+              {/* Upload Trigger: Only visible for Admin */}
+              {isAdminAuthenticated && (
+                <div className="flex items-center gap-2">
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="application/pdf"
+                    multiple
+                    onChange={handleFileUpload}
+                    className="hidden"
+                    id="booklet-pdf-upload"
+                  />
+                  <label
+                    htmlFor="booklet-pdf-upload"
+                    className="cursor-pointer px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-black rounded-xl flex items-center gap-1.5 shadow-xs transition active:scale-95"
                   >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                )}
-              </div>
+                    <Upload className="w-4 h-4" />
+                    <span>{pdfList.length > 0 ? '+ और PDF जोड़ें' : 'PDF बुकलेट अपलोड करें'}</span>
+                  </label>
+                </div>
+              )}
             </div>
 
-            {/* PDF Viewer / Empty State */}
-            {pdfData ? (
-              <div className="space-y-3">
-                <div className="flex items-center justify-between bg-slate-50 p-3 rounded-xl border border-slate-200 text-xs">
+            {/* Multiple PDF Selector Tabs / Badges */}
+            {pdfList.length > 0 && (
+              <div className="space-y-2 pt-1">
+                <div className="text-[11px] font-black text-slate-700 flex items-center gap-1.5">
+                  <Files className="w-3.5 h-3.5 text-amber-600" />
+                  <span>उपलब्ध PDF बुकलेट चुनें ({pdfList.length} फाइलें):</span>
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  {pdfList.map((pdf, idx) => {
+                    const isSelected = activePdf?.id === pdf.id;
+                    return (
+                      <div
+                        key={pdf.id || idx}
+                        className={`group flex items-center gap-2 p-1.5 pr-2.5 rounded-xl border transition cursor-pointer text-xs ${
+                          isSelected
+                            ? 'bg-amber-500 text-slate-950 border-amber-600 font-black shadow-xs'
+                            : 'bg-slate-50 text-slate-700 hover:bg-slate-100 border-slate-300 font-bold'
+                        }`}
+                        onClick={() => setSelectedPdfId(pdf.id)}
+                      >
+                        <FileText className={`w-4 h-4 ${isSelected ? 'text-slate-950' : 'text-rose-600'}`} />
+                        <span className="truncate max-w-[200px] sm:max-w-xs">{pdf.name}</span>
+                        <span className={`text-[10px] font-mono ${isSelected ? 'text-slate-900' : 'text-slate-400'}`}>
+                          ({Math.round((pdf.size || 0) / 1024)} KB)
+                        </span>
+
+                        {isAdminAuthenticated && (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeletePDFById(pdf.id, pdf.name);
+                            }}
+                            className={`p-1 rounded-md transition ${
+                              isSelected
+                                ? 'hover:bg-amber-600 text-slate-950'
+                                : 'hover:bg-rose-100 text-rose-600'
+                            }`}
+                            title="यह PDF हटाएं"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Active PDF Viewer */}
+            {activePdf ? (
+              <div className="space-y-3 pt-2">
+                <div className="flex flex-wrap items-center justify-between bg-slate-50 p-3 rounded-xl border border-slate-200 text-xs gap-2">
                   <div className="flex items-center gap-2 font-bold text-slate-800">
-                    <FileText className="w-4 h-4 text-rose-600" />
-                    <span>{pdfData.name}</span>
-                    <span className="text-slate-400 font-mono">({Math.round((pdfData.size || 0) / 1024)} KB)</span>
+                    <FileText className="w-4 h-4 text-rose-600 shrink-0" />
+                    <span className="font-black text-slate-950 truncate max-w-xs sm:max-w-md">{activePdf.name}</span>
+                    <span className="text-slate-400 font-mono">({Math.round((activePdf.size || 0) / 1024)} KB)</span>
                   </div>
 
-                  <a
-                    href={pdfData.url}
-                    download={pdfData.name}
-                    className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg font-bold flex items-center gap-1 transition"
-                  >
-                    <Download className="w-3.5 h-3.5" />
-                    <span>डाउनलोड करें</span>
-                  </a>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => window.open(activePdf.url || activePdf.blobUrl, '_blank')}
+                      className="px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-lg font-black flex items-center gap-1.5 transition cursor-pointer shadow-xs"
+                      title="नए टैब में पूरी स्क्रीन में देखें"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5" />
+                      <span>पूर्ण स्क्रीन में देखें</span>
+                    </button>
+
+                    <a
+                      href={activePdf.url || activePdf.blobUrl}
+                      download={activePdf.name}
+                      className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg font-bold flex items-center gap-1 transition"
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                      <span>डाउनलोड करें</span>
+                    </a>
+                  </div>
                 </div>
 
-                <div className="w-full h-[650px] bg-slate-100 rounded-xl overflow-hidden border border-slate-300">
-                  <iframe
-                    src={pdfData.url}
-                    title="Police Duty Booklet PDF"
-                    className="w-full h-full border-0"
-                  />
+                <div className="w-full h-[750px] bg-slate-100 rounded-2xl overflow-hidden border-2 border-slate-300 shadow-inner relative">
+                  <object
+                    key={activePdf.id || activePdf.url}
+                    data={activePdf.url || activePdf.blobUrl}
+                    type="application/pdf"
+                    className="w-full h-full"
+                  >
+                    <iframe
+                      src={activePdf.url || activePdf.blobUrl}
+                      title="Police Duty Booklet PDF"
+                      className="w-full h-full border-0"
+                    >
+                      <div className="p-8 text-center space-y-3">
+                        <p className="text-sm font-bold text-slate-700">आपका ब्राउज़र सीधे PDF पूर्वावलोकन का समर्थन नहीं करता है।</p>
+                        <a
+                          href={activePdf.url || activePdf.blobUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex items-center gap-2 px-4 py-2 bg-amber-500 text-slate-950 font-bold rounded-xl text-xs"
+                        >
+                          <ExternalLink className="w-4 h-4" />
+                          यहाँ क्लिक करके PDF खोलें
+                        </a>
+                      </div>
+                    </iframe>
+                  </object>
                 </div>
               </div>
             ) : (
@@ -300,7 +386,7 @@ export default function BookletSection({
                     कोई आधिकारिक PDF बुकलेट अपलोड नहीं है
                   </h4>
                   <p className="text-xs text-slate-500 max-w-sm mx-auto mt-1">
-                    वरिष्ठ अधिकारियों के अवलोकनार्थ पूरी 50-100 पेज की मूल सुरक्षा बुकलेट PDF यहाँ ऊपर अपलोड करें।
+                    वरिष्ठ अधिकारियों के अवलोकनार्थ पूरी सुरक्षा बुकलेट PDF यहाँ ऊपर अपलोड करें।
                   </p>
                 </div>
               </div>

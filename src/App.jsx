@@ -622,7 +622,7 @@ export default function App() {
         {activeTab === 'booklet' && (
           <BookletSection
             records={currentEvent.records || []}
-            isAdminAuthenticated={userRole === 'admin' || userRole === 'senior'}
+            isAdminAuthenticated={userRole === 'admin'}
             onRequestAdminAuth={handleRequestAdminAuth}
             events={events}
             activeEventId={activeEventId}

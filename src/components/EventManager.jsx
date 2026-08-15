@@ -139,23 +139,24 @@ export default function EventManager({
                 <div className="space-y-1">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span
-                      className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-md uppercase ${
+                      className={`text-[10px] font-mono font-black px-2.5 py-0.5 rounded-full uppercase flex items-center gap-1 ${
                         isArchived
-                          ? 'bg-slate-100 text-slate-600 border border-slate-200'
-                          : 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                          ? 'bg-slate-200 text-slate-700 border border-slate-300'
+                          : 'bg-emerald-100 text-emerald-950 border border-emerald-300'
                       }`}
                     >
-                      {isArchived ? 'आर्काइव्ड (Archived)' : 'सक्रिय (Active)'}
+                      <span className={`w-1.5 h-1.5 rounded-full ${isArchived ? 'bg-slate-500' : 'bg-emerald-500 animate-pulse'}`} />
+                      {isArchived ? '📦 आर्काइव्ड (Archived)' : '🟢 सक्रिय (Active)'}
                     </span>
 
                     {isActive && (
-                      <span className="text-[10px] font-black px-2 py-0.5 rounded-md bg-amber-500 text-slate-950">
-                        वर्तमान चयनित ✓
+                      <span className="text-[10px] font-black px-2 py-0.5 rounded-md bg-amber-500 text-slate-950 shadow-xs">
+                        वर्तमान चयनित कार्यक्षेत्र ✓
                       </span>
                     )}
                   </div>
 
-                  <h3 className="text-base sm:text-lg font-black text-slate-900 leading-tight">
+                  <h3 className={`text-base sm:text-lg font-black leading-tight ${isArchived ? 'text-slate-700' : 'text-slate-900'}`}>
                     {evt.title}
                   </h3>
                   <p className="text-xs text-slate-500 font-medium">
@@ -166,7 +167,7 @@ export default function EventManager({
                 <div className="flex items-center gap-1">
                   <button
                     onClick={() => handleOpenModal(evt)}
-                    className="p-1.5 text-slate-400 hover:text-slate-700 bg-slate-50 hover:bg-slate-100 rounded-lg transition"
+                    className="p-1.5 text-slate-400 hover:text-slate-700 bg-slate-50 hover:bg-slate-100 rounded-lg transition cursor-pointer"
                     title="संशोधित करें"
                   >
                     <Edit className="w-3.5 h-3.5" />
@@ -174,7 +175,7 @@ export default function EventManager({
                   {events.length > 1 && (
                     <button
                       onClick={() => onDeleteEvent(evt.id, evt.title)}
-                      className="p-1.5 text-rose-400 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 rounded-lg transition"
+                      className="p-1.5 text-rose-400 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 rounded-lg transition cursor-pointer"
                       title="इवेंट हटाएं"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
@@ -186,7 +187,7 @@ export default function EventManager({
               {/* Event Metrics */}
               <div className="grid grid-cols-3 gap-2 bg-slate-50 p-3 rounded-xl text-center border border-slate-100">
                 <div>
-                  <div className="text-[10px] font-bold text-slate-500">कुल बल</div>
+                  <div className="text-[10px] font-bold text-slate-500">कुल बल (सुरक्षित)</div>
                   <div className="text-sm sm:text-base font-black text-slate-900 font-mono mt-0.5">{headcount}</div>
                 </div>
                 <div>
@@ -204,10 +205,15 @@ export default function EventManager({
                 <button
                   type="button"
                   onClick={() => onToggleEventStatus(evt.id)}
-                  className="text-xs font-bold text-slate-600 hover:text-slate-900 flex items-center gap-1 cursor-pointer"
+                  className={`text-xs font-bold px-3 py-1.5 rounded-lg border transition flex items-center gap-1.5 cursor-pointer ${
+                    isArchived
+                      ? 'bg-emerald-50 text-emerald-900 border-emerald-300 hover:bg-emerald-100'
+                      : 'bg-slate-100 text-slate-700 border-slate-300 hover:bg-slate-200'
+                  }`}
+                  title={isArchived ? 'इसे पुनः सक्रिय करें' : 'इसे आर्काइव में डालें'}
                 >
-                  <Archive className="w-3.5 h-3.5 text-slate-400" />
-                  <span>{isArchived ? 'सक्रिय करें' : 'आर्काइव करें'}</span>
+                  <Archive className="w-3.5 h-3.5" />
+                  <span>{isArchived ? 'पुनः सक्रिय करें' : 'आर्काइव करें'}</span>
                 </button>
 
                 {!isActive ? (
@@ -221,7 +227,7 @@ export default function EventManager({
                 ) : (
                   <span className="text-xs font-bold text-amber-900 bg-amber-50 px-2.5 py-1 rounded-lg border border-amber-200 flex items-center gap-1">
                     <CheckCircle2 className="w-3.5 h-3.5 text-amber-600" />
-                    सक्रिय कार्यक्षेत्र
+                    वर्तमान कार्यक्षेत्र
                   </span>
                 )}
               </div>
