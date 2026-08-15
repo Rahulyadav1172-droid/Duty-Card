@@ -229,12 +229,15 @@ export default function MasterForceManager({ forceRecords, onUpdateForce }) {
                   onChange={(e) => setFormData({ ...formData, rank: e.target.value })}
                   className="w-full p-2 bg-slate-50 border border-slate-300 rounded-xl text-amber-800 font-bold"
                 >
+                  <option value="म0उ0नि0">म0उ0नि0 (महिला उप-निरीक्षक)</option>
+                  <option value="म0नि0">म0नि0 (महिला निरीक्षक)</option>
+                  <option value="म0हे0का0">म0हे0का0 (महिला हेड कान्स्टेबल)</option>
+                  <option value="म0का0">म0का0 (महिला कान्स्टेबल)</option>
                   <option value="उ0नि0">उ0नि0 (उप-निरीक्षक)</option>
                   <option value="नि0">नि0 (निरीक्षक)</option>
                   <option value="हे0का0">हे0का0 (हेड कान्स्टेबल)</option>
                   <option value="का0">का0 (कान्स्टेबल)</option>
-                  <option value="म0का0">म0का0 (महिला कान्स्टेबल)</option>
-                  <option value="म0नि0">म0नि0 (महिला निरीक्षक)</option>
+                  <option value="उ0नि0 (स0पु0)">उ0नि0 (स0पु0)</option>
                 </select>
               </div>
 

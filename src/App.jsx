@@ -27,6 +27,8 @@ import SingleWindowLogin from './components/SingleWindowLogin';
 import DutyPointFilterSection from './components/DutyPointFilterSection';
 import MasterForceManager from './components/MasterForceManager';
 import EventManager from './components/EventManager';
+import DutyAllocationHub from './components/DutyAllocationHub';
+import ForceAamadManager from './components/ForceAamadManager';
 
 import initialData from './data/duty_data.json';
 import {
@@ -498,6 +500,30 @@ export default function App() {
                 बुकलेट PDF
               </button>
 
+              {(userRole === 'admin' || userRole === 'senior') && (
+                <button
+                  onClick={() => handleTabClick('allocation')}
+                  className={`px-3 py-1.5 rounded-lg transition flex items-center gap-1 text-xs whitespace-nowrap cursor-pointer shrink-0 ${
+                    activeTab === 'allocation' ? 'bg-amber-500 text-slate-950 font-black shadow-xs' : 'text-slate-300 hover:text-white font-bold'
+                  }`}
+                >
+                  <UserCheck className="w-3.5 h-3.5" />
+                  ड्यूटी आवंटन
+                </button>
+              )}
+
+              {userRole === 'admin' && (
+                <button
+                  onClick={() => handleTabClick('aamad')}
+                  className={`px-3 py-1.5 rounded-lg transition flex items-center gap-1 text-xs whitespace-nowrap cursor-pointer shrink-0 ${
+                    activeTab === 'aamad' ? 'bg-amber-500 text-slate-950 font-black shadow-xs' : 'text-slate-300 hover:text-white font-bold'
+                  }`}
+                >
+                  <UserCheck className="w-3.5 h-3.5" />
+                  बल आमद
+                </button>
+              )}
+
               {userRole === 'admin' && (
                 <button
                   onClick={() => handleTabClick('events')}
@@ -600,6 +626,19 @@ export default function App() {
           </div>
         )}
 
+        {/* SENIOR OFFICER / ADMIN: DUTY ALLOCATION HUB */}
+        {activeTab === 'allocation' && (
+          <DutyAllocationHub
+            masterForce={forceRecords}
+            activeEvent={currentEvent}
+            onUpdateEventRecords={handleUpdateActiveEventRecords}
+            events={events}
+            activeEventId={activeEventId}
+            onSelectActiveEvent={handleSelectActiveEvent}
+            onOpenBooklet={() => setActiveTab('booklet')}
+          />
+        )}
+
         {/* ADMIN ONLY: MULTI-EVENT MANAGER */}
         {activeTab === 'events' && (
           <EventManager
@@ -639,6 +678,14 @@ export default function App() {
             eventTitle={currentEvent.title}
             eventSubtitle={currentEvent.subtitle}
             eventStartDate={currentEvent.startDate || currentEvent.created_at || '16.08.2026 से अग्रिम आदेश तक'}
+          />
+        )}
+
+        {/* ADMIN ONLY: FORCE AAMAD REGISTER */}
+        {activeTab === 'aamad' && (
+          <ForceAamadManager
+            forceRecords={forceRecords}
+            onUpdateForce={handleUpdateForce}
           />
         )}
 
