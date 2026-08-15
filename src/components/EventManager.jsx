@@ -29,6 +29,7 @@ export default function EventManager({
   const [formData, setFormData] = useState({
     title: '',
     subtitle: '',
+    startDate: '16.08.2026 से अग्रिम आदेश तक',
     signatoryText: 'वरिष्ठ पुलिस अधीक्षक, अयोध्या',
     note: '',
     briefing: ''
@@ -40,6 +41,7 @@ export default function EventManager({
       setFormData({
         title: eventObj.title || '',
         subtitle: eventObj.subtitle || '',
+        startDate: eventObj.startDate || eventObj.created_at || '16.08.2026 से अग्रिम आदेश तक',
         signatoryText: eventObj.signatoryText || 'वरिष्ठ पुलिस अधीक्षक, अयोध्या',
         note: eventObj.note || '',
         briefing: eventObj.briefing || ''
@@ -49,6 +51,7 @@ export default function EventManager({
       setFormData({
         title: '',
         subtitle: 'ड्यूटी कार्ड अयोध्या-2026',
+        startDate: '16.08.2026 से अग्रिम आदेश तक',
         signatoryText: 'वरिष्ठ पुलिस अधीक्षक, अयोध्या',
         note: '',
         briefing: ''
@@ -75,6 +78,7 @@ export default function EventManager({
         id: newId,
         title: formData.title.trim(),
         subtitle: formData.subtitle.trim(),
+        startDate: formData.startDate.trim() || '16.08.2026 से अग्रिम आदेश तक',
         status: 'active',
         created_at: new Date().toLocaleDateString('hi-IN'),
         signatoryText: formData.signatoryText.trim(),
@@ -279,6 +283,20 @@ export default function EventManager({
                   onChange={(e) => setFormData({ ...formData, subtitle: e.target.value })}
                   placeholder="e.g. ड्यूटी कार्ड जनपद अयोध्या"
                   className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:bg-white"
+                />
+              </div>
+
+              <div>
+                <label className="block text-slate-700 mb-1">
+                  इवेंट प्रारंभ दिनांक / अवधि (Event Start Date / Duration) *
+                </label>
+                <input
+                  type="text"
+                  value={formData.startDate}
+                  onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
+                  placeholder="e.g. 16.08.2026 से अग्रिम आदेश तक"
+                  className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:bg-white"
+                  required
                 />
               </div>
 

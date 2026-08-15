@@ -30,7 +30,8 @@ export default function BookletSection({
   activeEventId = '',
   onSelectActiveEvent,
   eventTitle = '',
-  eventSubtitle = ''
+  eventSubtitle = '',
+  eventStartDate = ''
 }) {
   const [pdfList, setPdfList] = useState([]);
   const [selectedPdfId, setSelectedPdfId] = useState(null);
@@ -398,7 +399,12 @@ export default function BookletSection({
       {/* VIEW MODE 2: DYNAMIC DATABASE OFFICIAL BOOKLET */}
       {viewMode === 'interactive' && (
         <div className="space-y-6">
-          <OfficialBooklet records={records} />
+          <OfficialBooklet
+            records={records}
+            eventTitle={eventTitle}
+            eventSubtitle={eventSubtitle}
+            eventStartDate={eventStartDate}
+          />
         </div>
       )}
     </div>
