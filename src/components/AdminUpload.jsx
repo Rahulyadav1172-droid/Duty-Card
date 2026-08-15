@@ -55,6 +55,7 @@ export default function AdminUpload({
   const [loading, setLoading] = useState(false);
   const [statusMsg, setStatusMsg] = useState(null);
   const [filterQuery, setFilterQuery] = useState('');
+  const [uploadMode, setUploadMode] = useState('append'); // 'append' (merge with existing) | 'replace' (overwrite)
   
   // Note State
   const [noteText, setNoteText] = useState(customNote || '');
@@ -237,11 +238,38 @@ export default function AdminUpload({
     try {
       const parsedRecords = await parseDutyFile(file);
       if (parsedRecords && parsedRecords.length > 0) {
-        onUpdateRecords(parsedRecords);
-        setStatusMsg({
-          type: 'success',
-          text: `🎉 सफलता! Excel फ़ाइल "${file.name}" से कुल ${parsedRecords.length} ड्यूटी पास रिकॉर्ड्स इनजेस्ट एवं सहेजे गए!`
-        });
+        if (uploadMode === 'append' && records && records.length > 0) {
+          // Smart merge without losing previous data
+          const existingKeySet = new Set(
+            records.map(r => `${(r.id || '').trim().toLowerCase()}_${(r.mobile || '').trim()}_${(r.name || '').trim().toLowerCase()}_${(r.duty_place || '').trim().toLowerCase()}`)
+          );
+
+          const newUniqueRecords = [];
+          let duplicateCount = 0;
+
+          for (const newRec of parsedRecords) {
+            const key = `${(newRec.id || '').trim().toLowerCase()}_${(newRec.mobile || '').trim()}_${(newRec.name || '').trim().toLowerCase()}_${(newRec.duty_place || '').trim().toLowerCase()}`;
+            if (!existingKeySet.has(key)) {
+              existingKeySet.add(key);
+              newUniqueRecords.push(newRec);
+            } else {
+              duplicateCount++;
+            }
+          }
+
+          const mergedRecords = [...records, ...newUniqueRecords];
+          onUpdateRecords(mergedRecords);
+          setStatusMsg({
+            type: 'success',
+            text: `🎉 सफलता! Excel फ़ाइल "${file.name}" से कुल ${parsedRecords.length} में से ${newUniqueRecords.length} नए रिकॉर्ड्स जोड़े गए! (पुराना डेटा सुरक्षित) - अब कुल: ${mergedRecords.length} जवान।`
+          });
+        } else {
+          onUpdateRecords(parsedRecords);
+          setStatusMsg({
+            type: 'success',
+            text: `🎉 सफलता! Excel फ़ाइल "${file.name}" से कुल ${parsedRecords.length} ड्यूटी पास रिकॉर्ड्स इनजेस्ट एवं सहेजे गए!`
+          });
+        }
       } else {
         setStatusMsg({ type: 'error', text: 'अमान्य डेटा: फ़ाइल में कोई ड्यूटी रिकॉर्ड प्राप्त नहीं हुए।' });
       }
@@ -374,8 +402,14 @@ export default function AdminUpload({
       try {
         const imported = JSON.parse(event.target?.result);
         if (Array.isArray(imported) && imported.length > 0) {
-          onUpdateRecords(imported);
-          setStatusMsg({ type: 'success', text: `सफलतापूर्वक ${imported.length} ड्यूटी रिकॉर्ड्स JSON बैकअप से लोड किए गए!` });
+          if (uploadMode === 'append' && records && records.length > 0) {
+            const merged = [...records, ...imported];
+            onUpdateRecords(merged);
+            setStatusMsg({ type: 'success', text: `सफलतापूर्वक ${imported.length} ड्यूटी रिकॉर्ड्स जोड़े गए! अब कुल: ${merged.length} जवान।` });
+          } else {
+            onUpdateRecords(imported);
+            setStatusMsg({ type: 'success', text: `सफलतापूर्वक ${imported.length} ड्यूटी रिकॉर्ड्स JSON बैकअप से लोड किए गए!` });
+          }
         } else {
           alert('अमान्य JSON बैकअप फ़ाइल।');
         }
@@ -504,6 +538,32 @@ export default function AdminUpload({
           <p className="text-xs sm:text-sm font-bold text-slate-600 max-w-xl mx-auto mt-1">
             मानक फ़ॉर्मेट कॉलम: <span className="font-mono text-amber-900 font-black">zone | zonal | sector | sector incharge | duty place | name | mob | thana | district | name thana district mob | time</span>
           </p>
+        </div>
+
+        {/* Upload Mode Selector */}
+        <div className="max-w-md mx-auto bg-slate-100 p-1.5 rounded-xl border border-slate-300 flex items-center gap-1.5 text-xs font-bold">
+          <button
+            type="button"
+            onClick={() => setUploadMode('append')}
+            className={`flex-1 py-2 px-3 rounded-lg flex items-center justify-center gap-1.5 transition cursor-pointer ${
+              uploadMode === 'append'
+                ? 'bg-amber-500 text-slate-950 font-black shadow-xs'
+                : 'text-slate-700 hover:bg-slate-200'
+            }`}
+          >
+            <span>➕ पुराने डेटा में जोड़ें (Merge)</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setUploadMode('replace')}
+            className={`flex-1 py-2 px-3 rounded-lg flex items-center justify-center gap-1.5 transition cursor-pointer ${
+              uploadMode === 'replace'
+                ? 'bg-rose-600 text-white font-black shadow-xs'
+                : 'text-slate-700 hover:bg-slate-200'
+            }`}
+          >
+            <span>🔄 पुराना हटाकर नया बदलें (Replace)</span>
+          </button>
         </div>
 
         <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
