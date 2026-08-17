@@ -15,6 +15,38 @@ import {
   AlertCircle
 } from 'lucide-react';
 
+/**
+ * Helper to clean raw name string by stripping duplicate mobile numbers,
+ * trailing commas, and separating clean name from posting/district.
+ */
+function cleanOfficerName(rawName = '', posting = '', district = '', mobile = '') {
+  if (!rawName) return '';
+  let cleaned = String(rawName).trim();
+
+  // Remove any 10-digit mobile numbers from the name text
+  cleaned = cleaned.replace(/\b[6-9]\d{9}\b/g, '');
+  if (mobile) {
+    const cleanMob = String(mobile).trim();
+    if (cleanMob.length >= 5) {
+      cleaned = cleaned.replace(new RegExp(`\\b${cleanMob}\\b`, 'g'), '');
+    }
+  }
+
+  // Remove redundant parentheses with rank if already included
+  cleaned = cleaned.replace(/\(\s*(?:का0|उ0नि0|हे0का0|नि0|म0का0|म0उ0नि0|का०|उ०नि०|हे०कां०|नि०|कां०|हेकां|जवान)\s*\)/gi, '');
+
+  // If rawName is comma-separated, take first segment
+  const commaParts = cleaned.split(',').map(s => s.trim()).filter(Boolean);
+  if (commaParts.length > 1) {
+    cleaned = commaParts[0];
+  }
+
+  // Remove double commas, trailing/leading commas & spaces
+  cleaned = cleaned.replace(/,\s*,/g, ',').replace(/\s*,\s*$/, '').replace(/^[\s,]+/, '').trim();
+
+  return cleaned || rawName;
+}
+
 export default function DutyPointFilterSection({
   records = [],
   events = [],
@@ -279,6 +311,10 @@ export default function DutyPointFilterSection({
               const isAbsent = att?.status === 'absent';
               const canMark = userRole === 'senior' || userRole === 'admin';
 
+              const rosterIndex = records.findIndex(r => r.id === p.id);
+              const stableSerialNo = rosterIndex >= 0 ? rosterIndex + 1 : (idx + 1);
+              const cleanName = cleanOfficerName(p.name, p.posting, p.district, p.mobile);
+
               return (
                 <div
                   key={p.id || idx}
@@ -294,8 +330,8 @@ export default function DutyPointFilterSection({
                   <div className="space-y-2">
                     <div className="flex items-center justify-between gap-2 border-b border-slate-100 pb-2">
                       <div className="flex items-center gap-2">
-                        <span className="w-7 h-7 rounded-lg bg-slate-900 text-amber-400 font-mono font-black text-xs flex items-center justify-center shrink-0 shadow-2xs">
-                          #{idx + 1}
+                        <span className="w-7 h-7 rounded-lg bg-slate-900 text-amber-400 font-mono font-black text-xs flex items-center justify-center shrink-0 shadow-2xs" title={`रोस्टर क्रमांक: #${stableSerialNo}`}>
+                          #{stableSerialNo}
                         </span>
                         <span className="font-mono text-[11px] font-bold text-slate-500">
                           ID: <strong className="text-slate-800">{p.id}</strong>
@@ -310,7 +346,7 @@ export default function DutyPointFilterSection({
                     {/* Officer Name & Posting */}
                     <div>
                       <h4 className="font-black text-slate-950 text-sm leading-snug">
-                        {p.name}
+                        {cleanName}
                       </h4>
                       <p className="text-xs text-slate-600 font-medium mt-0.5">
                         थाना: <strong className="text-slate-900">{p.posting || 'थाना कोतवाली'}</strong> {p.district ? `(${p.district})` : ''}
