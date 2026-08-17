@@ -19,7 +19,7 @@ import {
   PlusCircle,
   Files
 } from 'lucide-react';
-import { saveBookletPDF, getAllBookletPDFs, deleteBookletPDFById } from '../utils/pdfStorage';
+import { saveBookletPDF, getAllBookletPDFs, deleteBookletPDFById, subscribeToCloudPDFs } from '../utils/pdfStorage';
 import OfficialBooklet from './OfficialBooklet';
 
 export default function BookletSection({
@@ -43,12 +43,14 @@ export default function BookletSection({
   const fileInputRef = useRef(null);
 
   useEffect(() => {
+    let unsubscribe = () => {};
+
     async function loadStoredPDFs() {
       try {
         const stored = await getAllBookletPDFs();
         if (stored && stored.length > 0) {
           setPdfList(stored);
-          setSelectedPdfId(stored[0].id);
+          setSelectedPdfId(prev => prev && stored.some(p => p.id === prev) ? prev : stored[0].id);
         } else {
           setPdfList([]);
           setSelectedPdfId(null);
@@ -58,8 +60,20 @@ export default function BookletSection({
       } finally {
         setLoading(false);
       }
+
+      unsubscribe = subscribeToCloudPDFs((freshList) => {
+        if (freshList) {
+          setPdfList(freshList);
+          setSelectedPdfId(prev => prev && freshList.some(p => p.id === prev) ? prev : (freshList[0]?.id || null));
+        }
+      });
     }
+
     loadStoredPDFs();
+
+    return () => {
+      unsubscribe();
+    };
   }, []);
 
   const handleFileUpload = async (e) => {
