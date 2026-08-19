@@ -27,6 +27,23 @@ function cleanName(raw = '') {
   return (parts[0] || str).replace(/\s+/g, ' ');
 }
 
+/**
+ * Helper to format date string to DD.MM.YYYY
+ */
+function formatDisplayDate(dateStr) {
+  if (!dateStr) return 'दिनांक: ........................';
+  try {
+    const parts = dateStr.split('-');
+    if (parts.length === 3) {
+      const [y, m, d] = parts;
+      return `${d}.${m}.${y}`;
+    }
+    return dateStr;
+  } catch (e) {
+    return dateStr;
+  }
+}
+
 export default function CheckingReportModal({
   isOpen,
   onClose,
@@ -174,6 +191,8 @@ export default function CheckingReportModal({
       setIsGeneratingPDF(false);
     }
   };
+
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4 font-devanagari text-slate-900">
