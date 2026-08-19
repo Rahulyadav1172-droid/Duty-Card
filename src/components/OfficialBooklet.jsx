@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Printer, ArrowLeft, Shield, Calendar, Clock, MapPin, Users, Edit3, Plus, Trash2, FileText, Check, X, AlertCircle } from 'lucide-react';
+import ForceDeploymentMatrix from './ForceDeploymentMatrix';
 
 /**
  * Helper to clean raw name string by stripping duplicate mobile numbers,
@@ -259,6 +260,9 @@ export default function OfficialBooklet({
             दिनांक:— {displayEventDate}
           </div>
         </div>
+
+        {/* 1-Page Executive Force Deployment Matrix Summary */}
+        <ForceDeploymentMatrix records={records} eventTitle={eventTitle} />
 
         {/* Grouped Zone -> Sector -> Duty Place Tables with Hierarchical Instructions */}
         <div className="space-y-4">

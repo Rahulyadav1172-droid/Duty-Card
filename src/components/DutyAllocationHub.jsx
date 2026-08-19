@@ -37,6 +37,7 @@ import {
 } from 'lucide-react';
 import { parseDutyFile } from '../utils/fileParser';
 import * as XLSX from 'xlsx';
+import ForceDeploymentMatrix from './ForceDeploymentMatrix';
 
 export default function DutyAllocationHub({
   masterForce = [],
@@ -581,54 +582,66 @@ export default function DutyAllocationHub({
           </div>
         </div>
 
-        {/* 4-Tab Sleek Pill-Style Navigation */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 bg-slate-900 p-1.5 rounded-2xl border border-slate-800 text-xs sm:text-sm font-black">
+        {/* 5-Tab Sleek Pill-Style Navigation */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 bg-slate-900 p-1.5 rounded-2xl border border-slate-800 text-xs font-black">
           <button
             onClick={() => setAllocationMode('manual')}
-            className={`py-3 px-4 rounded-xl transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer ${
+            className={`py-3 px-3 rounded-xl transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer ${
               allocationMode === 'manual'
                 ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/25 font-black scale-[1.01]'
                 : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
             }`}
           >
             <UserCheck className="w-4 h-4 shrink-0 stroke-[2.5]" />
-            <span className="truncate">1. मैनुअल टीम आवंटन</span>
+            <span className="truncate">1. टीम आवंटन</span>
           </button>
 
           <button
             onClick={() => setAllocationMode('auto')}
-            className={`py-3 px-4 rounded-xl transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer ${
+            className={`py-3 px-3 rounded-xl transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer ${
               allocationMode === 'auto'
                 ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/25 font-black scale-[1.01]'
                 : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
             }`}
           >
             <Sparkles className="w-4 h-4 shrink-0 stroke-[2.5]" />
-            <span className="truncate">2. स्मार्ट ऑटो-एलोकेशन</span>
+            <span className="truncate">2. ऑटो-एलोकेशन</span>
+          </button>
+
+          <button
+            onClick={() => setAllocationMode('matrix')}
+            className={`py-3 px-3 rounded-xl transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer ${
+              allocationMode === 'matrix'
+                ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/25 font-black scale-[1.01]'
+                : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+            }`}
+          >
+            <Shield className="w-4 h-4 shrink-0 stroke-[2.5]" />
+            <span className="truncate">3. समरी मैट्रिक्स</span>
           </button>
 
           <button
             onClick={() => setAllocationMode('hierarchy_upload')}
-            className={`py-3 px-4 rounded-xl transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer ${
+            className={`py-3 px-3 rounded-xl transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer ${
               allocationMode === 'hierarchy_upload'
                 ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/25 font-black scale-[1.01]'
                 : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
             }`}
           >
             <FolderTree className="w-4 h-4 shrink-0 stroke-[2.5]" />
-            <span className="truncate">3. ज़ोन/सेक्टर/पॉइंट्स मास्टर</span>
+            <span className="truncate">4. ज़ोन/पॉइंट्स</span>
           </button>
 
           <button
             onClick={() => setAllocationMode('zone_manager')}
-            className={`py-3 px-4 rounded-xl transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer ${
+            className={`py-3 px-3 rounded-xl transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer ${
               allocationMode === 'zone_manager'
                 ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/25 font-black scale-[1.01]'
                 : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
             }`}
           >
             <ArrowLeftRight className="w-4 h-4 shrink-0 stroke-[2.5]" />
-            <span className="truncate">4. पॉइंट स्थानांतरण ({masterPoints.length})</span>
+            <span className="truncate">5. स्थानांतरण ({masterPoints.length})</span>
           </button>
         </div>
       </div>
@@ -1161,6 +1174,37 @@ export default function DutyAllocationHub({
               <Zap className="w-4 h-4 text-amber-400 stroke-[2.5]" />
               <span>स्मार्ट ऑटो-एलोकेशन रन करें एवं ड्यूटी लगाएं</span>
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* MODE: FORCE DEPLOYMENT MATRIX (EXECUTIVE SUMMARY)                         */}
+      {/* ========================================================================= */}
+      {allocationMode === 'matrix' && (
+        <div className="space-y-4">
+          <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm space-y-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
+              <div>
+                <h2 className="text-lg font-black text-slate-900">
+                  📊 उच्चाधिकारी बल तैनाती समरी शीट (Force Deployment Matrix)
+                </h2>
+                <p className="text-xs text-slate-500 font-medium mt-0.5">
+                  ज़ोन-वार निरीक्षक, उ०नि०, हे०का०, आरक्षी, महिला पुलिस, यातायात व होमगार्ड का विस्तृत विवरण
+                </p>
+              </div>
+              {onOpenBooklet && (
+                <button
+                  type="button"
+                  onClick={onOpenBooklet}
+                  className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-xl flex items-center gap-1.5 transition cursor-pointer shrink-0"
+                >
+                  <span>📖 बुकलेट में प्रिंट करें</span>
+                </button>
+              )}
+            </div>
+
+            <ForceDeploymentMatrix records={eventRecords} eventTitle={activeEvent?.title} />
           </div>
         </div>
       )}
