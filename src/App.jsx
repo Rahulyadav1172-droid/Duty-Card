@@ -475,7 +475,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-100 text-slate-900 flex font-sans selection:bg-amber-500 selection:text-slate-950 font-devanagari">
+    <div className="min-h-screen bg-slate-100/70 text-slate-900 flex font-sans selection:bg-amber-500 selection:text-slate-950 font-devanagari">
       {/* 1. Responsive Sidebar Navigation */}
       <SidebarNavigation
         activeTab={activeTab}
@@ -772,30 +772,26 @@ export default function App() {
                 customLabels={currentEvent.customLabels || {}}
               />
             ) : searchAttempted && searchQuery.trim() ? (
-              <div className="p-6 bg-white dark:bg-slate-900 rounded-2xl border border-rose-200 dark:border-rose-800 text-center space-y-3 shadow-xs">
+              <div className="p-6 bg-white rounded-2xl border border-rose-200 text-center space-y-3 shadow-xs">
                 <AlertTriangle className="w-10 h-10 text-rose-500 mx-auto" />
-                <h3 className="text-base font-bold text-rose-700 dark:text-rose-400">
-                  {language === 'en' ? 'No Duty Record Found!' : 'कोई ड्यूटी रिकॉर्ड नहीं मिला!'}
+                <h3 className="text-base font-bold text-rose-700">
+                  कोई ड्यूटी रिकॉर्ड नहीं मिला!
                 </h3>
-                <p className="text-xs text-slate-600 dark:text-slate-400 font-medium">
-                  {language === 'en'
-                    ? `No duty allocation found for "${searchQuery}" in ${currentEvent.title}.`
-                    : `"${currentEvent.title}" में प्रविष्ट खोज "${searchQuery}" के लिए कोई ड्यूटी आवंटन प्राप्त नहीं हुआ।`}
+                <p className="text-xs text-slate-600 font-medium">
+                  "{currentEvent.title}" में प्रविष्ट खोज "<span className="font-mono text-amber-900 font-bold">{searchQuery}</span>" के लिए कोई ड्यूटी आवंटन प्राप्त नहीं हुआ।
                 </p>
               </div>
             ) : (
-              <div className="bg-white dark:bg-slate-900 p-7 rounded-2xl border border-slate-200 dark:border-slate-800 text-center space-y-2.5 shadow-xs transition">
-                <div className="w-12 h-12 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-700/50 flex items-center justify-center mx-auto text-amber-600 dark:text-amber-400">
+              <div className="bg-white p-7 rounded-2xl border border-slate-200 text-center space-y-2.5 shadow-xs">
+                <div className="w-12 h-12 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center mx-auto text-amber-600">
                   <Smartphone className="w-6 h-6" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold text-slate-900 dark:text-white">
-                    {language === 'en' ? 'Enter Mobile Number or Name' : 'अपना मोबाईल नंबर या नाम दर्ज करें'}
+                  <h3 className="text-sm font-bold text-slate-900">
+                    अपना मोबाईल नंबर या नाम दर्ज करें
                   </h3>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto mt-0.5">
-                    {language === 'en'
-                      ? 'Type your mobile number or name above to view your duty location, timing, and co-deployed colleagues.'
-                      : 'अपनी ड्यूटी स्थान, सेक्टर, समय एवं साथ में तैनात अन्य पुलिसकर्मियों की सूची देखने के लिए ऊपर सर्च बॉक्स में नंबर लिखें।'}
+                  <p className="text-xs text-slate-500 max-w-sm mx-auto mt-0.5">
+                    अपनी ड्यूटी स्थान, सेक्टर, समय एवं साथ में तैनात अन्य पुलिसकर्मियों की सूची देखने के लिए ऊपर सर्च बॉक्स में नंबर लिखें।
                   </p>
                 </div>
               </div>

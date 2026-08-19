@@ -1152,47 +1152,47 @@ export default function AdminUpload({
           </div>
         </div>
 
-        <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
-          <table className="w-full text-left text-xs sm:text-sm text-slate-950 dark:text-slate-100">
-            <thead className="bg-slate-100 dark:bg-slate-800 text-slate-950 dark:text-white font-black border-b border-slate-200 dark:border-slate-700">
+        <div className="overflow-x-auto rounded-xl border border-slate-200">
+          <table className="w-full text-left text-xs sm:text-sm text-slate-950">
+            <thead className="bg-slate-100 text-slate-950 font-black border-b border-slate-200">
               <tr>
-                <th className="p-3 border-r border-slate-200 dark:border-slate-700">फोटो</th>
-                <th className="p-3 border-r border-slate-200 dark:border-slate-700">ID</th>
-                <th className="p-3 border-r border-slate-200 dark:border-slate-700">नाम एवं पदनाम</th>
-                <th className="p-3 border-r border-slate-200 dark:border-slate-700">मोबाईल नंबर</th>
-                <th className="p-3 border-r border-slate-200 dark:border-slate-700">ड्यूटी स्थान (Duty Place)</th>
-                <th className="p-3 border-r border-slate-200 dark:border-slate-700">जोन / सेक्टर</th>
-                <th className="p-3 border-r border-slate-200 dark:border-slate-700">उपस्थिति</th>
+                <th className="p-3 border-r border-slate-200">फोटो</th>
+                <th className="p-3 border-r border-slate-200">ID</th>
+                <th className="p-3 border-r border-slate-200">नाम एवं पदनाम</th>
+                <th className="p-3 border-r border-slate-200">मोबाईल नंबर</th>
+                <th className="p-3 border-r border-slate-200">ड्यूटी स्थान (Duty Place)</th>
+                <th className="p-3 border-r border-slate-200">जोन / सेक्टर</th>
+                <th className="p-3 border-r border-slate-200">उपस्थिति</th>
                 <th className="p-3 text-right">कार्रवाई</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-200 dark:divide-slate-700 bg-white dark:bg-slate-900 font-medium">
+            <tbody className="divide-y divide-slate-200 bg-white font-medium">
               {filteredRecords.length > 0 ? (
                 filteredRecords.map((r, idx) => {
                   const isReported = !!attendanceMap[r.id];
                   return (
-                    <tr key={idx} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition">
-                      <td className="p-2.5 border-r border-slate-200 dark:border-slate-700 text-center">
+                    <tr key={idx} className="hover:bg-slate-50 transition">
+                      <td className="p-2.5 border-r border-slate-200 text-center">
                         {r.photo ? (
-                          <img src={r.photo} alt={r.name} className="w-8 h-8 rounded-full object-cover mx-auto border border-slate-400 dark:border-slate-600" />
+                          <img src={r.photo} alt={r.name} className="w-8 h-8 rounded-full object-cover mx-auto border border-slate-400" />
                         ) : (
-                          <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 flex items-center justify-center mx-auto text-[9px] font-bold">
+                          <div className="w-8 h-8 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mx-auto text-[9px] font-bold">
                             फोटो
                           </div>
                         )}
                       </td>
-                      <td className="p-3 font-mono text-amber-900 dark:text-amber-300 font-bold border-r border-slate-200 dark:border-slate-700">{r.id}</td>
-                      <td className="p-3 font-bold text-slate-950 dark:text-white border-r border-slate-200 dark:border-slate-700">{r.name} ({r.rank || 'जवान'})</td>
-                      <td className="p-3 font-mono text-emerald-950 dark:text-emerald-300 font-bold bg-emerald-50/50 dark:bg-emerald-950/30 border-r border-slate-200 dark:border-slate-700">{r.mobile}</td>
-                      <td className="p-3 font-bold text-slate-950 dark:text-amber-200 bg-amber-50/40 dark:bg-amber-950/20 border-r border-slate-200 dark:border-slate-700">{r.duty_place || '-'}</td>
-                      <td className="p-3 text-slate-800 dark:text-slate-200 font-medium border-r border-slate-200 dark:border-slate-700">{r.zone || '-'} / {r.sector || '-'}</td>
-                      <td className="p-3 border-r border-slate-200 dark:border-slate-700">
+                      <td className="p-3 font-mono text-amber-900 font-bold border-r border-slate-200">{r.id}</td>
+                      <td className="p-3 font-bold text-slate-950 border-r border-slate-200">{r.name} ({r.rank || 'जवान'})</td>
+                      <td className="p-3 font-mono text-emerald-950 font-bold bg-emerald-50/50 border-r border-slate-200">{r.mobile}</td>
+                      <td className="p-3 font-bold text-slate-950 border-r border-slate-200">{r.duty_place || '-'}</td>
+                      <td className="p-3 text-slate-700 border-r border-slate-200">{r.zone || '-'} / {r.sector || '-'}</td>
+                      <td className="p-3 border-r border-slate-200">
                         {isReported ? (
-                          <span className="px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-900 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700/50 font-bold text-xs">
+                          <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-900 font-bold text-xs">
                             उपस्थित 🟢
                           </span>
                         ) : (
-                          <span className="px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700 font-bold text-xs">
+                          <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 text-xs">
                             लंबित
                           </span>
                         )}
@@ -1201,14 +1201,14 @@ export default function AdminUpload({
                         <div className="flex items-center justify-end gap-1.5">
                           <button
                             onClick={() => handleOpenDutyModal(r)}
-                            className="p-1.5 rounded-lg bg-blue-50 dark:bg-blue-950/50 hover:bg-blue-100 dark:hover:bg-blue-900 text-blue-800 dark:text-blue-300 border border-blue-200 dark:border-blue-700 transition cursor-pointer"
+                            className="p-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-800 border border-blue-200 transition cursor-pointer"
                             title="संशोधित करें"
                           >
                             <Edit className="w-4 h-4" />
                           </button>
                           <button
                             onClick={() => handleDeleteDutyRecord(r.id, r.name)}
-                            className="p-1.5 rounded-lg bg-rose-50 dark:bg-rose-950/50 hover:bg-rose-100 dark:hover:bg-rose-900 text-rose-800 dark:text-rose-300 border border-rose-200 dark:border-rose-700 transition cursor-pointer"
+                            className="p-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-800 border border-rose-200 transition cursor-pointer"
                             title="हटाएं"
                           >
                             <Trash2 className="w-4 h-4" />
@@ -1220,7 +1220,7 @@ export default function AdminUpload({
                 })
               ) : (
                 <tr>
-                  <td colSpan={8} className="p-6 text-center text-slate-500 dark:text-slate-400 font-bold">
+                  <td colSpan={8} className="p-6 text-center text-slate-500 font-bold">
                     "{eventTitle}" के लिए कोई ड्यूटी रिकॉर्ड नहीं मिला। ऊपर "+ नया ड्यूटी पास जोड़ें" क्लिक करें या Excel अपलोड करें।
                   </td>
                 </tr>
