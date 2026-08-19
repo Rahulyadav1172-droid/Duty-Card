@@ -19,13 +19,10 @@ import {
   Menu,
   ChevronDown,
   ShieldCheck,
-  Globe,
-  Moon,
-  Sun
+  Globe
 } from 'lucide-react';
 
 import { useLanguage } from './context/LanguageContext';
-import { useTheme } from './context/ThemeContext';
 import SidebarNavigation from './components/SidebarNavigation';
 import SearchSection from './components/SearchSection';
 import DutyCard from './components/DutyCard';
@@ -85,7 +82,6 @@ function getInitialEvents() {
 
 export default function App() {
   const { language, setLanguage, toggleLanguage, t } = useLanguage();
-  const { theme, toggleTheme, isDark } = useTheme();
 
   // Multi-Event State
   const [events, setEvents] = useState(getInitialEvents);
@@ -479,7 +475,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-100 dark:bg-[#080d1a] text-slate-900 dark:text-slate-100 flex font-sans selection:bg-amber-500 selection:text-slate-950 font-devanagari transition-colors duration-200">
+    <div className="min-h-screen bg-slate-100 text-slate-900 flex font-sans selection:bg-amber-500 selection:text-slate-950 font-devanagari">
       {/* 1. Responsive Sidebar Navigation */}
       <SidebarNavigation
         activeTab={activeTab}
@@ -548,7 +544,7 @@ export default function App() {
               </div>
             </div>
 
-            {/* Right: Language Toggle, Night Mode Toggle, Cloud Sync & User Profile Dropdown */}
+            {/* Right: Language Toggle, Cloud Sync & User Profile Dropdown */}
             <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
               {/* Quick 1-Click Language Switcher (Always visible in Header) */}
               <button
@@ -561,30 +557,6 @@ export default function App() {
                 <span className="font-mono text-amber-300 font-extrabold uppercase">
                   {language === 'hi' ? 'EN' : 'हिन्दी'}
                 </span>
-              </button>
-
-              {/* Quick Night Shift Mode Switcher (Always visible in Header) */}
-              <button
-                type="button"
-                onClick={toggleTheme}
-                className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl border transition cursor-pointer shadow-xs active:scale-95 text-xs font-black ${
-                  isDark
-                    ? 'bg-indigo-950 text-indigo-200 border-indigo-500/50 hover:bg-indigo-900'
-                    : 'bg-gradient-to-r from-amber-400 to-amber-300 text-slate-950 border-amber-400 hover:from-amber-300 hover:to-amber-200'
-                }`}
-                title={isDark ? (language === 'en' ? 'Night Mode Active (Click for Day)' : 'नाईट मोड सक्रिय (डे मोड के लिए क्लिक करें)') : (language === 'en' ? 'Day Mode Active (Click for Night)' : 'डे मोड सक्रिय (नाईट मोड के लिए क्लिक करें)')}
-              >
-                {isDark ? (
-                  <>
-                    <Moon className="w-3.5 h-3.5 text-indigo-300 shrink-0" />
-                    <span>{language === 'en' ? 'Night 🌙' : 'रात 🌙'}</span>
-                  </>
-                ) : (
-                  <>
-                    <Sun className="w-3.5 h-3.5 text-slate-950 shrink-0" />
-                    <span>{language === 'en' ? 'Day ☀️' : 'दिन ☀️'}</span>
-                  </>
-                )}
               </button>
 
               <div className="hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-800/80 border border-slate-700/60 text-[11px] font-bold text-slate-300">
@@ -681,23 +653,6 @@ export default function App() {
                             <span>🇬🇧 English</span>
                           </button>
                         </div>
-                      </div>
-
-                      {/* Night Shift Dark Mode Inside Profile Menu */}
-                      <div className="p-2.5 bg-slate-800/60 rounded-xl border border-slate-700/50 flex items-center justify-between text-xs font-bold text-slate-300">
-                        <div className="flex items-center gap-2">
-                          {isDark ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-indigo-300" />}
-                          <span>{language === 'en' ? 'Night Shift Mode' : 'नाईट ड्यूटी मोड'}</span>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={toggleTheme}
-                          className={`px-2.5 py-1 rounded-lg text-xs font-bold transition cursor-pointer ${
-                            isDark ? 'bg-indigo-600 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
-                          }`}
-                        >
-                          {isDark ? 'ON' : 'OFF'}
-                        </button>
                       </div>
 
                       {/* Menu Options */}

@@ -70,16 +70,19 @@ class ErrorBoundary extends React.Component {
 }
 
 import { LanguageProvider } from './context/LanguageContext.jsx';
-import { ThemeProvider } from './context/ThemeContext.jsx';
+
+// Ensure dark class is removed if leftover
+try {
+  document.documentElement.classList.remove('dark');
+  localStorage.removeItem('duty_portal_theme');
+} catch (e) {}
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <ErrorBoundary>
-      <ThemeProvider>
-        <LanguageProvider>
-          <App />
-        </LanguageProvider>
-      </ThemeProvider>
+      <LanguageProvider>
+        <App />
+      </LanguageProvider>
     </ErrorBoundary>
   </React.StrictMode>,
 );
