@@ -391,15 +391,6 @@ export default function ForceAamadManager({
           {/* Action Buttons */}
           <div className="flex flex-wrap items-center gap-2 self-stretch lg:self-auto justify-end">
             <button
-              onClick={() => setIsAuditModalOpen(true)}
-              className="px-3.5 py-2 bg-slate-50 hover:bg-slate-100 text-slate-700 hover:text-slate-900 text-xs font-bold rounded-xl border border-slate-200 flex items-center gap-1.5 transition cursor-pointer shadow-xs"
-              title="हटाए गए रिकॉर्ड्स एवं रिमार्क लॉग देखें"
-            >
-              <History className="w-3.5 h-3.5 text-amber-600" />
-              <span>ऑडिट लॉग ({auditLogs.length})</span>
-            </button>
-
-            <button
               onClick={handleExportExcel}
               className="px-3.5 py-2 bg-slate-50 hover:bg-slate-100 text-slate-700 hover:text-slate-900 text-xs font-bold rounded-xl border border-slate-200 flex items-center gap-1.5 transition cursor-pointer shadow-xs"
               title="आमद रजिस्टर एक्सेल में डाउनलोड करें"
@@ -785,65 +776,6 @@ export default function ForceAamadManager({
                 </button>
               </div>
             </form>
-          </div>
-        </div>
-      )}
-
-      {/* ========================================================================= */}
-      {/* AUDIT LOG MODAL (TRANSPARENCY)                                            */}
-      {/* ========================================================================= */}
-      {isAuditModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl p-6 max-w-2xl w-full shadow-2xl border border-slate-200 space-y-4 font-devanagari text-slate-900 max-h-[85vh] flex flex-col">
-            <div className="flex items-center justify-between border-b border-slate-200 pb-3">
-              <div className="flex items-center gap-2 font-black text-base text-slate-950">
-                <History className="w-5 h-5 text-amber-600" />
-                <span>आमद डिलीशन ऑडिट लॉग (Transparency Trail)</span>
-              </div>
-              <button onClick={() => setIsAuditModalOpen(false)} className="text-slate-400 hover:text-slate-700 font-bold text-lg cursor-pointer">✕</button>
-            </div>
-
-            <div className="flex-1 overflow-y-auto space-y-2.5 pr-1">
-              {auditLogs.length > 0 ? (
-                auditLogs.map((log) => (
-                  <div key={log.id} className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200 text-xs space-y-1.5">
-                    <div className="flex items-center justify-between">
-                      <span className="font-black text-slate-950 text-sm">
-                        {log.deletedRecord?.name} ({log.deletedRecord?.rank})
-                      </span>
-                      <span className="font-mono text-[11px] font-bold text-slate-500">
-                        ⏱️ सर्वर समय: {log.deletedAt}
-                      </span>
-                    </div>
-
-                    <div className="text-slate-600 text-[11px]">
-                      PNO: <strong className="font-mono">{log.deletedRecord?.pno}</strong> | थाना: {log.deletedRecord?.posting} ({log.deletedRecord?.district})
-                    </div>
-
-                    <div className="bg-amber-50 p-2 rounded-xl border border-amber-200 text-amber-950 font-bold text-[11px]">
-                      📝 <strong>वजह / रिमार्क:</strong> {log.remark}
-                    </div>
-
-                    <div className="text-[10px] text-slate-400 text-right">
-                      हटाया गया द्वारा: <strong>{log.deletedBy}</strong>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="p-8 text-center text-slate-400 font-bold">
-                  अभी तक कोई रिकॉर्ड हटाया नहीं गया है। ऑडिट लॉग साफ़ है।
-                </div>
-              )}
-            </div>
-
-            <div className="pt-3 border-t border-slate-200 flex justify-end">
-              <button
-                onClick={() => setIsAuditModalOpen(false)}
-                className="px-5 py-2 bg-slate-900 text-white font-black text-xs rounded-xl cursor-pointer"
-              >
-                बंद करें
-              </button>
-            </div>
           </div>
         </div>
       )}
