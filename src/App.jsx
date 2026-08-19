@@ -326,7 +326,10 @@ export default function App() {
     saveEvents(updated, updatedObj);
   };
 
-  const handleMarkAttendance = (id, name, status = 'present') => {
+  const handleMarkAttendance = (id, name, status = 'present', targetDate = null) => {
+    const todayStr = new Date().toISOString().split('T')[0];
+    const dateKey = targetDate || todayStr;
+
     const now = new Date().toLocaleString('hi-IN', {
       day: '2-digit',
       month: 'short',
@@ -335,21 +338,40 @@ export default function App() {
       hour12: true
     });
 
+    // 1. Date-wise attendance dictionary
+    let allAttendanceByDate = { ...(currentEvent.attendanceByDate || {}) };
+    let dateAttendance = { ...(allAttendanceByDate[dateKey] || {}) };
+
+    // 2. Global current attendanceMap
     let newAttendance = { ...(currentEvent.attendanceMap || {}) };
 
     if (status === 'unmarked') {
-      delete newAttendance[id];
+      delete dateAttendance[id];
+      if (dateKey === todayStr) {
+        delete newAttendance[id];
+      }
     } else {
-      newAttendance[id] = {
+      const record = {
         status: status, // 'present' | 'absent'
         reported: status === 'present',
         name: name,
         time: now,
+        date: dateKey,
         markedBy: userRole === 'admin' ? 'सुपर एडमिन' : 'वरिष्ठ अधिकारी'
       };
+      dateAttendance[id] = record;
+      if (dateKey === todayStr) {
+        newAttendance[id] = record;
+      }
     }
 
-    const updatedObj = { ...currentEvent, attendanceMap: newAttendance };
+    allAttendanceByDate[dateKey] = dateAttendance;
+
+    const updatedObj = {
+      ...currentEvent,
+      attendanceMap: newAttendance,
+      attendanceByDate: allAttendanceByDate
+    };
     const updated = events.map(e => e.id === currentEvent.id ? updatedObj : e);
     saveEvents(updated, updatedObj);
   };
@@ -357,6 +379,18 @@ export default function App() {
   const handleUpdateDutyPhoto = (id, base64Photo) => {
     const newRecords = (currentEvent.records || []).map(r => r.id === id ? { ...r, photo: base64Photo } : r);
     handleUpdateActiveEventRecords(newRecords);
+  };
+
+  const handleUpdateDutyRecord = (updatedRecord) => {
+    const newRecords = (currentEvent.records || []).map(r => r.id === updatedRecord.id ? updatedRecord : r);
+    handleUpdateActiveEventRecords(newRecords);
+    setActiveDuty(updatedRecord);
+  };
+
+  const handleUpdateActiveEventCustomLabels = (newLabels) => {
+    const updatedObj = { ...currentEvent, customLabels: newLabels };
+    const updated = events.map(e => e.id === currentEvent.id ? updatedObj : e);
+    saveEvents(updated, updatedObj);
   };
 
   const handleUpdateForce = (newForce) => {
@@ -632,6 +666,13 @@ export default function App() {
                 signatureImg={currentEvent.signatureImg || ''}
                 signatoryText={currentEvent.signatoryText || 'वरिष्ठ पुलिस अधीक्षक, अयोध्या'}
                 onUpdateDutyPhoto={handleUpdateDutyPhoto}
+                onUpdateDutyRecord={handleUpdateDutyRecord}
+                userRole={userRole}
+                onRequestAuth={(callback) => {
+                  setPendingTab('search');
+                  setIsLoginModalOpen(true);
+                }}
+                customLabels={currentEvent.customLabels || {}}
               />
             ) : searchAttempted && searchQuery.trim() ? (
               <div className="p-6 bg-white rounded-2xl border border-rose-200 text-center space-y-3 shadow-xs">
@@ -695,7 +736,9 @@ export default function App() {
             activeEventId={activeEventId}
             onSelectActiveEvent={handleSelectActiveEvent}
             eventTitle={currentEvent.title}
+            eventSubtitle={currentEvent.subtitle}
             attendanceMap={currentEvent.attendanceMap || {}}
+            attendanceByDate={currentEvent.attendanceByDate || {}}
             onMarkAttendance={handleMarkAttendance}
             userRole={userRole}
           />
@@ -754,6 +797,8 @@ export default function App() {
             events={events}
             activeEventId={activeEventId}
             onSelectActiveEvent={handleSelectActiveEvent}
+            customLabels={currentEvent.customLabels || {}}
+            onUpdateCustomLabels={handleUpdateActiveEventCustomLabels}
           />
         )}
       </main>

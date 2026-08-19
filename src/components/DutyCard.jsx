@@ -14,7 +14,10 @@ import {
   Camera,
   Layers,
   Users,
-  Award
+  Award,
+  Edit3,
+  Check,
+  X
 } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import jsPDF from 'jspdf';
@@ -35,13 +38,38 @@ export default function DutyCard({
   eventSubtitle = 'ड्यूटी कार्ड अयोध्या-2026',
   signatureImg = '',
   signatoryText = 'वरिष्ठ पुलिस अधीक्षक, अयोध्या',
-  onUpdateDutyPhoto
+  onUpdateDutyPhoto,
+  onUpdateDutyRecord,
+  userRole = 'guest',
+  onRequestAuth,
+  customLabels = {}
 }) {
   const [isDownloadingPDF, setIsDownloadingPDF] = useState(false);
   const [isVerifyModalOpen, setIsVerifyModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editFormData, setEditFormData] = useState({
+    duty_place: '',
+    zone: '',
+    sector: '',
+    shift: '',
+    zonal_incharge: '',
+    sector_incharge: '',
+    event_name: ''
+  });
   const photoInputRef = useRef(null);
 
   if (!duty) return null;
+
+  const labels = {
+    duty_place: customLabels?.duty_place?.trim() || 'ड्यूटी का स्थान',
+    shift: customLabels?.shift?.trim() || 'दिनाँक व समय',
+    zone: customLabels?.zone?.trim() || 'जोन / व्यवस्था',
+    zonal_incharge: customLabels?.zonal_incharge?.trim() || 'जोनाल प्रभारी',
+    sector: customLabels?.sector?.trim() || 'सेक्टर',
+    sector_incharge: customLabels?.sector_incharge?.trim() || 'सेक्टर प्रभारी',
+    briefing: customLabels?.briefing?.trim() || 'ब्रीफिंग स्थान',
+    note: customLabels?.note?.trim() || 'विशेष नोट'
+  };
 
   // Find co-deployed personnel at the exact same duty point
   const normalizePlace = (str) => (str || '').trim().toLowerCase().replace(/\s+/g, ' ');
@@ -70,6 +98,58 @@ export default function DutyCard({
       }
     };
     reader.readAsDataURL(file);
+  };
+
+  const openEditForm = () => {
+    setEditFormData({
+      duty_place: duty.duty_place || '',
+      zone: duty.zone || '',
+      sector: duty.sector || '',
+      shift: duty.shift || 'प्रातः 08:00 बजे से मेला समाप्ति तक',
+      zonal_incharge: duty.zonal_incharge || duty.zonal || '',
+      sector_incharge: duty.sector_incharge || '',
+      event_name: duty.event_name || ''
+    });
+    setIsEditModalOpen(true);
+  };
+
+  const handleOpenEditModal = () => {
+    if (userRole !== 'admin' && userRole !== 'senior') {
+      if (onRequestAuth) {
+        onRequestAuth(() => {
+          openEditForm();
+        });
+      } else {
+        alert('ड्यूटी विवरण बदलने के लिए एडमिन या वरिष्ठ अधिकारी लॉगिन आवश्यक है।');
+      }
+      return;
+    }
+    openEditForm();
+  };
+
+  const handleSaveEdit = (e) => {
+    e.preventDefault();
+    if (!editFormData.duty_place.trim()) {
+      alert('कृपया ड्यूटी स्थल का नाम अवश्य भरें।');
+      return;
+    }
+
+    const updated = {
+      ...duty,
+      duty_place: editFormData.duty_place.trim(),
+      zone: editFormData.zone.trim(),
+      sector: editFormData.sector.trim(),
+      shift: editFormData.shift.trim(),
+      zonal_incharge: editFormData.zonal_incharge.trim(),
+      zonal: editFormData.zonal_incharge.trim(),
+      sector_incharge: editFormData.sector_incharge.trim(),
+      event_name: editFormData.event_name.trim()
+    };
+
+    if (onUpdateDutyRecord) {
+      onUpdateDutyRecord(updated);
+    }
+    setIsEditModalOpen(false);
   };
 
   const handleWhatsAppShare = () => {
@@ -186,7 +266,17 @@ export default function DutyCard({
         </div>
 
         {/* Action Buttons: Responsive Grid */}
-        <div className="grid grid-cols-3 sm:flex items-center gap-1.5 sm:gap-2">
+        <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+          {/* Edit Duty Details Button (Admin/Senior) */}
+          <button
+            onClick={handleOpenEditModal}
+            className="px-2.5 sm:px-3 py-2 rounded-lg sm:rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 font-bold text-[11px] sm:text-xs flex items-center justify-center gap-1 transition active:scale-95 cursor-pointer"
+            title="ड्यूटी स्थल, ज़ोन, सेक्टर व समय बदलें"
+          >
+            <Edit3 className="w-3.5 h-3.5 text-amber-700 shrink-0" />
+            <span>ड्यूटी बदलें</span>
+          </button>
+
           {/* Direct PDF Download */}
           <button
             onClick={handleDownloadDirectPDF}
@@ -308,63 +398,73 @@ export default function DutyCard({
 
               <tr>
                 <td className="w-[38%] sm:w-1/3 bg-slate-50 font-bold p-2 sm:p-2.5 border-r border-slate-200 text-slate-700 text-[11px] sm:text-sm leading-relaxed">
-                  ड्यूटी का स्थान
+                  {labels.duty_place}
                 </td>
                 <td className="p-2 sm:p-2.5 font-black text-xs sm:text-base text-amber-950 bg-amber-50/50 break-words leading-relaxed">
-                  {duty.duty_place || ''}
+                  {duty.duty_place || '-'}
                 </td>
               </tr>
 
-              <tr>
-                <td className="bg-slate-50 font-bold p-2 sm:p-2.5 border-r border-slate-200 text-slate-700 text-[11px] sm:text-sm leading-relaxed">
-                  दिनाँक व समय
-                </td>
-                <td className="p-2 sm:p-2.5 font-bold text-slate-900 bg-white text-[11px] sm:text-sm break-words leading-relaxed">
-                  {duty.shift || ''}
-                </td>
-              </tr>
+              {duty.shift ? (
+                <tr>
+                  <td className="bg-slate-50 font-bold p-2 sm:p-2.5 border-r border-slate-200 text-slate-700 text-[11px] sm:text-sm leading-relaxed">
+                    {labels.shift}
+                  </td>
+                  <td className="p-2 sm:p-2.5 font-bold text-slate-900 bg-white text-[11px] sm:text-sm break-words leading-relaxed">
+                    {duty.shift}
+                  </td>
+                </tr>
+              ) : null}
 
-              <tr>
-                <td className="bg-slate-50 font-bold p-2 sm:p-2.5 border-r border-slate-200 text-slate-700 text-[11px] sm:text-sm leading-relaxed">
-                  जोन / व्यवस्था
-                </td>
-                <td className="p-2 sm:p-2.5 font-semibold text-slate-800 bg-white text-[11px] sm:text-sm break-words leading-relaxed">
-                  {duty.zone || ''}
-                </td>
-              </tr>
+              {duty.zone ? (
+                <tr>
+                  <td className="bg-slate-50 font-bold p-2 sm:p-2.5 border-r border-slate-200 text-slate-700 text-[11px] sm:text-sm leading-relaxed">
+                    {labels.zone}
+                  </td>
+                  <td className="p-2 sm:p-2.5 font-semibold text-slate-800 bg-white text-[11px] sm:text-sm break-words leading-relaxed">
+                    {duty.zone}
+                  </td>
+                </tr>
+              ) : null}
 
-              <tr>
-                <td className="bg-slate-50 font-bold p-2 sm:p-2.5 border-r border-slate-200 text-slate-700 text-[11px] sm:text-sm leading-relaxed">
-                  जोनाल प्रभारी
-                </td>
-                <td className="p-2 sm:p-2.5 font-semibold text-slate-800 bg-white text-[11px] sm:text-sm break-words leading-relaxed">
-                  {duty.zonal_incharge || duty.zonal || ''}
-                </td>
-              </tr>
+              {(duty.zonal_incharge || duty.zonal) ? (
+                <tr>
+                  <td className="bg-slate-50 font-bold p-2 sm:p-2.5 border-r border-slate-200 text-slate-700 text-[11px] sm:text-sm leading-relaxed">
+                    {labels.zonal_incharge}
+                  </td>
+                  <td className="p-2 sm:p-2.5 font-semibold text-slate-800 bg-white text-[11px] sm:text-sm break-words leading-relaxed">
+                    {duty.zonal_incharge || duty.zonal}
+                  </td>
+                </tr>
+              ) : null}
 
-              <tr>
-                <td className="bg-slate-50 font-bold p-2 sm:p-2.5 border-r border-slate-200 text-slate-700 text-[11px] sm:text-sm leading-relaxed">
-                  सेक्टर
-                </td>
-                <td className="p-2 sm:p-2.5 font-semibold text-slate-800 bg-white text-[11px] sm:text-sm break-words leading-relaxed">
-                  {duty.sector || ''}
-                </td>
-              </tr>
+              {duty.sector ? (
+                <tr>
+                  <td className="bg-slate-50 font-bold p-2 sm:p-2.5 border-r border-slate-200 text-slate-700 text-[11px] sm:text-sm leading-relaxed">
+                    {labels.sector}
+                  </td>
+                  <td className="p-2 sm:p-2.5 font-semibold text-slate-800 bg-white text-[11px] sm:text-sm break-words leading-relaxed">
+                    {duty.sector}
+                  </td>
+                </tr>
+              ) : null}
 
-              <tr>
-                <td className="bg-slate-50 font-bold p-2 sm:p-2.5 border-r border-slate-200 text-slate-700 text-[11px] sm:text-sm leading-relaxed">
-                  सेक्टर प्रभारी
-                </td>
-                <td className="p-2 sm:p-2.5 font-semibold text-slate-800 bg-white text-[11px] sm:text-sm break-words leading-relaxed">
-                  {duty.sector_incharge || ''}
-                </td>
-              </tr>
+              {duty.sector_incharge ? (
+                <tr>
+                  <td className="bg-slate-50 font-bold p-2 sm:p-2.5 border-r border-slate-200 text-slate-700 text-[11px] sm:text-sm leading-relaxed">
+                    {labels.sector_incharge}
+                  </td>
+                  <td className="p-2 sm:p-2.5 font-semibold text-slate-800 bg-white text-[11px] sm:text-sm break-words leading-relaxed">
+                    {duty.sector_incharge}
+                  </td>
+                </tr>
+              ) : null}
 
               {/* Briefing Location Row */}
               {activeBriefingPlace && (
                 <tr className="bg-amber-50/70 border-t-2 border-amber-200">
                   <td className="bg-amber-100/60 font-black p-2 sm:p-2.5 border-r border-amber-200 text-amber-950 text-[11px] sm:text-sm leading-relaxed">
-                    ब्रीफिंग स्थान
+                    {labels.briefing}
                   </td>
                   <td className="p-2 sm:p-2.5 font-bold text-amber-950 bg-amber-50/70 text-[11px] sm:text-sm break-words leading-relaxed">
                     {activeBriefingPlace}
@@ -376,7 +476,7 @@ export default function DutyCard({
               {activeNote && (
                 <tr className="bg-amber-50/70 border-t-2 border-amber-200">
                   <td className="bg-amber-100/60 font-black p-2 sm:p-2.5 border-r border-amber-200 text-amber-950 text-[11px] sm:text-sm leading-relaxed">
-                    विशेष नोट
+                    {labels.note}
                   </td>
                   <td className="p-2 sm:p-2.5 font-bold text-amber-950 bg-amber-50/70 text-[11px] sm:text-sm leading-relaxed break-words">
                     {activeNote}
@@ -500,6 +600,142 @@ export default function DutyCard({
         eventTitle={eventTitle}
         eventSubtitle={eventSubtitle}
       />
+
+      {/* Edit Duty Card Details Modal (Zone, Sector, Duty Point, Shift, Incharges) */}
+      {isEditModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl p-5 sm:p-6 max-w-lg w-full shadow-2xl border border-slate-200 space-y-4 font-devanagari text-slate-900 animate-in fade-in zoom-in-95 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2 font-black text-base text-slate-950">
+                <Edit3 className="w-5 h-5 text-amber-600" />
+                <span>ड्यूटी कार्ड विवरण संशोधित करें</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsEditModalOpen(false)}
+                className="text-slate-400 hover:text-slate-700 font-bold text-lg p-1 cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Officer Brief */}
+            <div className="bg-slate-50 border border-slate-200 p-3 rounded-xl flex items-center justify-between text-xs font-bold">
+              <div>
+                <span className="text-slate-500">अधिकारी / कर्मचारी:</span>
+                <div className="font-black text-slate-950 text-sm mt-0.5">{duty.name} ({duty.rank || 'जवान'})</div>
+              </div>
+              <div className="font-mono text-slate-700">PNO: {duty.id}</div>
+            </div>
+
+            <form onSubmit={handleSaveEdit} className="space-y-3.5 text-xs font-bold">
+              {/* Duty Place */}
+              <div>
+                <label className="text-slate-800 font-black">
+                  ड्यूटी का स्थान (Duty Place) *
+                </label>
+                <input
+                  type="text"
+                  value={editFormData.duty_place}
+                  onChange={(e) => setEditFormData({ ...editFormData, duty_place: e.target.value })}
+                  placeholder="e.g. हनुमानगढ़ी मुख्य द्वार"
+                  className="w-full h-11 px-3.5 bg-slate-50 border border-slate-300 rounded-xl font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500 mt-1"
+                  required
+                />
+              </div>
+
+              {/* Zone and Sector */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="text-slate-800 font-black">
+                    जोन / व्यवस्था (Zone)
+                  </label>
+                  <input
+                    type="text"
+                    value={editFormData.zone}
+                    onChange={(e) => setEditFormData({ ...editFormData, zone: e.target.value })}
+                    placeholder="e.g. मंदिर जोन"
+                    className="w-full h-11 px-3.5 bg-slate-50 border border-slate-300 rounded-xl font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500 mt-1"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-slate-800 font-black">
+                    सेक्टर (Sector)
+                  </label>
+                  <input
+                    type="text"
+                    value={editFormData.sector}
+                    onChange={(e) => setEditFormData({ ...editFormData, sector: e.target.value })}
+                    placeholder="e.g. मंदिर सेक्टर-01"
+                    className="w-full h-11 px-3.5 bg-slate-50 border border-slate-300 rounded-xl font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500 mt-1"
+                  />
+                </div>
+              </div>
+
+              {/* Shift & Time */}
+              <div>
+                <label className="text-slate-800 font-black">
+                  दिनाँक व समय / पाली (Shift & Timing)
+                </label>
+                <input
+                  type="text"
+                  value={editFormData.shift}
+                  onChange={(e) => setEditFormData({ ...editFormData, shift: e.target.value })}
+                  placeholder="e.g. प्रातः 08:00 बजे से 20:30 बजे तक"
+                  className="w-full h-11 px-3.5 bg-slate-50 border border-slate-300 rounded-xl font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500 mt-1"
+                />
+              </div>
+
+              {/* Zonal and Sector Incharges */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="text-slate-800">
+                    जोनाल प्रभारी अधिकारी
+                  </label>
+                  <input
+                    type="text"
+                    value={editFormData.zonal_incharge}
+                    onChange={(e) => setEditFormData({ ...editFormData, zonal_incharge: e.target.value })}
+                    placeholder="e.g. क्षेत्राधिकारी"
+                    className="w-full h-11 px-3.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 mt-1"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-slate-800">
+                    सेक्टर प्रभारी अधिकारी
+                  </label>
+                  <input
+                    type="text"
+                    value={editFormData.sector_incharge}
+                    onChange={(e) => setEditFormData({ ...editFormData, sector_incharge: e.target.value })}
+                    placeholder="e.g. प्र0नि0 कोतवाली"
+                    className="w-full h-11 px-3.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 mt-1"
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setIsEditModalOpen(false)}
+                  className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold cursor-pointer"
+                >
+                  रद्द करें
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black rounded-xl shadow transition active:scale-95 cursor-pointer flex items-center gap-1.5"
+                >
+                  <Check className="w-4 h-4 stroke-[3]" />
+                  <span>ड्यूटी कार्ड में सहेजें (Save)</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

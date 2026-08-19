@@ -12,8 +12,13 @@ import {
   XCircle,
   Clock,
   UserCheck,
-  AlertCircle
+  AlertCircle,
+  Calendar,
+  FileText,
+  FileDown,
+  Printer
 } from 'lucide-react';
+import CheckingReportModal from './CheckingReportModal';
 
 /**
  * Helper to clean raw name string by stripping duplicate mobile numbers,
@@ -53,13 +58,30 @@ export default function DutyPointFilterSection({
   activeEventId = '',
   onSelectActiveEvent,
   eventTitle = '',
+  eventSubtitle = '',
   attendanceMap = {},
+  attendanceByDate = {},
   onMarkAttendance,
   userRole = 'guest'
 }) {
   const [selectedPoint, setSelectedPoint] = useState('ALL');
   const [pointSearchQuery, setPointSearchQuery] = useState('');
   const [attendanceFilter, setAttendanceFilter] = useState('ALL'); // 'ALL' | 'present' | 'absent' | 'pending'
+  const [isCheckingReportOpen, setIsCheckingReportOpen] = useState(false);
+
+  // Default Checking Date to Today (YYYY-MM-DD)
+  const [checkingDate, setCheckingDate] = useState(() => {
+    const today = new Date();
+    return today.toISOString().split('T')[0];
+  });
+
+  // Active attendance for the selected date
+  const activeAttendance = useMemo(() => {
+    if (attendanceByDate && attendanceByDate[checkingDate]) {
+      return attendanceByDate[checkingDate];
+    }
+    return attendanceMap || {};
+  }, [attendanceByDate, checkingDate, attendanceMap]);
 
   // Extract all unique duty points and their count
   const dutyPointStats = useMemo(() => {
@@ -81,7 +103,7 @@ export default function DutyPointFilterSection({
 
     if (attendanceFilter !== 'ALL') {
       list = list.filter(p => {
-        const att = attendanceMap[p.id];
+        const att = activeAttendance[p.id];
         if (attendanceFilter === 'present') {
           return att?.status === 'present' || (att?.reported && att?.status !== 'absent');
         }
@@ -106,58 +128,109 @@ export default function DutyPointFilterSection({
       );
     }
     return list;
-  }, [records, selectedPoint, dutyPointStats, pointSearchQuery, attendanceFilter, attendanceMap]);
+  }, [records, selectedPoint, dutyPointStats, pointSearchQuery, attendanceFilter, activeAttendance]);
 
-  // Point Attendance Statistics
+  // Point Attendance Statistics for selected checking date
   const pointTotal = selectedPoint === 'ALL' ? records.length : (dutyPointStats[selectedPoint]?.length || 0);
   const pointPersonnelList = selectedPoint === 'ALL' ? records : (dutyPointStats[selectedPoint] || []);
   
   const presentCount = pointPersonnelList.filter(p => {
-    const att = attendanceMap[p.id];
+    const att = activeAttendance[p.id];
     return att?.status === 'present' || (att?.reported && att?.status !== 'absent');
   }).length;
 
   const absentCount = pointPersonnelList.filter(p => {
-    const att = attendanceMap[p.id];
+    const att = activeAttendance[p.id];
     return att?.status === 'absent';
   }).length;
 
   const pendingCount = Math.max(0, pointTotal - (presentCount + absentCount));
 
+  const handleSetTodayDate = () => {
+    const today = new Date().toISOString().split('T')[0];
+    setCheckingDate(today);
+  };
+
   return (
     <div className="w-full max-w-5xl mx-auto space-y-6 font-devanagari text-slate-900">
-      {/* Event Selector for Senior Officers */}
-      {events.length > 0 && (
-        <div className="bg-slate-900 text-white p-4 rounded-2xl border border-slate-800 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 shrink-0">
-              <Layers className="w-5 h-5" />
-            </div>
-            <div>
-              <div className="text-xs text-slate-400 font-bold">ड्यूटी का प्रकार:</div>
-              <div className="text-base font-black text-amber-400">{eventTitle || 'श्रावण झूला मेला'}</div>
-            </div>
+      {/* Event Selector & Daily Checking Report Action Header */}
+      <div className="bg-slate-900 text-white p-4 sm:p-5 rounded-2xl border border-slate-800 shadow-sm flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3.5 no-print">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 shrink-0">
+            <Layers className="w-5 h-5" />
           </div>
-
-          <div className="flex items-center gap-2 w-full sm:w-auto">
-            <label className="text-xs font-bold text-slate-300 shrink-0">इवेंट चुनें:</label>
-            <select
-              value={activeEventId}
-              onChange={(e) => {
-                onSelectActiveEvent?.(e.target.value);
-                setSelectedPoint('ALL');
-              }}
-              className="bg-slate-800 text-white border border-slate-700 text-xs font-bold rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-500 w-full sm:w-auto cursor-pointer"
-            >
-              {events.map((evt) => (
-                <option key={evt.id} value={evt.id}>
-                  {evt.title} ({evt.records?.length || 0} बल)
-                </option>
-              ))}
-            </select>
+          <div>
+            <div className="text-xs text-slate-400 font-bold">ड्यूटी का प्रकार:</div>
+            <div className="text-base font-black text-amber-400">{eventTitle || 'श्रावण झूला मेला'}</div>
           </div>
         </div>
-      )}
+
+        <div className="flex flex-wrap items-center gap-2">
+          {events.length > 0 && (
+            <div className="flex items-center gap-2">
+              <label className="text-xs font-bold text-slate-300 shrink-0">इवेंट:</label>
+              <select
+                value={activeEventId}
+                onChange={(e) => {
+                  onSelectActiveEvent?.(e.target.value);
+                  setSelectedPoint('ALL');
+                }}
+                className="bg-slate-800 text-white border border-slate-700 text-xs font-bold rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-500 cursor-pointer"
+              >
+                {events.map((evt) => (
+                  <option key={evt.id} value={evt.id}>
+                    {evt.title} ({evt.records?.length || 0} बल)
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {/* Trigger Official Checking Report Modal */}
+          <button
+            onClick={() => setIsCheckingReportOpen(true)}
+            className="px-4 py-2 bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-400 hover:to-amber-300 text-slate-950 font-black text-xs rounded-xl shadow-md flex items-center gap-1.5 transition active:scale-95 cursor-pointer shrink-0"
+            title="आधिकारिक दैनिक चेकिंग रिपोर्ट A4 प्रोफ़ार्मा खोलें"
+          >
+            <FileText className="w-4 h-4 stroke-[2.5]" />
+            <span>📑 दैनिक चेकिंग रिपोर्ट (Print Proforma)</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Date-Wise Checking Bar */}
+      <div className="bg-amber-50/80 border border-amber-200 p-4 rounded-2xl flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 shadow-xs no-print">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-amber-500 text-slate-950 flex items-center justify-center shrink-0 shadow-xs">
+            <Calendar className="w-5 h-5 stroke-[2.5]" />
+          </div>
+          <div>
+            <div className="text-xs font-black text-amber-950">
+              📅 चेकिंग दिनांक (Inspection Date):
+            </div>
+            <div className="text-[11px] text-amber-800 font-medium">
+              चयनित दिनांक के अनुसार बल की दैनिक उपस्थिति/गैरहाजिरी मार्क व रिकॉर्ड करें
+            </div>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <input
+            type="date"
+            value={checkingDate}
+            onChange={(e) => setCheckingDate(e.target.value)}
+            className="h-10 px-3 bg-white border border-amber-300 rounded-xl font-bold font-mono text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500 shadow-2xs"
+          />
+
+          <button
+            onClick={handleSetTodayDate}
+            className="h-10 px-3 bg-white hover:bg-amber-100 text-amber-900 border border-amber-300 font-black text-xs rounded-xl transition cursor-pointer active:scale-95"
+            title="आज की दिनांक चुनें"
+          >
+            आज (Today)
+          </button>
+        </div>
+      </div>
 
       {/* Top Filter Panel with Dropdown */}
       <div className="bg-white p-5 sm:p-6 rounded-2xl border border-slate-200 space-y-5 shadow-sm">
@@ -306,7 +379,7 @@ export default function DutyPointFilterSection({
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
           {displayedPersonnel.length > 0 ? (
             displayedPersonnel.map((p, idx) => {
-              const att = attendanceMap[p.id];
+              const att = activeAttendance[p.id];
               const isPresent = att?.status === 'present' || (att?.reported && att?.status !== 'absent');
               const isAbsent = att?.status === 'absent';
               const canMark = userRole === 'senior' || userRole === 'admin';
@@ -405,7 +478,7 @@ export default function DutyPointFilterSection({
                       <div className="grid grid-cols-2 gap-1.5 pt-1">
                         <button
                           type="button"
-                          onClick={() => onMarkAttendance?.(p.id, p.name, isPresent ? 'unmarked' : 'present')}
+                          onClick={() => onMarkAttendance?.(p.id, p.name, isPresent ? 'unmarked' : 'present', checkingDate)}
                           className={`py-1.5 px-2 rounded-xl font-black text-xs flex items-center justify-center gap-1 transition cursor-pointer active:scale-95 ${
                             isPresent
                               ? 'bg-emerald-600 text-white shadow-xs ring-2 ring-emerald-500/30'
@@ -418,7 +491,7 @@ export default function DutyPointFilterSection({
 
                         <button
                           type="button"
-                          onClick={() => onMarkAttendance?.(p.id, p.name, isAbsent ? 'unmarked' : 'absent')}
+                          onClick={() => onMarkAttendance?.(p.id, p.name, isAbsent ? 'unmarked' : 'absent', checkingDate)}
                           className={`py-1.5 px-2 rounded-xl font-black text-xs flex items-center justify-center gap-1 transition cursor-pointer active:scale-95 ${
                             isAbsent
                               ? 'bg-rose-600 text-white shadow-xs ring-2 ring-rose-500/30'
@@ -441,6 +514,19 @@ export default function DutyPointFilterSection({
           )}
         </div>
       </div>
+
+      {/* Official Checking Report Proforma Modal */}
+      <CheckingReportModal
+        isOpen={isCheckingReportOpen}
+        onClose={() => setIsCheckingReportOpen(false)}
+        eventTitle={eventTitle}
+        eventSubtitle={eventSubtitle}
+        records={records}
+        attendanceMap={attendanceMap}
+        attendanceByDate={attendanceByDate}
+        selectedDate={checkingDate}
+        onDateChange={(newDate) => setCheckingDate(newDate)}
+      />
     </div>
   );
 }

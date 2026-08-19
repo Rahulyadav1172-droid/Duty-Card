@@ -6,6 +6,26 @@ const EVENTS_TABLE = 'police_events';
  * Fetch all events from Supabase.
  * Returns null if Supabase table does not exist or network is unavailable.
  */
+function ensureUniqueRecordIds(records = []) {
+  if (!Array.isArray(records) || records.length === 0) return [];
+  const seen = new Set();
+  let hasDuplicates = false;
+  for (const r of records) {
+    if (!r.id || seen.has(r.id)) {
+      hasDuplicates = true;
+      break;
+    }
+    seen.add(r.id);
+  }
+
+  if (!hasDuplicates) return records;
+
+  return records.map((r, idx) => ({
+    ...r,
+    id: `DUTY-${String(idx + 1).padStart(4, '0')}`
+  }));
+}
+
 export async function fetchEventsFromSupabase() {
   try {
     const { data, error } = await supabase
@@ -32,7 +52,7 @@ export async function fetchEventsFromSupabase() {
         isNoteEnabled: row.is_note_enabled ?? false,
         briefing: row.briefing || '',
         isBriefingEnabled: row.is_briefing_enabled ?? false,
-        records: row.records || [],
+        records: ensureUniqueRecordIds(row.records || []),
         attendanceMap: row.attendance_map || {}
       }));
     }

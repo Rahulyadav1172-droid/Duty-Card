@@ -50,12 +50,26 @@ export default function AdminUpload({
   onUpdateSignature,
   events = [],
   activeEventId = '',
-  onSelectActiveEvent
+  onSelectActiveEvent,
+  customLabels = {},
+  onUpdateCustomLabels
 }) {
   const [loading, setLoading] = useState(false);
   const [statusMsg, setStatusMsg] = useState(null);
   const [filterQuery, setFilterQuery] = useState('');
   const [uploadMode, setUploadMode] = useState('append'); // 'append' (merge with existing) | 'replace' (overwrite)
+  
+  // Custom Labels State
+  const [labelsInput, setLabelsInput] = useState({
+    duty_place: customLabels?.duty_place || '',
+    shift: customLabels?.shift || '',
+    zone: customLabels?.zone || '',
+    zonal_incharge: customLabels?.zonal_incharge || '',
+    sector: customLabels?.sector || '',
+    sector_incharge: customLabels?.sector_incharge || '',
+    briefing: customLabels?.briefing || ''
+  });
+  const [labelsSaved, setLabelsSaved] = useState(false);
   
   // Note State
   const [noteText, setNoteText] = useState(customNote || '');
@@ -302,6 +316,28 @@ export default function AdminUpload({
     setSignText(signatoryText || 'वरिष्ठ पुलिस अधीक्षक, अयोध्या');
     setSignaturePreview(signatureImg || '');
   }, [signatoryText, signatureImg]);
+
+  React.useEffect(() => {
+    setLabelsInput({
+      duty_place: customLabels?.duty_place || '',
+      shift: customLabels?.shift || '',
+      zone: customLabels?.zone || '',
+      zonal_incharge: customLabels?.zonal_incharge || '',
+      sector: customLabels?.sector || '',
+      sector_incharge: customLabels?.sector_incharge || '',
+      briefing: customLabels?.briefing || ''
+    });
+  }, [customLabels]);
+
+  const handleSaveCustomLabels = (e) => {
+    e?.preventDefault();
+    if (onUpdateCustomLabels) {
+      onUpdateCustomLabels(labelsInput);
+      setLabelsSaved(true);
+      setTimeout(() => setLabelsSaved(false), 2000);
+      setStatusMsg({ type: 'success', text: 'ड्यूटी पास के कॉलम हेडिंग्स सफलतापूर्वक सहेज दिए गए हैं।' });
+    }
+  };
 
   const handleSaveHeadings = (e) => {
     e?.preventDefault();
@@ -912,6 +948,150 @@ export default function AdminUpload({
               </form>
             </div>
           </div>
+        </div>
+
+        {/* SETTING 5: CUSTOM COLUMN LABELS / HEADINGS (FULL WIDTH) */}
+        <div className="bg-white p-5 sm:p-6 rounded-2xl border border-slate-200 space-y-4 shadow-sm">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-slate-200 pb-3">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-amber-500/15 border border-amber-500/40 text-amber-700 flex items-center justify-center shrink-0">
+                <Layers className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-base font-black text-slate-950">
+                  🏷️ ड्यूटी पास टेबल हेडिंग्स कस्टमाइज़ करें (Custom Column Labels)
+                </h3>
+                <p className="text-xs font-bold text-slate-600">
+                  विशिष्ट आयोजनों हेतु ड्यूटी पास के कॉलम नामों (जोन, सेक्टर, ड्यूटी स्थान आदि) को इच्छानुसार बदलें
+                </p>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                setLabelsInput({
+                  duty_place: '',
+                  shift: '',
+                  zone: '',
+                  zonal_incharge: '',
+                  sector: '',
+                  sector_incharge: '',
+                  briefing: ''
+                });
+                if (onUpdateCustomLabels) onUpdateCustomLabels({});
+                setStatusMsg({ type: 'success', text: 'कॉलम हेडिंग्स डिफ़ॉल्ट पर रीसेट कर दी गई हैं।' });
+              }}
+              className="text-xs font-black text-slate-600 hover:text-slate-950 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 rounded-xl border border-slate-200 cursor-pointer"
+            >
+              🔄 डिफ़ॉल्ट नाम रीसेट करें
+            </button>
+          </div>
+
+          <form onSubmit={handleSaveCustomLabels} className="space-y-4 pt-1 text-xs font-bold">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+              <div>
+                <label className="text-slate-800 font-black">
+                  1. 'ड्यूटी का स्थान' हेडिंग:
+                </label>
+                <input
+                  type="text"
+                  value={labelsInput.duty_place}
+                  onChange={(e) => setLabelsInput({ ...labelsInput, duty_place: e.target.value })}
+                  placeholder="डिफ़ॉल्ट: ड्यूटी का स्थान (या पिकेट/बैरियर)"
+                  className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold text-slate-950 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:bg-white mt-1"
+                />
+              </div>
+
+              <div>
+                <label className="text-slate-800 font-black">
+                  2. 'दिनाँक व समय' हेडिंग:
+                </label>
+                <input
+                  type="text"
+                  value={labelsInput.shift}
+                  onChange={(e) => setLabelsInput({ ...labelsInput, shift: e.target.value })}
+                  placeholder="डिफ़ॉल्ट: दिनाँक व समय (या पाली/समय)"
+                  className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold text-slate-950 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:bg-white mt-1"
+                />
+              </div>
+
+              <div>
+                <label className="text-slate-800 font-black">
+                  3. 'जोन / व्यवस्था' हेडिंग:
+                </label>
+                <input
+                  type="text"
+                  value={labelsInput.zone}
+                  onChange={(e) => setLabelsInput({ ...labelsInput, zone: e.target.value })}
+                  placeholder="डिफ़ॉल्ट: जोन / व्यवस्था (या सर्किल/क्षेत्र)"
+                  className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold text-slate-950 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:bg-white mt-1"
+                />
+              </div>
+
+              <div>
+                <label className="text-slate-800 font-black">
+                  4. 'जोनाल प्रभारी' हेडिंग:
+                </label>
+                <input
+                  type="text"
+                  value={labelsInput.zonal_incharge}
+                  onChange={(e) => setLabelsInput({ ...labelsInput, zonal_incharge: e.target.value })}
+                  placeholder="डिफ़ॉल्ट: जोनाल प्रभारी (या क्षेत्राधिकारी/नोडल)"
+                  className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold text-slate-950 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:bg-white mt-1"
+                />
+              </div>
+
+              <div>
+                <label className="text-slate-800 font-black">
+                  5. 'सेक्टर' हेडिंग:
+                </label>
+                <input
+                  type="text"
+                  value={labelsInput.sector}
+                  onChange={(e) => setLabelsInput({ ...labelsInput, sector: e.target.value })}
+                  placeholder="डिफ़ॉल्ट: सेक्टर (या थाना क्षेत्र/चौकी)"
+                  className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold text-slate-950 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:bg-white mt-1"
+                />
+              </div>
+
+              <div>
+                <label className="text-slate-800 font-black">
+                  6. 'सेक्टर प्रभारी' हेडिंग:
+                </label>
+                <input
+                  type="text"
+                  value={labelsInput.sector_incharge}
+                  onChange={(e) => setLabelsInput({ ...labelsInput, sector_incharge: e.target.value })}
+                  placeholder="डिफ़ॉल्ट: सेक्टर प्रभारी (या प्रभारी निरीक्षक)"
+                  className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold text-slate-950 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:bg-white mt-1"
+                />
+              </div>
+
+              <div>
+                <label className="text-slate-800 font-black">
+                  7. 'ब्रीफिंग स्थान' हेडिंग:
+                </label>
+                <input
+                  type="text"
+                  value={labelsInput.briefing}
+                  onChange={(e) => setLabelsInput({ ...labelsInput, briefing: e.target.value })}
+                  placeholder="डिफ़ॉल्ट: ब्रीफिंग स्थान (या एकत्रीकरण स्थल)"
+                  className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold text-slate-950 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:bg-white mt-1"
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end pt-2">
+              <button
+                type="submit"
+                className="px-5 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs sm:text-sm rounded-xl shadow flex items-center gap-1.5 active:scale-95 transition cursor-pointer"
+              >
+                {labelsSaved ? <Check className="w-4 h-4 stroke-[3]" /> : <Layers className="w-4 h-4" />}
+                <span>{labelsSaved ? 'हेडिंग्स सहेजी गईं!' : 'कॉलम हेडिंग्स सहेजें (Save Labels)'}</span>
+              </button>
+            </div>
+          </form>
         </div>
       </div>
 
