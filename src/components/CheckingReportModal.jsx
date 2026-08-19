@@ -56,18 +56,21 @@ export default function CheckingReportModal({
 
   const reportRef = useRef(null);
 
-  if (!isOpen) return null;
-
-  // Format date for Hindi presentation
-  const formatDisplayDate = (dateStr) => {
-    if (!dateStr) return 'दिनांक: ........................';
-    try {
-      const [y, m, d] = dateStr.split('-');
-      return `${d}.${m}.${y}`;
-    } catch (e) {
-      return dateStr;
+  // Clean Event Title: "चेकिंग रिपोर्ट [इवेंट का नाम]" e.g. "चेकिंग रिपोर्ट श्रावण झूला मेला अयोध्या-2026"
+  const cleanEventHeading = React.useMemo(() => {
+    const rawTitle = (eventTitle || '').trim();
+    let sub = (eventSubtitle || '').replace(/ड्यूटी कार्ड/gi, '').replace(/अयोध्या-2026/gi, '').trim();
+    
+    // If title doesn't already contain district/year, append
+    let full = rawTitle;
+    if (sub && !full.includes(sub)) {
+      full = `${full} ${sub}`;
     }
-  };
+    if (!full.includes('अयोध्या') && !full.includes('2026')) {
+      full = `${full} अयोध्या-2026`;
+    }
+    return full.trim() || 'श्रावण झूला मेला अयोध्या-2026';
+  }, [eventTitle, eventSubtitle]);
 
   // Extract attendance for this specific date
   // Support both attendanceByDate[reportDate] and fallback to attendanceMap
@@ -83,6 +86,44 @@ export default function CheckingReportModal({
     }
     return true;
   });
+
+  // Auto-detect Incharge Name based on selected Zone and Sector
+  const autoInchargeName = React.useMemo(() => {
+    if (inchargeName.trim()) {
+      return inchargeName.trim();
+    }
+
+    let foundSectorIncharge = '';
+    let foundZonalIncharge = '';
+
+    if (selectedSector !== 'ALL') {
+      const matchSector = records.find(r => (r.sector || '').trim() === selectedSector.trim() && (r.sector_incharge || '').trim());
+      if (matchSector?.sector_incharge) {
+        foundSectorIncharge = matchSector.sector_incharge.trim();
+      }
+    }
+
+    if (selectedZone !== 'ALL') {
+      const matchZone = records.find(r => (r.zone || '').trim() === selectedZone.trim() && (r.zonal_incharge || r.zonal || '').trim());
+      if (matchZone?.zonal_incharge || matchZone?.zonal) {
+        foundZonalIncharge = (matchZone.zonal_incharge || matchZone.zonal).trim();
+      }
+    }
+
+    if (foundSectorIncharge && foundZonalIncharge && foundSectorIncharge !== foundZonalIncharge) {
+      return `${foundSectorIncharge} / ${foundZonalIncharge}`;
+    }
+    if (foundSectorIncharge) return foundSectorIncharge;
+    if (foundZonalIncharge) return foundZonalIncharge;
+
+    // If "ALL" is selected, try to find any first available incharge in filtered list
+    const anyIncharge = filteredRecords.find(r => (r.sector_incharge || r.zonal_incharge || r.zonal || '').trim());
+    if (anyIncharge) {
+      return (anyIncharge.sector_incharge || anyIncharge.zonal_incharge || anyIncharge.zonal || '').trim();
+    }
+
+    return '';
+  }, [inchargeName, selectedZone, selectedSector, records, filteredRecords]);
 
   // Extract absent personnel for the report
   const absentRecords = filteredRecords.filter(r => {
@@ -254,14 +295,14 @@ export default function CheckingReportModal({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
             <div>
               <label className="text-slate-700 block mb-1">
-                जोनल / सेक्टर प्रभारी का नाम (वैकल्पिक):
+                जोनल / सेक्टर प्रभारी का नाम (स्वतः प्राप्त / संपादन योग्य):
               </label>
               <input
                 type="text"
                 value={inchargeName}
                 onChange={(e) => setInchargeName(e.target.value)}
-                placeholder="उदा: श्री रामेश्वर सिंह, क्षेत्राधिकारी"
-                className="w-full h-9 px-3 bg-white border border-slate-300 rounded-lg text-slate-900"
+                placeholder={autoInchargeName ? `स्वतः चयनित: ${autoInchargeName}` : 'उदा: श्री रामेश्वर सिंह, क्षेत्राधिकारी'}
+                className="w-full h-9 px-3 bg-white border border-slate-300 rounded-lg text-slate-900 font-bold"
               />
             </div>
 
@@ -274,7 +315,7 @@ export default function CheckingReportModal({
                 value={checkingOfficerName}
                 onChange={(e) => setCheckingOfficerName(e.target.value)}
                 placeholder="उदा: अपर पुलिस अधीक्षक / क्षेत्राधिकारी"
-                className="w-full h-9 px-3 bg-white border border-slate-300 rounded-lg text-slate-900"
+                className="w-full h-9 px-3 bg-white border border-slate-300 rounded-lg text-slate-900 font-bold"
               />
             </div>
           </div>
@@ -292,13 +333,8 @@ export default function CheckingReportModal({
             {/* Header: Title */}
             <div className="text-center space-y-1 border-b-2 border-black pb-3">
               <h1 className="text-xl sm:text-2xl font-black tracking-wide text-black">
-                चेकिंग रिपोर्ट {eventTitle}
+                चेकिंग रिपोर्ट {cleanEventHeading}
               </h1>
-              {eventSubtitle && (
-                <p className="text-xs sm:text-sm font-bold text-gray-800">
-                  {eventSubtitle}
-                </p>
-              )}
             </div>
 
             {/* Sub-Header: Incharge Name and Zone/Sector Name */}
@@ -306,7 +342,7 @@ export default function CheckingReportModal({
               <div className="flex items-center gap-1.5 flex-1 min-w-0">
                 <span className="font-black shrink-0">जोनल/सेक्टर प्रभारी का नाम:-</span>
                 <span className="border-b border-dotted border-black flex-1 px-1 font-semibold truncate min-h-[20px]">
-                  {inchargeName || '...............................................................'}
+                  {autoInchargeName || inchargeName || '...............................................................'}
                 </span>
               </div>
 
