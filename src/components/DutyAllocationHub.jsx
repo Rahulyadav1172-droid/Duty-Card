@@ -61,40 +61,80 @@ export default function DutyAllocationHub({
   const [masterZones, setMasterZones] = useState(() => {
     try {
       const saved = localStorage.getItem(zonesStorageKey);
-      if (saved) return JSON.parse(saved);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
     } catch (e) {}
-    return [
-      { id: 'Z-1', name: 'मंदिर जोन', incharge: 'श्री राजेश कुमार (क्षेत्राधिकारी)', mobile: '9454401201' },
-      { id: 'Z-2', name: 'घाट जोन', incharge: 'श्री वीरेन्द्र सिंह (क्षेत्राधिकारी)', mobile: '9454401202' },
-      { id: 'Z-3', name: 'यातायात / ट्रैफिक जोन', incharge: 'श्री अमित सिंह (टी.आई.)', mobile: '9454401203' }
-    ];
+    // Extract unique zones from actual uploaded event records
+    const zonesSet = new Map();
+    (activeEvent?.records || []).forEach((r, idx) => {
+      const zName = (r.zone || '').trim();
+      if (zName && !zonesSet.has(zName)) {
+        zonesSet.set(zName, {
+          id: `Z-${idx + 1}`,
+          name: zName,
+          incharge: r.zonal_incharge || r.zonal || '',
+          mobile: r.zonal_mobile || ''
+        });
+      }
+    });
+    return Array.from(zonesSet.values());
   });
 
   const [masterSectors, setMasterSectors] = useState(() => {
     try {
       const saved = localStorage.getItem(sectorsStorageKey);
-      if (saved) return JSON.parse(saved);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
     } catch (e) {}
-    return [
-      { id: 'S-1', name: 'मंदिर सेक्टर-01', zone: 'मंदिर जोन', incharge: 'प्र0नि0 कोतवाली नगर', mobile: '9454401301' },
-      { id: 'S-2', name: 'मंदिर सेक्टर-02', zone: 'मंदिर जोन', incharge: 'प्र0नि0 रामजन्मभूमि', mobile: '9454401302' },
-      { id: 'S-3', name: 'घाट सेक्टर-01', zone: 'घाट जोन', incharge: 'प्र0नि0 नयाघाट चौकी', mobile: '9454401303' },
-      { id: 'S-4', name: 'घाट सेक्टर-02', zone: 'घाट जोन', incharge: 'प्र0नि0 लक्ष्मणघाट', mobile: '9454401304' },
-      { id: 'S-5', name: 'ट्रैफिक सेक्टर-01', zone: 'यातायात / ट्रैफिक जोन', incharge: 'टी.एस.आई. अयोध्या', mobile: '9454401305' }
-    ];
+    // Extract unique sectors from actual uploaded event records
+    const sectorsSet = new Map();
+    (activeEvent?.records || []).forEach((r, idx) => {
+      const sName = (r.sector || '').trim();
+      const zName = (r.zone || '').trim();
+      if (sName && !sectorsSet.has(sName)) {
+        sectorsSet.set(sName, {
+          id: `S-${idx + 1}`,
+          name: sName,
+          zone: zName,
+          incharge: r.sector_incharge || '',
+          mobile: r.sector_mobile || ''
+        });
+      }
+    });
+    return Array.from(sectorsSet.values());
   });
 
   const [masterPoints, setMasterPoints] = useState(() => {
     try {
       const saved = localStorage.getItem(pointsStorageKey);
-      if (saved) return JSON.parse(saved);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
     } catch (e) {}
-    return [
-      { id: 'P-1', name: 'हनुमानगढ़ी मुख्य प्रवेश द्वार', zone: 'मंदिर जोन', sector: 'मंदिर सेक्टर-01', shift: 'प्रातः 08:00 बजे से 20:30 बजे तक', reqSI: 1, reqHC: 2, reqConstable: 6, reqFemale: 2 },
-      { id: 'P-2', name: 'राम जन्मभूमि वीआईपी गेट नं. 3', zone: 'मंदिर जोन', sector: 'मंदिर सेक्टर-02', shift: 'प्रातः 08:00 बजे से 20:30 बजे तक', reqSI: 2, reqHC: 3, reqConstable: 8, reqFemale: 3 },
-      { id: 'P-3', name: 'पक्काघाट पीपल पेड़ के पास', zone: 'घाट जोन', sector: 'घाट सेक्टर-01', shift: 'प्रातः 08:00 बजे से 20:30 बजे तक', reqSI: 1, reqHC: 2, reqConstable: 4, reqFemale: 1 },
-      { id: 'P-4', name: 'नया घाट चौराहा व बैरियर', zone: 'यातायात / ट्रैफिक जोन', sector: 'ट्रैफिक सेक्टर-01', shift: 'प्रातः 08:00 बजे से 20:30 बजे तक', reqSI: 1, reqHC: 2, reqConstable: 6, reqFemale: 0 }
-    ];
+    // Extract unique duty points from actual uploaded event records
+    const pointsSet = new Map();
+    (activeEvent?.records || []).forEach((r, idx) => {
+      const pName = (r.duty_place || '').trim();
+      if (pName && !pointsSet.has(pName)) {
+        pointsSet.set(pName, {
+          id: `P-${idx + 1}`,
+          name: pName,
+          zone: (r.zone || '').trim(),
+          sector: (r.sector || '').trim(),
+          shift: (r.shift || 'प्रातः 08:00 बजे से 20:30 बजे तक').trim(),
+          reqSI: 1,
+          reqHC: 2,
+          reqConstable: 4,
+          reqFemale: 1
+        });
+      }
+    });
+    return Array.from(pointsSet.values());
   });
 
   const zoneFileInputRef = useRef(null);
@@ -482,37 +522,38 @@ export default function DutyAllocationHub({
   };
 
   return (
-    <div className="w-full max-w-6xl mx-auto space-y-6 font-devanagari text-slate-900">
+    <div className="w-full max-w-7xl mx-auto space-y-6 font-devanagari text-slate-900">
       {/* ========================================================================= */}
       {/* 1. EXECUTIVE DARK COMMAND HERO & PILL NAVIGATION                           */}
       {/* ========================================================================= */}
-      <div className="bg-slate-950 text-white rounded-3xl p-6 sm:p-7 shadow-2xl border border-slate-800 space-y-5">
-        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-400 via-amber-500 to-amber-600 text-slate-950 flex items-center justify-center font-black shadow-lg shadow-amber-500/20 shrink-0">
+      <div className="bg-slate-950 text-white rounded-3xl p-5 sm:p-7 shadow-2xl border border-slate-800 space-y-5">
+        <div className="flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4">
+          <div className="flex items-start sm:items-center gap-4 min-w-0">
+            <div className="w-13 h-13 rounded-2xl bg-gradient-to-br from-amber-400 via-amber-500 to-amber-600 text-slate-950 flex items-center justify-center font-black shadow-lg shadow-amber-500/20 shrink-0">
               <Shield className="w-7 h-7 stroke-[2.5]" />
             </div>
-            <div>
-              <div className="flex items-center gap-2.5">
-                <h1 className="text-xl sm:text-2xl font-black tracking-tight text-white">
+            <div className="min-w-0">
+              <div className="flex items-center gap-2.5 flex-wrap">
+                <h1 className="text-lg sm:text-xl md:text-2xl font-black tracking-tight text-white leading-tight">
                   पुलिस ड्यूटी आवंटन एवं ज़ोन-सेक्टर कमान केंद्र
                 </h1>
-                <span className="hidden sm:inline-flex px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-bold text-xs border border-amber-500/30">
+                <span className="inline-flex px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-bold text-xs border border-amber-500/30 shrink-0">
                   लाइव कमान
                 </span>
               </div>
               <p className="text-xs sm:text-sm text-slate-400 font-medium mt-1">
-                इवेंट: <strong className="text-amber-400 font-black">{activeEvent?.title || 'श्रावण झूला मेला'}</strong> | बल प्रबंधन, ज़ोन पदानुक्रम व ड्यूटी पास आवंटन
+                इवेंट: <strong className="text-amber-400 font-black">{activeEvent?.title || 'सक्रिय सुरक्षा व्यवस्था'}</strong> | बल प्रबंधन, ज़ोन पदानुक्रम व ड्यूटी पास आवंटन
               </p>
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2.5 self-stretch sm:self-auto">
+          <div className="flex flex-wrap items-center gap-2.5 self-stretch xl:self-auto justify-end shrink-0">
             {/* Direct Booklet Button */}
             {onOpenBooklet && (
               <button
+                type="button"
                 onClick={onOpenBooklet}
-                className="px-4 py-2 bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-400 hover:to-amber-300 text-slate-950 font-black text-xs sm:text-sm rounded-2xl flex items-center gap-2 shadow-lg shadow-amber-500/20 transition active:scale-95 cursor-pointer"
+                className="px-4 py-2.5 bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-400 hover:to-amber-300 text-slate-950 font-black text-xs sm:text-sm rounded-xl flex items-center gap-2 shadow-lg shadow-amber-500/20 transition active:scale-95 cursor-pointer shrink-0"
                 title="आधिकारिक ड्यूटी बुकलेट देखें एवं A4 PDF प्रिंट करें"
               >
                 <FileSpreadsheet className="w-4 h-4 stroke-[2.5]" />
@@ -522,7 +563,7 @@ export default function DutyAllocationHub({
 
             {/* Event Selector Dropdown */}
             {events.length > 0 && (
-              <div className="flex items-center gap-2 bg-slate-900 px-3.5 py-2 rounded-2xl border border-slate-800 shadow-inner">
+              <div className="flex items-center gap-2 bg-slate-900 px-3.5 py-2.5 rounded-xl border border-slate-800 shadow-inner">
                 <span className="text-xs font-bold text-slate-400 shrink-0">इवेंट:</span>
                 <select
                   value={activeEventId}
@@ -693,17 +734,17 @@ export default function DutyAllocationHub({
             </div>
 
             {/* 4 Cascading Clean Selectors with uniform height and focus */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs font-bold">
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 text-xs font-bold">
               {/* 1. Zone */}
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between text-slate-700">
                   <span className="font-black text-slate-900">1. ज़ोन (Zone):</span>
-                  <button onClick={() => setIsZoneModalOpen(true)} className="text-[11px] text-amber-700 hover:text-amber-800 font-bold cursor-pointer">+ नया</button>
+                  <button type="button" onClick={() => setIsZoneModalOpen(true)} className="text-[11px] text-amber-700 hover:text-amber-800 font-bold cursor-pointer">+ नया</button>
                 </div>
                 <select
                   value={targetZone}
                   onChange={(e) => setTargetZone(e.target.value)}
-                  className="w-full h-11 px-3.5 bg-slate-50 border border-slate-300 rounded-xl font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500 cursor-pointer"
+                  className="w-full h-11 px-3.5 bg-slate-50 border border-slate-300 rounded-xl font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500 cursor-pointer text-xs"
                 >
                   {allZoneNames.map(z => <option key={z} value={z}>🛡️ {z}</option>)}
                 </select>
@@ -713,12 +754,12 @@ export default function DutyAllocationHub({
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between text-slate-700">
                   <span className="font-black text-slate-900">2. सेक्टर (Sector):</span>
-                  <button onClick={() => setIsSectorModalOpen(true)} className="text-[11px] text-amber-700 hover:text-amber-800 font-bold cursor-pointer">+ नया</button>
+                  <button type="button" onClick={() => setIsSectorModalOpen(true)} className="text-[11px] text-amber-700 hover:text-amber-800 font-bold cursor-pointer">+ नया</button>
                 </div>
                 <select
                   value={targetSector}
                   onChange={(e) => setTargetSector(e.target.value)}
-                  className="w-full h-11 px-3.5 bg-slate-50 border border-slate-300 rounded-xl font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500 cursor-pointer"
+                  className="w-full h-11 px-3.5 bg-slate-50 border border-slate-300 rounded-xl font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500 cursor-pointer text-xs"
                 >
                   {availableSectorsForZone.map(s => <option key={s} value={s}>🚩 {s}</option>)}
                 </select>
@@ -728,7 +769,7 @@ export default function DutyAllocationHub({
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between text-slate-900 font-black">
                   <span className="font-black text-slate-900">3. ड्यूटी स्थल (Point) *:</span>
-                  <button onClick={() => setIsPointModalOpen(true)} className="text-[11px] text-amber-700 hover:text-amber-800 font-bold cursor-pointer">+ नया</button>
+                  <button type="button" onClick={() => setIsPointModalOpen(true)} className="text-[11px] text-amber-700 hover:text-amber-800 font-bold cursor-pointer">+ नया</button>
                 </div>
                 <select
                   value={targetPoint}
@@ -738,7 +779,7 @@ export default function DutyAllocationHub({
                     const match = masterPoints.find(p => p.name === val);
                     if (match?.shift) setTargetShift(match.shift);
                   }}
-                  className="w-full h-11 px-3.5 bg-amber-50/50 border-2 border-amber-400 rounded-xl font-black text-slate-950 focus:outline-none focus:ring-2 focus:ring-amber-500 cursor-pointer"
+                  className="w-full h-11 px-3.5 bg-amber-50/60 border-2 border-amber-400 rounded-xl font-black text-slate-950 focus:outline-none focus:ring-2 focus:ring-amber-500 cursor-pointer text-xs"
                 >
                   {availablePointsForSector.map(p => <option key={p} value={p}>📍 {p}</option>)}
                 </select>
@@ -752,7 +793,7 @@ export default function DutyAllocationHub({
                   value={targetShift}
                   onChange={(e) => setTargetShift(e.target.value)}
                   placeholder="e.g. 08:00 से 20:30 बजे तक"
-                  className="w-full h-11 px-3.5 bg-slate-50 border border-slate-300 rounded-xl font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                  className="w-full h-11 px-3.5 bg-slate-50 border border-slate-300 rounded-xl font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500 text-xs"
                 />
               </div>
             </div>

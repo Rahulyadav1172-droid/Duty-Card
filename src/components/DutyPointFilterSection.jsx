@@ -152,16 +152,16 @@ export default function DutyPointFilterSection({
   };
 
   return (
-    <div className="w-full max-w-5xl mx-auto space-y-6 font-devanagari text-slate-900">
+    <div className="w-full max-w-7xl mx-auto space-y-6 font-devanagari text-slate-900">
       {/* Event Selector & Daily Checking Report Action Header */}
-      <div className="bg-slate-900 text-white p-4 sm:p-5 rounded-2xl border border-slate-800 shadow-sm flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3.5 no-print">
+      <div className="bg-slate-900 text-white p-4 sm:p-6 rounded-3xl border border-slate-800 shadow-sm flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3.5 no-print">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 shrink-0">
             <Layers className="w-5 h-5" />
           </div>
           <div>
             <div className="text-xs text-slate-400 font-bold">ड्यूटी का प्रकार:</div>
-            <div className="text-base font-black text-amber-400">{eventTitle || 'श्रावण झूला मेला'}</div>
+            <div className="text-base font-black text-amber-400">{eventTitle || 'सक्रिय सुरक्षा व्यवस्था'}</div>
           </div>
         </div>
 

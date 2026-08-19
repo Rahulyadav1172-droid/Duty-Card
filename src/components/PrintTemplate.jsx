@@ -3,19 +3,30 @@ import { QRCodeSVG } from 'qrcode.react';
 
 export default function PrintTemplate({
   duty,
+  allRecords = [],
   customNote = '',
   isNoteEnabled = true,
   customBriefing = '',
   isBriefingEnabled = true,
-  eventTitle = 'श्रावण झूला मेला',
-  eventSubtitle = 'ड्यूटी कार्ड अयोध्या-2026',
+  eventTitle = '',
+  eventSubtitle = '',
   signatureImg = '',
-  signatoryText = 'वरिष्ठ पुलिस अधीक्षक, अयोध्या'
+  signatoryText = 'वरिष्ठ पुलिस अधीक्षक, अयोध्या',
+  isCoForceEnabled = true
 }) {
   if (!duty) return null;
 
   const activeNote = (isNoteEnabled !== false && customNote) ? customNote : (isNoteEnabled ? (duty.note || '') : '');
   const activeBriefingPlace = (isBriefingEnabled !== false && customBriefing) ? customBriefing : (isBriefingEnabled ? (duty.briefing_place || '') : '');
+
+  // Co-deployed officers at same place
+  const normalizePlace = (str) => (str || '').trim().toLowerCase().replace(/\s+/g, ' ');
+  const coDeployedOfficers = (allRecords || []).filter(r => {
+    if (!r || r.id === duty.id) return false;
+    const placeA = normalizePlace(r.duty_place);
+    const placeB = normalizePlace(duty.duty_place);
+    return placeA && placeB && placeA === placeB;
+  });
 
   return (
     <div className="p-4 max-w-lg mx-auto bg-white text-black font-sans border-4 border-black rounded-lg shadow-none font-devanagari space-y-3">

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Search,
   FileSpreadsheet,
@@ -15,9 +15,13 @@ import {
   Users,
   LogIn,
   Calendar,
-  Layers
+  Layers,
+  Menu,
+  ChevronDown,
+  ShieldCheck
 } from 'lucide-react';
 
+import SidebarNavigation from './components/SidebarNavigation';
 import SearchSection from './components/SearchSection';
 import DutyCard from './components/DutyCard';
 import PrintTemplate from './components/PrintTemplate';
@@ -54,41 +58,21 @@ function getInitialEvents() {
     }
   } catch (e) {}
 
-  // Fallback / Initial Seed Event
+  // Initial Real Event Default
   return [
     {
       id: 'event-shravan-2026',
       title: 'श्रावण झूला मेला',
       subtitle: 'ड्यूटी कार्ड अयोध्या-2026',
       status: 'active',
-      created_at: new Date().toLocaleDateString('hi-IN'),
+      created_at: '16.08.2026 से अग्रिम आदेश तक',
       signatoryText: 'वरिष्ठ पुलिस अधीक्षक, अयोध्या',
       signatureImg: '',
       note: '',
       isNoteEnabled: false,
       briefing: '',
       isBriefingEnabled: false,
-      records: initialData || [],
-      attendanceMap: {}
-    },
-    {
-      id: 'event-cm-visit-2026',
-      title: 'मुख्यमंत्री वीआईपी सुरक्षा व्यवस्था 2026',
-      subtitle: 'जनपद अयोध्या विशेष ड्यूटी पास',
-      status: 'active',
-      created_at: new Date().toLocaleDateString('hi-IN'),
-      signatoryText: 'वरिष्ठ पुलिस अधीक्षक, अयोध्या',
-      signatureImg: '',
-      note: 'समस्त अधिकारी समय से 02 घंटे पूर्व ब्रीफिंग स्थल पर उपस्थित रहें।',
-      isNoteEnabled: true,
-      briefing: 'कंट्रोल रूम अयोध्या',
-      isBriefingEnabled: true,
-      records: (initialData || []).slice(0, 3).map((r, i) => ({
-        ...r,
-        id: `VIP-00${i + 1}`,
-        duty_place: i === 0 ? 'हेलीपैड सुरक्षा व्यवस्था' : 'मुख्य मंच प्रवेश द्वार',
-        shift: 'प्रातः 08:00 बजे से कार्यक्रम समाप्ति तक'
-      })),
+      records: [],
       attendanceMap: {}
     }
   ];
@@ -115,23 +99,16 @@ export default function App() {
     }
   });
 
-  // Master Force Register State (Global)
+  // Master Force Register State (Global) - Only Real Data
   const [forceRecords, setForceRecords] = useState(() => {
     try {
       const saved = localStorage.getItem(FORCE_STORAGE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) return parsed;
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
       }
     } catch (e) {}
-    return (initialData || []).map(d => ({
-      pno: d.id || `PN-${Math.floor(100000 + Math.random() * 900000)}`,
-      name: d.name,
-      rank: d.rank || 'का0',
-      mobile: d.mobile,
-      posting: d.posting || 'थाना कोतवाली',
-      district: d.district || 'अयोध्या'
-    }));
+    return [];
   });
 
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
@@ -143,6 +120,20 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('search');
   const [searchAttempted, setSearchAttempted] = useState(false);
   const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const userMenuRef = useRef(null);
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target)) {
+        setIsUserMenuOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   // Current Active Event Object (Guaranteed fallback, respects active status for public search)
   const activeEventsList = (Array.isArray(events) ? events : []).filter(e => e.status !== 'archived');
@@ -480,161 +471,215 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col font-sans selection:bg-amber-500 selection:text-slate-950 font-devanagari">
-      {/* Top Header - Deep Navy & Gold Accent Touch */}
-      <header className="sticky top-0 z-40 bg-[#0b132b] text-white border-b border-slate-800 shadow-md no-print">
-        <div className="max-w-5xl mx-auto px-3 sm:px-4 py-2.5 sm:py-3 flex items-center justify-between gap-2 sm:gap-3">
-          {/* Logo & Title */}
-          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-            <img src="/badge.png" alt="Badge" className="w-8 h-8 sm:w-10 sm:h-10 object-contain drop-shadow-md shrink-0" />
-            <div className="min-w-0">
-              <h1 className="text-sm sm:text-lg font-black text-white leading-tight flex items-center gap-1.5 sm:gap-2">
-                <span className="truncate">अयोध्या पुलिस ड्यूटी पास</span>
-                <span className="text-[9px] sm:text-[10px] px-1.5 sm:px-2 py-0.5 rounded bg-amber-500 text-slate-950 font-mono font-black truncate max-w-[110px] sm:max-w-[160px] shrink-0">
-                  {currentEvent.title}
-                </span>
-              </h1>
-              <p className="text-[10px] sm:text-[11px] text-slate-300 font-medium truncate">उत्तर प्रदेश पुलिस सुरक्षा व्यवस्था</p>
-            </div>
-          </div>
+    <div className="min-h-screen bg-slate-100/70 text-slate-900 flex font-sans selection:bg-amber-500 selection:text-slate-950 font-devanagari">
+      {/* 1. Responsive Sidebar Navigation */}
+      <SidebarNavigation
+        activeTab={activeTab}
+        onSelectTab={handleTabClick}
+        userRole={userRole}
+        onLogout={handleLogout}
+        onRequestAuth={(role, tab) => {
+          if (tab) setPendingTab(tab);
+          setIsLoginModalOpen(true);
+        }}
+        isCollapsed={isSidebarCollapsed}
+        onToggleCollapse={() => setIsSidebarCollapsed(prev => !prev)}
+        isMobileOpen={isMobileSidebarOpen}
+        onCloseMobile={() => setIsMobileSidebarOpen(false)}
+        eventTitle={currentEvent.title}
+        totalPersonnelCount={currentEvent.records?.length || 0}
+      />
 
-          {/* Login / Logout Trigger */}
-          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-            {userRole !== 'guest' ? (
-              <div className="flex items-center gap-1.5 sm:gap-2">
-                <span className="text-[10px] sm:text-xs font-bold px-2 sm:px-2.5 py-1 rounded-lg bg-amber-500 text-slate-950 flex items-center gap-1">
-                  {userRole === 'admin' ? <Lock className="w-3 h-3 sm:w-3.5 sm:h-3.5" /> : <UserCheck className="w-3 h-3 sm:w-3.5 sm:h-3.5" />}
-                  <span>{userRole === 'admin' ? 'एडमिन' : 'अधिकारी'}</span>
-                </span>
+      {/* 2. Main Content Wrapper */}
+      <div
+        className={`flex-1 flex flex-col min-w-0 transition-all duration-200 ease-in-out ${
+          userRole !== 'guest' ? (isSidebarCollapsed ? 'md:pl-20' : 'md:pl-64') : 'pl-0'
+        }`}
+      >
+        {/* Modern Clean Top Header */}
+        <header className="sticky top-0 z-20 bg-slate-900 text-white border-b border-slate-800 shadow-sm no-print">
+          <div className="px-3 sm:px-6 py-2.5 sm:py-3 flex items-center justify-between gap-3 max-w-7xl mx-auto w-full">
+            {/* Left: Police Emblem & Title / Mobile Hamburger */}
+            <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+              {userRole !== 'guest' ? (
+                /* Mobile Hamburger for Logged In Officer */
                 <button
-                  onClick={() => setIsChangePasswordOpen(true)}
-                  className="px-2 sm:px-2.5 py-1 sm:py-1.5 bg-slate-800 hover:bg-slate-700 text-amber-400 border border-slate-700 rounded-lg text-[10px] sm:text-xs font-bold flex items-center gap-1 transition cursor-pointer"
-                  title="पासवर्ड बदलें"
+                  onClick={() => setIsMobileSidebarOpen(true)}
+                  className="p-2 -ml-1 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800 md:hidden cursor-pointer"
+                  title="मेनू खोलें"
                 >
-                  <KeyRound className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                  <span className="hidden sm:inline">पासवर्ड बदलें</span>
+                  <Menu className="w-5 h-5" />
                 </button>
-                <button
-                  onClick={handleLogout}
-                  className="px-2 sm:px-2.5 py-1 sm:py-1.5 bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/40 rounded-lg text-[10px] sm:text-xs font-bold flex items-center gap-1 transition cursor-pointer"
-                  title="लॉग आउट करें"
-                >
-                  <LogOut className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                  <span className="hidden sm:inline">लॉग आउट</span>
-                </button>
+              ) : (
+                /* Police Emblem for Public / Guest */
+                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 p-0.5 shadow-md shrink-0 flex items-center justify-center">
+                  <img
+                    src="/badge.png"
+                    alt="Police Emblem"
+                    className="w-7 h-7 object-contain filter drop-shadow"
+                    onError={(e) => {
+                      e.target.style.display = 'none';
+                    }}
+                  />
+                </div>
+              )}
+
+              {/* Event Badge & Selector */}
+              <div className="min-w-0">
+                <div className="flex items-center gap-2">
+                  <h1 className="text-xs sm:text-sm font-black text-white truncate leading-tight">
+                    {userRole === 'guest' ? 'अयोध्या पुलिस ड्यूटी पास पोर्टल' : currentEvent.title}
+                  </h1>
+                  <span className="hidden sm:inline-block text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30 shrink-0">
+                    {currentEvent.title}
+                  </span>
+                </div>
+                {userRole === 'guest' && (
+                  <p className="text-[10px] text-slate-400 font-medium truncate">उत्तर प्रदेश पुलिस सुरक्षा व्यवस्था</p>
+                )}
               </div>
-            ) : (
-              <button
-                onClick={() => setIsLoginModalOpen(true)}
-                className="px-3 sm:px-4 py-1.5 sm:py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black rounded-xl text-xs sm:text-sm flex items-center gap-1.5 transition shadow-xs cursor-pointer"
-              >
-                <LogIn className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                लॉगिन
-              </button>
-            )}
-          </div>
-        </div>
+            </div>
 
-        {/* Logged in Navigation Bar (Horizontally scrollable for mobile) */}
-        {userRole !== 'guest' && (
-          <div className="border-t border-slate-800/80 bg-slate-900/95 px-2 sm:px-4 py-1">
-            <div className="max-w-5xl mx-auto flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
-              <button
-                onClick={() => handleTabClick('search')}
-                className={`px-3 py-1.5 rounded-lg transition flex items-center gap-1 text-xs whitespace-nowrap cursor-pointer shrink-0 ${
-                  activeTab === 'search' ? 'bg-amber-500 text-slate-950 font-black shadow-xs' : 'text-slate-300 hover:text-white font-bold'
-                }`}
-              >
-                <Search className="w-3.5 h-3.5" />
-                कार्ड खोजें
-              </button>
+            {/* Right: Cloud Sync Chip & User Profile Dropdown */}
+            <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+              <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-800/80 border border-slate-700/60 text-[11px] font-bold text-slate-300">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
+                <span>क्लाउड सिंक सक्रिय</span>
+              </div>
 
-              <button
-                onClick={() => handleTabClick('filter')}
-                className={`px-3 py-1.5 rounded-lg transition flex items-center gap-1 text-xs whitespace-nowrap cursor-pointer shrink-0 ${
-                  activeTab === 'filter' ? 'bg-amber-500 text-slate-950 font-black shadow-xs' : 'text-slate-300 hover:text-white font-bold'
-                }`}
-              >
-                <MapPin className="w-3.5 h-3.5" />
-                पॉइंट फ़िल्टर
-              </button>
+              {userRole !== 'guest' ? (
+                <div className="relative" ref={userMenuRef}>
+                  {/* User Profile Trigger Button */}
+                  <button
+                    type="button"
+                    onClick={() => setIsUserMenuOpen((prev) => !prev)}
+                    className="flex items-center gap-2 px-2.5 sm:px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700/90 border border-slate-700/80 text-white transition cursor-pointer shadow-xs active:scale-95"
+                    title="यूज़र मेनू खोलें"
+                  >
+                    <div
+                      className={`w-6 h-6 sm:w-7 sm:h-7 rounded-lg flex items-center justify-center text-xs font-black shrink-0 ${
+                        userRole === 'admin'
+                          ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
+                          : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                      }`}
+                    >
+                      {userRole === 'admin' ? '👑' : '👮'}
+                    </div>
 
-              <button
-                onClick={() => handleTabClick('booklet')}
-                className={`px-3 py-1.5 rounded-lg transition flex items-center gap-1 text-xs whitespace-nowrap cursor-pointer shrink-0 ${
-                  activeTab === 'booklet' ? 'bg-amber-500 text-slate-950 font-black shadow-xs' : 'text-slate-300 hover:text-white font-bold'
-                }`}
-              >
-                <BookOpen className="w-3.5 h-3.5" />
-                बुकलेट PDF
-              </button>
+                    <div className="text-left hidden sm:block">
+                      <div className="text-xs font-black text-white leading-tight">
+                        {userRole === 'admin' ? 'सुपर एडमिन' : 'वरिष्ठ अधिकारी'}
+                      </div>
+                      <div className="text-[10px] text-slate-400 font-medium">
+                        {userRole === 'admin' ? 'Admin Portal' : 'Inspection Officer'}
+                      </div>
+                    </div>
 
-              {(userRole === 'admin' || userRole === 'senior') && (
+                    <ChevronDown
+                      className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${
+                        isUserMenuOpen ? 'rotate-180 text-amber-400' : ''
+                      }`}
+                    />
+                  </button>
+
+                  {/* Dropdown Menu Modal / Card */}
+                  {isUserMenuOpen && (
+                    <div className="absolute right-0 mt-2 w-64 bg-slate-900 border border-slate-700/90 rounded-2xl shadow-2xl z-50 overflow-hidden animate-in fade-in zoom-in-95 font-devanagari text-slate-200 p-2 space-y-2">
+                      {/* User Info Card */}
+                      <div className="p-3 bg-slate-800/90 rounded-xl border border-slate-700/60 space-y-1">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] uppercase tracking-wider font-bold text-slate-400">
+                            सक्रिय सत्र (Active Session)
+                          </span>
+                          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                        </div>
+                        <div className="font-black text-sm text-white flex items-center gap-1.5">
+                          <span>
+                            {userRole === 'admin' ? '👑 सुपर एडमिनिस्ट्रेटर' : '👮 वरिष्ठ पुलिस अधिकारी'}
+                          </span>
+                        </div>
+                        <div className="text-[11px] text-amber-400 font-semibold truncate">
+                          इवेंट: {currentEvent.title}
+                        </div>
+                      </div>
+
+                      {/* Menu Options */}
+                      <div className="space-y-1 text-xs font-bold">
+                        {/* 1. Change Password */}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsUserMenuOpen(false);
+                            setIsChangePasswordOpen(true);
+                          }}
+                          className="w-full px-3 py-2.5 rounded-xl hover:bg-slate-800 text-slate-200 hover:text-amber-400 transition flex items-center gap-2.5 cursor-pointer text-left"
+                        >
+                          <div className="w-7 h-7 rounded-lg bg-amber-500/10 text-amber-400 flex items-center justify-center shrink-0 border border-amber-500/20">
+                            <KeyRound className="w-4 h-4" />
+                          </div>
+                          <div>
+                            <div>पासवर्ड बदलें (Change Password)</div>
+                            <div className="text-[10px] text-slate-400 font-medium">खाता सुरक्षा अपडेट करें</div>
+                          </div>
+                        </button>
+
+                        {/* 2. Admin Quick Settings */}
+                        {userRole === 'admin' && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setIsUserMenuOpen(false);
+                              handleTabClick('upload');
+                            }}
+                            className="w-full px-3 py-2.5 rounded-xl hover:bg-slate-800 text-slate-200 hover:text-amber-400 transition flex items-center gap-2.5 cursor-pointer text-left"
+                          >
+                            <div className="w-7 h-7 rounded-lg bg-indigo-500/10 text-indigo-400 flex items-center justify-center shrink-0 border border-indigo-500/20">
+                              <ShieldCheck className="w-4 h-4" />
+                            </div>
+                            <div>
+                              <div>पोर्टल सेटिंग्स (Portal Settings)</div>
+                              <div className="text-[10px] text-slate-400 font-medium">हेडिंग्स, एक्सेल व हस्ताक्षर</div>
+                            </div>
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Divider */}
+                      <div className="h-px bg-slate-800 my-1" />
+
+                      {/* Logout Action */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsUserMenuOpen(false);
+                          handleLogout();
+                        }}
+                        className="w-full px-3 py-2.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 hover:text-rose-200 border border-rose-500/30 transition flex items-center justify-center gap-2 text-xs font-black cursor-pointer active:scale-95"
+                      >
+                        <LogOut className="w-4 h-4" />
+                        <span>लॉग आउट करें (Logout)</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ) : (
                 <button
-                  onClick={() => handleTabClick('allocation')}
-                  className={`px-3 py-1.5 rounded-lg transition flex items-center gap-1 text-xs whitespace-nowrap cursor-pointer shrink-0 ${
-                    activeTab === 'allocation' ? 'bg-amber-500 text-slate-950 font-black shadow-xs' : 'text-slate-300 hover:text-white font-bold'
-                  }`}
+                  onClick={() => {
+                    setPendingTab('search');
+                    setIsLoginModalOpen(true);
+                  }}
+                  className="px-3.5 py-1.5 bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-400 hover:to-amber-300 text-slate-950 font-black rounded-xl text-xs sm:text-sm flex items-center gap-1.5 transition shadow-xs cursor-pointer active:scale-95"
                 >
-                  <UserCheck className="w-3.5 h-3.5" />
-                  ड्यूटी आवंटन
-                </button>
-              )}
-
-              {userRole === 'admin' && (
-                <button
-                  onClick={() => handleTabClick('aamad')}
-                  className={`px-3 py-1.5 rounded-lg transition flex items-center gap-1 text-xs whitespace-nowrap cursor-pointer shrink-0 ${
-                    activeTab === 'aamad' ? 'bg-amber-500 text-slate-950 font-black shadow-xs' : 'text-slate-300 hover:text-white font-bold'
-                  }`}
-                >
-                  <UserCheck className="w-3.5 h-3.5" />
-                  बल आमद
-                </button>
-              )}
-
-              {userRole === 'admin' && (
-                <button
-                  onClick={() => handleTabClick('events')}
-                  className={`px-3 py-1.5 rounded-lg transition flex items-center gap-1 text-xs whitespace-nowrap cursor-pointer shrink-0 ${
-                    activeTab === 'events' ? 'bg-amber-500 text-slate-950 font-black shadow-xs' : 'text-slate-300 hover:text-white font-bold'
-                  }`}
-                >
-                  <Calendar className="w-3.5 h-3.5" />
-                  इवेंट्स मैनेजर
-                </button>
-              )}
-
-              {userRole === 'admin' && (
-                <button
-                  onClick={() => handleTabClick('force')}
-                  className={`px-3 py-1.5 rounded-lg transition flex items-center gap-1 text-xs whitespace-nowrap cursor-pointer shrink-0 ${
-                    activeTab === 'force' ? 'bg-amber-500 text-slate-950 font-black shadow-xs' : 'text-slate-300 hover:text-white font-bold'
-                  }`}
-                >
-                  <Users className="w-3.5 h-3.5" />
-                  मास्टर फ़ोर्स
-                </button>
-              )}
-
-              {userRole === 'admin' && (
-                <button
-                  onClick={() => handleTabClick('upload')}
-                  className={`px-3 py-1.5 rounded-lg transition flex items-center gap-1 text-xs whitespace-nowrap cursor-pointer shrink-0 ${
-                    activeTab === 'upload' ? 'bg-amber-500 text-slate-950 font-black shadow-xs' : 'text-slate-300 hover:text-white font-bold'
-                  }`}
-                >
-                  <FileSpreadsheet className="w-3.5 h-3.5" />
-                  अपलोड / सेटिंग्स
+                  <LogIn className="w-3.5 h-3.5" />
+                  <span>अधिकारी लॉगिन</span>
                 </button>
               )}
             </div>
           </div>
-        )}
-      </header>
+        </header>
 
-      {/* Main Page Content */}
-      <main className="flex-1 max-w-5xl w-full mx-auto p-3 sm:p-6 space-y-5 sm:space-y-6">
+        {/* Main Page Content */}
+        <main className="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-6 lg:p-8 space-y-6">
         {/* PUBLICLY ACCESSIBLE SEARCH TAB */}
         {activeTab === 'search' && (
           <div className="max-w-xl mx-auto space-y-5">
@@ -702,8 +747,8 @@ export default function App() {
           </div>
         )}
 
-        {/* SENIOR OFFICER / ADMIN: DUTY ALLOCATION HUB */}
-        {activeTab === 'allocation' && (
+        {/* ADMIN ONLY: DUTY ALLOCATION HUB */}
+        {activeTab === 'allocation' && userRole === 'admin' && (
           <DutyAllocationHub
             masterForce={forceRecords}
             activeEvent={currentEvent}
@@ -825,6 +870,7 @@ export default function App() {
         <p className="font-bold text-slate-700">अयोध्या पुलिस ड्यूटी व पास प्रबंधन प्रणाली © 2026</p>
         <p className="text-[11px] font-semibold text-slate-500">Designed & Developed by Smart Cell Ayodhya</p>
       </footer>
+      </div>
     </div>
   );
 }

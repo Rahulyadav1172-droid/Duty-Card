@@ -39,22 +39,24 @@ export async function fetchEventsFromSupabase() {
     }
 
     if (Array.isArray(data) && data.length > 0) {
-      return data.map(row => ({
-        id: row.id,
-        title: row.title,
-        subtitle: row.subtitle,
-        startDate: row.start_date || row.created_at || '16.08.2026 से अग्रिम आदेश तक',
-        status: row.status === 'archived' ? 'archived' : 'active',
-        created_at: row.created_at,
-        signatoryText: row.signatory_text || 'वरिष्ठ पुलिस अधीक्षक, अयोध्या',
-        signatureImg: row.signature_img || '',
-        note: row.note || '',
-        isNoteEnabled: row.is_note_enabled ?? false,
-        briefing: row.briefing || '',
-        isBriefingEnabled: row.is_briefing_enabled ?? false,
-        records: ensureUniqueRecordIds(row.records || []),
-        attendanceMap: row.attendance_map || {}
-      }));
+      return data
+        .filter(row => row.id !== 'global-pdf-booklets' && !String(row.id).startsWith('global-'))
+        .map(row => ({
+          id: row.id,
+          title: row.title,
+          subtitle: row.subtitle,
+          startDate: row.start_date || row.created_at || '16.08.2026 से अग्रिम आदेश तक',
+          status: row.status === 'archived' ? 'archived' : 'active',
+          created_at: row.created_at,
+          signatoryText: row.signatory_text || 'वरिष्ठ पुलिस अधीक्षक, अयोध्या',
+          signatureImg: row.signature_img || '',
+          note: row.note || '',
+          isNoteEnabled: row.is_note_enabled ?? false,
+          briefing: row.briefing || '',
+          isBriefingEnabled: row.is_briefing_enabled ?? false,
+          records: ensureUniqueRecordIds(row.records || []),
+          attendanceMap: row.attendance_map || {}
+        }));
     }
     return [];
   } catch (err) {

@@ -91,9 +91,9 @@ export default function MasterForceManager({ forceRecords, onUpdateForce }) {
   );
 
   return (
-    <div className="w-full max-w-5xl mx-auto space-y-6 font-devanagari text-slate-900">
+    <div className="w-full max-w-7xl mx-auto space-y-6 font-devanagari text-slate-900">
       {/* Header Banner (Light Theme) */}
-      <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-xl flex flex-col md:flex-row items-center justify-between gap-4">
+      <div className="bg-white p-5 sm:p-7 rounded-3xl border border-slate-200 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2.5">
             <Users className="w-6 h-6 text-amber-600" />

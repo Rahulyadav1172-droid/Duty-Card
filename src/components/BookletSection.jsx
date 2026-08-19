@@ -168,7 +168,7 @@ export default function BookletSection({
             </div>
             <div>
               <div className="text-xs text-slate-400 font-bold">ड्यूटी का प्रकार:</div>
-              <div className="text-base font-black text-amber-400">{eventTitle || 'श्रावण झूला मेला'}</div>
+              <div className="text-base font-black text-amber-400">{eventTitle || 'पुलिस सुरक्षा व्यवस्था'}</div>
             </div>
           </div>
 

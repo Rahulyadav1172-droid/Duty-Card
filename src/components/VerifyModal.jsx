@@ -5,8 +5,8 @@ export default function VerifyModal({
   duty,
   isOpen,
   onClose,
-  eventTitle = 'श्रावण झूला मेला',
-  eventSubtitle = 'ड्यूटी कार्ड अयोध्या-2026'
+  eventTitle = '',
+  eventSubtitle = ''
 }) {
   if (!isOpen || !duty) return null;
 

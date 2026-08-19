@@ -42,8 +42,8 @@ export default function AdminUpload({
   isBriefingEnabled,
   onUpdateBriefing,
   attendanceMap = {},
-  eventTitle = 'श्रावण झूला मेला',
-  eventSubtitle = 'ड्यूटी कार्ड अयोध्या-2026',
+  eventTitle = '',
+  eventSubtitle = '',
   onUpdateEventHeadings,
   signatureImg = '',
   signatoryText = 'वरिष्ठ पुलिस अधीक्षक, अयोध्या',
@@ -342,7 +342,7 @@ export default function AdminUpload({
   const handleSaveHeadings = (e) => {
     e?.preventDefault();
     if (onUpdateEventHeadings) {
-      onUpdateEventHeadings(titleInput.trim() || 'श्रावण झूला मेला', subtitleInput.trim() || 'ड्यूटी कार्ड अयोध्या-2026');
+      onUpdateEventHeadings(titleInput.trim() || eventTitle || 'पुलिस सुरक्षा व्यवस्था', subtitleInput.trim() || eventSubtitle || 'ड्यूटी पास');
       setHeadingsSaved(true);
       setTimeout(() => setHeadingsSaved(false), 2000);
       setStatusMsg({ type: 'success', text: 'मेला / कार्यक्रम शीर्षक सफलतापूर्वक सहेज दिया गया है।' });

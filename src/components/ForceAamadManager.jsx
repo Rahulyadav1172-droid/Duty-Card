@@ -365,43 +365,46 @@ export default function ForceAamadManager({
 
   return (
     <div className="w-full max-w-5xl mx-auto space-y-6 font-devanagari text-slate-900">
-      {/* Top Banner */}
-      <div className="bg-white p-5 sm:p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-3.5">
-            <div className="w-12 h-12 rounded-2xl bg-amber-50 border border-amber-200 text-amber-700 flex items-center justify-center shrink-0">
-              <UserCheck className="w-6 h-6" />
+      {/* Top Banner Header */}
+      <div className="bg-white p-5 sm:p-7 rounded-3xl border border-slate-200 shadow-sm space-y-5">
+        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+          <div className="flex items-start sm:items-center gap-3.5 min-w-0">
+            <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-600 flex items-center justify-center shrink-0 shadow-xs">
+              <UserCheck className="w-6 h-6 stroke-[2.5]" />
             </div>
-            <div>
-              <h2 className="text-lg sm:text-xl font-black text-slate-950 flex items-center gap-2">
-                <span>पुलिस बल आमद रजिस्टर (Force Arrival)</span>
-                <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold border border-emerald-300 flex items-center gap-1">
-                  <Server className="w-3 h-3" />
+            <div className="min-w-0">
+              <div className="flex items-center gap-2.5 flex-wrap">
+                <h2 className="text-lg sm:text-xl font-black text-slate-900 leading-tight">
+                  पुलिस बल आमद रजिस्टर (Force Arrival)
+                </h2>
+                <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-800 font-bold border border-emerald-300 flex items-center gap-1 shrink-0">
+                  <Server className="w-3 h-3 text-emerald-600" />
                   सर्वर टाइम सिंक
                 </span>
-              </h2>
-              <p className="text-xs text-slate-500 font-medium mt-0.5">
+              </div>
+              <p className="text-xs text-slate-500 font-medium mt-1">
                 बाहरी जनपदों एवं रेंजों से आए पुलिस बल की आमद दर्ज करें (डेटा स्वतः मास्टर फ़ोर्स में जुड़ता है)
               </p>
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
+          {/* Action Buttons */}
+          <div className="flex flex-wrap items-center gap-2 self-stretch lg:self-auto justify-end">
             <button
               onClick={() => setIsAuditModalOpen(true)}
-              className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-black rounded-xl border border-slate-300 flex items-center gap-1.5 transition cursor-pointer"
+              className="px-3.5 py-2 bg-slate-50 hover:bg-slate-100 text-slate-700 hover:text-slate-900 text-xs font-bold rounded-xl border border-slate-200 flex items-center gap-1.5 transition cursor-pointer shadow-xs"
               title="हटाए गए रिकॉर्ड्स एवं रिमार्क लॉग देखें"
             >
-              <History className="w-4 h-4 text-amber-600" />
+              <History className="w-3.5 h-3.5 text-amber-600" />
               <span>ऑडिट लॉग ({auditLogs.length})</span>
             </button>
 
             <button
               onClick={handleExportExcel}
-              className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-black rounded-xl border border-slate-300 flex items-center gap-1.5 transition cursor-pointer"
+              className="px-3.5 py-2 bg-slate-50 hover:bg-slate-100 text-slate-700 hover:text-slate-900 text-xs font-bold rounded-xl border border-slate-200 flex items-center gap-1.5 transition cursor-pointer shadow-xs"
               title="आमद रजिस्टर एक्सेल में डाउनलोड करें"
             >
-              <FileDown className="w-4 h-4 text-emerald-600" />
+              <FileDown className="w-3.5 h-3.5 text-emerald-600" />
               <span>Excel डाउनलोड</span>
             </button>
 
@@ -415,39 +418,39 @@ export default function ForceAamadManager({
             />
             <label
               htmlFor="bulk-aamad-excel-input"
-              className="cursor-pointer px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white font-black text-xs rounded-xl flex items-center gap-1.5 shadow transition active:scale-95"
+              className="cursor-pointer px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl flex items-center gap-1.5 shadow-sm transition active:scale-95"
             >
-              <Upload className="w-4 h-4 text-amber-400" />
-              <span>बल्क आमद एक्सेल</span>
+              <Upload className="w-3.5 h-3.5 text-amber-400" />
+              <span>बल्क एक्सेल</span>
             </label>
 
             <button
               onClick={handleOpenAddModal}
-              className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs rounded-xl flex items-center gap-1.5 shadow transition active:scale-95 cursor-pointer"
+              className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs rounded-xl flex items-center gap-1.5 shadow-sm transition active:scale-95 cursor-pointer"
             >
               <Plus className="w-4 h-4 stroke-[3]" />
-              <span>+ एकल आमद दर्ज करें</span>
+              <span>+ एकल आमद</span>
             </button>
           </div>
         </div>
 
         {/* Live Counters */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-2 border-t border-slate-100 text-xs">
-          <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200 text-center">
-            <div className="text-slate-500 font-bold text-[10px]">कुल आमद प्राप्त बल</div>
-            <div className="text-base font-black text-slate-900 font-mono mt-0.5">{aamadRecords.length} जवान</div>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-3 border-t border-slate-100 text-xs">
+          <div className="bg-slate-50/80 p-3 rounded-2xl border border-slate-200/80 text-center space-y-0.5">
+            <div className="text-slate-500 font-bold text-[10px] uppercase tracking-wider">कुल आमद प्राप्त बल</div>
+            <div className="text-lg font-black text-slate-900 font-mono">{aamadRecords.length} <span className="text-xs font-bold font-sans text-slate-600">जवान</span></div>
           </div>
-          <div className="bg-emerald-50 p-2.5 rounded-xl border border-emerald-200 text-center">
-            <div className="text-emerald-800 font-bold text-[10px]">संबंधित जनपद</div>
-            <div className="text-base font-black text-emerald-950 font-mono mt-0.5">{uniqueDistricts.length} जनपद</div>
+          <div className="bg-emerald-50/60 p-3 rounded-2xl border border-emerald-200/80 text-center space-y-0.5">
+            <div className="text-emerald-800 font-bold text-[10px] uppercase tracking-wider">संबंधित जनपद</div>
+            <div className="text-lg font-black text-emerald-950 font-mono">{uniqueDistricts.length} <span className="text-xs font-bold font-sans text-emerald-800">जनपद</span></div>
           </div>
-          <div className="bg-amber-50 p-2.5 rounded-xl border border-amber-200 text-center">
-            <div className="text-amber-800 font-bold text-[10px]">संबंधित रेंज (Ranges)</div>
-            <div className="text-base font-black text-amber-950 font-mono mt-0.5">{uniqueRanges.length} रेंज</div>
+          <div className="bg-amber-50/60 p-3 rounded-2xl border border-amber-200/80 text-center space-y-0.5">
+            <div className="text-amber-800 font-bold text-[10px] uppercase tracking-wider">संबंधित रेंज (Ranges)</div>
+            <div className="text-lg font-black text-amber-950 font-mono">{uniqueRanges.length} <span className="text-xs font-bold font-sans text-amber-800">रेंज</span></div>
           </div>
-          <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200 text-center">
-            <div className="text-slate-500 font-bold text-[10px]">संबंधित पुलिस ज़ोन</div>
-            <div className="text-base font-black text-slate-900 font-mono mt-0.5">{uniquePoliceZones.length} ज़ोन</div>
+          <div className="bg-slate-50/80 p-3 rounded-2xl border border-slate-200/80 text-center space-y-0.5">
+            <div className="text-slate-500 font-bold text-[10px] uppercase tracking-wider">संबंधित पुलिस ज़ोन</div>
+            <div className="text-lg font-black text-slate-900 font-mono">{uniquePoliceZones.length} <span className="text-xs font-bold font-sans text-slate-600">ज़ोन</span></div>
           </div>
         </div>
       </div>

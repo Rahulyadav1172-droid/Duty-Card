@@ -96,16 +96,16 @@ export default function EventManager({
   return (
     <div className="w-full max-w-5xl mx-auto space-y-6 font-devanagari text-slate-900">
       {/* Top Banner Header */}
-      <div className="bg-white p-5 sm:p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-3.5">
-          <div className="w-12 h-12 rounded-xl bg-amber-50 border border-amber-200 text-amber-700 flex items-center justify-center shrink-0">
-            <Calendar className="w-6 h-6" />
+      <div className="bg-white p-5 sm:p-7 rounded-3xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="flex items-start sm:items-center gap-3.5 min-w-0">
+          <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-600 flex items-center justify-center shrink-0 shadow-xs">
+            <Calendar className="w-6 h-6 stroke-[2.5]" />
           </div>
-          <div>
-            <h2 className="text-lg sm:text-xl font-black text-slate-900 leading-tight flex items-center gap-2">
+          <div className="min-w-0">
+            <h2 className="text-lg sm:text-xl font-black text-slate-900 leading-tight">
               इवेंट्स एवं हेड्स मैनेजर (Multi-Event Manager)
             </h2>
-            <p className="text-xs text-slate-500 font-medium mt-0.5">
+            <p className="text-xs text-slate-500 font-medium mt-1">
               विभिन्न मेलों, वीआईपी दौरों व सुरक्षा व्यवस्थाओं के लिए अलग-अलग डेटाबेस बनाएं व प्रबंधित करें
             </p>
           </div>
@@ -113,21 +113,23 @@ export default function EventManager({
 
         <button
           onClick={() => handleOpenModal(null)}
-          className="px-4 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs sm:text-sm rounded-xl flex items-center gap-1.5 shadow-sm transition active:scale-95 cursor-pointer"
+          className="px-4 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs sm:text-sm rounded-xl flex items-center gap-1.5 shadow-sm transition active:scale-95 cursor-pointer shrink-0"
         >
           <Plus className="w-4 h-4 stroke-[3]" />
-          + नया इवेंट / हेड बनाएं
+          <span>+ नया इवेंट / हेड बनाएं</span>
         </button>
       </div>
 
       {/* Events Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {events.map((evt) => {
-          const isActive = evt.id === activeEventId;
-          const isArchived = evt.status === 'archived';
-          const headcount = evt.records?.length || 0;
-          const reportedCount = Object.keys(evt.attendanceMap || {}).length;
-          const attendancePercent = headcount > 0 ? Math.round((reportedCount / headcount) * 100) : 0;
+        {(events || [])
+          .filter((evt) => evt.id !== 'global-pdf-booklets' && !String(evt.id).startsWith('global-'))
+          .map((evt) => {
+            const isActive = evt.id === activeEventId;
+            const isArchived = evt.status === 'archived';
+            const headcount = evt.records?.length || 0;
+            const reportedCount = Object.keys(evt.attendanceMap || {}).length;
+            const attendancePercent = headcount > 0 ? Math.round((reportedCount / headcount) * 100) : 0;
 
           return (
             <div

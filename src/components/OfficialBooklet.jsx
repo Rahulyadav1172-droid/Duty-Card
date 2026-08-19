@@ -53,9 +53,9 @@ export default function OfficialBooklet({
   records = [],
   instructions,
   onBack,
-  eventTitle = 'श्रावण झूला मेला',
-  eventSubtitle = 'ड्यूटी कार्ड अयोध्या-2026',
-  eventStartDate = '16.08.2026 से अग्रिम आदेश तक'
+  eventTitle = '',
+  eventSubtitle = '',
+  eventStartDate = ''
 }) {
   const instructionsStorageKey = `OFFICIAL_BOOKLET_INSTRUCTIONS_${(eventTitle || 'default').replace(/\s+/g, '_')}`;
 

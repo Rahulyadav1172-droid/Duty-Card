@@ -47,7 +47,7 @@ function formatDisplayDate(dateStr) {
 export default function CheckingReportModal({
   isOpen,
   onClose,
-  eventTitle = 'श्रावण झूला मेला अयोध्या-2026',
+  eventTitle = '',
   eventSubtitle = '',
   records = [],
   attendanceMap = {},
@@ -73,20 +73,17 @@ export default function CheckingReportModal({
 
   const reportRef = useRef(null);
 
-  // Clean Event Title: "चेकिंग रिपोर्ट [इवेंट का नाम]" e.g. "चेकिंग रिपोर्ट श्रावण झूला मेला अयोध्या-2026"
+  // Clean Event Title: "चेकिंग रिपोर्ट [इवेंट का नाम]" e.g. "चेकिंग रिपोर्ट [active event]"
   const cleanEventHeading = React.useMemo(() => {
-    const rawTitle = (eventTitle || '').trim();
-    let sub = (eventSubtitle || '').replace(/ड्यूटी कार्ड/gi, '').replace(/अयोध्या-2026/gi, '').trim();
+    const rawTitle = (eventTitle || 'पुलिस सुरक्षा व्यवस्था').trim();
+    let sub = (eventSubtitle || '').replace(/ड्यूटी कार्ड/gi, '').trim();
     
-    // If title doesn't already contain district/year, append
+    // If title doesn't already contain subtitle, append
     let full = rawTitle;
     if (sub && !full.includes(sub)) {
       full = `${full} ${sub}`;
     }
-    if (!full.includes('अयोध्या') && !full.includes('2026')) {
-      full = `${full} अयोध्या-2026`;
-    }
-    return full.trim() || 'श्रावण झूला मेला अयोध्या-2026';
+    return full.trim();
   }, [eventTitle, eventSubtitle]);
 
   // Extract attendance for this specific date
