@@ -17,6 +17,7 @@ import { QRCodeSVG } from 'qrcode.react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { printLegalBulk } from '../utils/printLegalBulk';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function BulkLegalPdfModal({
   isOpen,
@@ -31,6 +32,7 @@ export default function BulkLegalPdfModal({
   customBriefing = '',
   isBriefingEnabled = true
 }) {
+  const { language, t } = useLanguage();
   const [isGenerating, setIsGenerating] = useState(false);
   const [progress, setProgress] = useState({ current: 0, total: 0, page: 0, totalPages: 0 });
   const [selectedPointFilter, setSelectedPointFilter] = useState('ALL');

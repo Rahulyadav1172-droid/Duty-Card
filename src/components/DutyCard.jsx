@@ -23,6 +23,7 @@ import { QRCodeSVG } from 'qrcode.react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import VerifyModal from './VerifyModal';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function DutyCard({
   duty,
@@ -44,6 +45,7 @@ export default function DutyCard({
   onRequestAuth,
   customLabels = {}
 }) {
+  const { language, t } = useLanguage();
   const [isDownloadingPDF, setIsDownloadingPDF] = useState(false);
   const [isVerifyModalOpen, setIsVerifyModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
