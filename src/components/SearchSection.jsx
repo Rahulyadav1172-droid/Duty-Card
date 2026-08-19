@@ -1,5 +1,6 @@
 import React, { useRef } from 'react';
 import { Search, Smartphone, ShieldCheck, X, Calendar, ChevronDown, CheckCircle2 } from 'lucide-react';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function SearchSection({
   searchQuery,
@@ -9,6 +10,7 @@ export default function SearchSection({
   activeEventId = '',
   onSelectActiveEvent
 }) {
+  const { language, t } = useLanguage();
   const inputRef = useRef(null);
 
   const handleClear = () => {
@@ -34,15 +36,15 @@ export default function SearchSection({
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-1.5">
                 <span className="text-[10px] sm:text-[11px] font-bold text-slate-500 uppercase tracking-wider block">
-                  सक्रिय ड्यूटी मेला:
+                  {language === 'en' ? 'Active Event / Mela:' : 'सक्रिय ड्यूटी मेला:'}
                 </span>
                 <span className="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[9px] font-black">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                  सक्रिय
+                  {language === 'en' ? 'Active' : 'सक्रिय'}
                 </span>
               </div>
               <span className="text-xs sm:text-sm font-black text-slate-900 truncate block mt-0.5">
-                {selectedEvent?.title || 'इवेंट चुनें'}
+                {selectedEvent?.title || (language === 'en' ? 'Select Event' : 'इवेंट चुनें')}
               </span>
             </div>
           </div>
@@ -68,10 +70,10 @@ export default function SearchSection({
       ) : (
         <div className="bg-amber-50 border border-amber-200/90 rounded-2xl p-4 text-center space-y-1 shadow-2xs">
           <p className="text-xs font-black text-amber-950">
-            ⚠️ वर्तमान में कोई सक्रिय ड्यूटी मेला उपलब्ध नहीं है।
+            {language === 'en' ? '⚠️ No active duty event available at present.' : '⚠️ वर्तमान में कोई सक्रिय ड्यूटी मेला उपलब्ध नहीं है।'}
           </p>
           <p className="text-[11px] font-medium text-amber-800">
-            समस्त ड्यूटी इवेंट्स पूर्ण/आर्काइव कर दिए गए हैं।
+            {language === 'en' ? 'All events have been archived or completed.' : 'समस्त ड्यूटी इवेंट्स पूर्ण/आर्काइव कर दिए गए हैं।'}
           </p>
         </div>
       )}
@@ -82,14 +84,14 @@ export default function SearchSection({
         <div className="space-y-1">
           <div className="inline-flex items-center gap-1.5 px-3 py-0.5 sm:py-1 rounded-full bg-amber-50 border border-amber-200/80 text-amber-900 text-[11px] sm:text-xs font-bold shadow-2xs">
             <ShieldCheck className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-            <span>अयोध्या पुलिस डिजिटल ड्यूटी पास</span>
+            <span>{language === 'en' ? 'Ayodhya Police Digital Duty Pass' : 'अयोध्या पुलिस डिजिटल ड्यूटी पास'}</span>
           </div>
 
           <h2 className="text-lg sm:text-2xl font-black text-slate-900 tracking-tight pt-1">
-            अपना ड्यूटी कार्ड खोजें
+            {t('searchHeading', 'अपना ड्यूटी कार्ड खोजें')}
           </h2>
           <p className="text-[11px] sm:text-xs text-slate-600 font-medium max-w-md mx-auto leading-relaxed">
-            10-अंकीय मोबाइल नंबर या अपना नाम दर्ज करें और तुरंत अपना ड्यूटी पास प्राप्त करें
+            {t('searchSubheading', '10-अंकीय मोबाइल नंबर या अपना नाम दर्ज करें और तुरंत अपना ड्यूटी पास प्राप्त करें')}
           </p>
         </div>
 
@@ -107,7 +109,7 @@ export default function SearchSection({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && onSearchSubmit?.()}
-            placeholder="मोबाइल नंबर या नाम लिखें..."
+            placeholder={language === 'en' ? 'Enter Mobile Number or Name...' : 'मोबाइल नंबर या नाम लिखें...'}
             className="w-full pl-11 sm:pl-12 pr-10 py-3 sm:py-3.5 bg-slate-50 border border-slate-300 rounded-xl text-xs sm:text-sm font-bold text-slate-900 placeholder:text-slate-400 placeholder:font-normal focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 focus:bg-white transition shadow-inner"
             autoFocus
           />
@@ -117,7 +119,7 @@ export default function SearchSection({
             <button
               onClick={handleClear}
               className="absolute right-3 p-1.5 text-slate-400 hover:text-slate-700 bg-slate-200/60 hover:bg-slate-200 rounded-lg transition cursor-pointer"
-              title="खोज साफ़ करें"
+              title={language === 'en' ? 'Clear search' : 'खोज साफ़ करें'}
             >
               <X className="w-3.5 h-3.5" />
             </button>

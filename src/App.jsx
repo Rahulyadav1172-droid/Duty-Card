@@ -18,9 +18,11 @@ import {
   Layers,
   Menu,
   ChevronDown,
-  ShieldCheck
+  ShieldCheck,
+  Globe
 } from 'lucide-react';
 
+import { useLanguage } from './context/LanguageContext';
 import SidebarNavigation from './components/SidebarNavigation';
 import SearchSection from './components/SearchSection';
 import DutyCard from './components/DutyCard';
@@ -79,6 +81,8 @@ function getInitialEvents() {
 }
 
 export default function App() {
+  const { language, setLanguage, toggleLanguage, t } = useLanguage();
+
   // Multi-Event State
   const [events, setEvents] = useState(getInitialEvents);
 
@@ -540,11 +544,24 @@ export default function App() {
               </div>
             </div>
 
-            {/* Right: Cloud Sync Chip & User Profile Dropdown */}
-            <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-              <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-800/80 border border-slate-700/60 text-[11px] font-bold text-slate-300">
+            {/* Right: Language Toggle, Cloud Sync & User Profile Dropdown */}
+            <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
+              {/* Quick 1-Click Language Switcher (Always visible in Header) */}
+              <button
+                type="button"
+                onClick={toggleLanguage}
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-slate-800/90 hover:bg-slate-700/90 border border-slate-700/80 text-white transition cursor-pointer shadow-xs active:scale-95 text-xs font-bold"
+                title={language === 'hi' ? 'Switch to English' : 'हिन्दी में बदलें'}
+              >
+                <Globe className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                <span className="font-mono text-amber-300 font-extrabold uppercase">
+                  {language === 'hi' ? 'EN' : 'हिन्दी'}
+                </span>
+              </button>
+
+              <div className="hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-800/80 border border-slate-700/60 text-[11px] font-bold text-slate-300">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
-                <span>क्लाउड सिंक सक्रिय</span>
+                <span>{t('cloudSyncActive', 'क्लाउड सिंक सक्रिय')}</span>
               </div>
 
               {userRole !== 'guest' ? (
@@ -568,10 +585,10 @@ export default function App() {
 
                     <div className="text-left hidden sm:block">
                       <div className="text-xs font-black text-white leading-tight">
-                        {userRole === 'admin' ? 'सुपर एडमिन' : 'वरिष्ठ अधिकारी'}
+                        {userRole === 'admin' ? t('superAdmin', 'सुपर एडमिन') : t('seniorOfficer', 'वरिष्ठ अधिकारी')}
                       </div>
                       <div className="text-[10px] text-slate-400 font-medium">
-                        {userRole === 'admin' ? 'Admin Portal' : 'Inspection Officer'}
+                        {userRole === 'admin' ? t('adminPortal', 'Admin Portal') : t('inspectionOfficer', 'Inspection Officer')}
                       </div>
                     </div>
 
@@ -589,17 +606,52 @@ export default function App() {
                       <div className="p-3 bg-slate-800/90 rounded-xl border border-slate-700/60 space-y-1">
                         <div className="flex items-center justify-between">
                           <span className="text-[10px] uppercase tracking-wider font-bold text-slate-400">
-                            सक्रिय सत्र (Active Session)
+                            {t('activeSession', 'सक्रिय सत्र (Active Session)')}
                           </span>
                           <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
                         </div>
                         <div className="font-black text-sm text-white flex items-center gap-1.5">
                           <span>
-                            {userRole === 'admin' ? '👑 सुपर एडमिनिस्ट्रेटर' : '👮 वरिष्ठ पुलिस अधिकारी'}
+                            {userRole === 'admin' ? t('superAdminTitle', '👑 सुपर एडमिनिस्ट्रेटर') : t('seniorOfficerTitle', '👮 वरिष्ठ पुलिस अधिकारी')}
                           </span>
                         </div>
                         <div className="text-[11px] text-amber-400 font-semibold truncate">
-                          इवेंट: {currentEvent.title}
+                          {currentEvent.title}
+                        </div>
+                      </div>
+
+                      {/* Language Switcher Inside Profile Menu */}
+                      <div className="p-2.5 bg-slate-800/60 rounded-xl border border-slate-700/50 space-y-1.5">
+                        <div className="flex items-center justify-between text-[11px] font-bold text-slate-300">
+                          <div className="flex items-center gap-1.5">
+                            <Globe className="w-3.5 h-3.5 text-amber-400" />
+                            <span>{t('switchLanguage', 'भाषा / Language')}</span>
+                          </div>
+                          <span className="text-[10px] text-amber-400 font-mono font-bold uppercase">{language}</span>
+                        </div>
+                        <div className="grid grid-cols-2 gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => setLanguage('hi')}
+                            className={`py-1.5 px-2 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1 cursor-pointer ${
+                              language === 'hi'
+                                ? 'bg-amber-500 text-slate-950 shadow-xs'
+                                : 'bg-slate-700/70 text-slate-300 hover:bg-slate-700'
+                            }`}
+                          >
+                            <span>🇮🇳 हिन्दी</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setLanguage('en')}
+                            className={`py-1.5 px-2 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1 cursor-pointer ${
+                              language === 'en'
+                                ? 'bg-amber-500 text-slate-950 shadow-xs'
+                                : 'bg-slate-700/70 text-slate-300 hover:bg-slate-700'
+                            }`}
+                          >
+                            <span>🇬🇧 English</span>
+                          </button>
                         </div>
                       </div>
 
@@ -618,8 +670,8 @@ export default function App() {
                             <KeyRound className="w-4 h-4" />
                           </div>
                           <div>
-                            <div>पासवर्ड बदलें (Change Password)</div>
-                            <div className="text-[10px] text-slate-400 font-medium">खाता सुरक्षा अपडेट करें</div>
+                            <div>{language === 'en' ? 'Change Password' : 'पासवर्ड बदलें (Change Password)'}</div>
+                            <div className="text-[10px] text-slate-400 font-medium">{language === 'en' ? 'Update account security' : 'खाता सुरक्षा अपडेट करें'}</div>
                           </div>
                         </button>
 
@@ -637,8 +689,8 @@ export default function App() {
                               <ShieldCheck className="w-4 h-4" />
                             </div>
                             <div>
-                              <div>पोर्टल सेटिंग्स (Portal Settings)</div>
-                              <div className="text-[10px] text-slate-400 font-medium">हेडिंग्स, एक्सेल व हस्ताक्षर</div>
+                              <div>{language === 'en' ? 'Portal Settings' : 'पोर्टल सेटिंग्स (Portal Settings)'}</div>
+                              <div className="text-[10px] text-slate-400 font-medium">{language === 'en' ? 'Headings, Excel & Signatures' : 'हेडिंग्स, एक्सेल व हस्ताक्षर'}</div>
                             </div>
                           </button>
                         )}
@@ -657,7 +709,7 @@ export default function App() {
                         className="w-full px-3 py-2.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 hover:text-rose-200 border border-rose-500/30 transition flex items-center justify-center gap-2 text-xs font-black cursor-pointer active:scale-95"
                       >
                         <LogOut className="w-4 h-4" />
-                        <span>लॉग आउट करें (Logout)</span>
+                        <span>{t('logout', 'लॉग आउट करें')}</span>
                       </button>
                     </div>
                   )}
@@ -671,7 +723,7 @@ export default function App() {
                   className="px-3.5 py-1.5 bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-400 hover:to-amber-300 text-slate-950 font-black rounded-xl text-xs sm:text-sm flex items-center gap-1.5 transition shadow-xs cursor-pointer active:scale-95"
                 >
                   <LogIn className="w-3.5 h-3.5" />
-                  <span>अधिकारी लॉगिन</span>
+                  <span>{t('login', 'अधिकारी लॉगिन')}</span>
                 </button>
               )}
             </div>
