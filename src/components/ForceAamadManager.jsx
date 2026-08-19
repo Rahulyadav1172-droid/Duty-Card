@@ -25,6 +25,16 @@ import {
   Server
 } from 'lucide-react';
 import { parseDutyFile } from '../utils/fileParser';
+import {
+  UP_POLICE_ZONES,
+  UP_POLICE_RANGES,
+  STANDARD_RANKS,
+  standardizePNO,
+  standardizeMobile,
+  standardizeRank,
+  standardizeName,
+  resolveZoneAndRangeFromDistrict
+} from '../utils/upPoliceHierarchy';
 import * as XLSX from 'xlsx';
 
 const AAMAD_STORAGE_KEY = 'police_force_aamad_records_v1';
@@ -198,7 +208,7 @@ export default function ForceAamadManager({
     setIsAddModalOpen(true);
   };
 
-  // Save Single Aamad with Verified Server Time
+  // Save Single Aamad with Verified Server Time & Strict Standardization
   const handleSaveAamad = async (e) => {
     e.preventDefault();
     if (!formData.name.trim() || !formData.mobile.trim()) {
@@ -209,9 +219,33 @@ export default function ForceAamadManager({
     // Always capture fresh server timestamp on final submit
     const finalServerTime = await fetchServerDateTime();
 
+    // Standardize input values to zero-mismatch standard format
+    const cleanMob = standardizeMobile(formData.mobile);
+    const cleanName = standardizeName(formData.name, cleanMob);
+    const cleanPno = standardizePNO(formData.pno) || `PN-${Date.now().toString().slice(-6)}`;
+    const cleanRank = standardizeRank(formData.rank);
+    const cleanPosting = (formData.posting || 'थाना कोतवाली').trim();
+    const cleanDistrict = (formData.district || '').trim();
+
+    // Auto-resolve range and zone if not yet set
+    let finalRange = formData.range;
+    let finalZone = formData.police_zone;
+    if ((!finalRange || !finalZone) && cleanDistrict) {
+      const auto = resolveZoneAndRangeFromDistrict(cleanDistrict);
+      if (auto.range && !finalRange) finalRange = auto.range;
+      if (auto.zone && !finalZone) finalZone = auto.zone;
+    }
+
     const newEntry = {
       id: `AAMAD-${Date.now()}`,
-      ...formData,
+      name: cleanName,
+      rank: cleanRank,
+      pno: cleanPno,
+      mobile: cleanMob,
+      posting: cleanPosting,
+      district: cleanDistrict,
+      range: finalRange || '-',
+      police_zone: finalZone || '-',
       aamad_time: finalServerTime,
       recorded_by: 'सुपर एडमिन (आमद कार्यालय)'
     };
@@ -221,7 +255,7 @@ export default function ForceAamadManager({
     syncToMasterForce([newEntry]);
 
     setIsAddModalOpen(false);
-    setSuccessToast(`🎉 ${formData.name} की आमद सर्वर समय (${finalServerTime}) पर दर्ज की गई एवं मास्टर फ़ोर्स में जोड़ी गई!`);
+    setSuccessToast(`🎉 ${cleanName} (${cleanRank}) की आमद सर्वर समय (${finalServerTime}) पर दर्ज की गई एवं मास्टर फ़ोर्स में जोड़ी गई!`);
     setTimeout(() => setSuccessToast(null), 4000);
   };
 
@@ -262,7 +296,7 @@ export default function ForceAamadManager({
     setTimeout(() => setSuccessToast(null), 4000);
   };
 
-  // Bulk Excel Aamad File Upload with Server Time
+  // Bulk Excel Aamad File Upload with Server Time & Zero-Mismatch Standardization
   const handleBulkExcelUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -272,25 +306,38 @@ export default function ForceAamadManager({
       if (parsed && parsed.length > 0) {
         const bulkServerTime = await fetchServerDateTime();
 
-        const newAamadList = parsed.map((item, idx) => ({
-          id: `AAMAD-${Date.now()}-${idx}`,
-          name: item.name,
-          rank: item.rank || 'का0',
-          pno: item.pno || `PN-${Date.now()}-${idx}`,
-          mobile: item.mobile || '',
-          posting: item.posting || 'थाना कोतवाली',
-          district: item.district || '',
-          range: item.range || item.police_range || '',
-          police_zone: item.zone || item.police_zone || '',
-          aamad_time: bulkServerTime,
-          recorded_by: 'एक्सेल बल्क आमद'
-        }));
+        const newAamadList = parsed.map((item, idx) => {
+          const cleanMob = standardizeMobile(item.mobile);
+          const cleanName = standardizeName(item.name, cleanMob);
+          const cleanPno = standardizePNO(item.pno) || `PN-${Date.now().toString().slice(-6)}-${idx + 1}`;
+          const cleanRank = standardizeRank(item.rank);
+          const cleanPosting = (item.posting || item.thana || 'थाना कोतवाली').trim();
+          const cleanDistrict = (item.district || '').trim();
+
+          const auto = resolveZoneAndRangeFromDistrict(cleanDistrict);
+          const finalRange = item.range || item.police_range || auto.range || '-';
+          const finalZone = item.zone || item.police_zone || auto.zone || '-';
+
+          return {
+            id: `AAMAD-${Date.now()}-${idx}`,
+            name: cleanName,
+            rank: cleanRank,
+            pno: cleanPno,
+            mobile: cleanMob,
+            posting: cleanPosting,
+            district: cleanDistrict,
+            range: finalRange,
+            police_zone: finalZone,
+            aamad_time: bulkServerTime,
+            recorded_by: 'एक्सेल बल्क आमद'
+          };
+        });
 
         const updated = [...newAamadList, ...aamadRecords];
         saveAamadState(updated);
         syncToMasterForce(newAamadList);
 
-        setSuccessToast(`🎉 एक्सेल फ़ाइल से कुल ${newAamadList.length} पुलिसकर्मियों की आमद सर्वर समय (${bulkServerTime}) पर दर्ज की गई!`);
+        setSuccessToast(`🎉 एक्सेल फ़ाइल से कुल ${newAamadList.length} पुलिसकर्मियों की आमद मानकीकृत प्रारूप में दर्ज की गई!`);
         setTimeout(() => setSuccessToast(null), 4000);
       }
     } catch (err) {
@@ -601,108 +648,155 @@ export default function ForceAamadManager({
                     type="text"
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    placeholder="e.g. अजय कुमार"
-                    className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl font-bold focus:outline-none focus:ring-2 focus:ring-amber-500"
+                    onBlur={(e) => setFormData(prev => ({ ...prev, name: standardizeName(e.target.value, prev.mobile) }))}
+                    placeholder="उदा: राहुल यादव / अनूप सिंह"
+                    className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl font-bold focus:outline-none focus:ring-2 focus:ring-amber-500 focus:bg-white"
                     required
                   />
                 </div>
 
-                {/* Rank (With Female SI, Female Inspector, etc.) */}
+                {/* Rank (Standard UP Police Ranks) */}
                 <div className="space-y-1">
-                  <label className="text-slate-800 font-black">पदनाम (Rank) *:</label>
+                  <label className="text-slate-800 font-black">पदनाम (Standard Rank) *:</label>
                   <select
                     value={formData.rank}
                     onChange={(e) => setFormData({ ...formData, rank: e.target.value })}
-                    className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl font-bold focus:outline-none focus:ring-2 focus:ring-amber-500 cursor-pointer"
+                    className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl font-bold focus:outline-none focus:ring-2 focus:ring-amber-500 cursor-pointer focus:bg-white"
                   >
-                    <optgroup label="महिला अधिकारी / कर्मचारी (Female Officers)">
-                      <option value="म0उ0नि0">म0उ0नि0 (Female Sub-Inspector)</option>
-                      <option value="म0नि0">म0नि0 (Female Inspector)</option>
-                      <option value="म0हे0का0">म0हे0का0 (Female Head Constable)</option>
-                      <option value="म0का0">म0का0 (Female Constable)</option>
+                    <optgroup label="महिला पुलिस बल (Female Officers)">
+                      <option value="म०का०">म०का० (महिला आरक्षी / Lady Constable)</option>
+                      <option value="म०उ०नि०">म०उ०नि० (महिला उप निरीक्षक / WSI)</option>
+                      <option value="म०हे०का०">म०हे०का० (महिला मुख्य आरक्षी)</option>
+                      <option value="म०नि०">म०नि० (महिला निरीक्षक)</option>
                     </optgroup>
-                    <optgroup label="पुरुष अधिकारी / कर्मचारी (Male Officers)">
-                      <option value="उ0नि0">उ0नि0 (Sub-Inspector)</option>
-                      <option value="नि0">नि0 (Inspector)</option>
-                      <option value="हे0का0">हे0का0 (Head Constable)</option>
-                      <option value="का0">का0 (Constable)</option>
-                      <option value="उ0नि0 (स0पु0)">उ0नि0 (स0पु0)</option>
+                    <optgroup label="पुरुष पुलिस बल (Male Officers)">
+                      <option value="का०">का० (आरक्षी / Constable)</option>
+                      <option value="हे०का०">हे०का० (मुख्य आरक्षी / Head Constable)</option>
+                      <option value="उ०नि०">उ०नि० (उप निरीक्षक / Sub Inspector)</option>
+                      <option value="नि०">नि० (निरीक्षक / Inspector / SHO)</option>
+                      <option value="उ०नि० (स०पु०)">उ०नि० (स०पु०)</option>
+                    </optgroup>
+                    <optgroup label="विशेष बल (Special Wings)">
+                      <option value="यातायात">यातायात (Traffic Police)</option>
+                      <option value="होमगार्ड">होमगार्ड (Home Guard / PRD)</option>
+                      <option value="अन्य">अन्य पुलिस बल</option>
                     </optgroup>
                   </select>
                 </div>
 
                 {/* PNO */}
                 <div className="space-y-1">
-                  <label className="text-slate-800">PNO (पी०एन०ओ०):</label>
+                  <label className="text-slate-800 font-black">PNO (मानकीकृत पी०एन०ओ०):</label>
                   <input
                     type="text"
                     value={formData.pno}
-                    onChange={(e) => setFormData({ ...formData, pno: e.target.value })}
-                    placeholder="e.g. 192830192"
-                    className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl font-mono font-bold focus:outline-none focus:ring-2 focus:ring-amber-500"
+                    onChange={(e) => setFormData({ ...formData, pno: standardizePNO(e.target.value) })}
+                    placeholder="उदा: 192830192"
+                    className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl font-mono font-bold focus:outline-none focus:ring-2 focus:ring-amber-500 focus:bg-white uppercase"
                   />
                 </div>
 
                 {/* Mobile */}
                 <div className="space-y-1">
-                  <label className="text-slate-800 font-black">मोबाईल नंबर *:</label>
+                  <label className="text-slate-800 font-black">मोबाईल नंबर (10-अंक) *:</label>
                   <input
                     type="tel"
                     maxLength="10"
                     value={formData.mobile}
-                    onChange={(e) => setFormData({ ...formData, mobile: e.target.value })}
-                    placeholder="10-अंकीय नंबर"
-                    className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl font-mono font-bold focus:outline-none focus:ring-2 focus:ring-amber-500"
+                    onChange={(e) => setFormData({ ...formData, mobile: e.target.value.replace(/\D/g, '').slice(0, 10) })}
+                    placeholder="उदा: 9454401000"
+                    className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl font-mono font-bold focus:outline-none focus:ring-2 focus:ring-amber-500 focus:bg-white"
                     required
                   />
                 </div>
 
-                {/* Posting */}
+                {/* Posting / Thana */}
                 <div className="space-y-1">
                   <label className="text-slate-800">मूल तैनाती (थाना / यूनिट):</label>
                   <input
                     type="text"
                     value={formData.posting}
                     onChange={(e) => setFormData({ ...formData, posting: e.target.value })}
-                    placeholder="e.g. थाना कोतवाली / पुलिस लाइन"
-                    className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl font-bold focus:outline-none focus:ring-2 focus:ring-amber-500"
+                    placeholder="उदा: थाना कोतवाली / पुलिस लाइन"
+                    className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl font-bold focus:outline-none focus:ring-2 focus:ring-amber-500 focus:bg-white"
                   />
                 </div>
 
-                {/* District */}
+                {/* District with Auto-Cascade to Range & Zone */}
                 <div className="space-y-1">
-                  <label className="text-slate-800">गृह / तैनाती जनपद:</label>
+                  <div className="flex items-center justify-between">
+                    <label className="text-slate-800 font-black">तैनाती जनपद (District):</label>
+                    <span className="text-[10px] text-amber-700 font-bold">✨ रेंज/ज़ोन स्वतः भरेगा</span>
+                  </div>
                   <input
                     type="text"
                     value={formData.district}
-                    onChange={(e) => setFormData({ ...formData, district: e.target.value })}
-                    placeholder="e.g. वाराणसी / लखनऊ / अमेठी"
-                    className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl font-bold focus:outline-none focus:ring-2 focus:ring-amber-500"
+                    onChange={(e) => {
+                      const dVal = e.target.value;
+                      const auto = resolveZoneAndRangeFromDistrict(dVal);
+                      setFormData(prev => ({
+                        ...prev,
+                        district: dVal,
+                        range: auto.range || prev.range,
+                        police_zone: auto.zone || prev.police_zone
+                      }));
+                    }}
+                    placeholder="उदा: अयोध्या, लखनऊ, वाराणसी..."
+                    className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl font-bold focus:outline-none focus:ring-2 focus:ring-amber-500 focus:bg-white"
                   />
                 </div>
 
-                {/* Range */}
+                {/* Police Zone Dropdown (8 Official UP Zones) */}
                 <div className="space-y-1">
-                  <label className="text-slate-800">रेंज (Police Range):</label>
-                  <input
-                    type="text"
-                    value={formData.range}
-                    onChange={(e) => setFormData({ ...formData, range: e.target.value })}
-                    placeholder="e.g. अयोध्या रेंज / वाराणसी रेंज"
-                    className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl font-bold focus:outline-none focus:ring-2 focus:ring-amber-500"
-                  />
-                </div>
-
-                {/* Police Zone */}
-                <div className="space-y-1">
-                  <label className="text-slate-800">ज़ोन (Police Zone):</label>
-                  <input
-                    type="text"
+                  <label className="text-slate-800 font-black">पुलिस ज़ोन (UP Police 8 Zones) *:</label>
+                  <select
                     value={formData.police_zone}
-                    onChange={(e) => setFormData({ ...formData, police_zone: e.target.value })}
-                    placeholder="e.g. लखनऊ ज़ोन / प्रयागराज ज़ोन"
-                    className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl font-bold focus:outline-none focus:ring-2 focus:ring-amber-500"
-                  />
+                    onChange={(e) => {
+                      const zVal = e.target.value;
+                      const validRanges = UP_POLICE_RANGES.filter(r => r.zone === zVal);
+                      const rangeStillValid = validRanges.some(r => r.name === formData.range);
+                      setFormData(prev => ({
+                        ...prev,
+                        police_zone: zVal,
+                        range: rangeStillValid ? prev.range : (validRanges[0]?.name || '')
+                      }));
+                    }}
+                    className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl font-bold focus:outline-none focus:ring-2 focus:ring-amber-500 cursor-pointer focus:bg-white"
+                  >
+                    <option value="">-- पुलिस ज़ोन चुनें --</option>
+                    {UP_POLICE_ZONES.map((z) => (
+                      <option key={z} value={z}>
+                        🛡️ {z}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Police Range Dropdown (18 Official UP Ranges) */}
+                <div className="space-y-1">
+                  <label className="text-slate-800 font-black">पुलिस रेंज (UP Police 18 Ranges) *:</label>
+                  <select
+                    value={formData.range}
+                    onChange={(e) => {
+                      const rVal = e.target.value;
+                      const rObj = UP_POLICE_RANGES.find(r => r.name === rVal);
+                      setFormData(prev => ({
+                        ...prev,
+                        range: rVal,
+                        police_zone: rObj ? rObj.zone : prev.police_zone
+                      }));
+                    }}
+                    className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl font-bold focus:outline-none focus:ring-2 focus:ring-amber-500 cursor-pointer focus:bg-white"
+                  >
+                    <option value="">-- पुलिस रेंज चुनें --</option>
+                    {UP_POLICE_RANGES
+                      .filter(r => !formData.police_zone || r.zone === formData.police_zone)
+                      .map((r) => (
+                        <option key={r.name} value={r.name}>
+                          📍 {r.name} ({r.zone})
+                        </option>
+                      ))}
+                  </select>
                 </div>
               </div>
 
@@ -719,7 +813,7 @@ export default function ForceAamadManager({
                   className="px-5 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black rounded-xl shadow transition active:scale-95 cursor-pointer flex items-center gap-1.5"
                 >
                   <CheckCircle2 className="w-4 h-4" />
-                  <span>आमद दर्ज करें (Save Arrival)</span>
+                  <span>मानक आमद दर्ज करें (Save Arrival)</span>
                 </button>
               </div>
             </form>
