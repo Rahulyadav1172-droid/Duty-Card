@@ -41,6 +41,9 @@ export default function AdminUpload({
   customBriefing,
   isBriefingEnabled,
   onUpdateBriefing,
+  helplineList = [],
+  isHelplineEnabled = true,
+  onUpdateHelpline,
   attendanceMap = {},
   eventTitle = '',
   eventSubtitle = '',
@@ -80,6 +83,18 @@ export default function AdminUpload({
   const [briefingText, setBriefingText] = useState(customBriefing || '');
   const [briefingToggle, setBriefingToggle] = useState(isBriefingEnabled !== undefined ? isBriefingEnabled : true);
   const [briefingSaved, setBriefingSaved] = useState(false);
+
+  // Manual Helpline Contacts State
+  const [helplineContacts, setHelplineContacts] = useState(() => {
+    if (Array.isArray(helplineList) && helplineList.length > 0) return helplineList;
+    return [
+      { id: '1', title: 'पुलिस कंट्रोल रूम (अयोध्या)', number: '112' },
+      { id: '2', title: 'मेला नियंत्रण कक्ष / ड्यूटी हेल्पडेस्क', number: '9454401000' },
+      { id: '3', title: 'स्मार्ट सेल / तकनीकी सहायता', number: '9454402000' }
+    ];
+  });
+  const [helplineToggle, setHelplineToggle] = useState(isHelplineEnabled !== false);
+  const [helplineSaved, setHelplineSaved] = useState(false);
 
   // Event Headings State
   const [titleInput, setTitleInput] = useState(eventTitle);
@@ -377,6 +392,49 @@ export default function AdminUpload({
   const handleToggleBriefing = (newEnabledState) => {
     setBriefingToggle(newEnabledState);
     onUpdateBriefing(briefingText, newEnabledState);
+  };
+
+  React.useEffect(() => {
+    if (Array.isArray(helplineList) && helplineList.length > 0) {
+      setHelplineContacts(helplineList);
+    }
+    setHelplineToggle(isHelplineEnabled !== false);
+  }, [helplineList, isHelplineEnabled]);
+
+  const handleToggleHelpline = (newEnabledState) => {
+    setHelplineToggle(newEnabledState);
+    if (onUpdateHelpline) {
+      onUpdateHelpline(helplineContacts, newEnabledState);
+    }
+  };
+
+  const handleAddHelplineContact = () => {
+    setHelplineContacts(prev => [
+      ...prev,
+      { id: String(Date.now()), title: 'नवीन हेल्पलाइन / नोडल संपर्क', number: '' }
+    ]);
+  };
+
+  const handleUpdateContactItem = (idx, field, value) => {
+    setHelplineContacts(prev => {
+      const copy = [...prev];
+      copy[idx] = { ...copy[idx], [field]: value };
+      return copy;
+    });
+  };
+
+  const handleRemoveContactItem = (idx) => {
+    setHelplineContacts(prev => prev.filter((_, i) => i !== idx));
+  };
+
+  const handleSaveHelplineSetting = (e) => {
+    e?.preventDefault();
+    if (onUpdateHelpline) {
+      onUpdateHelpline(helplineContacts, helplineToggle);
+    }
+    setHelplineSaved(true);
+    setTimeout(() => setHelplineSaved(false), 2000);
+    setStatusMsg({ type: 'success', text: 'हेल्पलाइन संपर्क नंबर सफलतापूर्वक सहेज दिए गए हैं।' });
   };
 
   const handleDownloadSampleExcel = () => {
@@ -1089,6 +1147,115 @@ export default function AdminUpload({
               >
                 {labelsSaved ? <Check className="w-4 h-4 stroke-[3]" /> : <Layers className="w-4 h-4" />}
                 <span>{labelsSaved ? 'हेडिंग्स सहेजी गईं!' : 'कॉलम हेडिंग्स सहेजें (Save Labels)'}</span>
+              </button>
+            </div>
+          </form>
+        </div>
+
+        {/* SETTING 6: MANUAL HELPLINE / EMERGENCY SUPPORT NUMBERS (FULL WIDTH) */}
+        <div className="bg-white p-5 sm:p-6 rounded-2xl border border-slate-200 space-y-4 shadow-sm">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-slate-200 pb-3">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-rose-500/15 border border-rose-500/40 text-rose-700 flex items-center justify-center shrink-0">
+                <Phone className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-base font-black text-slate-950">
+                  📞 'कंट्रोल रूम व हेल्पलाइन नंबर' सेटिंग (Manual Helpline & Contacts)
+                </h3>
+                <p className="text-xs font-bold text-slate-600">
+                  पब्लिक सर्च पेज पर जवानों की सहायता हेतु कंट्रोल रूम, नोडल व तकनीकी हेल्पलाइन नंबर जोड़ें या बदलें
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <span className="text-xs font-black text-slate-700">
+                {helplineToggle ? '✅ हेल्पलाइन चालू है' : '❌ हेल्पलाइन बंद है'}
+              </span>
+              <button
+                type="button"
+                onClick={() => handleToggleHelpline(!helplineToggle)}
+                className={`w-12 h-6.5 rounded-full transition-colors relative flex items-center p-0.5 cursor-pointer ${
+                  helplineToggle ? 'bg-emerald-600' : 'bg-slate-300'
+                }`}
+                title={helplineToggle ? "हेल्पलाइन चालू है" : "हेल्पलाइन बंद है"}
+              >
+                <div
+                  className={`w-5.5 h-5.5 bg-white rounded-full shadow transform transition-transform ${
+                    helplineToggle ? 'translate-x-5.5' : 'translate-x-0'
+                  }`}
+                />
+              </button>
+            </div>
+          </div>
+
+          <form onSubmit={handleSaveHelplineSetting} className="space-y-4 pt-1 text-xs font-bold">
+            <div className="space-y-3">
+              {helplineContacts.map((contact, idx) => (
+                <div
+                  key={contact.id || idx}
+                  className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 p-3 rounded-xl bg-slate-50 border border-slate-200"
+                >
+                  <div className="w-full sm:w-1/2">
+                    <label className="text-[11px] font-black text-slate-700 block mb-1">
+                      संपर्क / अधिकारी का नाम (Title {idx + 1}):
+                    </label>
+                    <input
+                      type="text"
+                      value={contact.title || ''}
+                      disabled={!helplineToggle}
+                      onChange={(e) => handleUpdateContactItem(idx, 'title', e.target.value)}
+                      placeholder="उदा: पुलिस कंट्रोल रूम (अयोध्या)"
+                      className="w-full p-2.5 bg-white border border-slate-300 rounded-xl text-xs font-bold text-slate-950 focus:outline-none focus:ring-2 focus:ring-amber-500 disabled:opacity-50"
+                    />
+                  </div>
+
+                  <div className="w-full sm:w-5/12">
+                    <label className="text-[11px] font-black text-slate-700 block mb-1">
+                      मोबाइल / हेल्पलाइन नंबर:
+                    </label>
+                    <input
+                      type="text"
+                      value={contact.number || ''}
+                      disabled={!helplineToggle}
+                      onChange={(e) => handleUpdateContactItem(idx, 'number', e.target.value)}
+                      placeholder="उदा: 112 / 9454401000"
+                      className="w-full p-2.5 bg-white border border-slate-300 rounded-xl text-xs font-mono font-bold text-slate-950 focus:outline-none focus:ring-2 focus:ring-amber-500 disabled:opacity-50"
+                    />
+                  </div>
+
+                  <div className="flex sm:self-end pt-1 sm:pt-0">
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveContactItem(idx)}
+                      className="p-2.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-xl transition cursor-pointer"
+                      title="यह नंबर हटाएं"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
+              <button
+                type="button"
+                onClick={handleAddHelplineContact}
+                disabled={!helplineToggle}
+                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-900 font-black text-xs rounded-xl border border-slate-300 flex items-center gap-1.5 transition cursor-pointer disabled:opacity-50"
+              >
+                <Plus className="w-4 h-4 text-emerald-700" />
+                <span>+ नया हेल्पलाइन नंबर जोड़ें</span>
+              </button>
+
+              <button
+                type="submit"
+                className="px-5 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs sm:text-sm rounded-xl shadow flex items-center gap-1.5 active:scale-95 transition cursor-pointer"
+              >
+                {helplineSaved ? <Check className="w-4 h-4 stroke-[3]" /> : <Phone className="w-4 h-4" />}
+                <span>{helplineSaved ? 'हेल्पलाइन सहेजी गई!' : 'हेल्पलाइन नंबर सहेजें (Save Contacts)'}</span>
               </button>
             </div>
           </form>

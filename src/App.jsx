@@ -74,6 +74,12 @@ function getInitialEvents() {
       isNoteEnabled: false,
       briefing: '',
       isBriefingEnabled: false,
+      helplineList: [
+        { id: '1', title: 'पुलिस कंट्रोल रूम (अयोध्या)', number: '112' },
+        { id: '2', title: 'मेला नियंत्रण कक्ष / ड्यूटी हेल्पडेस्क', number: '9454401000' },
+        { id: '3', title: 'स्मार्ट सेल / तकनीकी सहायता', number: '9454402000' }
+      ],
+      isHelplineEnabled: true,
       records: [],
       attendanceMap: {}
     }
@@ -317,6 +323,12 @@ export default function App() {
 
   const handleUpdateActiveEventBriefing = (newBriefing, enabled) => {
     const updatedObj = { ...currentEvent, briefing: newBriefing, isBriefingEnabled: enabled };
+    const updated = events.map(e => e.id === currentEvent.id ? updatedObj : e);
+    saveEvents(updated, updatedObj);
+  };
+
+  const handleUpdateActiveEventHelpline = (newList, enabled) => {
+    const updatedObj = { ...currentEvent, helplineList: newList, isHelplineEnabled: enabled };
     const updated = events.map(e => e.id === currentEvent.id ? updatedObj : e);
     saveEvents(updated, updatedObj);
   };
@@ -782,18 +794,68 @@ export default function App() {
                 </p>
               </div>
             ) : (
-              <div className="bg-white p-7 rounded-2xl border border-slate-200 text-center space-y-2.5 shadow-xs">
-                <div className="w-12 h-12 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center mx-auto text-amber-600">
-                  <Smartphone className="w-6 h-6" />
+              <div className="space-y-4">
+                <div className="bg-white p-7 rounded-2xl border border-slate-200 text-center space-y-2.5 shadow-xs">
+                  <div className="w-12 h-12 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center mx-auto text-amber-600">
+                    <Smartphone className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-900">
+                      {language === 'en' ? 'Enter Mobile Number or Name' : 'अपना मोबाईल नंबर या नाम दर्ज करें'}
+                    </h3>
+                    <p className="text-xs text-slate-500 max-w-sm mx-auto mt-0.5">
+                      {language === 'en'
+                        ? 'Type your mobile number or name above to view your duty location, timing, and co-deployed colleagues.'
+                        : 'अपनी ड्यूटी स्थान, सेक्टर, समय एवं साथ में तैनात अन्य पुलिसकर्मियों की सूची देखने के लिए ऊपर सर्च बॉक्स में नंबर लिखें।'}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="text-sm font-bold text-slate-900">
-                    अपना मोबाईल नंबर या नाम दर्ज करें
-                  </h3>
-                  <p className="text-xs text-slate-500 max-w-sm mx-auto mt-0.5">
-                    अपनी ड्यूटी स्थान, सेक्टर, समय एवं साथ में तैनात अन्य पुलिसकर्मियों की सूची देखने के लिए ऊपर सर्च बॉक्स में नंबर लिखें।
-                  </p>
-                </div>
+
+                {/* Quick Emergency & Police Helpline Widget */}
+                {currentEvent.isHelplineEnabled !== false && Array.isArray(currentEvent.helplineList) && currentEvent.helplineList.length > 0 && (
+                  <div className="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-5 shadow-xs space-y-3">
+                    <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-lg bg-rose-50 border border-rose-200 flex items-center justify-center text-rose-600 shrink-0">
+                          <Phone className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <h4 className="text-xs sm:text-sm font-black text-slate-900 leading-tight">
+                            {language === 'en' ? 'Emergency & Duty Control Room' : 'आपातकालीन सहायता एवं ड्यूटी नियंत्रण कक्ष'}
+                          </h4>
+                          <p className="text-[10px] text-slate-500 font-medium">
+                            {language === 'en' ? '24x7 Police Helpline Contacts' : '24x7 पुलिस ड्यूटी हेल्पलाइन संपर्क'}
+                          </p>
+                        </div>
+                      </div>
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                        {language === 'en' ? 'Active 24x7' : '24x7 सक्रिय'}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {currentEvent.helplineList.map((contact, idx) => (
+                        <a
+                          key={contact.id || idx}
+                          href={`tel:${String(contact.number || '').replace(/[^0-9+]/g, '')}`}
+                          className="p-2.5 bg-slate-50 hover:bg-amber-50/70 border border-slate-200/90 hover:border-amber-300 rounded-xl transition flex items-center justify-between gap-2 group cursor-pointer"
+                        >
+                          <div className="min-w-0">
+                            <div className="text-xs font-black text-slate-900 group-hover:text-amber-900 truncate">
+                              {contact.title}
+                            </div>
+                            <div className="text-[11px] font-mono font-bold text-slate-600 group-hover:text-amber-800">
+                              {contact.number}
+                            </div>
+                          </div>
+                          <div className="w-7 h-7 rounded-lg bg-emerald-100 text-emerald-800 group-hover:bg-emerald-600 group-hover:text-white flex items-center justify-center shrink-0 transition shadow-2xs">
+                            <Phone className="w-3.5 h-3.5" />
+                          </div>
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -884,6 +946,9 @@ export default function App() {
             customBriefing={currentEvent.briefing || ''}
             isBriefingEnabled={currentEvent.isBriefingEnabled}
             onUpdateBriefing={handleUpdateActiveEventBriefing}
+            helplineList={currentEvent.helplineList || []}
+            isHelplineEnabled={currentEvent.isHelplineEnabled !== false}
+            onUpdateHelpline={handleUpdateActiveEventHelpline}
             attendanceMap={currentEvent.attendanceMap || {}}
             eventTitle={currentEvent.title}
             eventSubtitle={currentEvent.subtitle}

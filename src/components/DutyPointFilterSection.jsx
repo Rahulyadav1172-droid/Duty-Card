@@ -151,6 +151,22 @@ export default function DutyPointFilterSection({
     setCheckingDate(today);
   };
 
+  // Grand live stats across all records for the selected checkingDate
+  const totalRecordsCount = records.length;
+  const grandPresentCount = useMemo(() => {
+    return records.filter(p => {
+      const att = activeAttendance[p.id];
+      return att?.status === 'present' || (att?.reported && att?.status !== 'absent');
+    }).length;
+  }, [records, activeAttendance]);
+
+  const grandAbsentCount = useMemo(() => {
+    return records.filter(p => activeAttendance[p.id]?.status === 'absent').length;
+  }, [records, activeAttendance]);
+
+  const grandPendingCount = Math.max(0, totalRecordsCount - grandPresentCount - grandAbsentCount);
+  const grandPresentPercent = totalRecordsCount > 0 ? Math.round((grandPresentCount / totalRecordsCount) * 100) : 0;
+
   return (
     <div className="w-full max-w-7xl mx-auto space-y-6 font-devanagari text-slate-900">
       {/* Event Selector & Daily Checking Report Action Header */}
@@ -229,6 +245,61 @@ export default function DutyPointFilterSection({
           >
             आज (Today)
           </button>
+        </div>
+      </div>
+
+      {/* Live Force Attendance Meter Bar */}
+      <div className="bg-white border border-slate-200 p-4 sm:p-5 rounded-2xl shadow-sm space-y-3.5 no-print">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 flex items-center justify-center shrink-0">
+              <UserCheck className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="text-sm sm:text-base font-black text-slate-900 flex items-center gap-2">
+                <span>दैनिक बल उपस्थिति मीटर (Live Force Attendance Bar)</span>
+                <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-950 font-mono font-black border border-emerald-300">
+                  {grandPresentPercent}% उपस्थित
+                </span>
+              </h3>
+              <p className="text-xs text-slate-500 font-medium">
+                दिनांक: <strong className="font-mono text-slate-800">{checkingDate}</strong> | कुल तैनात बल: <strong className="font-mono text-slate-900">{totalRecordsCount}</strong>
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 text-xs font-bold self-start sm:self-auto">
+            <span className="px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-800 border border-emerald-200">
+              🟢 उपस्थित: <strong className="font-mono">{grandPresentCount}</strong>
+            </span>
+            <span className="px-2.5 py-1 rounded-lg bg-rose-50 text-rose-800 border border-rose-200">
+              🔴 गैरहाजिर: <strong className="font-mono">{grandAbsentCount}</strong>
+            </span>
+            <span className="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 border border-slate-200">
+              ⚪ लंबित: <strong className="font-mono">{grandPendingCount}</strong>
+            </span>
+          </div>
+        </div>
+
+        {/* Visual Dual/Tri-Color Progress Bar */}
+        <div className="space-y-1.5">
+          <div className="h-3 w-full bg-slate-100 rounded-full overflow-hidden flex border border-slate-200">
+            <div
+              style={{ width: `${totalRecordsCount > 0 ? (grandPresentCount / totalRecordsCount) * 100 : 0}%` }}
+              className="bg-emerald-500 h-full transition-all duration-300"
+              title={`उपस्थित: ${grandPresentCount}`}
+            />
+            <div
+              style={{ width: `${totalRecordsCount > 0 ? (grandAbsentCount / totalRecordsCount) * 100 : 0}%` }}
+              className="bg-rose-500 h-full transition-all duration-300"
+              title={`गैरहाजिर: ${grandAbsentCount}`}
+            />
+          </div>
+          <div className="flex justify-between text-[10px] text-slate-500 font-bold px-0.5">
+            <span>0%</span>
+            <span className="text-emerald-700 font-black">{grandPresentPercent}% रिपोर्टेड उपस्थित</span>
+            <span>100% ({totalRecordsCount} जवान)</span>
+          </div>
         </div>
       </div>
 
