@@ -19,7 +19,8 @@ import {
   Menu,
   ChevronDown,
   ShieldCheck,
-  Globe
+  Globe,
+  History
 } from 'lucide-react';
 
 import { useLanguage } from './context/LanguageContext';
@@ -36,6 +37,7 @@ import EventManager from './components/EventManager';
 import DutyAllocationHub from './components/DutyAllocationHub';
 import ForceAamadManager from './components/ForceAamadManager';
 import ChangePasswordModal from './components/ChangePasswordModal';
+import AuditLogModal from './components/AuditLogModal';
 
 import initialData from './data/duty_data.json';
 import {
@@ -123,6 +125,7 @@ export default function App() {
 
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
+  const [isAuditLogModalOpen, setIsAuditLogModalOpen] = useState(false);
   const [pendingTab, setPendingTab] = useState(null);
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -687,7 +690,25 @@ export default function App() {
                           </div>
                         </button>
 
-                        {/* 2. Admin Quick Settings */}
+                        {/* 2. System Audit Log */}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsUserMenuOpen(false);
+                            setIsAuditLogModalOpen(true);
+                          }}
+                          className="w-full px-3 py-2.5 rounded-xl hover:bg-slate-800 text-slate-200 hover:text-amber-400 transition flex items-center gap-2.5 cursor-pointer text-left"
+                        >
+                          <div className="w-7 h-7 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-500/20">
+                            <History className="w-4 h-4" />
+                          </div>
+                          <div>
+                            <div>{language === 'en' ? 'Audit Log & History' : 'ऑडिट लॉग (Audit Trail)'}</div>
+                            <div className="text-[10px] text-slate-400 font-medium">{language === 'en' ? 'View deletion & security logs' : 'विलोपन व सुरक्षा रिकॉर्ड्स देखें'}</div>
+                          </div>
+                        </button>
+
+                        {/* 3. Admin Quick Settings */}
                         {userRole === 'admin' && (
                           <button
                             type="button"
@@ -980,6 +1001,12 @@ export default function App() {
         isOpen={isChangePasswordOpen}
         onClose={() => setIsChangePasswordOpen(false)}
         userRole={userRole}
+      />
+
+      {/* Transparency System Audit Log Modal */}
+      <AuditLogModal
+        isOpen={isAuditLogModalOpen}
+        onClose={() => setIsAuditLogModalOpen(false)}
       />
 
       {/* Footer */}
