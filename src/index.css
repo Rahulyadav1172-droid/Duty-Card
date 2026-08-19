@@ -21,6 +21,19 @@
   * {
     box-sizing: border-box;
   }
+
+  /* Universal cursor behavior: text cursor ONLY on inputs/textareas, pointer on buttons, default everywhere else */
+  body, div, p, span, h1, h2, h3, h4, h5, h6, table, tr, th, td, header, nav, section, main, footer, ul, li, label, svg {
+    cursor: default;
+  }
+
+  input, textarea, [contenteditable="true"], [contenteditable] {
+    cursor: text !important;
+  }
+
+  button, a, select, [role="button"], .cursor-pointer, input[type="button"], input[type="submit"], input[type="file"] {
+    cursor: pointer !important;
+  }
 }
 
 .font-devanagari {

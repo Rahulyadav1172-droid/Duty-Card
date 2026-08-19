@@ -79,7 +79,7 @@ export default function SearchSection({
       )}
 
       {/* Main Search Card (Optimized for Mobile Touch) */}
-      <div className="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-6 shadow-sm space-y-3.5 sm:space-y-4 text-center">
+      <div className="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-6 shadow-sm space-y-3.5 sm:space-y-4 text-center select-none">
         {/* Title & Tagline */}
         <div className="space-y-1">
           <div className="inline-flex items-center gap-1.5 px-3 py-0.5 sm:py-1 rounded-full bg-amber-50 border border-amber-200/80 text-amber-900 text-[11px] sm:text-xs font-bold shadow-2xs">
@@ -110,7 +110,7 @@ export default function SearchSection({
             onChange={(e) => setSearchQuery(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && onSearchSubmit?.()}
             placeholder={language === 'en' ? 'Enter Mobile Number or Name...' : 'मोबाइल नंबर या नाम लिखें...'}
-            className="w-full pl-11 sm:pl-12 pr-10 py-3 sm:py-3.5 bg-slate-50 border border-slate-300 rounded-xl text-xs sm:text-sm font-bold text-slate-900 placeholder:text-slate-400 placeholder:font-normal focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 focus:bg-white transition shadow-inner"
+            className="w-full pl-11 sm:pl-12 pr-10 py-3 sm:py-3.5 bg-slate-50 border border-slate-300 rounded-xl text-xs sm:text-sm font-bold text-slate-900 placeholder:text-slate-400 placeholder:font-normal focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 focus:bg-white transition shadow-inner select-text cursor-text"
             autoFocus
           />
 
