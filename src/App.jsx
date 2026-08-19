@@ -567,13 +567,24 @@ export default function App() {
               <button
                 type="button"
                 onClick={toggleTheme}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-slate-800/90 hover:bg-slate-700/90 border border-slate-700/80 text-white transition cursor-pointer shadow-xs active:scale-95 text-xs font-bold"
-                title={isDark ? (language === 'en' ? 'Day Mode' : 'दिन / डे मोड') : (language === 'en' ? 'Night Shift Mode' : 'नाईट ड्यूटी मोड')}
+                className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl border transition cursor-pointer shadow-xs active:scale-95 text-xs font-black ${
+                  isDark
+                    ? 'bg-indigo-950 text-indigo-200 border-indigo-500/50 hover:bg-indigo-900'
+                    : 'bg-gradient-to-r from-amber-400 to-amber-300 text-slate-950 border-amber-400 hover:from-amber-300 hover:to-amber-200'
+                }`}
+                title={isDark ? (language === 'en' ? 'Night Mode Active (Click for Day)' : 'नाईट मोड सक्रिय (डे मोड के लिए क्लिक करें)') : (language === 'en' ? 'Day Mode Active (Click for Night)' : 'डे मोड सक्रिय (नाईट मोड के लिए क्लिक करें)')}
               >
-                {isDark ? <Sun className="w-3.5 h-3.5 text-amber-400 shrink-0" /> : <Moon className="w-3.5 h-3.5 text-indigo-300 shrink-0" />}
-                <span className="hidden sm:inline text-xs font-bold text-slate-200">
-                  {isDark ? (language === 'en' ? 'Day' : 'दिन') : (language === 'en' ? 'Night' : 'रात')}
-                </span>
+                {isDark ? (
+                  <>
+                    <Moon className="w-3.5 h-3.5 text-indigo-300 shrink-0" />
+                    <span>{language === 'en' ? 'Night 🌙' : 'रात 🌙'}</span>
+                  </>
+                ) : (
+                  <>
+                    <Sun className="w-3.5 h-3.5 text-slate-950 shrink-0" />
+                    <span>{language === 'en' ? 'Day ☀️' : 'दिन ☀️'}</span>
+                  </>
+                )}
               </button>
 
               <div className="hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-800/80 border border-slate-700/60 text-[11px] font-bold text-slate-300">
