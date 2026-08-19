@@ -314,17 +314,17 @@ export default function DutyCard({
       {/* Main Printable Duty Card Container */}
       <div
         id="printable-duty-card"
-        className="bg-white text-slate-900 p-4 sm:p-6 rounded-xl sm:rounded-2xl border-2 border-slate-900 shadow-md space-y-3.5 sm:space-y-4"
+        className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 p-4 sm:p-6 rounded-xl sm:rounded-2xl border-2 border-slate-900 dark:border-slate-700 shadow-md space-y-3.5 sm:space-y-4 transition"
       >
         {/* Pass Header */}
-        <div className="border-b-2 border-slate-900 pb-2.5 sm:pb-3.5 flex items-center justify-between gap-2 sm:gap-3">
+        <div className="border-b-2 border-slate-900 dark:border-slate-700 pb-2.5 sm:pb-3.5 flex items-center justify-between gap-2 sm:gap-3">
           <img src="/badge.png" alt="Police Badge Left" className="w-10 h-10 sm:w-14 sm:h-14 object-contain shrink-0" />
           
           <div className="flex-1 text-center min-w-0 px-1">
-            <h1 className="text-base sm:text-2xl font-black text-slate-950 leading-normal">
+            <h1 className="text-base sm:text-2xl font-black text-slate-950 dark:text-white leading-normal">
               {eventTitle}
             </h1>
-            <h2 className="text-xs sm:text-base font-bold text-slate-700 mt-1 leading-normal">
+            <h2 className="text-xs sm:text-base font-bold text-slate-700 dark:text-amber-400 mt-1 leading-normal">
               {eventSubtitle}
             </h2>
           </div>
@@ -333,11 +333,11 @@ export default function DutyCard({
         </div>
 
         {/* Officer Identity & Passport Photo Block */}
-        <div className="flex items-stretch gap-2.5 sm:gap-3 border border-slate-300 p-2.5 sm:p-3 rounded-lg sm:rounded-xl bg-slate-50/80">
+        <div className="flex items-stretch gap-2.5 sm:gap-3 border border-slate-300 dark:border-slate-700 p-2.5 sm:p-3 rounded-lg sm:rounded-xl bg-slate-50/90 dark:bg-slate-800/80">
           {/* Photo Frame */}
           <div
             onClick={() => photoInputRef.current?.click()}
-            className="w-18 h-24 sm:w-24 sm:h-28 border-2 border-dashed border-slate-400 hover:border-amber-500 rounded-lg bg-white overflow-hidden flex flex-col items-center justify-center text-center shrink-0 relative group cursor-pointer transition shadow-inner"
+            className="w-18 h-24 sm:w-24 sm:h-28 border-2 border-dashed border-slate-400 dark:border-slate-600 hover:border-amber-500 rounded-lg bg-white dark:bg-slate-900 overflow-hidden flex flex-col items-center justify-center text-center shrink-0 relative group cursor-pointer transition shadow-inner"
             title="फोटो अपलोड/बदलने के लिए क्लिक करें"
           >
             {duty.photo ? (
@@ -347,12 +347,12 @@ export default function DutyCard({
                 className="w-full h-full object-cover"
               />
             ) : (
-              <div className="p-1 space-y-0.5 text-slate-400">
-                <User className="w-5 h-5 sm:w-6 sm:h-6 mx-auto text-slate-400" />
-                <div className="text-[9px] sm:text-[10px] font-bold text-slate-700 leading-tight">
+              <div className="p-1 space-y-0.5 text-slate-400 dark:text-slate-500">
+                <User className="w-5 h-5 sm:w-6 sm:h-6 mx-auto text-slate-400 dark:text-slate-500" />
+                <div className="text-[9px] sm:text-[10px] font-bold text-slate-700 dark:text-slate-300 leading-tight">
                   पासपोर्ट फोटो
                 </div>
-                <div className="text-[8px] sm:text-[9px] text-slate-400">चस्पा करें</div>
+                <div className="text-[8px] sm:text-[9px] text-slate-400 dark:text-slate-500">चस्पा करें</div>
               </div>
             )}
 
@@ -364,55 +364,55 @@ export default function DutyCard({
           </div>
 
           {/* Officer Details Info */}
-          <div className="flex-1 flex flex-col justify-between text-slate-900 py-0.5 min-w-0">
+          <div className="flex-1 flex flex-col justify-between text-slate-900 dark:text-slate-100 py-0.5 min-w-0">
             <div>
-              <span className="text-[10px] sm:text-[11px] font-bold text-slate-500">अधिकारी / कर्मचारी:</span>
-              <div className="text-sm sm:text-lg font-black text-slate-950 mt-0.5 break-words">
+              <span className="text-[10px] sm:text-[11px] font-bold text-slate-600 dark:text-slate-400">अधिकारी / कर्मचारी:</span>
+              <div className="text-sm sm:text-lg font-black text-slate-950 dark:text-white mt-0.5 break-words">
                 {duty.name}
               </div>
-              <div className="text-xs font-mono font-bold text-slate-800 mt-1 flex items-center gap-1.5">
+              <div className="text-xs font-mono font-bold text-slate-900 dark:text-amber-300 mt-1 flex items-center gap-1.5">
                 <span>📱</span>
                 <span>{duty.mobile || 'मोबाइल अनुपलब्ध'}</span>
               </div>
             </div>
 
-            <div className="text-[10px] sm:text-xs text-slate-600 border-t border-slate-200 pt-1.5 flex flex-wrap items-center justify-between gap-1">
-              <div>P.No: <strong className="font-mono text-slate-950">{duty.id}</strong></div>
-              <div>मूल तैनाती: <strong className="text-slate-950">{duty.posting || '-'}</strong> {duty.district ? `(${duty.district})` : ''}</div>
+            <div className="text-[10px] sm:text-xs text-slate-700 dark:text-slate-300 border-t border-slate-200 dark:border-slate-700 pt-1.5 flex flex-wrap items-center justify-between gap-1">
+              <div>P.No: <strong className="font-mono text-slate-950 dark:text-white">{duty.id}</strong></div>
+              <div>मूल तैनाती: <strong className="text-slate-950 dark:text-white">{duty.posting || '-'}</strong> {duty.district ? `(${duty.district})` : ''}</div>
             </div>
           </div>
         </div>
 
         {/* Clean Alternating Rows Table */}
-        <div className="overflow-hidden border border-slate-300 rounded-lg sm:rounded-xl text-xs sm:text-sm">
+        <div className="overflow-hidden border border-slate-300 dark:border-slate-700 rounded-lg sm:rounded-xl text-xs sm:text-sm">
           <table className="w-full border-collapse">
-            <tbody className="divide-y divide-slate-200">
+            <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
               {duty.event_name ? (
                 <tr>
-                  <td className="w-[38%] sm:w-1/3 bg-slate-50 font-bold p-2 sm:p-2.5 border-r border-slate-200 text-slate-700 text-[11px] sm:text-sm leading-relaxed">
+                  <td className="w-[38%] sm:w-1/3 bg-slate-100 dark:bg-slate-800/80 font-bold p-2 sm:p-2.5 border-r border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-300 text-[11px] sm:text-sm leading-relaxed">
                     ड्यूटी का प्रकार
                   </td>
-                  <td className="p-2 sm:p-2.5 font-bold text-slate-900 bg-white text-[11px] sm:text-sm break-words leading-relaxed">
+                  <td className="p-2 sm:p-2.5 font-bold text-slate-950 dark:text-white bg-white dark:bg-slate-900 text-[11px] sm:text-sm break-words leading-relaxed">
                     {duty.event_name}
                   </td>
                 </tr>
               ) : null}
 
               <tr>
-                <td className="w-[38%] sm:w-1/3 bg-slate-50 font-bold p-2 sm:p-2.5 border-r border-slate-200 text-slate-700 text-[11px] sm:text-sm leading-relaxed">
+                <td className="w-[38%] sm:w-1/3 bg-slate-100 dark:bg-slate-800/80 font-bold p-2 sm:p-2.5 border-r border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-300 text-[11px] sm:text-sm leading-relaxed">
                   {labels.duty_place}
                 </td>
-                <td className="p-2 sm:p-2.5 font-black text-xs sm:text-base text-amber-950 bg-amber-50/50 break-words leading-relaxed">
+                <td className="p-2 sm:p-2.5 font-black text-xs sm:text-base bg-amber-100/80 dark:bg-amber-950/60 text-amber-950 dark:text-amber-300 break-words leading-relaxed">
                   {duty.duty_place || '-'}
                 </td>
               </tr>
 
               {duty.shift ? (
                 <tr>
-                  <td className="bg-slate-50 font-bold p-2 sm:p-2.5 border-r border-slate-200 text-slate-700 text-[11px] sm:text-sm leading-relaxed">
+                  <td className="bg-slate-100 dark:bg-slate-800/80 font-bold p-2 sm:p-2.5 border-r border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-300 text-[11px] sm:text-sm leading-relaxed">
                     {labels.shift}
                   </td>
-                  <td className="p-2 sm:p-2.5 font-bold text-slate-900 bg-white text-[11px] sm:text-sm break-words leading-relaxed">
+                  <td className="p-2 sm:p-2.5 font-bold text-slate-950 dark:text-white bg-white dark:bg-slate-900 text-[11px] sm:text-sm break-words leading-relaxed">
                     {duty.shift}
                   </td>
                 </tr>
@@ -420,10 +420,10 @@ export default function DutyCard({
 
               {duty.zone ? (
                 <tr>
-                  <td className="bg-slate-50 font-bold p-2 sm:p-2.5 border-r border-slate-200 text-slate-700 text-[11px] sm:text-sm leading-relaxed">
+                  <td className="bg-slate-100 dark:bg-slate-800/80 font-bold p-2 sm:p-2.5 border-r border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-300 text-[11px] sm:text-sm leading-relaxed">
                     {labels.zone}
                   </td>
-                  <td className="p-2 sm:p-2.5 font-semibold text-slate-800 bg-white text-[11px] sm:text-sm break-words leading-relaxed">
+                  <td className="p-2 sm:p-2.5 font-semibold text-slate-900 dark:text-slate-200 bg-white dark:bg-slate-900 text-[11px] sm:text-sm break-words leading-relaxed">
                     {duty.zone}
                   </td>
                 </tr>
@@ -431,10 +431,10 @@ export default function DutyCard({
 
               {(duty.zonal_incharge || duty.zonal) ? (
                 <tr>
-                  <td className="bg-slate-50 font-bold p-2 sm:p-2.5 border-r border-slate-200 text-slate-700 text-[11px] sm:text-sm leading-relaxed">
+                  <td className="bg-slate-100 dark:bg-slate-800/80 font-bold p-2 sm:p-2.5 border-r border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-300 text-[11px] sm:text-sm leading-relaxed">
                     {labels.zonal_incharge}
                   </td>
-                  <td className="p-2 sm:p-2.5 font-semibold text-slate-800 bg-white text-[11px] sm:text-sm break-words leading-relaxed">
+                  <td className="p-2 sm:p-2.5 font-semibold text-slate-900 dark:text-slate-200 bg-white dark:bg-slate-900 text-[11px] sm:text-sm break-words leading-relaxed">
                     {duty.zonal_incharge || duty.zonal}
                   </td>
                 </tr>
@@ -442,10 +442,10 @@ export default function DutyCard({
 
               {duty.sector ? (
                 <tr>
-                  <td className="bg-slate-50 font-bold p-2 sm:p-2.5 border-r border-slate-200 text-slate-700 text-[11px] sm:text-sm leading-relaxed">
+                  <td className="bg-slate-100 dark:bg-slate-800/80 font-bold p-2 sm:p-2.5 border-r border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-300 text-[11px] sm:text-sm leading-relaxed">
                     {labels.sector}
                   </td>
-                  <td className="p-2 sm:p-2.5 font-semibold text-slate-800 bg-white text-[11px] sm:text-sm break-words leading-relaxed">
+                  <td className="p-2 sm:p-2.5 font-semibold text-slate-900 dark:text-slate-200 bg-white dark:bg-slate-900 text-[11px] sm:text-sm break-words leading-relaxed">
                     {duty.sector}
                   </td>
                 </tr>
@@ -453,10 +453,10 @@ export default function DutyCard({
 
               {duty.sector_incharge ? (
                 <tr>
-                  <td className="bg-slate-50 font-bold p-2 sm:p-2.5 border-r border-slate-200 text-slate-700 text-[11px] sm:text-sm leading-relaxed">
+                  <td className="bg-slate-100 dark:bg-slate-800/80 font-bold p-2 sm:p-2.5 border-r border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-300 text-[11px] sm:text-sm leading-relaxed">
                     {labels.sector_incharge}
                   </td>
-                  <td className="p-2 sm:p-2.5 font-semibold text-slate-800 bg-white text-[11px] sm:text-sm break-words leading-relaxed">
+                  <td className="p-2 sm:p-2.5 font-semibold text-slate-900 dark:text-slate-200 bg-white dark:bg-slate-900 text-[11px] sm:text-sm break-words leading-relaxed">
                     {duty.sector_incharge}
                   </td>
                 </tr>
@@ -464,11 +464,11 @@ export default function DutyCard({
 
               {/* Briefing Location Row */}
               {activeBriefingPlace && (
-                <tr className="bg-amber-50/70 border-t-2 border-amber-200">
-                  <td className="bg-amber-100/60 font-black p-2 sm:p-2.5 border-r border-amber-200 text-amber-950 text-[11px] sm:text-sm leading-relaxed">
+                <tr className="bg-amber-100/70 dark:bg-amber-950/40 border-t-2 border-amber-300 dark:border-amber-700/50">
+                  <td className="bg-amber-200/60 dark:bg-amber-900/40 font-black p-2 sm:p-2.5 border-r border-amber-300 dark:border-amber-700/50 text-amber-950 dark:text-amber-300 text-[11px] sm:text-sm leading-relaxed">
                     {labels.briefing}
                   </td>
-                  <td className="p-2 sm:p-2.5 font-bold text-amber-950 bg-amber-50/70 text-[11px] sm:text-sm break-words leading-relaxed">
+                  <td className="p-2 sm:p-2.5 font-bold text-amber-950 dark:text-amber-200 bg-amber-100/50 dark:bg-amber-950/30 text-[11px] sm:text-sm break-words leading-relaxed">
                     {activeBriefingPlace}
                   </td>
                 </tr>
@@ -476,11 +476,11 @@ export default function DutyCard({
 
               {/* Special Note Row */}
               {activeNote && (
-                <tr className="bg-amber-50/70 border-t-2 border-amber-200">
-                  <td className="bg-amber-100/60 font-black p-2 sm:p-2.5 border-r border-amber-200 text-amber-950 text-[11px] sm:text-sm leading-relaxed">
+                <tr className="bg-amber-100/70 dark:bg-amber-950/40 border-t-2 border-amber-300 dark:border-amber-700/50">
+                  <td className="bg-amber-200/60 dark:bg-amber-900/40 font-black p-2 sm:p-2.5 border-r border-amber-300 dark:border-amber-700/50 text-amber-950 dark:text-amber-300 text-[11px] sm:text-sm leading-relaxed">
                     {labels.note}
                   </td>
-                  <td className="p-2 sm:p-2.5 font-bold text-amber-950 bg-amber-50/70 text-[11px] sm:text-sm leading-relaxed break-words">
+                  <td className="p-2 sm:p-2.5 font-bold text-amber-950 dark:text-amber-200 bg-amber-100/50 dark:bg-amber-950/30 text-[11px] sm:text-sm leading-relaxed break-words">
                     {activeNote}
                   </td>
                 </tr>

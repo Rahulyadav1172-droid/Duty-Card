@@ -82,48 +82,52 @@
     color: #64748b !important;
   }
 
-  /* Colored Badge & Chip Text Contrast Fixes in Dark Mode */
-  html.dark .text-amber-900,
-  html.dark .text-amber-950 {
-    color: #fef08a !important;
+  /* High-Contrast Amber / Yellow Highlight Boxes in Dark Mode */
+  html.dark .bg-amber-50,
+  html.dark .bg-amber-100,
+  html.dark [class*="bg-amber-50"],
+  html.dark [class*="bg-amber-100"] {
+    background-color: #2e1d05 !important;
+    border-color: #78350f !important;
+    color: #fde047 !important;
   }
+  html.dark .text-amber-900,
+  html.dark .text-amber-950,
   html.dark .text-amber-800,
   html.dark .text-amber-700 {
     color: #fde047 !important;
   }
-  html.dark .bg-amber-50 {
-    background-color: rgba(245, 158, 11, 0.15) !important;
-    border-color: rgba(245, 158, 11, 0.35) !important;
-  }
 
+  /* Emerald / Green Status Boxes in Dark Mode */
+  html.dark .bg-emerald-50,
+  html.dark .bg-emerald-100,
+  html.dark [class*="bg-emerald-50"],
+  html.dark [class*="bg-emerald-100"] {
+    background-color: #06281b !important;
+    border-color: #047857 !important;
+    color: #6ee7b7 !important;
+  }
   html.dark .text-emerald-900,
+  html.dark .text-emerald-950,
   html.dark .text-emerald-800,
   html.dark .text-emerald-700 {
     color: #6ee7b7 !important;
   }
-  html.dark .bg-emerald-50 {
-    background-color: rgba(16, 185, 129, 0.15) !important;
-    border-color: rgba(16, 185, 129, 0.35) !important;
-  }
 
+  /* Rose / Red Status Boxes in Dark Mode */
+  html.dark .bg-rose-50,
+  html.dark .bg-rose-100,
+  html.dark [class*="bg-rose-50"],
+  html.dark [class*="bg-rose-100"] {
+    background-color: #2b0c15 !important;
+    border-color: #9f1239 !important;
+    color: #fda4af !important;
+  }
   html.dark .text-rose-900,
+  html.dark .text-rose-950,
   html.dark .text-rose-800,
   html.dark .text-rose-700 {
     color: #fda4af !important;
-  }
-  html.dark .bg-rose-50 {
-    background-color: rgba(244, 63, 94, 0.15) !important;
-    border-color: rgba(244, 63, 94, 0.35) !important;
-  }
-
-  html.dark .text-blue-900,
-  html.dark .text-blue-800,
-  html.dark .text-blue-700 {
-    color: #93c5fd !important;
-  }
-  html.dark .bg-blue-50 {
-    background-color: rgba(59, 130, 246, 0.15) !important;
-    border-color: rgba(59, 130, 246, 0.35) !important;
   }
 
   * {

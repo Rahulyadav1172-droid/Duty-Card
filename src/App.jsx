@@ -479,7 +479,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-100/70 text-slate-900 flex font-sans selection:bg-amber-500 selection:text-slate-950 font-devanagari">
+    <div className="min-h-screen bg-slate-100 dark:bg-[#080d1a] text-slate-900 dark:text-slate-100 flex font-sans selection:bg-amber-500 selection:text-slate-950 font-devanagari transition-colors duration-200">
       {/* 1. Responsive Sidebar Navigation */}
       <SidebarNavigation
         activeTab={activeTab}
