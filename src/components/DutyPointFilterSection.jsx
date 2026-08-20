@@ -64,6 +64,8 @@ export default function DutyPointFilterSection({
   onMarkAttendance,
   userRole = 'guest'
 }) {
+  const [selectedZone, setSelectedZone] = useState('ALL');
+  const [selectedSector, setSelectedSector] = useState('ALL');
   const [selectedPoint, setSelectedPoint] = useState('ALL');
   const [pointSearchQuery, setPointSearchQuery] = useState('');
   const [attendanceFilter, setAttendanceFilter] = useState('ALL'); // 'ALL' | 'present' | 'absent' | 'pending'
@@ -83,24 +85,68 @@ export default function DutyPointFilterSection({
     return attendanceMap || {};
   }, [attendanceByDate, checkingDate, attendanceMap]);
 
-  // Extract all unique duty points and their count
+  // Unique Zones with personnel count
+  const zoneStats = useMemo(() => {
+    const map = {};
+    (records || []).forEach(r => {
+      const z = (r.zone || '').trim();
+      if (!z) return;
+      if (!map[z]) map[z] = 0;
+      map[z]++;
+    });
+    return map;
+  }, [records]);
+  const uniqueZones = useMemo(() => Object.keys(zoneStats).sort(), [zoneStats]);
+
+  // Unique Sectors (cascaded by selectedZone) with personnel count
+  const sectorStats = useMemo(() => {
+    const map = {};
+    (records || []).forEach(r => {
+      if (selectedZone !== 'ALL' && (r.zone || '').trim() !== selectedZone) return;
+      const s = (r.sector || '').trim();
+      if (!s) return;
+      if (!map[s]) map[s] = 0;
+      map[s]++;
+    });
+    return map;
+  }, [records, selectedZone]);
+  const uniqueSectors = useMemo(() => Object.keys(sectorStats).sort(), [sectorStats]);
+
+  // Extract unique duty points (cascaded by selectedZone and selectedSector)
   const dutyPointStats = useMemo(() => {
     const map = {};
     (records || []).forEach(r => {
+      if (selectedZone !== 'ALL' && (r.zone || '').trim() !== selectedZone) return;
+      if (selectedSector !== 'ALL' && (r.sector || '').trim() !== selectedSector) return;
       const p = (r.duty_place || '').trim();
       if (!p) return;
       if (!map[p]) map[p] = [];
       map[p].push(r);
     });
     return map;
-  }, [records]);
-
+  }, [records, selectedZone, selectedSector]);
   const uniqueDutyPoints = useMemo(() => Object.keys(dutyPointStats).sort(), [dutyPointStats]);
 
-  // Selected personnel list based on duty point filter & attendance filter
+  // Selected personnel list based on Zone, Sector, Duty Point, Attendance & Search filters
   const displayedPersonnel = useMemo(() => {
-    let list = selectedPoint === 'ALL' ? (records || []) : (dutyPointStats[selectedPoint] || []);
+    let list = records || [];
 
+    // 1. Zone filter
+    if (selectedZone !== 'ALL') {
+      list = list.filter(p => (p.zone || '').trim() === selectedZone);
+    }
+
+    // 2. Sector filter
+    if (selectedSector !== 'ALL') {
+      list = list.filter(p => (p.sector || '').trim() === selectedSector);
+    }
+
+    // 3. Duty point filter
+    if (selectedPoint !== 'ALL') {
+      list = list.filter(p => (p.duty_place || '').trim() === selectedPoint);
+    }
+
+    // 4. Attendance filter
     if (attendanceFilter !== 'ALL') {
       list = list.filter(p => {
         const att = activeAttendance[p.id];
@@ -117,6 +163,7 @@ export default function DutyPointFilterSection({
       });
     }
 
+    // 5. Text search query
     if (pointSearchQuery.trim()) {
       const q = pointSearchQuery.trim().toLowerCase();
       list = list.filter(p =>
@@ -124,15 +171,39 @@ export default function DutyPointFilterSection({
         (p.mobile || '').includes(q) ||
         (p.duty_place || '').toLowerCase().includes(q) ||
         (p.posting || '').toLowerCase().includes(q) ||
-        (p.district || '').toLowerCase().includes(q)
+        (p.district || '').toLowerCase().includes(q) ||
+        (p.zone || '').toLowerCase().includes(q) ||
+        (p.sector || '').toLowerCase().includes(q)
       );
     }
     return list;
-  }, [records, selectedPoint, dutyPointStats, pointSearchQuery, attendanceFilter, activeAttendance]);
+  }, [records, selectedZone, selectedSector, selectedPoint, attendanceFilter, activeAttendance, pointSearchQuery]);
 
-  // Point Attendance Statistics for selected checking date
-  const pointTotal = selectedPoint === 'ALL' ? records.length : (dutyPointStats[selectedPoint]?.length || 0);
-  const pointPersonnelList = selectedPoint === 'ALL' ? records : (dutyPointStats[selectedPoint] || []);
+  // Handle Zone Change with automatic reset of child filters
+  const handleZoneChange = (zVal) => {
+    setSelectedZone(zVal);
+    setSelectedSector('ALL');
+    setSelectedPoint('ALL');
+  };
+
+  // Handle Sector Change with automatic reset of duty point
+  const handleSectorChange = (sVal) => {
+    setSelectedSector(sVal);
+    setSelectedPoint('ALL');
+  };
+
+  // Reset all filters
+  const handleResetFilters = () => {
+    setSelectedZone('ALL');
+    setSelectedSector('ALL');
+    setSelectedPoint('ALL');
+    setPointSearchQuery('');
+    setAttendanceFilter('ALL');
+  };
+
+  // Point Attendance Statistics for currently filtered personnel list
+  const pointTotal = displayedPersonnel.length;
+  const pointPersonnelList = displayedPersonnel;
   
   const presentCount = pointPersonnelList.filter(p => {
     const att = activeAttendance[p.id];
@@ -326,48 +397,124 @@ export default function DutyPointFilterSection({
           </div>
         </div>
 
-        {/* PRIMARY DUTY POINT DROPDOWN SELECTOR */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* CASCADING FILTER CONTROLS: ZONE, SECTOR, DUTY POINT, AND SEARCH */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+          {/* 1. ZONE SELECTOR */}
           <div className="space-y-1.5">
-            <label className="text-xs font-black text-slate-800 block">
-              ड्यूटी पॉइंट चुनें (Select Duty Point Dropdown):
+            <label className="text-xs font-black text-slate-800 flex items-center justify-between">
+              <span>1. ज़ोन चुनें (Select Zone):</span>
+              {selectedZone !== 'ALL' && (
+                <span className="text-[10px] text-amber-700 bg-amber-50 px-1.5 py-0.2 rounded font-mono font-bold">
+                  सक्रिय
+                </span>
+              )}
+            </label>
+            <div className="relative">
+              <ShieldCheck className="absolute left-3.5 top-3.5 w-4 h-4 text-amber-600 pointer-events-none" />
+              <select
+                value={selectedZone}
+                onChange={(e) => handleZoneChange(e.target.value)}
+                className="w-full appearance-none pl-10 pr-9 py-2.5 bg-slate-50 hover:bg-slate-100/80 border border-slate-300 rounded-xl text-xs font-black text-slate-950 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:bg-white transition cursor-pointer shadow-2xs truncate"
+              >
+                <option value="ALL">
+                  🛡️ समस्त ज़ोन ({uniqueZones.length} ज़ोन)
+                </option>
+                {uniqueZones.map((z) => (
+                  <option key={z} value={z}>
+                    🛡️ {z} ({zoneStats[z]} जवान)
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="absolute right-3 top-3.5 w-4 h-4 text-slate-400 pointer-events-none" />
+            </div>
+          </div>
+
+          {/* 2. SECTOR SELECTOR */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-black text-slate-800 flex items-center justify-between">
+              <span>2. सेक्टर चुनें (Select Sector):</span>
+              {selectedSector !== 'ALL' && (
+                <span className="text-[10px] text-amber-700 bg-amber-50 px-1.5 py-0.2 rounded font-mono font-bold">
+                  सक्रिय
+                </span>
+              )}
+            </label>
+            <div className="relative">
+              <Layers className="absolute left-3.5 top-3.5 w-4 h-4 text-amber-600 pointer-events-none" />
+              <select
+                value={selectedSector}
+                onChange={(e) => handleSectorChange(e.target.value)}
+                className="w-full appearance-none pl-10 pr-9 py-2.5 bg-slate-50 hover:bg-slate-100/80 border border-slate-300 rounded-xl text-xs font-black text-slate-950 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:bg-white transition cursor-pointer shadow-2xs truncate"
+              >
+                <option value="ALL">
+                  📑 समस्त सेक्टर ({uniqueSectors.length} सेक्टर)
+                </option>
+                {uniqueSectors.map((s) => (
+                  <option key={s} value={s}>
+                    📑 {s} ({sectorStats[s]} जवान)
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="absolute right-3 top-3.5 w-4 h-4 text-slate-400 pointer-events-none" />
+            </div>
+          </div>
+
+          {/* 3. DUTY POINT SELECTOR */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-black text-slate-800 flex items-center justify-between">
+              <span>3. ड्यूटी पॉइंट चुनें (Duty Point):</span>
+              {selectedPoint !== 'ALL' && (
+                <span className="text-[10px] text-amber-700 bg-amber-50 px-1.5 py-0.2 rounded font-mono font-bold">
+                  सक्रिय
+                </span>
+              )}
             </label>
             <div className="relative">
               <MapPin className="absolute left-3.5 top-3.5 w-4 h-4 text-amber-600 pointer-events-none" />
               <select
                 value={selectedPoint}
                 onChange={(e) => setSelectedPoint(e.target.value)}
-                className="w-full appearance-none pl-10 pr-10 py-3 bg-slate-50 hover:bg-slate-100/80 border border-slate-300 rounded-xl text-xs sm:text-sm font-black text-slate-950 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:bg-white transition cursor-pointer shadow-2xs"
+                className="w-full appearance-none pl-10 pr-9 py-2.5 bg-slate-50 hover:bg-slate-100/80 border border-slate-300 rounded-xl text-xs font-black text-slate-950 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:bg-white transition cursor-pointer shadow-2xs truncate"
               >
                 <option value="ALL">
-                  🚩 समस्त बल (All Staff) — कुल {records.length} पुलिसकर्मी
+                  📍 समस्त पॉइंट ({uniqueDutyPoints.length} पॉइंट)
                 </option>
                 {uniqueDutyPoints.map((point) => {
                   const count = dutyPointStats[point]?.length || 0;
                   return (
                     <option key={point} value={point}>
-                      📍 {point} ({count} जवान तैनात)
+                      📍 {point} ({count} जवान)
                     </option>
                   );
                 })}
               </select>
-              <ChevronDown className="absolute right-3.5 top-3.5 w-4 h-4 text-slate-500 pointer-events-none" />
+              <ChevronDown className="absolute right-3 top-3.5 w-4 h-4 text-slate-400 pointer-events-none" />
             </div>
           </div>
 
-          {/* Quick Search within this Duty Point */}
+          {/* 4. TEXT SEARCH FILTER */}
           <div className="space-y-1.5">
-            <label className="text-xs font-bold text-slate-700 block">
-              जवान का नाम या मोबाइल नंबर से फ़िल्टर करें:
-            </label>
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-bold text-slate-700 block">
+                4. खोजें (Search):
+              </label>
+              {(selectedZone !== 'ALL' || selectedSector !== 'ALL' || selectedPoint !== 'ALL' || pointSearchQuery) && (
+                <button
+                  onClick={handleResetFilters}
+                  className="text-[10px] text-rose-600 hover:text-rose-800 font-black underline cursor-pointer"
+                >
+                  फ़िल्टर रीसेट ✕
+                </button>
+              )}
+            </div>
             <div className="relative">
               <Search className="absolute left-3.5 top-3.5 w-4 h-4 text-slate-400" />
               <input
                 type="text"
                 value={pointSearchQuery}
                 onChange={(e) => setPointSearchQuery(e.target.value)}
-                placeholder="नाम, मोबाइल, थाना या जिला टाइप करें..."
-                className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs sm:text-sm font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:bg-white"
+                placeholder="नाम, मोबाइल, PNO या थाना..."
+                className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:bg-white"
               />
             </div>
           </div>
