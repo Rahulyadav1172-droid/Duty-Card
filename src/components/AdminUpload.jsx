@@ -25,21 +25,22 @@ import {
   Camera,
   User,
   Calendar,
-  Layers
+  Layers,
+  Phone
 } from 'lucide-react';
 import { parseDutyFile } from '../utils/fileParser';
 import * as XLSX from 'xlsx';
 import BulkLegalPdfModal from './BulkLegalPdfModal';
 
 export default function AdminUpload({
-  records,
+  records = [],
   onUpdateRecords,
   onResetToDefault,
-  customNote,
-  isNoteEnabled,
+  customNote = '',
+  isNoteEnabled = true,
   onUpdateNote,
-  customBriefing,
-  isBriefingEnabled,
+  customBriefing = '',
+  isBriefingEnabled = true,
   onUpdateBriefing,
   helplineList = [],
   isHelplineEnabled = true,
