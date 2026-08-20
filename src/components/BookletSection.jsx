@@ -31,7 +31,9 @@ export default function BookletSection({
   onSelectActiveEvent,
   eventTitle = '',
   eventSubtitle = '',
-  eventStartDate = ''
+  eventStartDate = '',
+  masterForce = [],
+  onUpdateEventRecords
 }) {
   const [pdfList, setPdfList] = useState([]);
   const [selectedPdfId, setSelectedPdfId] = useState(null);
@@ -335,48 +337,38 @@ export default function BookletSection({
             {/* Active PDF Viewer */}
             {activePdf ? (
               <div className="space-y-3 pt-2">
-                <div className="flex flex-wrap items-center justify-between bg-slate-50 p-3 rounded-xl border border-slate-200 text-xs gap-2">
-                  <div className="flex items-center gap-2 font-bold text-slate-800">
-                    <FileText className="w-4 h-4 text-rose-600 shrink-0" />
-                    <span className="font-black text-slate-950 truncate max-w-xs sm:max-w-md">{activePdf.name}</span>
-                    <span className="text-slate-400 font-mono">({Math.round((activePdf.size || 0) / 1024)} KB)</span>
+                <div className="flex items-center justify-between bg-slate-50 p-3 rounded-2xl border border-slate-200">
+                  <div className="flex items-center gap-2 text-xs font-bold text-slate-800">
+                    <FileText className="w-4 h-4 text-amber-600" />
+                    <span>{activePdf.name || activePdf.title}</span>
                   </div>
 
                   <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => window.open(activePdf.url || activePdf.blobUrl, '_blank')}
-                      className="px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-lg font-black flex items-center gap-1.5 transition cursor-pointer shadow-xs"
-                      title="नए टैब में पूरी स्क्रीन में देखें"
-                    >
-                      <ExternalLink className="w-3.5 h-3.5" />
-                      <span>पूर्ण स्क्रीन में देखें</span>
-                    </button>
-
                     <a
                       href={activePdf.url || activePdf.blobUrl}
-                      download={activePdf.name}
-                      className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg font-bold flex items-center gap-1 transition"
+                      target="_blank"
+                      rel="noreferrer"
+                      className="px-3 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-800 text-xs font-bold rounded-lg flex items-center gap-1"
                     >
-                      <Download className="w-3.5 h-3.5" />
-                      <span>डाउनलोड करें</span>
+                      <ExternalLink className="w-3 h-3" />
+                      <span>पूर्ण स्क्रीन में खोलें</span>
                     </a>
                   </div>
                 </div>
 
-                <div className="w-full h-[750px] bg-slate-100 rounded-2xl overflow-hidden border-2 border-slate-300 shadow-inner relative">
+                <div className="w-full h-[75vh] rounded-2xl border border-slate-300 overflow-hidden bg-slate-100">
                   <object
-                    key={activePdf.id || activePdf.url}
                     data={activePdf.url || activePdf.blobUrl}
                     type="application/pdf"
                     className="w-full h-full"
                   >
                     <iframe
                       src={activePdf.url || activePdf.blobUrl}
-                      title="Police Duty Booklet PDF"
-                      className="w-full h-full border-0"
+                      className="w-full h-full"
+                      title="PDF Booklet Viewer"
                     >
-                      <div className="p-8 text-center space-y-3">
-                        <p className="text-sm font-bold text-slate-700">आपका ब्राउज़र सीधे PDF पूर्वावलोकन का समर्थन नहीं करता है।</p>
+                      <div className="p-8 text-center text-xs text-slate-600">
+                        PDF लोड करने के लिए{' '}
                         <a
                           href={activePdf.url || activePdf.blobUrl}
                           target="_blank"
@@ -418,6 +410,8 @@ export default function BookletSection({
             eventTitle={eventTitle}
             eventSubtitle={eventSubtitle}
             eventStartDate={eventStartDate}
+            masterForce={masterForce}
+            onUpdateEventRecords={onUpdateEventRecords}
           />
         </div>
       )}

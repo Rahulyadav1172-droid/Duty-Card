@@ -1019,6 +1019,8 @@ export default function App() {
             eventTitle={currentEvent.title}
             eventSubtitle={currentEvent.subtitle}
             eventStartDate={currentEvent.startDate || currentEvent.created_at || '16.08.2026 से अग्रिम आदेश तक'}
+            masterForce={forceRecords}
+            onUpdateEventRecords={handleUpdateActiveEventRecords}
           />
         )}
 

@@ -68,14 +68,53 @@ export async function saveAamadToSupabase(aamadRecords = [], auditLogs = []) {
 
     if (error) {
       console.warn('Supabase upsert error for Aamad:', error.message);
-      return false;
+      return { success: false };
     }
-    return true;
+    return { success: true };
   } catch (err) {
-    console.warn('Network error saving Aamad to Supabase:', err);
+    console.error('Failed to sync Aamad to Supabase Cloud:', err);
+    return { success: false, error: err };
+  }
+}
+
+/**
+ * Log Duty Replacement / Substitution event to Audit Trail
+ */
+export async function logReplacementToAuditTrail(entry) {
+  try {
+    const cloud = await fetchAamadFromSupabase();
+    const existingLogs = cloud?.auditLogs || [];
+    const newLog = {
+      id: `AUDIT-REP-${Date.now()}`,
+      type: entry.replacementType || 'REPLACEMENT',
+      deletedAt: new Date().toLocaleString('hi-IN'),
+      deletedRecord: {
+        pno: entry.oldRecord?.pno || '-',
+        name: entry.oldRecord?.name || '-',
+        rank: entry.oldRecord?.rank || 'का0',
+        posting: entry.oldRecord?.posting || '-',
+        district: entry.oldRecord?.district || '-',
+        mobile: entry.oldRecord?.mobile || '-'
+      },
+      newRecord: {
+        pno: entry.newRecord?.pno || '-',
+        name: entry.newRecord?.name || '-',
+        rank: entry.newRecord?.rank || 'का0',
+        mobile: entry.newRecord?.mobile || '-'
+      },
+      remark: `${entry.reason || 'ड्यूटी प्रतिस्थानी'} (${entry.oldRecord?.name || ''} ➡️ ${entry.newRecord?.name || ''})`,
+      deletedBy: entry.adminName || 'सुपर एडमिन'
+    };
+
+    const updatedLogs = [newLog, ...existingLogs];
+    await saveAamadToSupabase(cloud?.records || [], updatedLogs);
+    return true;
+  } catch (e) {
+    console.error('Error logging replacement to audit trail:', e);
     return false;
   }
 }
+
 
 /**
  * Subscribe to realtime changes on Force Aamad records

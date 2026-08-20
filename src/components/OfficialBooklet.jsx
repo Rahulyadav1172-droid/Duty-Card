@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
-import { Printer, ArrowLeft, Shield, Calendar, Clock, MapPin, Users, Edit3, Plus, Trash2, FileText, Check, X, AlertCircle } from 'lucide-react';
+import { Printer, ArrowLeft, Shield, Calendar, Clock, MapPin, Users, Edit3, Plus, Trash2, FileText, Check, X, AlertCircle, RefreshCw } from 'lucide-react';
 import ForceDeploymentMatrix from './ForceDeploymentMatrix';
 import { printOfficialBookletDocument } from '../utils/printOfficialBooklet';
+import DutyReplacementModal from './DutyReplacementModal';
+import { logReplacementToAuditTrail } from '../utils/aamadSync';
 
 /**
  * Helper to clean raw name string by stripping duplicate mobile numbers,
@@ -57,7 +59,9 @@ export default function OfficialBooklet({
   onBack,
   eventTitle = '',
   eventSubtitle = '',
-  eventStartDate = ''
+  eventStartDate = '',
+  masterForce = [],
+  onUpdateEventRecords
 }) {
   const instructionsStorageKey = `OFFICIAL_BOOKLET_INSTRUCTIONS_${(eventTitle || 'default').replace(/\s+/g, '_')}`;
 
@@ -70,6 +74,65 @@ export default function OfficialBooklet({
   });
 
   const [dateInput, setDateInput] = useState(() => new Date().toLocaleDateString('hi-IN'));
+
+  // Replacement Modal State & Handler
+  const [replacementRecord, setReplacementRecord] = useState(null);
+  const [toastMsg, setToastMsg] = useState(null);
+
+  const handleConfirmReplacement = async ({ oldRecord, newRecord, replacementType, reason }) => {
+    let updatedRecords = [...records];
+
+    if (replacementType === 'INTERNAL_RESERVE_SWAP') {
+      updatedRecords = updatedRecords.filter(r => (r.id !== oldRecord.id && r.pno !== oldRecord.pno));
+      const startNum = updatedRecords.length + 1;
+      updatedRecords.push({
+        id: `DUTY-${Date.now()}-${startNum}`,
+        pno: newRecord.pno || `PN-${Date.now()}-${startNum}`,
+        name: newRecord.name,
+        rank: newRecord.rank || 'का0',
+        mobile: newRecord.mobile,
+        posting: newRecord.posting || oldRecord.posting || 'पुलिस लाइन',
+        district: newRecord.district || oldRecord.district || 'अयोध्या',
+        zone: oldRecord.zone,
+        sector: oldRecord.sector,
+        duty_place: oldRecord.duty_place,
+        shift: oldRecord.shift,
+        photo: newRecord.photo || ''
+      });
+
+      setToastMsg(`🔄 ${oldRecord.name} के स्थान पर ${newRecord.name} की प्रतिस्थानी ड्यूटी लगा दी गई!`);
+    } else if (replacementType === 'INTER_DISTRICT_SUBSTITUTION') {
+      const idx = updatedRecords.findIndex(r => r.id === oldRecord.id || (r.pno && r.pno === oldRecord.pno));
+      const updatedItem = {
+        ...oldRecord,
+        ...newRecord
+      };
+
+      if (idx !== -1) {
+        updatedRecords[idx] = updatedItem;
+      } else {
+        updatedRecords.push(updatedItem);
+      }
+
+      setToastMsg(`🏢 गैर-जनपद आवक: ${newRecord.name} (PNO: ${newRecord.pno}) का विवरण बुकलेट में अपडेट हो गया!`);
+    }
+
+    if (onUpdateEventRecords) {
+      onUpdateEventRecords(updatedRecords);
+    }
+
+    // Save to permanent Read-Only Audit Log
+    logReplacementToAuditTrail({
+      oldRecord,
+      newRecord,
+      replacementType,
+      reason,
+      adminName: 'सुपर एडमिन'
+    });
+
+    setReplacementRecord(null);
+    setTimeout(() => setToastMsg(null), 4000);
+  };
 
   // =========================================================================
   // MULTI-LEVEL MANUAL INSTRUCTIONS STATE (ZONE / SECTOR / POINT / GENERAL)
@@ -561,8 +624,21 @@ function stripNumbering(rawText = '') {
                                     return (
                                       <tr key={rIdx} className="border-b border-gray-300 hover:bg-gray-50 last:border-b-0 text-xs sm:text-sm">
                                         <td className="border-r border-gray-300 py-2.5 px-2.5 text-center font-mono font-bold bg-slate-50/70">{rIdx + 1}</td>
-                                        <td className="border-r border-gray-300 py-2.5 px-3.5 font-black text-slate-950">
-                                          {cleanName}
+                                        <td className="border-r border-gray-300 py-2 px-3.5 font-black text-slate-950">
+                                          <div className="flex items-center justify-between gap-1">
+                                            <span>{cleanName}</span>
+                                            {onUpdateEventRecords && (
+                                              <button
+                                                type="button"
+                                                onClick={() => setReplacementRecord(row)}
+                                                className="no-print opacity-60 hover:opacity-100 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 rounded px-1.5 py-0.5 text-[10px] font-bold inline-flex items-center gap-0.5 cursor-pointer shrink-0 transition"
+                                                title="जवान बदलें (Reserve Swap / Inter-District Substitute)"
+                                              >
+                                                <RefreshCw className="w-2.5 h-2.5" />
+                                                <span>रिप्लेस</span>
+                                              </button>
+                                            )}
+                                          </div>
                                         </td>
                                         <td className="border-r border-gray-300 py-2.5 px-3 font-mono font-black text-slate-900 text-center">
                                           {row.mobile || '-'}
@@ -742,6 +818,26 @@ function stripNumbering(rawText = '') {
               </div>
             </form>
           </div>
+        </div>
+      )}
+
+      {/* Universal Duty Replacement & Substitution Modal */}
+      {replacementRecord && (
+        <DutyReplacementModal
+          isOpen={Boolean(replacementRecord)}
+          onClose={() => setReplacementRecord(null)}
+          targetRecord={replacementRecord}
+          masterForce={masterForce}
+          eventRecords={records}
+          onConfirmReplacement={handleConfirmReplacement}
+        />
+      )}
+
+      {/* Toast Notification */}
+      {toastMsg && (
+        <div className="fixed bottom-6 right-6 z-50 bg-slate-950 text-white border border-slate-700 px-4 py-3 rounded-2xl shadow-2xl font-bold text-xs flex items-center gap-2 animate-in fade-in slide-in-from-bottom-5">
+          <Check className="w-4 h-4 text-emerald-400" />
+          <span>{toastMsg}</span>
         </div>
       )}
 

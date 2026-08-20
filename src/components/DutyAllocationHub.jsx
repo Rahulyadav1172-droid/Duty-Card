@@ -40,6 +40,8 @@ import {
 import { parseDutyFile } from '../utils/fileParser';
 import * as XLSX from 'xlsx';
 import ForceDeploymentMatrix from './ForceDeploymentMatrix';
+import DutyReplacementModal from './DutyReplacementModal';
+import { logReplacementToAuditTrail } from '../utils/aamadSync';
 
 export default function DutyAllocationHub({
   masterForce = [],
@@ -351,6 +353,66 @@ export default function DutyAllocationHub({
 
     setSelectedPnos(new Set());
     setSuccessToast(`🎉 सफलतापूर्वक ${newAllocations.length} जवानों को "${targetPoint}" पर तैनात किया गया!`);
+    setTimeout(() => setSuccessToast(null), 4000);
+  };
+
+  // Replacement Modal State & Handler
+  const [replacementRecord, setReplacementRecord] = useState(null);
+
+  const handleConfirmReplacement = async ({ oldRecord, newRecord, replacementType, reason }) => {
+    let updatedRecords = [...eventRecords];
+
+    if (replacementType === 'INTERNAL_RESERVE_SWAP') {
+      // 1. Remove oldRecord from eventRecords (returns automatically to available reserve pool)
+      updatedRecords = updatedRecords.filter(r => (r.id !== oldRecord.id && r.pno !== oldRecord.pno));
+
+      // 2. Add newRecord at exact same duty location & shift
+      const startNum = updatedRecords.length + 1;
+      updatedRecords.push({
+        id: `DUTY-${Date.now()}-${startNum}`,
+        pno: newRecord.pno || `PN-${Date.now()}-${startNum}`,
+        name: newRecord.name,
+        rank: newRecord.rank || 'का0',
+        mobile: newRecord.mobile,
+        posting: newRecord.posting || oldRecord.posting || 'पुलिस लाइन',
+        district: newRecord.district || oldRecord.district || 'अयोध्या',
+        zone: oldRecord.zone,
+        sector: oldRecord.sector,
+        duty_place: oldRecord.duty_place,
+        shift: oldRecord.shift,
+        photo: newRecord.photo || ''
+      });
+
+      setSuccessToast(`🔄 ${oldRecord.name} के स्थान पर ${newRecord.name} की प्रतिस्थानी ड्यूटी लगा दी गई!`);
+    } else if (replacementType === 'INTER_DISTRICT_SUBSTITUTION') {
+      // In-place substitute for inter-district arrival
+      const idx = updatedRecords.findIndex(r => r.id === oldRecord.id || (r.pno && r.pno === oldRecord.pno));
+      const updatedItem = {
+        ...oldRecord,
+        ...newRecord
+      };
+
+      if (idx !== -1) {
+        updatedRecords[idx] = updatedItem;
+      } else {
+        updatedRecords.push(updatedItem);
+      }
+
+      setSuccessToast(`🏢 गैर-जनपद आवक: ${newRecord.name} (PNO: ${newRecord.pno}) का ड्यूटी कार्ड व पास सफलतापूर्वक अपडेट हो गया!`);
+    }
+
+    onUpdateEventRecords(updatedRecords);
+
+    // Save to permanent Read-Only Audit Log
+    logReplacementToAuditTrail({
+      oldRecord,
+      newRecord,
+      replacementType,
+      reason,
+      adminName: 'सुपर एडमिन'
+    });
+
+    setReplacementRecord(null);
     setTimeout(() => setSuccessToast(null), 4000);
   };
 
@@ -866,8 +928,18 @@ export default function DutyAllocationHub({
                         <span>{r.name}</span>
                         <span className="text-[10px] px-1.5 py-0.2 bg-amber-100 text-amber-950 rounded font-black border border-amber-300">{r.rank || 'जवान'}</span>
                         <button
+                          type="button"
+                          onClick={() => setReplacementRecord(r)}
+                          className="px-1.5 py-0.5 rounded bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 text-[10px] font-black flex items-center gap-0.5 cursor-pointer ml-1"
+                          title="प्रतिस्थानी (Replace / Substitute)"
+                        >
+                          <RefreshCw className="w-2.5 h-2.5" />
+                          <span>रिप्लेस</span>
+                        </button>
+                        <button
+                          type="button"
                           onClick={() => handleUnassignRecord(r.id, r.name)}
-                          className="text-rose-500 hover:text-rose-700 ml-1 cursor-pointer font-bold"
+                          className="text-rose-500 hover:text-rose-700 ml-0.5 cursor-pointer font-bold"
                           title="ड्यूटी से हटाएं"
                         >
                           ✕
@@ -1903,6 +1975,18 @@ export default function DutyAllocationHub({
             </form>
           </div>
         </div>
+      )}
+
+      {/* UNIVERSAL DUTY REPLACEMENT & SUBSTITUTION MODAL */}
+      {replacementRecord && (
+        <DutyReplacementModal
+          isOpen={Boolean(replacementRecord)}
+          onClose={() => setReplacementRecord(null)}
+          targetRecord={replacementRecord}
+          masterForce={masterForce}
+          eventRecords={eventRecords}
+          onConfirmReplacement={handleConfirmReplacement}
+        />
       )}
     </div>
   );
