@@ -43,6 +43,10 @@ import {
   AAMAD_STORAGE_KEY,
   AAMAD_AUDIT_LOG_KEY
 } from '../utils/aamadSync';
+import {
+  fetchMasterForceFromSupabase,
+  saveMasterForceToSupabase
+} from '../utils/supabaseSync';
 
 /**
  * Robust helper to fetch true Server Date & Time from Cloud / HTTP headers
@@ -196,17 +200,24 @@ export default function ForceAamadManager({
     saveAamadToSupabase(newAamad, newLogs);
   };
 
-  // Synchronize new Aamad entries into Master Force
-  const syncToMasterForce = (incomingAamadList) => {
-    const existingPnos = new Set(forceRecords.map(p => p.pno));
-    const existingMobs = new Set(forceRecords.map(p => p.mobile));
+  // Synchronize new Aamad entries into Master Force (Directly to Cloud for all devices)
+  const syncToMasterForce = async (incomingAamadList) => {
+    // 1. Fetch latest master force from cloud
+    const cloudForce = await fetchMasterForceFromSupabase();
+    const baseForce = (cloudForce && Array.isArray(cloudForce) && cloudForce.length > 0) ? cloudForce : forceRecords;
+
+    const existingPnos = new Set(baseForce.map(p => (p.pno || '').trim().toUpperCase()));
+    const existingMobs = new Set(baseForce.map(p => (p.mobile || '').trim()));
 
     const toAddToMaster = [];
     incomingAamadList.forEach(item => {
-      const pno = item.pno || `PN-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
-      if (!existingPnos.has(pno) && (!item.mobile || !existingMobs.has(item.mobile))) {
+      const pno = (item.pno || '').trim().toUpperCase() || `PN-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+      const mob = (item.mobile || '').trim();
+      if (!existingPnos.has(pno) && (!mob || !existingMobs.has(mob))) {
+        existingPnos.add(pno);
+        if (mob) existingMobs.add(mob);
         toAddToMaster.push({
-          pno: pno,
+          pno: item.pno || pno,
           name: item.name,
           rank: item.rank || 'का0',
           mobile: item.mobile || '',
@@ -218,8 +229,12 @@ export default function ForceAamadManager({
       }
     });
 
-    if (toAddToMaster.length > 0 && onUpdateForce) {
-      onUpdateForce([...toAddToMaster, ...forceRecords]);
+    if (toAddToMaster.length > 0) {
+      const mergedForce = [...toAddToMaster, ...baseForce];
+      if (onUpdateForce) {
+        onUpdateForce(mergedForce);
+      }
+      saveMasterForceToSupabase(mergedForce);
     }
   };
 

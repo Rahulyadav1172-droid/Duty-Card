@@ -298,3 +298,31 @@ export function subscribeToEventsRealtime(onUpdateCallback) {
   }
 }
 
+/**
+ * Subscribe to realtime changes on Universal Master Force Pool
+ */
+export function subscribeToMasterForceRealtime(onUpdateCallback) {
+  try {
+    const channel = supabase
+      .channel('public:master_force_realtime')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: EVENTS_TABLE, filter: `id=eq.${CLOUD_MASTER_FORCE_ID}` },
+        async () => {
+          const freshForce = await fetchMasterForceFromSupabase();
+          if (freshForce && Array.isArray(freshForce)) {
+            onUpdateCallback(freshForce);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  } catch (err) {
+    console.warn('Master Force Realtime subscription error:', err);
+    return () => {};
+  }
+}
+

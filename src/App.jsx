@@ -183,7 +183,8 @@ export default function App() {
 
   // Load from Supabase on mount & subscribe to realtime changes across all devices
   useEffect(() => {
-    let unsubscribe = () => {};
+    let unsubscribeEvents = () => {};
+    let unsubscribeForce = () => {};
 
     async function initSupabase() {
       // 1. Initialize Auth Config from Cloud
@@ -212,11 +213,22 @@ export default function App() {
         }
       }
 
-      unsubscribe = subscribeToEventsRealtime((freshEvents) => {
+      // Realtime Events Listener
+      unsubscribeEvents = subscribeToEventsRealtime((freshEvents) => {
         if (freshEvents && freshEvents.length > 0) {
           setEvents(freshEvents);
           try {
             localStorage.setItem(EVENTS_STORAGE_KEY, JSON.stringify(freshEvents));
+          } catch (e) {}
+        }
+      });
+
+      // Realtime Master Force Listener
+      unsubscribeForce = subscribeToMasterForceRealtime((freshForce) => {
+        if (freshForce && Array.isArray(freshForce) && freshForce.length > 0) {
+          setForceRecords(freshForce);
+          try {
+            localStorage.setItem(FORCE_STORAGE_KEY, JSON.stringify(freshForce));
           } catch (e) {}
         }
       });
@@ -225,7 +237,8 @@ export default function App() {
     initSupabase();
 
     return () => {
-      unsubscribe();
+      unsubscribeEvents();
+      unsubscribeForce();
     };
   }, []);
 
