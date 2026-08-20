@@ -433,6 +433,12 @@ export default function App() {
     saveEvents(updated, updatedObj);
   };
 
+  const handleUpdateActiveEventAllocationData = (allocationData) => {
+    const updatedObj = { ...currentEvent, allocationData: allocationData };
+    const updated = events.map(e => e.id === currentEvent.id ? updatedObj : e);
+    saveEvents(updated, updatedObj);
+  };
+
   const handleUpdateForce = (newForce) => {
     setForceRecords(newForce);
     try {
@@ -919,6 +925,7 @@ export default function App() {
             masterForce={forceRecords}
             activeEvent={currentEvent}
             onUpdateEventRecords={handleUpdateActiveEventRecords}
+            onUpdateAllocationData={handleUpdateActiveEventAllocationData}
             events={events}
             activeEventId={activeEventId}
             onSelectActiveEvent={handleSelectActiveEvent}

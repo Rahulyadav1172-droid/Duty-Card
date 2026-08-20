@@ -43,6 +43,7 @@ export default function DutyAllocationHub({
   masterForce = [],
   activeEvent,
   onUpdateEventRecords,
+  onUpdateAllocationData,
   events = [],
   activeEventId = '',
   onSelectActiveEvent,
@@ -60,6 +61,9 @@ export default function DutyAllocationHub({
   // MASTER INDEPENDENT ZONES, SECTORS & POINTS
   // ==========================================
   const [masterZones, setMasterZones] = useState(() => {
+    if (activeEvent?.allocationData?.zones && Array.isArray(activeEvent.allocationData.zones) && activeEvent.allocationData.zones.length > 0) {
+      return activeEvent.allocationData.zones;
+    }
     try {
       const saved = localStorage.getItem(zonesStorageKey);
       if (saved) {
@@ -84,6 +88,9 @@ export default function DutyAllocationHub({
   });
 
   const [masterSectors, setMasterSectors] = useState(() => {
+    if (activeEvent?.allocationData?.sectors && Array.isArray(activeEvent.allocationData.sectors) && activeEvent.allocationData.sectors.length > 0) {
+      return activeEvent.allocationData.sectors;
+    }
     try {
       const saved = localStorage.getItem(sectorsStorageKey);
       if (saved) {
@@ -110,6 +117,9 @@ export default function DutyAllocationHub({
   });
 
   const [masterPoints, setMasterPoints] = useState(() => {
+    if (activeEvent?.allocationData?.points && Array.isArray(activeEvent.allocationData.points) && activeEvent.allocationData.points.length > 0) {
+      return activeEvent.allocationData.points;
+    }
     try {
       const saved = localStorage.getItem(pointsStorageKey);
       if (saved) {
@@ -142,18 +152,39 @@ export default function DutyAllocationHub({
   const sectorFileInputRef = useRef(null);
   const pointFileInputRef = useRef(null);
 
-  // Persistence helpers
+  // Persistence helpers with Cloud Sync
   const saveZones = (list) => {
     setMasterZones(list);
     try { localStorage.setItem(zonesStorageKey, JSON.stringify(list)); } catch (e) {}
+    if (onUpdateAllocationData) {
+      onUpdateAllocationData({
+        zones: list,
+        sectors: masterSectors,
+        points: masterPoints
+      });
+    }
   };
   const saveSectors = (list) => {
     setMasterSectors(list);
     try { localStorage.setItem(sectorsStorageKey, JSON.stringify(list)); } catch (e) {}
+    if (onUpdateAllocationData) {
+      onUpdateAllocationData({
+        zones: masterZones,
+        sectors: list,
+        points: masterPoints
+      });
+    }
   };
   const savePoints = (list) => {
     setMasterPoints(list);
     try { localStorage.setItem(pointsStorageKey, JSON.stringify(list)); } catch (e) {}
+    if (onUpdateAllocationData) {
+      onUpdateAllocationData({
+        zones: masterZones,
+        sectors: masterSectors,
+        points: list
+      });
+    }
   };
 
   // ==========================================
