@@ -24,6 +24,7 @@ import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import VerifyModal from './VerifyModal';
 import { useLanguage } from '../context/LanguageContext';
+import { printIndividualPass, generateIndividualPassHtml } from '../utils/printLegalBulk';
 
 export default function DutyCard({
   duty,
@@ -169,62 +170,84 @@ export default function DutyCard({
     window.open(`https://api.whatsapp.com/send?text=${encoded}`, '_blank');
   };
 
-  const handleDownloadDirectPDF = async () => {
-    const element = document.getElementById('printable-duty-card');
-    if (!element) return;
+  // Print Individual Duty Pass in Official Sahyogarth Layout
+  const handlePrintIndividualPass = () => {
+    printIndividualPass({
+      duty,
+      allRecords,
+      eventTitle,
+      eventSubtitle,
+      signatureImg,
+      signatoryText,
+      customNote,
+      isNoteEnabled,
+      customBriefing,
+      isBriefingEnabled
+    });
+  };
 
+  // Download Individual Duty Pass PDF in Official Sahyogarth Layout
+  const handleDownloadDirectPDF = async () => {
     try {
       setIsDownloadingPDF(true);
 
-      // Ensure fonts are fully loaded before rendering to canvas
       if (document.fonts) {
         await document.fonts.ready;
       }
 
-      const canvas = await html2canvas(element, {
-        scale: 3,
-        useCORS: true,
-        backgroundColor: '#ffffff',
-        logging: false,
-        onclone: (clonedDoc) => {
-          const card = clonedDoc.getElementById('printable-duty-card');
-          if (card) {
-            // Apply standard fixed dimensions for pristine PDF rendering
-            card.style.width = '640px';
-            card.style.maxWidth = '640px';
-            card.style.margin = '0 auto';
-            card.style.padding = '24px';
-            card.style.letterSpacing = 'normal';
-
-            // Ensure no clipped ligatures or broken matras in cloned tree
-            const textNodes = card.querySelectorAll('h1, h2, h3, h4, span, td, div, p');
-            textNodes.forEach((node) => {
-              node.style.letterSpacing = 'normal';
-              node.style.overflow = 'visible';
-              node.style.textOverflow = 'clip';
-              node.style.whiteSpace = 'normal';
-              node.style.lineHeight = '1.45';
-              node.style.fontFamily = "'Noto Sans Devanagari', sans-serif";
-            });
-          }
-        }
+      const passHtml = generateIndividualPassHtml({
+        duty,
+        allRecords,
+        eventTitle,
+        eventSubtitle,
+        signatureImg,
+        signatoryText,
+        customNote,
+        isNoteEnabled,
+        customBriefing,
+        isBriefingEnabled
       });
 
-      const imgData = canvas.toDataURL('image/png');
+      // Create temporary offscreen container
+      const container = document.createElement('div');
+      container.style.position = 'fixed';
+      container.style.top = '-9999px';
+      container.style.left = '-9999px';
+      container.style.width = '740px';
+      container.style.backgroundColor = '#ffffff';
+      container.style.padding = '16px';
+      container.style.fontFamily = "'Noto Sans Devanagari', -apple-system, BlinkMacSystemFont, sans-serif";
+      container.innerHTML = passHtml;
+
+      const passBox = container.querySelector('.pass-container') || container;
+      document.body.appendChild(container);
+
+      const canvas = await html2canvas(passBox, {
+        scale: 2.5,
+        useCORS: true,
+        backgroundColor: '#ffffff',
+        logging: false
+      });
+
+      document.body.removeChild(container);
+
+      const imgData = canvas.toDataURL('image/jpeg', 0.95);
       const pdf = new jsPDF({
         orientation: 'portrait',
         unit: 'mm',
-        format: 'a4'
+        format: 'a4',
+        compress: true
       });
 
       const pdfWidth = pdf.internal.pageSize.getWidth();
-      const margin = 14;
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+      const margin = 8;
       const printWidth = pdfWidth - (margin * 2);
       const printHeight = (canvas.height * printWidth) / canvas.width;
 
-      pdf.addImage(imgData, 'PNG', margin, 15, printWidth, printHeight);
+      pdf.addImage(imgData, 'JPEG', margin, margin, printWidth, Math.min(printHeight, pdfHeight - (margin * 2)));
       const safeName = (duty.name || 'DutyPass').replace(/\s+/g, '_');
-      pdf.save(`Duty_Card_${duty.id}_${safeName}.pdf`);
+      pdf.save(`Duty_Card_${duty.id || 'Pass'}_${safeName}_सहयोगार्थ.pdf`);
     } catch (err) {
       console.error('PDF Download Error:', err);
       alert('PDF डाउनलोड करने में त्रुटि: ' + err.message);
@@ -238,15 +261,14 @@ export default function DutyCard({
     name: duty.name,
     rank: duty.rank || 'का0',
     duty_place: duty.duty_place,
-    mobile: duty.mobile,
+    shift: duty.shift,
     zone: duty.zone,
-    sector: duty.sector,
-    auth: "UP_POLICE_SECURE_VERIFIED"
+    sector: duty.sector
   });
 
   return (
-    <div className="w-full max-w-2xl mx-auto space-y-3.5 sm:space-y-4 font-devanagari text-slate-900 px-0 sm:px-0">
-      {/* Hidden Photo Input */}
+    <div className="w-full max-w-2xl mx-auto space-y-4 font-devanagari animate-in fade-in duration-300">
+      {/* Hidden File Input for Photo Upload */}
       <input
         ref={photoInputRef}
         type="file"
@@ -279,24 +301,25 @@ export default function DutyCard({
             <span>ड्यूटी बदलें</span>
           </button>
 
-          {/* Direct PDF Download */}
+          {/* Direct PDF Download (Official Sahyogarth Layout) */}
           <button
             onClick={handleDownloadDirectPDF}
             disabled={isDownloadingPDF}
             className="px-2 sm:px-3.5 py-2 rounded-lg sm:rounded-xl bg-[#0b132b] hover:bg-slate-800 text-white font-bold text-[11px] sm:text-xs flex items-center justify-center gap-1 sm:gap-1.5 shadow-xs transition active:scale-95 cursor-pointer"
-            title="PDF फाइल डाउनलोड करें"
+            title="सहयोगार्थ बल सहित आधिकारिक PDF डाउनलोड करें"
           >
             <FileDown className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-400 shrink-0" />
-            <span>{isDownloadingPDF ? '...' : 'PDF'}</span>
+            <span>{isDownloadingPDF ? 'बना रहा है...' : 'PDF डाउनलोड'}</span>
           </button>
 
-          {/* Print Trigger */}
+          {/* Official Sahyogarth Print Trigger */}
           <button
-            onClick={onPrintClick}
+            onClick={handlePrintIndividualPass}
             className="px-2 sm:px-3.5 py-2 rounded-lg sm:rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-[11px] sm:text-xs flex items-center justify-center gap-1 sm:gap-1.5 shadow-xs transition active:scale-95 cursor-pointer"
+            title="सहयोगार्थ बल सहित आधिकारिक पास प्रिंट करें"
           >
             <Printer className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
-            <span>प्रिंट</span>
+            <span>प्रिंट करें</span>
           </button>
 
           {/* WhatsApp Share */}

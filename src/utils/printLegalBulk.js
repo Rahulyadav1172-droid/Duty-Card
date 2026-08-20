@@ -749,6 +749,444 @@ export function printLegalBulk({
   }
 }
 
+/**
+ * Dedicated Single Officer "सहयोगार्थ पुलिस बल" Duty Pass Print Engine
+ * Renders the exact official UP Police layout with Co-deployed colleagues, dual badges, photo frame, QR code and signature.
+ */
+export function printIndividualPass({
+  duty,
+  allRecords = [],
+  eventTitle = '',
+  eventSubtitle = '',
+  signatureImg = '',
+  signatoryText = 'वरिष्ठ पुलिस अधीक्षक, अयोध्या',
+  customNote = '',
+  isNoteEnabled = true,
+  customBriefing = '',
+  isBriefingEnabled = true
+}) {
+  if (!duty) return;
+
+  try {
+    const fullHtml = generateIndividualPassHtml({
+      duty,
+      allRecords,
+      eventTitle,
+      eventSubtitle,
+      signatureImg,
+      signatoryText,
+      customNote,
+      isNoteEnabled,
+      customBriefing,
+      isBriefingEnabled
+    });
+
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      alert('पॉप-अप ब्लॉक हो गया है। कृपया ब्राउज़र में पॉप-अप की अनुमति दें।');
+      return;
+    }
+
+    printWindow.document.open();
+    printWindow.document.write(fullHtml);
+    printWindow.document.close();
+  } catch (err) {
+    console.error('Individual Pass Print Error:', err);
+    alert(`प्रिंट त्रुटि: ${err.message}`);
+  }
+}
+
+/**
+ * HTML Generator for Individual "सहयोगार्थ पुलिस बल" Duty Pass
+ */
+export function generateIndividualPassHtml({
+  duty,
+  allRecords = [],
+  eventTitle = '',
+  eventSubtitle = '',
+  signatureImg = '',
+  signatoryText = 'वरिष्ठ पुलिस अधीक्षक, अयोध्या',
+  customNote = '',
+  isNoteEnabled = true,
+  customBriefing = '',
+  isBriefingEnabled = true
+}) {
+  if (!duty) return '';
+
+  const phoneSvg = `
+    <svg style="width:13px;height:13px;stroke:#047857;display:inline-block;vertical-align:middle;margin-right:3px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+    </svg>
+  `;
+
+  const usersSvg = `
+    <svg style="width:15px;height:15px;stroke:#047857;display:inline-block;vertical-align:middle;margin-right:4px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+      <circle cx="9" cy="7" r="4"></circle>
+      <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+      <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+    </svg>
+  `;
+
+  const activeNote = (isNoteEnabled !== false && customNote) ? customNote : (isNoteEnabled ? (duty.note || '') : '');
+  const activeBriefing = (isBriefingEnabled !== false && customBriefing) ? customBriefing : (isBriefingEnabled ? (duty.briefing_place || '') : '');
+
+  // Find co-deployed force at the exact same duty place
+  const coForceList = (allRecords || []).filter(r => 
+    r && 
+    r.id !== duty.id && 
+    (r.duty_place || '').trim() && 
+    (r.duty_place || '').trim().toLowerCase() === (duty.duty_place || '').trim().toLowerCase()
+  );
+
+  const photoHtml = duty.photo
+    ? `<img src="${duty.photo}" style="width:100%;height:100%;object-fit:cover;" />`
+    : `
+      <div style="text-align:center;color:#64748b;font-size:9px;font-weight:bold;line-height:1.2;">
+        📷<br />पासपोर्ट फोटो<br />चस्पा करें
+      </div>
+    `;
+
+  const signHtml = signatureImg
+    ? `<img src="${signatureImg}" style="height:36px;max-width:130px;object-fit:contain;margin-bottom:2px;" />`
+    : `<div style="font-style:italic;font-size:10px;color:#475569;margin-bottom:4px;">(हस्ताक्षरित)</div>`;
+
+  let qrSvgHtml = '';
+  try {
+    const authCode = (duty.id && !String(duty.id).toUpperCase().startsWith('DUTY-') ? String(duty.id) : '') || `AUTH-${Math.abs(hashCode(duty.name + (duty.mobile || '') + (duty.duty_place || ''))).toString(36).toUpperCase()}`;
+
+    const qrPayload = [
+      `नाम: ${(duty.name || '').trim()}`,
+      `मोबाइल: ${(duty.mobile || '').trim()}`,
+      `मूल तैनाती: ${(duty.posting || '').trim()}`,
+      `जिला: ${(duty.district || '').trim()}`,
+      `ड्यूटी पॉइंट: ${(duty.duty_place || '').trim()}`,
+      `सत्यापन कोड: ${authCode}`
+    ].join('\n');
+
+    qrSvgHtml = renderToString(
+      React.createElement(QRCodeSVG, {
+        value: qrPayload,
+        size: 65,
+        level: 'L',
+        includeMargin: false
+      })
+    );
+  } catch (e) {
+    qrSvgHtml = '';
+  }
+
+  let coForceHtml = '';
+  if (coForceList.length > 0) {
+    const coRows = coForceList.map((colleague, cIdx) => {
+      const cleanColleagueName = (colleague.name || '').trim()
+        .replace(/,\s*\d{10}\b/g, '')
+        .replace(/\b\d{10}\b/g, '')
+        .replace(/,\s*,/g, ',')
+        .replace(/,\s*$/, '')
+        .trim();
+
+      return `
+        <div style="display:flex;align-items:center;padding:4px 6px;border-bottom:1px solid #e2e8f0;font-size:11px;background:${cIdx % 2 === 0 ? '#ffffff' : '#f8fafc'};">
+          <div style="width:28px;font-weight:bold;color:#64748b;font-family:monospace;">${cIdx + 1}.</div>
+          <div style="flex:1.2;font-weight:900;color:#0f172a;">${escapeHtml(cleanColleagueName)} <span style="font-size:9.5px;padding:1px 4px;background:#e2e8f0;border-radius:4px;font-weight:bold;">${escapeHtml(colleague.rank || 'का0')}</span></div>
+          <div style="flex:1;font-family:monospace;font-weight:bold;color:#0f172a;">${phoneSvg}${escapeHtml(colleague.mobile || '-')}</div>
+          <div style="flex:1.4;color:#334155;font-weight:500;">${escapeHtml(colleague.posting || '')} ${colleague.district ? `(${escapeHtml(colleague.district)})` : ''}</div>
+        </div>
+      `;
+    }).join('');
+
+    coForceHtml = `
+      <div style="border:1.5px solid #047857;border-radius:8px;overflow:hidden;margin-top:10px;background:#ffffff;">
+        <div style="background:#ecfdf5;padding:6px 10px;border-bottom:1.5px solid #a7f3d0;display:flex;align-items:center;justify-content:between;">
+          <div style="font-weight:900;color:#065f46;font-size:11.5px;display:flex;align-items:center;">
+            ${usersSvg}
+            <span>सहयोगार्थ पुलिस बल (उसी स्थल पर तैनात अन्य पुलिसकर्मी):</span>
+          </div>
+          <span style="font-size:11px;font-weight:bold;color:#065f46;background:#d1fae5;padding:2px 8px;border-radius:12px;font-family:monospace;margin-left:auto;">कुल: ${coForceList.length} जवान</span>
+        </div>
+        <div style="max-height:none;">
+          ${coRows}
+        </div>
+      </div>
+    `;
+  }
+
+  return `
+    <!DOCTYPE html>
+    <html lang="hi">
+    <head>
+      <meta charset="utf-8">
+      <title>${escapeHtml(duty.name || 'ड्यूटी पास')} - ${escapeHtml(eventTitle || 'उत्तर प्रदेश पुलिस')}</title>
+      <style>
+        @page {
+          size: A4 portrait;
+          margin: 8mm 10mm;
+        }
+        * {
+          box-sizing: border-box;
+          margin: 0;
+          padding: 0;
+        }
+        body {
+          font-family: 'Noto Sans Devanagari', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+          background: #ffffff;
+          color: #020617;
+          -webkit-print-color-adjust: exact;
+          print-color-adjust: exact;
+          padding: 10px;
+        }
+        .pass-container {
+          max-width: 680px;
+          margin: 0 auto;
+          border: 2.5px solid #000000;
+          border-radius: 12px;
+          padding: 14px 18px;
+          background: #ffffff;
+        }
+        .header-bar {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          border-bottom: 2px solid #000000;
+          padding-bottom: 8px;
+          margin-bottom: 10px;
+        }
+        .badge-img {
+          width: 52px;
+          height: 52px;
+          object-fit: contain;
+        }
+        .title-box {
+          text-align: center;
+        }
+        .main-title {
+          font-size: 19px;
+          font-weight: 900;
+          color: #020617;
+          line-height: 1.2;
+        }
+        .sub-title {
+          font-size: 13px;
+          font-weight: 800;
+          color: #b45309;
+          margin-top: 2px;
+        }
+        .officer-box {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          border: 1.5px solid #0f172a;
+          border-radius: 8px;
+          padding: 8px 12px;
+          background: #f8fafc;
+          margin-bottom: 10px;
+        }
+        .photo-slot {
+          width: 68px;
+          height: 84px;
+          border: 1.5px solid #0f172a;
+          border-radius: 6px;
+          background: #ffffff;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          overflow: hidden;
+          flex-shrink: 0;
+        }
+        .officer-details {
+          flex: 1;
+        }
+        .officer-name {
+          font-size: 17px;
+          font-weight: 900;
+          color: #020617;
+          display: flex;
+          align-items: center;
+          gap: 6px;
+        }
+        .rank-tag {
+          font-size: 11px;
+          background: #fef3c7;
+          color: #78350f;
+          border: 1px solid #fde68a;
+          padding: 1px 6px;
+          border-radius: 4px;
+          font-weight: 900;
+        }
+        .officer-meta {
+          font-size: 12px;
+          color: #334155;
+          margin-top: 3px;
+          font-weight: 600;
+        }
+        .officer-mob {
+          font-family: monospace;
+          font-size: 14px;
+          font-weight: 900;
+          color: #047857;
+          margin-top: 2px;
+        }
+        .duty-table {
+          width: 100%;
+          border-collapse: collapse;
+          border: 1.5px solid #0f172a;
+          border-radius: 6px;
+          overflow: hidden;
+          font-size: 12px;
+        }
+        .duty-table td {
+          padding: 6px 10px;
+          border-bottom: 1px solid #cbd5e1;
+        }
+        .duty-table tr:last-child td {
+          border-bottom: none;
+        }
+        .duty-table .lbl-td {
+          width: 32%;
+          background: #f1f5f9;
+          font-weight: 900;
+          color: #1e293b;
+          border-right: 1.5px solid #cbd5e1;
+        }
+        .duty-table .val-td {
+          font-weight: 700;
+          color: #020617;
+        }
+        .duty-place-row {
+          background: #fffbeb;
+        }
+        .duty-place-val {
+          font-size: 13.5px;
+          font-weight: 900;
+          color: #92400e;
+        }
+        .footer-bar {
+          display: flex;
+          align-items: flex-end;
+          justify-content: space-between;
+          border-top: 1.5px solid #0f172a;
+          padding-top: 10px;
+          margin-top: 12px;
+        }
+        .verified-badge {
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
+          background: #ecfdf5;
+          color: #065f46;
+          border: 1px solid #a7f3d0;
+          padding: 3px 8px;
+          border-radius: 20px;
+          font-size: 10px;
+          font-weight: 900;
+        }
+        .sign-title {
+          font-size: 12px;
+          font-weight: 900;
+          color: #020617;
+          text-align: right;
+          margin-top: 2px;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="pass-container">
+        <!-- 1. Header -->
+        <div class="header-bar">
+          <img src="/badge.png" class="badge-img" alt="UP Police" />
+          <div class="title-box">
+            <h1 class="main-title">${escapeHtml(eventTitle || 'उत्तर प्रदेश पुलिस')}</h1>
+            <p class="sub-title">${escapeHtml(eventSubtitle || 'डिजिटल ड्यूटी पास')}</p>
+          </div>
+          <img src="/badge.png" class="badge-img" alt="UP Police" />
+        </div>
+
+        <!-- 2. Officer Bar -->
+        <div class="officer-box">
+          <div class="photo-slot">
+            ${photoHtml}
+          </div>
+          <div class="officer-details">
+            <div class="officer-name">
+              <span>${escapeHtml(duty.name || '-')}</span>
+              <span class="rank-tag">${escapeHtml(duty.rank || 'का0')}</span>
+            </div>
+            <div class="officer-mob">📱 ${escapeHtml(duty.mobile || '-')}</div>
+            <div class="officer-meta">
+              PNO: <strong style="font-family:monospace;">${escapeHtml(duty.id || '-')}</strong> | मूल तैनाती: <strong>${escapeHtml(duty.posting || '-')}</strong> ${duty.district ? `(${escapeHtml(duty.district)})` : ''}
+            </div>
+          </div>
+          <div style="text-align:center;padding:4px;background:#ffffff;border:1px solid #cbd5e1;border-radius:6px;">
+            ${qrSvgHtml}
+            <div style="font-size:8px;font-weight:900;color:#64748b;margin-top:2px;">स्कैन सत्यापन</div>
+          </div>
+        </div>
+
+        <!-- 3. Duty Table -->
+        <table class="duty-table">
+          <tbody>
+            <tr class="duty-place-row">
+              <td class="lbl-td">ड्यूटी का स्थान</td>
+              <td class="val-td duty-place-val">${escapeHtml(duty.duty_place || '-')}</td>
+            </tr>
+            <tr>
+              <td class="lbl-td">दिनाँक व समय</td>
+              <td class="val-td">${escapeHtml(duty.shift || '-')}</td>
+            </tr>
+            <tr>
+              <td class="lbl-td">जोन / जोनाल प्रभारी</td>
+              <td class="val-td">${escapeHtml(duty.zone || '-')} / <strong>${escapeHtml(duty.zonal_incharge || duty.zonal || '-')}</strong></td>
+            </tr>
+            <tr>
+              <td class="lbl-td">सेक्टर / सेक्टर प्रभारी</td>
+              <td class="val-td">${escapeHtml(duty.sector || '-')} / <strong>${escapeHtml(duty.sector_incharge || '-')}</strong></td>
+            </tr>
+            ${activeBriefing ? `
+            <tr style="background:#f0fdf4;">
+              <td class="lbl-td">ब्रीफिंग स्थान</td>
+              <td class="val-td" style="color:#166534;font-weight:900;">${escapeHtml(activeBriefing)}</td>
+            </tr>` : ''}
+            ${activeNote ? `
+            <tr style="background:#fffbeb;">
+              <td class="lbl-td">विशेष निर्देश</td>
+              <td class="val-td" style="color:#92400e;font-size:11px;">${escapeHtml(activeNote)}</td>
+            </tr>` : ''}
+          </tbody>
+        </table>
+
+        <!-- 4. Sahyogarth Co-deployed Force Table -->
+        ${coForceHtml}
+
+        <!-- 5. Footer -->
+        <div class="footer-bar">
+          <div>
+            <div class="verified-badge">
+              <span>●</span>
+              <span>डिजिटल सत्यापित पास (UP POLICE)</span>
+            </div>
+            <div style="font-size:9px;color:#64748b;font-weight:bold;margin-top:3px;">
+              कार्यालय वरिष्ठ पुलिस अधीक्षक, अयोध्या
+            </div>
+          </div>
+
+          <div style="text-align:right;">
+            ${signHtml}
+            <div class="sign-title">${escapeHtml(signatoryText)}</div>
+          </div>
+        </div>
+      </div>
+
+      <script>
+        window.onload = function() {
+          window.print();
+        };
+      </script>
+    </body>
+    </html>
+  `;
+}
+
 function hashCode(str) {
   let hash = 0;
   for (let i = 0; i < str.length; i++) {

@@ -113,13 +113,39 @@ export default function PrintTemplate({
         </table>
       </div>
 
+      {/* Sahyogarth Co-deployed Police Force Section */}
+      {isCoForceEnabled !== false && coDeployedOfficers.length > 0 && (
+        <div className="border border-emerald-700 rounded-md overflow-hidden bg-white text-xs">
+          <div className="bg-emerald-50 px-2 py-1 border-b border-emerald-300 flex items-center justify-between">
+            <div className="font-black text-emerald-900 text-[11px]">
+              👥 सहयोगार्थ पुलिस बल (उसी स्थल पर तैनात अन्य पुलिसकर्मी):
+            </div>
+            <span className="font-mono text-[10px] font-bold text-emerald-800 bg-emerald-100 px-1.5 py-0.5 rounded">
+              कुल: {coDeployedOfficers.length} जवान
+            </span>
+          </div>
+          <div className="divide-y divide-slate-200">
+            {coDeployedOfficers.map((peer, idx) => (
+              <div key={idx} className="flex items-center px-2 py-1 text-[10.5px] bg-slate-50">
+                <span className="w-5 font-bold text-slate-500 font-mono">{idx + 1}.</span>
+                <span className="flex-1 font-bold text-slate-900">
+                  {peer.name} <span className="text-[9px] px-1 rounded bg-slate-200">{peer.rank || 'का0'}</span>
+                </span>
+                <span className="w-28 font-mono font-bold text-emerald-800">📱 {peer.mobile || '-'}</span>
+                <span className="w-36 text-slate-600 truncate">{peer.posting || ''} {peer.district ? `(${peer.district})` : ''}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Footer */}
       <div className="flex items-end justify-between text-[10px] pt-1">
         <div className="flex items-center gap-2">
           <QRCodeSVG value={`POLICE-DUTY:${duty.id}:${duty.mobile}`} size={48} />
           <div>
-            <div>सत्यापित पास (Verified 🟢)</div>
-            <div className="text-[9px] text-gray-700">कार्यालय वरिष्ठ पुलिस अधीक्षक</div>
+            <div className="font-bold text-emerald-800">सत्यापित पास (Verified 🟢)</div>
+            <div className="text-[9px] text-gray-700 font-semibold">कार्यालय वरिष्ठ पुलिस अधीक्षक, अयोध्या</div>
           </div>
         </div>
         <div className="text-right flex flex-col items-end">
@@ -132,7 +158,7 @@ export default function PrintTemplate({
           ) : (
             <div className="w-24 border-b border-black mb-0.5" />
           )}
-          <div className="font-bold">{signatoryText}</div>
+          <div className="font-black text-slate-950">{signatoryText}</div>
         </div>
       </div>
     </div>
