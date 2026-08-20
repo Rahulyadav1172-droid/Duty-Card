@@ -1,3 +1,5 @@
+import { fetchAuthConfigFromSupabase, saveAuthConfigToSupabase } from './supabaseSync';
+
 /**
  * Police Portal High-Security Credential & Password Management System
  */
@@ -22,6 +24,20 @@ const DEFAULT_AUTH = {
 };
 
 /**
+ * Initialize / fetch auth config from Supabase Cloud on app load
+ */
+export async function initCloudAuthConfig() {
+  try {
+    const cloudAuth = await fetchAuthConfigFromSupabase();
+    if (cloudAuth) {
+      localStorage.setItem(AUTH_CONFIG_KEY, JSON.stringify(cloudAuth));
+      return cloudAuth;
+    }
+  } catch (e) {}
+  return getAuthConfig();
+}
+
+/**
  * Get current credentials from secure storage
  */
 export function getAuthConfig() {
@@ -42,11 +58,12 @@ export function getAuthConfig() {
 }
 
 /**
- * Save auth config
+ * Save auth config locally and sync to Supabase Cloud for all devices
  */
 function saveAuthConfig(config) {
   try {
     localStorage.setItem(AUTH_CONFIG_KEY, JSON.stringify(config));
+    saveAuthConfigToSupabase(config);
     return true;
   } catch (e) {
     console.error('Error saving auth config:', e);

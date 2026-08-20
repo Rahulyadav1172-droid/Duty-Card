@@ -45,8 +45,11 @@ import {
   fetchEventsFromSupabase,
   upsertEventToSupabase,
   deleteEventFromSupabase,
-  subscribeToEventsRealtime
+  subscribeToEventsRealtime,
+  fetchMasterForceFromSupabase,
+  saveMasterForceToSupabase
 } from './utils/supabaseSync';
+import { initCloudAuthConfig } from './utils/authManager';
 
 const EVENTS_STORAGE_KEY = 'police_portal_events_v3';
 const ACTIVE_EVENT_ID_KEY = 'police_portal_active_event_id';
@@ -178,11 +181,24 @@ export default function App() {
     return activeEventsList.find(e => e.id === activeEventId) || activeEventsList[0] || events[0];
   })();
 
-  // Load from Supabase on mount & subscribe to realtime changes
+  // Load from Supabase on mount & subscribe to realtime changes across all devices
   useEffect(() => {
     let unsubscribe = () => {};
 
     async function initSupabase() {
+      // 1. Initialize Auth Config from Cloud
+      initCloudAuthConfig();
+
+      // 2. Fetch Master Force Pool from Cloud
+      const cloudForce = await fetchMasterForceFromSupabase();
+      if (cloudForce && Array.isArray(cloudForce) && cloudForce.length > 0) {
+        setForceRecords(cloudForce);
+        try {
+          localStorage.setItem(FORCE_STORAGE_KEY, JSON.stringify(cloudForce));
+        } catch (e) {}
+      }
+
+      // 3. Fetch Events from Cloud
       const cloudEvents = await fetchEventsFromSupabase();
       if (cloudEvents && cloudEvents.length > 0) {
         setEvents(cloudEvents);
@@ -409,6 +425,7 @@ export default function App() {
     try {
       localStorage.setItem(FORCE_STORAGE_KEY, JSON.stringify(newForce));
     } catch (e) {}
+    saveMasterForceToSupabase(newForce);
   };
 
   const handleLoginSuccess = (role) => {
