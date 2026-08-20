@@ -20,7 +20,8 @@ import {
   ChevronDown,
   ShieldCheck,
   Globe,
-  History
+  History,
+  Phone
 } from 'lucide-react';
 
 import { useLanguage } from './context/LanguageContext';
