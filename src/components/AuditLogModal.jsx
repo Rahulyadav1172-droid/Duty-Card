@@ -1,7 +1,8 @@
 import React from 'react';
-import { History, Shield, AlertTriangle, FileSpreadsheet, X, Trash2, Clock, UserCheck } from 'lucide-react';
+import { History, Shield, FileSpreadsheet, X, Clock, Download, CheckCircle2, Lock } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
-import { fetchAamadFromSupabase, saveAamadToSupabase, AAMAD_AUDIT_LOG_KEY } from '../utils/aamadSync';
+import { fetchAamadFromSupabase, AAMAD_AUDIT_LOG_KEY } from '../utils/aamadSync';
+import * as XLSX from 'xlsx';
 
 export default function AuditLogModal({ isOpen, onClose }) {
   const { language } = useLanguage();
@@ -34,17 +35,29 @@ export default function AuditLogModal({ isOpen, onClose }) {
 
   if (!isOpen) return null;
 
-  const handleClearLogs = async () => {
-    if (window.confirm(language === 'en' ? 'Are you sure you want to clear all audit logs?' : 'क्या आप समस्त ऑडिट लॉग मिटाना चाहते हैं?')) {
-      setAuditLogs([]);
-      try {
-        localStorage.removeItem(AAMAD_AUDIT_LOG_KEY);
-      } catch (e) {}
-      const cloudData = await fetchAamadFromSupabase();
-      if (cloudData) {
-        await saveAamadToSupabase(cloudData.records || [], []);
-      }
+  const handleExportExcel = () => {
+    if (auditLogs.length === 0) {
+      alert('एक्सपोर्ट करने के लिए कोई ऑडिट लॉग उपलब्ध नहीं है।');
+      return;
     }
+
+    const exportData = auditLogs.map((log, idx) => ({
+      'क्र० सं०': idx + 1,
+      'समय / दिनांक': log.deletedAt || '-',
+      'PNO सं०': log.deletedRecord?.pno || '-',
+      'नाम': log.deletedRecord?.name || '-',
+      'पदनाम': log.deletedRecord?.rank || '-',
+      'मूल तैनाती': log.deletedRecord?.posting || '-',
+      'गृह जनपद': log.deletedRecord?.district || '-',
+      'मोबाइल': log.deletedRecord?.mobile || '-',
+      'हटाने का कारण / रिमार्क': log.remark || '-',
+      'कार्रवाई कर्ता (Admin)': log.deletedBy || 'Super Admin'
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(exportData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Audit_Trail');
+    XLSX.writeFile(wb, `Ayodhya_Police_Audit_Trail_${Date.now()}.xlsx`);
   };
 
   return (
@@ -57,8 +70,14 @@ export default function AuditLogModal({ isOpen, onClose }) {
               <History className="w-4 h-4 stroke-[2.5]" />
             </div>
             <div>
-              <div className="leading-tight">
-                {language === 'en' ? 'System Audit & Activity Trail' : 'सिस्टम ऑडिट एवं एक्टिविटी लॉग (Audit Trail)'}
+              <div className="flex items-center gap-2">
+                <span className="leading-tight">
+                  {language === 'en' ? 'System Audit & Activity Trail' : 'सिस्टम ऑडिट एवं एक्टिविटी लॉग (Audit Trail)'}
+                </span>
+                <span className="bg-slate-100 text-slate-700 text-[10px] px-2 py-0.5 rounded-full font-bold border border-slate-300 flex items-center gap-1">
+                  <Lock className="w-2.5 h-2.5 text-slate-500" />
+                  <span>{language === 'en' ? 'Read-Only (Immutable)' : 'अपरिवर्तनीय (Read-Only)'}</span>
+                </span>
               </div>
               <div className="text-[10px] font-bold text-slate-500">
                 {language === 'en' ? 'Transparency, deletion remarks & security events' : 'पारदर्शिता, विलोपन रिमार्क एवं सुरक्षा रिकॉर्ड्स'}
@@ -77,8 +96,8 @@ export default function AuditLogModal({ isOpen, onClose }) {
         {/* Logs List Container */}
         <div className="flex-1 overflow-y-auto space-y-2.5 pr-1 text-xs">
           {auditLogs.length > 0 ? (
-            auditLogs.map((log) => (
-              <div key={log.id || Math.random()} className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200 space-y-2 hover:border-slate-300 transition">
+            auditLogs.map((log, idx) => (
+              <div key={log.id || idx} className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200 space-y-2 hover:border-slate-300 transition">
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-1.5 font-black text-slate-950 text-sm">
                     <span className="w-2 h-2 rounded-full bg-rose-500 shrink-0"></span>
@@ -133,11 +152,11 @@ export default function AuditLogModal({ isOpen, onClose }) {
         <div className="pt-3 border-t border-slate-200 flex items-center justify-between gap-3">
           {auditLogs.length > 0 ? (
             <button
-              onClick={handleClearLogs}
-              className="px-3.5 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-black rounded-xl border border-rose-200 flex items-center gap-1.5 transition cursor-pointer"
+              onClick={handleExportExcel}
+              className="px-3.5 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-xs font-black rounded-xl border border-emerald-300 flex items-center gap-1.5 transition cursor-pointer shadow-2xs"
             >
-              <Trash2 className="w-3.5 h-3.5" />
-              <span>{language === 'en' ? 'Clear Logs' : 'लॉग साफ़ करें'}</span>
+              <Download className="w-3.5 h-3.5" />
+              <span>{language === 'en' ? 'Export to Excel' : '📥 एक्सेल में एक्सपोर्ट करें'}</span>
             </button>
           ) : <div />}
 

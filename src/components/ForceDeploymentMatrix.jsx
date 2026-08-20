@@ -116,9 +116,9 @@ export default function ForceDeploymentMatrix({ records = [], eventTitle = '', c
       {/* Header Banner */}
       <div className="bg-black text-white px-3 py-2 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Shield className="w-4 h-4 text-amber-400 shrink-0" />
+          <Shield className="w-4 h-4 text-amber-500" />
           <span className="font-extrabold text-xs sm:text-sm uppercase tracking-wide">
-            {language === 'en' ? 'Executive Force Deployment Matrix (Zone-wise Summary)' : 'उच्चाधिकारी समरी चार्ट: ज़ोन-वार बल विवरण (Deployment Matrix)'}
+            {language === 'en' ? 'Zone-wise Police Force Deployment Summary' : 'ज़ोन-वार तैनात पुलिस बल विवरण'}
           </span>
         </div>
         <span className="text-[10px] font-mono bg-amber-500 text-slate-950 px-2 py-0.5 rounded font-black">

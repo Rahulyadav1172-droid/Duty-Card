@@ -33,7 +33,9 @@ import {
   FolderTree,
   Eye,
   SlidersHorizontal,
-  ChevronRight
+  ChevronRight,
+  Printer,
+  FileText
 } from 'lucide-react';
 import { parseDutyFile } from '../utils/fileParser';
 import * as XLSX from 'xlsx';
@@ -1049,165 +1051,376 @@ export default function DutyAllocationHub({
       )}
 
       {/* ========================================================================= */}
-      {/* MODE 2: SMART AUTO-ALLOCATION ENGINE                                      */}
+      {/* MODE 2: SMART AUTO-ALLOCATION ENGINE (LIVE CONNECTED WITH OFFICIAL BOOKLET) */}
       {/* ========================================================================= */}
-      {allocationMode === 'auto' && (
-        <div className="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200/90 shadow-sm space-y-5">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-slate-100 pb-3.5">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-amber-500 text-slate-950 flex items-center justify-center font-black">
-                <Sparkles className="w-5 h-5 stroke-[2.5]" />
-              </div>
-              <div>
-                <h2 className="text-base sm:text-lg font-black text-slate-950">
-                  स्मार्ट ऑटो-ड्यूटी एलोकेशन (Force Distribution Matrix)
-                </h2>
-                <p className="text-xs text-slate-500 font-medium mt-0.5">
-                  प्रत्येक ड्यूटी पॉइंट पर आवश्यक पदवार कोटा सेट करें, सिस्टम उपलब्ध मास्टर फ़ोर्स से स्वतः ड्यूटी बांट देगा।
-                </p>
-              </div>
-            </div>
-          </div>
+      {allocationMode === 'auto' && (() => {
+        // Helper to categorize officer rank
+        const getOfficerCategory = (rec) => {
+          const r = (rec.rank || '').toLowerCase();
+          const isFem = rec.gender === 'F' || rec.gender === 'महिला' ||
+            /^(म0|महिला|कु0|श्रीमती|सुश्री|w\/o|d\/o|wcp|wsi)/i.test(rec.name || '') ||
+            /^(म0|महिला|wcp|wsi)/i.test(rec.rank || '');
 
-          {/* Matrix Table */}
-          <div className="overflow-x-auto rounded-2xl border border-slate-200">
-            <table className="w-full text-xs text-slate-900">
-              <thead className="bg-slate-50 font-black text-slate-900 border-b border-slate-200">
-                <tr>
-                  <th className="p-3.5 text-left">ड्यूटी स्थल (Point Name)</th>
-                  <th className="p-3.5 text-left">जोन / सेक्टर</th>
-                  <th className="p-3.5 text-center w-20">उ०नि० (SI)</th>
-                  <th className="p-3.5 text-center w-20">हेकां (HC)</th>
-                  <th className="p-3.5 text-center w-20">का० (Const.)</th>
-                  <th className="p-3.5 text-center w-20">म०का० (Fem.)</th>
-                  <th className="p-3.5 text-center w-20">कुल बल</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-200 bg-white">
-                {masterPoints.map((tpl, idx) => {
-                  const totalReq = (Number(tpl.reqSI) || 1) + (Number(tpl.reqHC) || 2) + (Number(tpl.reqConstable) || 4) + (Number(tpl.reqFemale) || 2);
+          if (isFem) return 'female';
+          if (r.includes('निरीक्षक') || r.includes('insp') || r.includes('उ०नि') || r.includes('उ0नि') || r.includes('si') || r.includes('sub')) {
+            return 'si';
+          }
+          if (r.includes('हे०का') || r.includes('हे0का') || r.includes('hc') || r.includes('head')) {
+            return 'hc';
+          }
+          return 'constable';
+        };
 
-                  return (
-                    <tr key={idx} className="hover:bg-slate-50/80">
-                      <td className="p-3.5 font-black text-slate-950">
-                        📍 {tpl.name}
-                      </td>
-                      <td className="p-3.5 text-slate-600 font-mono text-[11px]">
-                        {tpl.zone} / {tpl.sector}
-                      </td>
-                      <td className="p-3.5 text-center">
-                        <input
-                          type="number"
-                          min="0"
-                          value={tpl.reqSI ?? 1}
-                          onChange={(e) => {
-                            const updated = [...masterPoints];
-                            updated[idx] = { ...updated[idx], reqSI: parseInt(e.target.value) || 0 };
-                            savePoints(updated);
-                          }}
-                          className="w-14 h-9 bg-slate-50 border border-slate-300 rounded-lg text-center font-bold"
-                        />
-                      </td>
-                      <td className="p-3.5 text-center">
-                        <input
-                          type="number"
-                          min="0"
-                          value={tpl.reqHC ?? 2}
-                          onChange={(e) => {
-                            const updated = [...masterPoints];
-                            updated[idx] = { ...updated[idx], reqHC: parseInt(e.target.value) || 0 };
-                            savePoints(updated);
-                          }}
-                          className="w-14 h-9 bg-slate-50 border border-slate-300 rounded-lg text-center font-bold"
-                        />
-                      </td>
-                      <td className="p-3.5 text-center">
-                        <input
-                          type="number"
-                          min="0"
-                          value={tpl.reqConstable ?? 4}
-                          onChange={(e) => {
-                            const updated = [...masterPoints];
-                            updated[idx] = { ...updated[idx], reqConstable: parseInt(e.target.value) || 0 };
-                            savePoints(updated);
-                          }}
-                          className="w-14 h-9 bg-slate-50 border border-slate-300 rounded-lg text-center font-bold"
-                        />
-                      </td>
-                      <td className="p-3.5 text-center">
-                        <input
-                          type="number"
-                          min="0"
-                          value={tpl.reqFemale ?? 2}
-                          onChange={(e) => {
-                            const updated = [...masterPoints];
-                            updated[idx] = { ...updated[idx], reqFemale: parseInt(e.target.value) || 0 };
-                            savePoints(updated);
-                          }}
-                          className="w-14 h-9 bg-slate-50 border border-slate-300 rounded-lg text-center font-bold"
-                        />
-                      </td>
-                      <td className="p-3.5 text-center font-mono font-black text-slate-950">
-                        {totalReq}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+        const totalMaster = masterForce.length;
+        const totalDeployed = eventRecords.length;
+        const availablePool = masterForce.filter(p => !assignedPnoMap[p.pno] && !assignedPnoMap[p.mobile] && !assignedPnoMap[p.name]);
+        const totalReserve = availablePool.length;
 
-          <div className="pt-4 flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-slate-100">
-            <div className="text-xs text-slate-600 font-medium">
-              कुल निर्धारित मांग: <strong className="text-slate-950 font-mono text-sm">
-                {masterPoints.reduce((sum, t) => sum + ((t.reqSI || 1) + (t.reqHC || 2) + (t.reqConstable || 4) + (t.reqFemale || 2)), 0)}
-              </strong> जवान
-            </div>
+        // Rank-wise deployed breakdown
+        const deployedStats = { si: 0, hc: 0, constable: 0, female: 0 };
+        eventRecords.forEach(r => {
+          const cat = getOfficerCategory(r);
+          deployedStats[cat] = (deployedStats[cat] || 0) + 1;
+        });
 
-            <button
-              onClick={() => {
-                const availablePool = masterForce.filter(p => !assignedPnoMap[p.pno] && !assignedPnoMap[p.mobile]);
-                if (availablePool.length === 0) {
-                  alert('मास्टर फ़ोर्स में कोई भी खाली/उपलब्ध जवान शेष नहीं है।');
-                  return;
+        // Rank-wise reserve breakdown
+        const reserveStats = { si: 0, hc: 0, constable: 0, female: 0 };
+        availablePool.forEach(r => {
+          const cat = getOfficerCategory(r);
+          reserveStats[cat] = (reserveStats[cat] || 0) + 1;
+        });
+
+        const totalDemanded = masterPoints.reduce((sum, t) => sum + ((Number(t.reqSI) || 0) + (Number(t.reqHC) || 0) + (Number(t.reqConstable) || 0) + (Number(t.reqFemale) || 0)), 0);
+
+        // Live Quota Change Function (Increases/Decreases Live Force in Real Time!)
+        const handleLiveQuotaChange = (idx, field, rawVal) => {
+          const newCount = Math.max(0, parseInt(rawVal) || 0);
+          const targetPoint = masterPoints[idx];
+          if (!targetPoint) return;
+
+          const currentCount = targetPoint[field] ?? (field === 'reqSI' ? 1 : field === 'reqHC' ? 2 : field === 'reqConstable' ? 4 : 1);
+          const delta = newCount - currentCount;
+
+          const targetCat = field === 'reqSI' ? 'si' : field === 'reqHC' ? 'hc' : field === 'reqFemale' ? 'female' : 'constable';
+
+          let updatedRecords = [...eventRecords];
+
+          if (delta < 0) {
+            // REMOVE from duty point -> automatically returns to reserve pool!
+            const toRemove = Math.abs(delta);
+            const pointRecords = updatedRecords.filter(r => (r.duty_place || '').trim() === targetPoint.name.trim());
+            const matchingRecords = pointRecords.filter(r => getOfficerCategory(r) === targetCat);
+
+            const removeIds = new Set(matchingRecords.slice(-toRemove).map(r => r.id || r.pno || r.mobile));
+            if (removeIds.size < toRemove) {
+              const remainingNeed = toRemove - removeIds.size;
+              const otherRecords = pointRecords.filter(r => !removeIds.has(r.id || r.pno || r.mobile));
+              otherRecords.slice(-remainingNeed).forEach(r => removeIds.add(r.id || r.pno || r.mobile));
+            }
+
+            updatedRecords = updatedRecords.filter(r => !removeIds.has(r.id || r.pno || r.mobile));
+          } else if (delta > 0) {
+            // ADD to duty point from available reserve pool!
+            const currentAvail = masterForce.filter(p => {
+              const isAssigned = updatedRecords.some(r => r.pno === p.pno || r.mobile === p.mobile || (r.name === p.name && r.posting === p.posting));
+              return !isAssigned;
+            });
+
+            const matchingAvailable = currentAvail.filter(p => getOfficerCategory(p) === targetCat);
+            const fallbackAvailable = currentAvail.filter(p => getOfficerCategory(p) !== targetCat);
+            const candidates = [...matchingAvailable, ...fallbackAvailable].slice(0, delta);
+
+            if (candidates.length === 0) {
+              alert(`मास्टर फ़ोर्स में इस पद (${targetCat.toUpperCase()}) का कोई भी जवान उपलब्ध नहीं है।`);
+            } else {
+              let startIdx = updatedRecords.length + 1;
+              const newAssigned = candidates.map(s => ({
+                id: `DUTY-${Date.now()}-${startIdx++}`,
+                pno: s.pno || `PN-${Date.now()}-${startIdx}`,
+                name: s.name,
+                rank: s.rank || (targetCat === 'si' ? 'उ०नि०' : targetCat === 'hc' ? 'हे०का०' : targetCat === 'female' ? 'म०का०' : 'का०'),
+                mobile: s.mobile,
+                posting: s.posting || 'पुलिस लाइन',
+                district: s.district || 'अयोध्या',
+                zone: targetPoint.zone,
+                sector: targetPoint.sector,
+                duty_place: targetPoint.name,
+                shift: targetPoint.shift || 'प्रातः 08:00 बजे से 20:30 बजे तक',
+                photo: s.photo || ''
+              }));
+              updatedRecords = [...updatedRecords, ...newAssigned];
+            }
+          }
+
+          // Update point template state
+          const updatedPoints = [...masterPoints];
+          updatedPoints[idx] = { ...updatedPoints[idx], [field]: newCount };
+          savePoints(updatedPoints);
+
+          // Update Event Records in Realtime (Syncs live with Official Booklet & Cloud)
+          onUpdateEventRecords(updatedRecords);
+        };
+
+        // Smart Full Allocation
+        const handleSmartAutoDistributeAll = () => {
+          if (masterForce.length === 0) {
+            alert('कृपया पहले मास्टर पुलिस बल सूची अपलोड या सिंक करें।');
+            return;
+          }
+
+          let currentAssigned = [];
+          let unassignedPool = [...masterForce];
+
+          masterPoints.forEach(tpl => {
+            const quotas = [
+              { cat: 'si', count: Number(tpl.reqSI) || 0, defaultRank: 'उ०नि०' },
+              { cat: 'hc', count: Number(tpl.reqHC) || 0, defaultRank: 'हे०का०' },
+              { cat: 'female', count: Number(tpl.reqFemale) || 0, defaultRank: 'म०का०' },
+              { cat: 'constable', count: Number(tpl.reqConstable) || 0, defaultRank: 'का०' }
+            ];
+
+            quotas.forEach(q => {
+              for (let i = 0; i < q.count; i++) {
+                // Find matching rank from unassigned
+                let pIdx = unassignedPool.findIndex(p => getOfficerCategory(p) === q.cat);
+                if (pIdx === -1 && unassignedPool.length > 0) {
+                  pIdx = 0; // Fallback to any available personnel
                 }
-                let pool = [...availablePool];
-                let gen = [];
-                let startIdx = eventRecords.length + 1;
-                masterPoints.forEach(tpl => {
-                  const count = (tpl.reqSI || 1) + (tpl.reqHC || 2) + (tpl.reqConstable || 4) + (tpl.reqFemale || 2);
-                  for (let i = 0; i < count; i++) {
-                    const s = pool.pop();
-                    if (s) {
-                      gen.push({
-                        id: `DUTY-${String(startIdx++).padStart(4, '0')}`,
-                        pno: s.pno || `PN-${Date.now()}-${startIdx}`,
-                        name: s.name,
-                        rank: s.rank || 'का0',
-                        mobile: s.mobile,
-                        posting: s.posting || 'थाना कोतवाली',
-                        district: s.district || 'अयोध्या',
-                        zone: tpl.zone,
-                        sector: tpl.sector,
-                        duty_place: tpl.name,
-                        shift: tpl.shift,
-                        photo: s.photo || ''
-                      });
+
+                if (pIdx !== -1) {
+                  const person = unassignedPool.splice(pIdx, 1)[0];
+                  const startNum = currentAssigned.length + 1;
+                  currentAssigned.push({
+                    id: `DUTY-${Date.now()}-${startNum}`,
+                    pno: person.pno || `PN-${Date.now()}-${startNum}`,
+                    name: person.name,
+                    rank: person.rank || q.defaultRank,
+                    mobile: person.mobile,
+                    posting: person.posting || 'पुलिस लाइन',
+                    district: person.district || 'अयोध्या',
+                    zone: tpl.zone,
+                    sector: tpl.sector,
+                    duty_place: tpl.name,
+                    shift: tpl.shift || 'प्रातः 08:00 बजे से 20:30 बजे तक',
+                    photo: person.photo || ''
+                  });
+                }
+              }
+            });
+          });
+
+          onUpdateEventRecords(currentAssigned);
+          setSuccessToast(`🎉 ${currentAssigned.length} जवानों की ड्यूटी सफलतापूर्वक स्वतः आवंटित हो गई! बुकलेट में तुरंत अपडेट हो गई है।`);
+          setTimeout(() => setSuccessToast(null), 4000);
+        };
+
+        return (
+          <div className="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200/90 shadow-sm space-y-6">
+            {/* Header with Live Booklet Sync Indicator */}
+            <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 border-b border-slate-100 pb-5">
+              <div className="flex items-center gap-3">
+                <div className="w-11 h-11 rounded-2xl bg-amber-500 text-slate-950 flex items-center justify-center font-black shadow-sm">
+                  <Sparkles className="w-6 h-6 stroke-[2.5]" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-base sm:text-lg font-black text-slate-950">
+                      स्मार्ट ऑटो-ड्यूटी एलोकेशन (Live Force Distribution Matrix)
+                    </h2>
+                    <span className="bg-emerald-100 text-emerald-800 text-[10px] px-2 py-0.5 rounded-full font-black border border-emerald-300 flex items-center gap-1 animate-pulse">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>
+                      <span>बुकलेट से लाइव कनेक्टेड</span>
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-500 font-medium mt-0.5">
+                    कोटा बदलते ही जवान तुरंत ड्यूटी से जुड़ेंगे/हटेंगे और बुकलेट में रियल-टाइम लाइव अपडेट होंगे।
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2">
+                {onOpenBooklet && (
+                  <button
+                    type="button"
+                    onClick={onOpenBooklet}
+                    className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-amber-400 font-bold text-xs rounded-xl flex items-center gap-1.5 shadow transition cursor-pointer"
+                  >
+                    <Printer className="w-3.5 h-3.5 text-amber-400" />
+                    <span>📄 आधिकारिक बुकलेट में देखें</span>
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={handleSmartAutoDistributeAll}
+                  className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs rounded-xl flex items-center gap-1.5 shadow transition cursor-pointer"
+                >
+                  <Zap className="w-3.5 h-3.5" />
+                  <span>⚡ सभी पॉइंट्स पर एक साथ बल तैनात करें</span>
+                </button>
+              </div>
+            </div>
+
+            {/* REAL-TIME LIVE FORCE REPORT DASHBOARD */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+              {/* Card 1: Master Total */}
+              <div className="bg-slate-50 border border-slate-200 p-3.5 rounded-2xl space-y-1">
+                <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">कुल मास्टर पुलिस बल</div>
+                <div className="text-2xl font-black text-slate-900 font-mono">{totalMaster} <span className="text-xs font-sans text-slate-500">जवान</span></div>
+                <div className="text-[10px] text-slate-500 font-medium">डेटाबेस में कुल पंजीकृत बल</div>
+              </div>
+
+              {/* Card 2: Deployed Stats */}
+              <div className="bg-blue-50/80 border border-blue-200 p-3.5 rounded-2xl space-y-1">
+                <div className="text-[11px] font-black text-blue-900 uppercase tracking-wider flex items-center justify-between">
+                  <span>🚨 वर्तमान तैनात बल</span>
+                  <span className="bg-blue-600 text-white text-[10px] px-1.5 py-0.2 rounded font-mono font-bold">{totalDeployed}</span>
+                </div>
+                <div className="flex flex-wrap gap-1 text-[11px] font-bold text-blue-950 pt-1">
+                  <span className="bg-white px-1.5 py-0.5 rounded border border-blue-200">उ०नि०: {deployedStats.si}</span>
+                  <span className="bg-white px-1.5 py-0.5 rounded border border-blue-200">हे०का०: {deployedStats.hc}</span>
+                  <span className="bg-white px-1.5 py-0.5 rounded border border-blue-200">कां०: {deployedStats.constable}</span>
+                  <span className="bg-white px-1.5 py-0.5 rounded border border-blue-200 text-rose-700">म०कां०: {deployedStats.female}</span>
+                </div>
+              </div>
+
+              {/* Card 3: Reserve / Available Stats */}
+              <div className="bg-emerald-50/80 border border-emerald-200 p-3.5 rounded-2xl space-y-1">
+                <div className="text-[11px] font-black text-emerald-900 uppercase tracking-wider flex items-center justify-between">
+                  <span>🛡️ शेष उपलब्ध (रिजर्व फ़ोर्स)</span>
+                  <span className="bg-emerald-600 text-white text-[10px] px-1.5 py-0.2 rounded font-mono font-bold">{totalReserve}</span>
+                </div>
+                <div className="flex flex-wrap gap-1 text-[11px] font-bold text-emerald-950 pt-1">
+                  <span className="bg-white px-1.5 py-0.5 rounded border border-emerald-200">उ०नि०: {reserveStats.si}</span>
+                  <span className="bg-white px-1.5 py-0.5 rounded border border-emerald-200">हे०का०: {reserveStats.hc}</span>
+                  <span className="bg-white px-1.5 py-0.5 rounded border border-emerald-200">कां०: {reserveStats.constable}</span>
+                  <span className="bg-white px-1.5 py-0.5 rounded border border-emerald-200 text-rose-700">म०कां०: {reserveStats.female}</span>
+                </div>
+              </div>
+
+              {/* Card 4: Demand vs Fulfilled */}
+              <div className="bg-amber-50/80 border border-amber-200 p-3.5 rounded-2xl space-y-1">
+                <div className="text-[11px] font-black text-amber-900 uppercase tracking-wider flex items-center justify-between">
+                  <span>🎯 कुल निर्धारित मांग</span>
+                  <span className="bg-amber-500 text-slate-950 text-[10px] px-1.5 py-0.2 rounded font-mono font-bold">{totalDemanded}</span>
+                </div>
+                <div className="text-xs font-bold text-slate-700 pt-1">
+                  पूर्ति दर: <strong className="text-slate-950 font-mono text-sm">{totalDemanded > 0 ? Math.min(100, Math.round((totalDeployed / totalDemanded) * 100)) : 100}%</strong>
+                </div>
+              </div>
+            </div>
+
+            {/* Matrix Table with Live Increment/Decrement */}
+            <div className="overflow-x-auto rounded-2xl border border-slate-200 shadow-2xs">
+              <table className="w-full text-xs text-slate-900">
+                <thead className="bg-slate-100 font-black text-slate-900 border-b border-slate-200">
+                  <tr>
+                    <th className="p-3.5 text-left">ड्यूटी स्थल (Point Name)</th>
+                    <th className="p-3.5 text-left">जोन / सेक्टर</th>
+                    <th className="p-3.5 text-center w-24">उ०नि० (SI)</th>
+                    <th className="p-3.5 text-center w-24">हेकां (HC)</th>
+                    <th className="p-3.5 text-center w-24">का० (Const.)</th>
+                    <th className="p-3.5 text-center w-24">म०का० (Fem.)</th>
+                    <th className="p-3.5 text-center w-24 bg-slate-200">कुल बल (तैनात)</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-200 bg-white">
+                  {masterPoints.map((tpl, idx) => {
+                    const reqSI = tpl.reqSI ?? 1;
+                    const reqHC = tpl.reqHC ?? 2;
+                    const reqConst = tpl.reqConstable ?? 4;
+                    const reqFem = tpl.reqFemale ?? 1;
+                    const totalReq = reqSI + reqHC + reqConst + reqFem;
+
+                    // Count currently deployed at this point
+                    const currentlyDeployed = eventRecords.filter(r => (r.duty_place || '').trim() === tpl.name.trim()).length;
+
+                    return (
+                      <tr key={idx} className="hover:bg-slate-50/80 transition">
+                        <td className="p-3 font-black text-slate-950">
+                          <div className="flex items-center gap-1.5">
+                            <MapPin className="w-3.5 h-3.5 text-rose-600 shrink-0" />
+                            <span>{tpl.name}</span>
+                          </div>
+                        </td>
+                        <td className="p-3 text-slate-600 font-medium text-[11px]">
+                          {tpl.zone} / {tpl.sector}
+                        </td>
+                        <td className="p-3 text-center">
+                          <input
+                            type="number"
+                            min="0"
+                            value={reqSI}
+                            onChange={(e) => handleLiveQuotaChange(idx, 'reqSI', e.target.value)}
+                            className="w-16 h-9 bg-slate-50 border border-slate-300 rounded-lg text-center font-black text-slate-900 focus:bg-amber-50 focus:border-amber-500 focus:outline-none"
+                          />
+                        </td>
+                        <td className="p-3 text-center">
+                          <input
+                            type="number"
+                            min="0"
+                            value={reqHC}
+                            onChange={(e) => handleLiveQuotaChange(idx, 'reqHC', e.target.value)}
+                            className="w-16 h-9 bg-slate-50 border border-slate-300 rounded-lg text-center font-black text-slate-900 focus:bg-amber-50 focus:border-amber-500 focus:outline-none"
+                          />
+                        </td>
+                        <td className="p-3 text-center">
+                          <input
+                            type="number"
+                            min="0"
+                            value={reqConst}
+                            onChange={(e) => handleLiveQuotaChange(idx, 'reqConstable', e.target.value)}
+                            className="w-16 h-9 bg-slate-50 border border-slate-300 rounded-lg text-center font-black text-slate-900 focus:bg-amber-50 focus:border-amber-500 focus:outline-none"
+                          />
+                        </td>
+                        <td className="p-3 text-center">
+                          <input
+                            type="number"
+                            min="0"
+                            value={reqFem}
+                            onChange={(e) => handleLiveQuotaChange(idx, 'reqFemale', e.target.value)}
+                            className="w-16 h-9 bg-slate-50 border border-slate-300 rounded-lg text-center font-black text-slate-900 focus:bg-amber-50 focus:border-amber-500 focus:outline-none"
+                          />
+                        </td>
+                        <td className="p-3 text-center font-mono font-black bg-slate-50">
+                          <span className={`px-2.5 py-1 rounded-md text-xs ${
+                            currentlyDeployed >= totalReq 
+                              ? 'bg-emerald-100 text-emerald-900 border border-emerald-300' 
+                              : 'bg-amber-100 text-amber-900 border border-amber-300'
+                          }`}>
+                            {currentlyDeployed} / {totalReq}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="pt-4 flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-slate-100">
+              <div className="text-xs text-slate-600 font-medium">
+                मांग: <strong className="text-slate-950 font-mono text-sm">{totalDemanded}</strong> | तैनात: <strong className="text-emerald-700 font-mono text-sm">{totalDeployed}</strong> | रिजर्व: <strong className="text-blue-700 font-mono text-sm">{totalReserve}</strong>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (window.confirm('क्या आप सभी ड्यूटी पॉइंट्स की वर्तमान तैनाती को रीसेट करके जवानों को वापस रिजर्व में भेजना चाहते हैं?')) {
+                      onUpdateEventRecords([]);
+                      setSuccessToast('सभी जवान वापस उपलब्ध रिजर्व पूल में भेज दिए गए हैं।');
+                      setTimeout(() => setSuccessToast(null), 3000);
                     }
-                  }
-                });
-                onUpdateEventRecords([...eventRecords, ...gen]);
-                setSuccessToast(`🎉 ऑटो-एलोकेशन द्वारा ${gen.length} जवानों की ड्यूटी सफलतापूर्वक लगा दी गई!`);
-                setTimeout(() => setSuccessToast(null), 4000);
-              }}
-              className="w-full sm:w-auto px-7 py-3.5 bg-slate-900 hover:bg-slate-800 text-amber-400 font-black text-xs sm:text-sm rounded-2xl flex items-center justify-center gap-2 shadow-lg transition active:scale-95 cursor-pointer"
-            >
-              <Zap className="w-4 h-4 text-amber-400 stroke-[2.5]" />
-              <span>स्मार्ट ऑटो-एलोकेशन रन करें एवं ड्यूटी लगाएं</span>
-            </button>
+                  }}
+                  className="px-4 py-2.5 bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs rounded-xl border border-rose-200 transition cursor-pointer"
+                >
+                  🔄 सभी ड्यूटी खाली करें (वापस रिजर्व में भेजें)
+                </button>
+              </div>
+            </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* ========================================================================= */}
       {/* MODE: FORCE DEPLOYMENT MATRIX (EXECUTIVE SUMMARY)                         */}

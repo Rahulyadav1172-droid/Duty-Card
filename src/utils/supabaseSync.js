@@ -28,6 +28,12 @@ function ensureUniqueRecordIds(records = []) {
   }));
 }
 
+const DEFAULT_OFFICIAL_HELPLINES = [
+  { id: '1', title: 'पुलिस कंट्रोल रूम (अयोध्या)', number: '9454417465' },
+  { id: '2', title: 'पुलिस सिटी कन्ट्रोल रुम (अयोध्या)', number: '9454402648' },
+  { id: '3', title: 'मेला नियंत्रण कक्ष / ड्यूटी हेल्पडेस्क', number: '9454402655' }
+];
+
 export async function fetchEventsFromSupabase() {
   try {
     const { data, error } = await supabase
@@ -45,6 +51,10 @@ export async function fetchEventsFromSupabase() {
         .filter(row => row.id !== 'global-pdf-booklets' && !String(row.id).startsWith('global-'))
         .map(row => {
           const rawExtra = row.attendance_map?._extra || {};
+          const helplines = (Array.isArray(rawExtra.helplineList) && rawExtra.helplineList.length > 0)
+            ? rawExtra.helplineList
+            : DEFAULT_OFFICIAL_HELPLINES;
+
           return {
             id: row.id,
             title: row.title,
@@ -62,7 +72,7 @@ export async function fetchEventsFromSupabase() {
             attendanceMap: (typeof row.attendance_map === 'object' && row.attendance_map !== null)
               ? Object.fromEntries(Object.entries(row.attendance_map).filter(([k]) => k !== '_extra'))
               : {},
-            helplineList: rawExtra.helplineList || [],
+            helplineList: helplines,
             isHelplineEnabled: rawExtra.isHelplineEnabled ?? true,
             customLabels: rawExtra.customLabels || {},
             attendanceByDate: rawExtra.attendanceByDate || {},
@@ -85,10 +95,14 @@ export async function fetchEventsFromSupabase() {
 export async function upsertEventToSupabase(eventObj) {
   try {
     const rawAttendance = eventObj.attendanceMap || {};
+    const helplines = (Array.isArray(eventObj.helplineList) && eventObj.helplineList.length > 0)
+      ? eventObj.helplineList
+      : DEFAULT_OFFICIAL_HELPLINES;
+
     const attendanceMapWithExtra = {
       ...rawAttendance,
       _extra: {
-        helplineList: eventObj.helplineList || [],
+        helplineList: helplines,
         isHelplineEnabled: eventObj.isHelplineEnabled !== false,
         customLabels: eventObj.customLabels || {},
         attendanceByDate: eventObj.attendanceByDate || {},
@@ -322,6 +336,91 @@ export function subscribeToMasterForceRealtime(onUpdateCallback) {
     };
   } catch (err) {
     console.warn('Master Force Realtime subscription error:', err);
+    return () => {};
+  }
+}
+
+const CLOUD_ACTIVE_EVENT_STATE_ID = 'global-active-event-state';
+
+/**
+ * Fetch Global Active Event ID from Supabase Cloud
+ */
+export async function fetchGlobalActiveEventId() {
+  try {
+    const { data, error } = await supabase
+      .from(EVENTS_TABLE)
+      .select('subtitle')
+      .eq('id', CLOUD_ACTIVE_EVENT_STATE_ID)
+      .maybeSingle();
+
+    if (error) {
+      console.warn('Supabase fetch error for Active Event ID:', error.message);
+      return null;
+    }
+
+    if (data && data.subtitle) {
+      return data.subtitle;
+    }
+    return null;
+  } catch (err) {
+    console.warn('Network error fetching Active Event ID:', err);
+    return null;
+  }
+}
+
+/**
+ * Save Global Active Event ID to Supabase Cloud for all devices
+ */
+export async function saveGlobalActiveEventId(eventId) {
+  if (!eventId) return false;
+  try {
+    const row = {
+      id: CLOUD_ACTIVE_EVENT_STATE_ID,
+      title: 'GLOBAL_ACTIVE_EVENT_STATE',
+      subtitle: eventId,
+      status: 'active',
+      updated_at: new Date().toISOString()
+    };
+
+    const { error } = await supabase
+      .from(EVENTS_TABLE)
+      .upsert(row, { onConflict: 'id' });
+
+    if (error) {
+      console.warn('Supabase upsert error for Active Event ID:', error.message);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.warn('Network error saving Active Event ID:', err);
+    return false;
+  }
+}
+
+/**
+ * Subscribe to realtime changes on Global Active Event ID
+ */
+export function subscribeToActiveEventIdRealtime(onUpdateCallback) {
+  try {
+    const channel = supabase
+      .channel('public:active_event_id_realtime')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: EVENTS_TABLE, filter: `id=eq.${CLOUD_ACTIVE_EVENT_STATE_ID}` },
+        async () => {
+          const freshId = await fetchGlobalActiveEventId();
+          if (freshId) {
+            onUpdateCallback(freshId);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  } catch (err) {
+    console.warn('Active Event ID Realtime subscription error:', err);
     return () => {};
   }
 }

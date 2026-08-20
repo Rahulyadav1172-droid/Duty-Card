@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
   Search,
   FileSpreadsheet,
@@ -47,7 +47,11 @@ import {
   deleteEventFromSupabase,
   subscribeToEventsRealtime,
   fetchMasterForceFromSupabase,
-  saveMasterForceToSupabase
+  saveMasterForceToSupabase,
+  subscribeToMasterForceRealtime,
+  fetchGlobalActiveEventId,
+  saveGlobalActiveEventId,
+  subscribeToActiveEventIdRealtime
 } from './utils/supabaseSync';
 import { initCloudAuthConfig } from './utils/authManager';
 
@@ -81,9 +85,9 @@ function getInitialEvents() {
       briefing: '',
       isBriefingEnabled: false,
       helplineList: [
-        { id: '1', title: 'पुलिस कंट्रोल रूम (अयोध्या)', number: '112' },
-        { id: '2', title: 'मेला नियंत्रण कक्ष / ड्यूटी हेल्पडेस्क', number: '9454401000' },
-        { id: '3', title: 'स्मार्ट सेल / तकनीकी सहायता', number: '9454402000' }
+        { id: '1', title: 'पुलिस कंट्रोल रूम (अयोध्या)', number: '9454417465' },
+        { id: '2', title: 'पुलिस सिटी कन्ट्रोल रुम (अयोध्या)', number: '9454402648' },
+        { id: '3', title: 'मेला नियंत्रण कक्ष / ड्यूटी हेल्पडेस्क', number: '9454402655' }
       ],
       isHelplineEnabled: true,
       records: [],
@@ -152,10 +156,12 @@ export default function App() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Current Active Event Object (Guaranteed fallback, respects active status for public search)
-  const activeEventsList = (Array.isArray(events) ? events : []).filter(e => e.status !== 'archived');
+  // Current Active Event Object (Guaranteed fallback, respects active status everywhere)
+  const activeEventsList = useMemo(() => {
+    return (Array.isArray(events) ? events : []).filter(e => e.status !== 'archived');
+  }, [events]);
 
-  const currentEvent = (() => {
+  const currentEvent = useMemo(() => {
     if (!Array.isArray(events) || events.length === 0) {
       return {
         id: 'event-shravan-2026',
@@ -173,18 +179,23 @@ export default function App() {
       };
     }
 
-    if (userRole === 'admin' || userRole === 'senior') {
-      return events.find(e => e.id === activeEventId) || events[0];
-    }
+    // 1. If currently selected event exists and is not archived, use it
+    const matched = events.find(e => e.id === activeEventId && e.status !== 'archived');
+    if (matched) return matched;
 
-    // For public guest searching duty cards: strictly pick an active event
-    return activeEventsList.find(e => e.id === activeEventId) || activeEventsList[0] || events[0];
-  })();
+    // 2. Otherwise default to first active non-archived event
+    const firstActive = events.find(e => e.status !== 'archived');
+    if (firstActive) return firstActive;
+
+    // 3. Fallback to matched event or first event
+    return events.find(e => e.id === activeEventId) || events[0];
+  }, [events, activeEventId]);
 
   // Load from Supabase on mount & subscribe to realtime changes across all devices
   useEffect(() => {
     let unsubscribeEvents = () => {};
     let unsubscribeForce = () => {};
+    let unsubscribeActiveEventId = () => {};
 
     async function initSupabase() {
       // 1. Initialize Auth Config from Cloud
@@ -213,6 +224,15 @@ export default function App() {
         }
       }
 
+      // 4. Fetch Global Active Event ID from Cloud
+      const cloudActiveId = await fetchGlobalActiveEventId();
+      if (cloudActiveId) {
+        setActiveEventId(cloudActiveId);
+        try {
+          localStorage.setItem(ACTIVE_EVENT_ID_KEY, cloudActiveId);
+        } catch (e) {}
+      }
+
       // Realtime Events Listener
       unsubscribeEvents = subscribeToEventsRealtime((freshEvents) => {
         if (freshEvents && freshEvents.length > 0) {
@@ -232,6 +252,16 @@ export default function App() {
           } catch (e) {}
         }
       });
+
+      // Realtime Active Event ID Listener (Across all devices)
+      unsubscribeActiveEventId = subscribeToActiveEventIdRealtime((freshActiveId) => {
+        if (freshActiveId) {
+          setActiveEventId(freshActiveId);
+          try {
+            localStorage.setItem(ACTIVE_EVENT_ID_KEY, freshActiveId);
+          } catch (e) {}
+        }
+      });
     }
 
     initSupabase();
@@ -239,6 +269,7 @@ export default function App() {
     return () => {
       unsubscribeEvents();
       unsubscribeForce();
+      unsubscribeActiveEventId();
     };
   }, []);
 
@@ -263,6 +294,7 @@ export default function App() {
     try {
       localStorage.setItem(ACTIVE_EVENT_ID_KEY, id);
     } catch (e) {}
+    saveGlobalActiveEventId(id);
     setActiveDuty(null);
     setSearchQuery('');
   };
@@ -869,51 +901,64 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* Quick Emergency & Police Helpline Widget */}
-                {currentEvent.isHelplineEnabled !== false && Array.isArray(currentEvent.helplineList) && currentEvent.helplineList.length > 0 && (
-                  <div className="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-5 shadow-xs space-y-3">
-                    <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
-                      <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-lg bg-rose-50 border border-rose-200 flex items-center justify-center text-rose-600 shrink-0">
-                          <Phone className="w-4 h-4" />
-                        </div>
-                        <div>
-                          <h4 className="text-xs sm:text-sm font-black text-slate-900 leading-tight">
-                            {language === 'en' ? 'Emergency & Duty Control Room' : 'आपातकालीन सहायता एवं ड्यूटी नियंत्रण कक्ष'}
-                          </h4>
-                          <p className="text-[10px] text-slate-500 font-medium">
-                            {language === 'en' ? '24x7 Police Helpline Contacts' : '24x7 पुलिस ड्यूटी हेल्पलाइन संपर्क'}
-                          </p>
-                        </div>
-                      </div>
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-                        {language === 'en' ? 'Active 24x7' : '24x7 सक्रिय'}
-                      </span>
-                    </div>
+                {/* Quick Emergency & Police Helpline Widget (Permanent 24x7 Display) */}
+                {(() => {
+                  const defaultHelplines = [
+                    { id: '1', title: 'पुलिस कंट्रोल रूम (अयोध्या)', number: '9454417465' },
+                    { id: '2', title: 'पुलिस सिटी कन्ट्रोल रुम (अयोध्या)', number: '9454402648' },
+                    { id: '3', title: 'मेला नियंत्रण कक्ष / ड्यूटी हेल्पडेस्क', number: '9454402655' }
+                  ];
+                  const helplines = (Array.isArray(currentEvent.helplineList) && currentEvent.helplineList.length > 0)
+                    ? currentEvent.helplineList
+                    : defaultHelplines;
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                      {currentEvent.helplineList.map((contact, idx) => (
-                        <a
-                          key={contact.id || idx}
-                          href={`tel:${String(contact.number || '').replace(/[^0-9+]/g, '')}`}
-                          className="p-2.5 bg-slate-50 hover:bg-amber-50/70 border border-slate-200/90 hover:border-amber-300 rounded-xl transition flex items-center justify-between gap-2 group cursor-pointer"
-                        >
-                          <div className="min-w-0">
-                            <div className="text-xs font-black text-slate-900 group-hover:text-amber-900 truncate">
-                              {contact.title}
-                            </div>
-                            <div className="text-[11px] font-mono font-bold text-slate-600 group-hover:text-amber-800">
-                              {contact.number}
-                            </div>
+                  if (currentEvent.isHelplineEnabled === false) return null;
+
+                  return (
+                    <div className="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-5 shadow-xs space-y-3">
+                      <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
+                        <div className="flex items-center gap-2">
+                          <div className="w-8 h-8 rounded-lg bg-rose-50 border border-rose-200 flex items-center justify-center text-rose-600 shrink-0">
+                            <Phone className="w-4 h-4" />
                           </div>
-                          <div className="w-7 h-7 rounded-lg bg-emerald-100 text-emerald-800 group-hover:bg-emerald-600 group-hover:text-white flex items-center justify-center shrink-0 transition shadow-2xs">
-                            <Phone className="w-3.5 h-3.5" />
+                          <div>
+                            <h4 className="text-xs sm:text-sm font-black text-slate-900 leading-tight">
+                              {language === 'en' ? 'Emergency & Duty Control Room' : 'आपातकालीन सहायता एवं ड्यूटी नियंत्रण कक्ष'}
+                            </h4>
+                            <p className="text-[10px] text-slate-500 font-medium">
+                              {language === 'en' ? '24x7 Police Helpline Contacts' : '24x7 पुलिस ड्यूटी हेल्पलाइन संपर्क'}
+                            </p>
                           </div>
-                        </a>
-                      ))}
+                        </div>
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                          {language === 'en' ? 'Active 24x7' : '24x7 सक्रिय'}
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        {helplines.map((contact, idx) => (
+                          <a
+                            key={contact.id || idx}
+                            href={`tel:${String(contact.number || '').replace(/[^0-9+]/g, '')}`}
+                            className="p-2.5 bg-slate-50 hover:bg-amber-50/70 border border-slate-200/90 hover:border-amber-300 rounded-xl transition flex items-center justify-between gap-2 group cursor-pointer"
+                          >
+                            <div className="min-w-0">
+                              <div className="text-xs font-black text-slate-900 group-hover:text-amber-900 truncate">
+                                {contact.title}
+                              </div>
+                              <div className="text-[11px] font-mono font-bold text-slate-600 group-hover:text-amber-800">
+                                {contact.number}
+                              </div>
+                            </div>
+                            <div className="w-7 h-7 rounded-lg bg-emerald-100 text-emerald-800 group-hover:bg-emerald-600 group-hover:text-white flex items-center justify-center shrink-0 transition shadow-2xs">
+                              <Phone className="w-3.5 h-3.5" />
+                            </div>
+                          </a>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                )}
+                  );
+                })()}
               </div>
             )}
           </div>

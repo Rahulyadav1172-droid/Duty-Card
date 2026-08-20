@@ -89,9 +89,9 @@ export default function AdminUpload({
   const [helplineContacts, setHelplineContacts] = useState(() => {
     if (Array.isArray(helplineList) && helplineList.length > 0) return helplineList;
     return [
-      { id: '1', title: 'पुलिस कंट्रोल रूम (अयोध्या)', number: '112' },
-      { id: '2', title: 'मेला नियंत्रण कक्ष / ड्यूटी हेल्पडेस्क', number: '9454401000' },
-      { id: '3', title: 'स्मार्ट सेल / तकनीकी सहायता', number: '9454402000' }
+      { id: '1', title: 'पुलिस कंट्रोल रूम (अयोध्या)', number: '9454417465' },
+      { id: '2', title: 'पुलिस सिटी कन्ट्रोल रुम (अयोध्या)', number: '9454402648' },
+      { id: '3', title: 'मेला नियंत्रण कक्ष / ड्यूटी हेल्पडेस्क', number: '9454402655' }
     ];
   });
   const [helplineToggle, setHelplineToggle] = useState(isHelplineEnabled !== false);
