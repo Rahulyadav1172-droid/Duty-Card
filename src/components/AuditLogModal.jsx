@@ -1,8 +1,7 @@
 import React from 'react';
 import { History, Shield, AlertTriangle, FileSpreadsheet, X, Trash2, Clock, UserCheck } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
-
-const AAMAD_AUDIT_LOG_KEY = 'police_force_aamad_audit_logs_v1';
+import { fetchAamadFromSupabase, saveAamadToSupabase, AAMAD_AUDIT_LOG_KEY } from '../utils/aamadSync';
 
 export default function AuditLogModal({ isOpen, onClose }) {
   const { language } = useLanguage();
@@ -15,24 +14,36 @@ export default function AuditLogModal({ isOpen, onClose }) {
     return [];
   });
 
-  // Re-read from storage when opened
+  // Re-read from Supabase & local storage when opened
   React.useEffect(() => {
     if (isOpen) {
-      try {
-        const saved = localStorage.getItem(AAMAD_AUDIT_LOG_KEY);
-        if (saved) setAuditLogs(JSON.parse(saved));
-      } catch (e) {}
+      async function loadLogs() {
+        const cloudData = await fetchAamadFromSupabase();
+        if (cloudData && Array.isArray(cloudData.auditLogs)) {
+          setAuditLogs(cloudData.auditLogs);
+        } else {
+          try {
+            const saved = localStorage.getItem(AAMAD_AUDIT_LOG_KEY);
+            if (saved) setAuditLogs(JSON.parse(saved));
+          } catch (e) {}
+        }
+      }
+      loadLogs();
     }
   }, [isOpen]);
 
   if (!isOpen) return null;
 
-  const handleClearLogs = () => {
+  const handleClearLogs = async () => {
     if (window.confirm(language === 'en' ? 'Are you sure you want to clear all audit logs?' : 'क्या आप समस्त ऑडिट लॉग मिटाना चाहते हैं?')) {
       setAuditLogs([]);
       try {
         localStorage.removeItem(AAMAD_AUDIT_LOG_KEY);
       } catch (e) {}
+      const cloudData = await fetchAamadFromSupabase();
+      if (cloudData) {
+        await saveAamadToSupabase(cloudData.records || [], []);
+      }
     }
   };
 

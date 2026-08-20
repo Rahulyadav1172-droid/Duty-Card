@@ -36,9 +36,13 @@ import {
   resolveZoneAndRangeFromDistrict
 } from '../utils/upPoliceHierarchy';
 import * as XLSX from 'xlsx';
-
-const AAMAD_STORAGE_KEY = 'police_force_aamad_records_v1';
-const AAMAD_AUDIT_LOG_KEY = 'police_force_aamad_audit_logs_v1';
+import {
+  fetchAamadFromSupabase,
+  saveAamadToSupabase,
+  subscribeToAamadRealtime,
+  AAMAD_STORAGE_KEY,
+  AAMAD_AUDIT_LOG_KEY
+} from '../utils/aamadSync';
 
 /**
  * Robust helper to fetch true Server Date & Time from Cloud / HTTP headers
@@ -150,14 +154,46 @@ export default function ForceAamadManager({
   const [successToast, setSuccessToast] = useState(null);
   const fileInputRef = useRef(null);
 
-  // Save Aamad Records & Audit Logs
+  // Initial Load from Supabase Cloud & Realtime Multi-Device Sync
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadCloudAamad() {
+      const cloudData = await fetchAamadFromSupabase();
+      if (isMounted && cloudData) {
+        if (Array.isArray(cloudData.records)) {
+          setAamadRecords(cloudData.records);
+        }
+        if (Array.isArray(cloudData.auditLogs)) {
+          setAuditLogs(cloudData.auditLogs);
+        }
+      }
+    }
+
+    loadCloudAamad();
+
+    const unsubscribe = subscribeToAamadRealtime((freshData) => {
+      if (isMounted && freshData) {
+        if (Array.isArray(freshData.records)) {
+          setAamadRecords(freshData.records);
+        }
+        if (Array.isArray(freshData.auditLogs)) {
+          setAuditLogs(freshData.auditLogs);
+        }
+      }
+    });
+
+    return () => {
+      isMounted = false;
+      unsubscribe();
+    };
+  }, []);
+
+  // Save Aamad Records & Audit Logs to Local + Supabase Cloud (Across all devices)
   const saveAamadState = (newAamad, newLogs = auditLogs) => {
     setAamadRecords(newAamad);
     setAuditLogs(newLogs);
-    try {
-      localStorage.setItem(AAMAD_STORAGE_KEY, JSON.stringify(newAamad));
-      localStorage.setItem(AAMAD_AUDIT_LOG_KEY, JSON.stringify(newLogs));
-    } catch (e) {}
+    saveAamadToSupabase(newAamad, newLogs);
   };
 
   // Synchronize new Aamad entries into Master Force
