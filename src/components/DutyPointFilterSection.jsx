@@ -240,29 +240,29 @@ export default function DutyPointFilterSection({
 
   return (
     <div className="w-full max-w-7xl mx-auto space-y-6 font-devanagari text-slate-900">
-      {/* Event Selector & Daily Checking Report Action Header */}
-      <div className="bg-slate-900 text-white p-4 sm:p-6 rounded-3xl border border-slate-800 shadow-sm flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3.5 no-print">
+      {/* Top Action & Daily Checking Report Bar */}
+      <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/90 shadow-xs flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3.5 no-print">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 shrink-0">
+          <div className="w-10 h-10 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-700 shrink-0">
             <Layers className="w-5 h-5" />
           </div>
           <div>
-            <div className="text-xs text-slate-400 font-bold">ड्यूटी का प्रकार:</div>
-            <div className="text-base font-black text-amber-400">{eventTitle || 'सक्रिय सुरक्षा व्यवस्था'}</div>
+            <div className="text-xs text-slate-500 font-bold">ड्यूटी का प्रकार:</div>
+            <div className="text-base font-black text-slate-950">{eventTitle || 'सक्रिय सुरक्षा व्यवस्था'}</div>
           </div>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
           {events.length > 0 && (
             <div className="flex items-center gap-2">
-              <label className="text-xs font-bold text-slate-300 shrink-0">इवेंट:</label>
+              <label className="text-xs font-bold text-slate-600 shrink-0">इवेंट:</label>
               <select
                 value={activeEventId}
                 onChange={(e) => {
                   onSelectActiveEvent?.(e.target.value);
                   setSelectedPoint('ALL');
                 }}
-                className="bg-slate-800 text-white border border-slate-700 text-xs font-bold rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-500 cursor-pointer"
+                className="bg-slate-50 text-slate-900 border border-slate-300 text-xs font-bold rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-500 cursor-pointer"
               >
                 {events.map((evt) => (
                   <option key={evt.id} value={evt.id}>
@@ -276,7 +276,7 @@ export default function DutyPointFilterSection({
           {/* Trigger Official Checking Report Modal */}
           <button
             onClick={() => setIsCheckingReportOpen(true)}
-            className="px-4 py-2 bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-400 hover:to-amber-300 text-slate-950 font-black text-xs rounded-xl shadow-md flex items-center gap-1.5 transition active:scale-95 cursor-pointer shrink-0"
+            className="px-4 py-2 bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-400 hover:to-amber-300 text-slate-950 font-black text-xs rounded-xl shadow-xs flex items-center gap-1.5 transition active:scale-95 cursor-pointer shrink-0"
             title="आधिकारिक दैनिक चेकिंग रिपोर्ट A4 प्रोफ़ार्मा खोलें"
           >
             <FileText className="w-4 h-4 stroke-[2.5]" />

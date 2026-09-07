@@ -33,7 +33,7 @@ export default function DutyFormModal({ isOpen, onClose, onSave, initialData, ma
     rank: 'उ0नि0',
     mobile: '',
     posting: '',
-    district: 'वाराणसी',
+    district: 'अयोध्या',
     duty_place: '',
     zone: 'जोन-01 (मंदिर परिसर)',
     sector: 'सेक्टर-01 (मुख्य प्रवेश द्वार)',
@@ -53,7 +53,7 @@ export default function DutyFormModal({ isOpen, onClose, onSave, initialData, ma
         rank: 'उ0नि0',
         mobile: '',
         posting: '',
-        district: 'वाराणसी',
+        district: 'अयोध्या',
         duty_place: COMMON_DUTY_PLACES[0],
         zone: COMMON_ZONES[0],
         sector: COMMON_SECTORS[0],
@@ -227,7 +227,7 @@ export default function DutyFormModal({ isOpen, onClose, onSave, initialData, ma
                 type="text"
                 value={formData.district}
                 onChange={(e) => setFormData({ ...formData, district: e.target.value })}
-                placeholder="e.g. वाराणसी"
+                placeholder="e.g. अयोध्या"
                 className="w-full p-2 bg-slate-950 border border-slate-700 rounded-xl text-slate-200 focus:outline-none focus:ring-1 focus:ring-amber-500"
                 required
               />

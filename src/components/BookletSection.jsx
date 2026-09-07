@@ -161,38 +161,8 @@ export default function BookletSection({
 
   return (
     <div className="w-full max-w-5xl mx-auto space-y-6 font-devanagari text-slate-900">
-      {/* Event Selector for Senior Officers (Hidden on Print) */}
-      {events.length > 0 && (
-        <div className="bg-slate-900 text-white p-4 rounded-2xl border border-slate-800 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 no-print">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 shrink-0">
-              <Layers className="w-5 h-5" />
-            </div>
-            <div>
-              <div className="text-xs text-slate-400 font-bold">ड्यूटी का प्रकार:</div>
-              <div className="text-base font-black text-amber-400">{eventTitle || 'पुलिस सुरक्षा व्यवस्था'}</div>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2 w-full sm:w-auto">
-            <label className="text-xs font-bold text-slate-300 shrink-0">इवेंट चुनें:</label>
-            <select
-              value={activeEventId}
-              onChange={(e) => onSelectActiveEvent?.(e.target.value)}
-              className="bg-slate-800 text-white border border-slate-700 text-xs font-bold rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-500 w-full sm:w-auto cursor-pointer"
-            >
-              {events.map((evt) => (
-                <option key={evt.id} value={evt.id}>
-                  {evt.title} ({evt.records?.length || 0} बल)
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-      )}
-
       {/* Top Banner & Mode Switcher (Hidden on Print) */}
-      <div className="bg-white p-5 sm:p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4 no-print">
+      <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/90 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-4 no-print">
         <div className="flex items-center gap-3.5">
           <div className="w-12 h-12 rounded-xl bg-amber-50 border border-amber-200 text-amber-700 flex items-center justify-center shrink-0">
             <BookOpen className="w-6 h-6" />
@@ -207,26 +177,44 @@ export default function BookletSection({
           </div>
         </div>
 
-        {/* View Mode Switcher */}
-        <div className="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200 text-xs font-bold w-full md:w-auto">
-          <button
-            onClick={() => setViewMode('pdf')}
-            className={`flex-1 md:flex-initial px-4 py-2 rounded-lg transition flex items-center justify-center gap-1.5 cursor-pointer ${
-              viewMode === 'pdf' ? 'bg-amber-500 text-slate-950 font-black shadow-xs' : 'text-slate-600 hover:text-slate-900'
-            }`}
-          >
-            <FileText className="w-4 h-4" />
-            अपलोड की गई PDF {pdfList.length > 0 && `(${pdfList.length})`}
-          </button>
-          <button
-            onClick={() => setViewMode('interactive')}
-            className={`flex-1 md:flex-initial px-4 py-2 rounded-lg transition flex items-center justify-center gap-1.5 cursor-pointer ${
-              viewMode === 'interactive' ? 'bg-amber-500 text-slate-950 font-black shadow-xs' : 'text-slate-600 hover:text-slate-900'
-            }`}
-          >
-            <Eye className="w-4 h-4" />
-            डायनेमिक बुकलेट ({records.length} बल)
-          </button>
+        <div className="flex flex-wrap items-center gap-2.5 w-full md:w-auto">
+          {events.length > 0 && (
+            <div className="flex items-center gap-2">
+              <select
+                value={activeEventId}
+                onChange={(e) => onSelectActiveEvent?.(e.target.value)}
+                className="bg-slate-50 text-slate-900 border border-slate-300 text-xs font-bold rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-500 cursor-pointer"
+              >
+                {events.map((evt) => (
+                  <option key={evt.id} value={evt.id}>
+                    {evt.title} ({evt.records?.length || 0} बल)
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {/* View Mode Switcher */}
+          <div className="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200 text-xs font-bold w-full md:w-auto">
+            <button
+              onClick={() => setViewMode('pdf')}
+              className={`flex-1 md:flex-initial px-3.5 py-1.5 rounded-lg transition flex items-center justify-center gap-1.5 cursor-pointer ${
+                viewMode === 'pdf' ? 'bg-amber-500 text-slate-950 font-black shadow-xs' : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <FileText className="w-4 h-4" />
+              <span>अपलोड PDF {pdfList.length > 0 && `(${pdfList.length})`}</span>
+            </button>
+            <button
+              onClick={() => setViewMode('interactive')}
+              className={`flex-1 md:flex-initial px-3.5 py-1.5 rounded-lg transition flex items-center justify-center gap-1.5 cursor-pointer ${
+                viewMode === 'interactive' ? 'bg-amber-500 text-slate-950 font-black shadow-xs' : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <Eye className="w-4 h-4" />
+              <span>डायनेमिक बुकलेट ({records.length})</span>
+            </button>
+          </div>
         </div>
       </div>
 

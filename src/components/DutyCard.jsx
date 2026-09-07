@@ -261,6 +261,12 @@ export default function DutyCard({
     ? `${window.location.origin}/?search=${encodeURIComponent(duty.mobile || duty.pno || duty.id || '')}`
     : '';
 
+  const cleanPno = (duty.pno && !String(duty.pno).startsWith('DUTY-'))
+    ? String(duty.pno)
+    : (duty.id && !String(duty.id).startsWith('DUTY-') && String(duty.id).length <= 12)
+      ? String(duty.id)
+      : null;
+
   const qrPayload = qrVerificationUrl || JSON.stringify({
     id: duty.id,
     name: duty.name,
@@ -290,7 +296,9 @@ export default function DutyCard({
           </div>
           <div className="min-w-0">
             <div className="text-xs sm:text-sm font-black text-slate-900 leading-tight truncate">अयोध्या पुलिस ड्यूटी पास</div>
-            <div className="text-[10px] sm:text-xs text-slate-500 font-mono font-bold">P.No: {duty.id}</div>
+            <div className="text-[10px] sm:text-xs text-slate-500 font-mono font-bold">
+              {cleanPno ? `P.No: ${cleanPno}` : (duty.rank ? `${duty.rank} • ${duty.district || 'अयोध्या'}` : 'अयोध्या पुलिस')}
+            </div>
           </div>
         </div>
 
@@ -407,7 +415,11 @@ export default function DutyCard({
             </div>
 
             <div className="text-[10px] sm:text-xs text-slate-600 border-t border-slate-200 pt-1.5 flex flex-wrap items-center justify-between gap-1">
-              <div>P.No: <strong className="font-mono text-slate-950">{duty.id}</strong></div>
+              {cleanPno ? (
+                <div>P.No: <strong className="font-mono text-slate-950">{cleanPno}</strong></div>
+              ) : (
+                <div>पद: <strong className="text-slate-950">{duty.rank || 'आरक्षी'}</strong></div>
+              )}
               <div>मूल तैनाती: <strong className="text-slate-950">{duty.posting || '-'}</strong> {duty.district ? `(${duty.district})` : ''}</div>
             </div>
           </div>

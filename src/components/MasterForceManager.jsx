@@ -13,7 +13,7 @@ export default function MasterForceManager({ forceRecords, onUpdateForce }) {
     rank: 'उ0नि0',
     mobile: '',
     posting: 'थाना कोतवाली',
-    district: 'वाराणसी'
+    district: 'अयोध्या'
   });
 
   const handleOpenAddModal = (person = null) => {
@@ -28,7 +28,7 @@ export default function MasterForceManager({ forceRecords, onUpdateForce }) {
         rank: 'उ0नि0',
         mobile: '',
         posting: 'थाना कोतवाली',
-        district: 'वाराणसी'
+        district: 'अयोध्या'
       });
     }
     setIsModalOpen(true);
@@ -72,7 +72,7 @@ export default function MasterForceManager({ forceRecords, onUpdateForce }) {
           rank: item.rank || 'का0',
           mobile: item.mobile,
           posting: item.posting || 'थाना कोतवाली',
-          district: item.district || 'वाराणसी'
+          district: item.district || 'अयोध्या'
         }));
         onUpdateForce([...newForce, ...forceRecords]);
         alert(`सफलतापूर्वक ${newForce.length} पुलिसकर्मियों का मास्टर डेटाबेस अपलोड किया गया!`);

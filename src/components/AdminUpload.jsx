@@ -563,23 +563,23 @@ export default function AdminUpload({
     <div className="w-full max-w-5xl mx-auto space-y-6 font-devanagari text-slate-950">
       {/* Active Event Selector Banner */}
       {events.length > 0 && (
-        <div className="bg-slate-900 text-white p-4 sm:p-5 rounded-2xl border border-slate-800 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200/90 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 shrink-0">
+            <div className="w-10 h-10 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-700 shrink-0">
               <Layers className="w-5 h-5" />
             </div>
             <div>
-              <div className="text-xs text-slate-400 font-bold">वर्तमान सक्रिय कार्यक्षेत्र (Active Event):</div>
-              <div className="text-base sm:text-lg font-black text-amber-400">{eventTitle}</div>
+              <div className="text-xs text-slate-500 font-bold">वर्तमान सक्रिय कार्यक्षेत्र (Active Event):</div>
+              <div className="text-base sm:text-lg font-black text-slate-950">{eventTitle}</div>
             </div>
           </div>
 
           <div className="flex items-center gap-2 w-full sm:w-auto">
-            <label className="text-xs font-bold text-slate-300 shrink-0">इवेंट स्विच करें:</label>
+            <label className="text-xs font-bold text-slate-600 shrink-0">इवेंट स्विच करें:</label>
             <select
               value={activeEventId}
               onChange={(e) => onSelectActiveEvent?.(e.target.value)}
-              className="bg-slate-800 text-white border border-slate-700 text-xs font-bold rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-500 w-full sm:w-auto cursor-pointer"
+              className="bg-slate-50 text-slate-900 border border-slate-300 text-xs font-bold rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-500 w-full sm:w-auto cursor-pointer"
             >
               {events.map((evt) => (
                 <option key={evt.id} value={evt.id}>
