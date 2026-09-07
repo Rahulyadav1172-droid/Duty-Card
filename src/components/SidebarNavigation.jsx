@@ -17,7 +17,7 @@ import {
 
 import { useLanguage } from '../context/LanguageContext';
 
-export default function SidebarNavigation({
+function SidebarNavigation({
   activeTab,
   onSelectTab,
   userRole,
@@ -130,10 +130,11 @@ export default function SidebarNavigation({
         </div>
 
         {/* Mobile Close Button */}
-        {isMobileOpen && (
+        {isMobile && (
           <button
+            type="button"
             onClick={onCloseMobile}
-            className="p-1.5 rounded-xl text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 transition md:hidden cursor-pointer"
+            className="p-1.5 rounded-xl text-slate-400 hover:text-white active:scale-90 active:bg-slate-700 bg-slate-800 transition md:hidden cursor-pointer touch-manipulation"
             title="बंद करें"
           >
             <X className="w-5 h-5" />
@@ -150,11 +151,12 @@ export default function SidebarNavigation({
           return (
             <button
               key={item.id}
+              type="button"
               onClick={() => handleItemClick(item)}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl text-xs font-bold transition-all duration-200 cursor-pointer relative group ${
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl text-xs font-bold transition-all duration-150 cursor-pointer relative group touch-manipulation active:scale-[0.98] ${
                 isActive
                   ? 'bg-gradient-to-r from-amber-500 to-amber-400 text-slate-950 font-black shadow-lg shadow-amber-500/20 scale-[1.01]'
-                  : 'text-slate-300 hover:text-white hover:bg-slate-800/70'
+                  : 'text-slate-300 hover:text-white hover:bg-slate-800/70 active:bg-slate-800'
               }`}
             >
               {/* Icon Container */}
@@ -184,24 +186,29 @@ export default function SidebarNavigation({
     <>
       {/* 1. Desktop Fixed Sidebar Rail */}
       <aside className="hidden md:flex flex-col fixed inset-y-0 left-0 z-30 w-64 shadow-xl">
-        {renderSidebarContent()}
+        {renderSidebarContent(false)}
       </aside>
 
-      {/* 2. Mobile Backdrop & Slide-over Drawer */}
-      {isMobileOpen && (
-        <div className="fixed inset-0 z-50 md:hidden flex">
-          {/* Backdrop */}
-          <div
-            onClick={onCloseMobile}
-            className="fixed inset-0 bg-black/70 backdrop-blur-xs transition-opacity animate-in fade-in"
-          />
+      {/* 2. Mobile Backdrop (Pure CSS fade, 0ms lag, no CPU blur) */}
+      <div
+        onClick={onCloseMobile}
+        className={`fixed inset-0 bg-black/75 z-40 md:hidden transition-opacity duration-200 ${
+          isMobileOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+        }`}
+        aria-hidden={!isMobileOpen}
+      />
 
-          {/* Slide-out Drawer */}
-          <div className="relative w-72 max-w-[85vw] h-full shadow-2xl z-10 animate-in slide-in-from-left duration-200">
-            {renderSidebarContent()}
-          </div>
-        </div>
-      )}
+      {/* 3. Mobile Slide-over Drawer (GPU-accelerated transform, instant slide) */}
+      <div
+        className={`fixed inset-y-0 left-0 z-50 w-72 max-w-[85vw] h-full shadow-2xl md:hidden transition-transform duration-200 ease-out transform ${
+          isMobileOpen ? 'translate-x-0' : '-translate-x-full pointer-events-none'
+        }`}
+        aria-hidden={!isMobileOpen}
+      >
+        {renderSidebarContent(true)}
+      </div>
     </>
   );
 }
+
+export default React.memo(SidebarNavigation);

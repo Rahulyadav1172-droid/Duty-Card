@@ -43,7 +43,7 @@ import ForceDeploymentMatrix from './ForceDeploymentMatrix';
 import DutyReplacementModal from './DutyReplacementModal';
 import { logReplacementToAuditTrail } from '../utils/aamadSync';
 
-export default function DutyAllocationHub({
+function DutyAllocationHub({
   masterForce = [],
   activeEvent,
   onUpdateEventRecords,
@@ -2139,3 +2139,5 @@ export default function DutyAllocationHub({
     </div>
   );
 }
+
+export default React.memo(DutyAllocationHub);

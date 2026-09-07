@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import {
   Search,
   FileSpreadsheet,
@@ -400,7 +400,7 @@ export default function App() {
   };
 
   // Event Management Handlers
-  const handleSelectActiveEvent = (id) => {
+  const handleSelectActiveEvent = useCallback((id) => {
     setActiveEventId(id);
     try {
       localStorage.setItem(ACTIVE_EVENT_ID_KEY, id);
@@ -408,7 +408,7 @@ export default function App() {
     saveGlobalActiveEventId(id);
     setActiveDuty(null);
     setSearchQuery('');
-  };
+  }, []);
 
   const handleCreateEvent = (newEvent) => {
     const updated = [newEvent, ...events];
@@ -467,7 +467,7 @@ export default function App() {
   };
 
   // Update records for the currently active event
-  const handleUpdateActiveEventRecords = (newRecords) => {
+  const handleUpdateActiveEventRecords = useCallback((newRecords) => {
     const updatedObj = { ...currentEvent, records: newRecords };
     const updated = events.map(e => e.id === currentEvent.id ? updatedObj : e);
     saveEvents(updated, updatedObj);
@@ -490,7 +490,7 @@ export default function App() {
         handleUpdateForce(updatedForce);
       }
     }
-  };
+  }, [currentEvent, events, forceRecords]);
 
   const handleResetActiveEventToDefault = () => {
     const updatedObj = { ...currentEvent, records: initialData || [] };
@@ -595,11 +595,11 @@ export default function App() {
     saveEvents(updated, updatedObj);
   };
 
-  const handleUpdateActiveEventAllocationData = (allocationData) => {
+  const handleUpdateActiveEventAllocationData = useCallback((allocationData) => {
     const updatedObj = { ...currentEvent, allocationData: allocationData };
     const updated = events.map(e => e.id === currentEvent.id ? updatedObj : e);
     saveEvents(updated, updatedObj);
-  };
+  }, [currentEvent, events]);
 
   const handleUpdateForce = (newForce) => {
     setForceRecords(newForce);
@@ -634,13 +634,13 @@ export default function App() {
     }
   };
 
-  const handleLogout = () => {
+  const handleLogout = useCallback(() => {
     setUserRole('guest');
     clearAuthenticatedSession();
     setActiveTab('search');
-  };
+  }, []);
 
-  const handleTabClick = (tabName) => {
+  const handleTabClick = useCallback((tabName) => {
     if ((tabName === 'force' || tabName === 'upload' || tabName === 'events') && userRole !== 'admin') {
       setPendingTab(tabName);
       setIsLoginModalOpen(true);
@@ -652,7 +652,24 @@ export default function App() {
       return;
     }
     setActiveTab(tabName);
-  };
+  }, [userRole]);
+
+  const handleOpenBooklet = useCallback(() => {
+    setActiveTab('booklet');
+  }, []);
+
+  const handleOpenMobileSidebar = useCallback(() => {
+    setIsMobileSidebarOpen(true);
+  }, []);
+
+  const handleCloseMobileSidebar = useCallback(() => {
+    setIsMobileSidebarOpen(false);
+  }, []);
+
+  const handleRequestAuthSidebar = useCallback((role, tab) => {
+    if (tab) setPendingTab(tab);
+    setIsLoginModalOpen(true);
+  }, []);
 
   const handleRequestAdminAuth = (callback) => {
     if (userRole === 'admin' || userRole === 'senior') {
@@ -715,12 +732,9 @@ export default function App() {
         onSelectTab={handleTabClick}
         userRole={userRole}
         onLogout={handleLogout}
-        onRequestAuth={(role, tab) => {
-          if (tab) setPendingTab(tab);
-          setIsLoginModalOpen(true);
-        }}
+        onRequestAuth={handleRequestAuthSidebar}
         isMobileOpen={isMobileSidebarOpen}
-        onCloseMobile={() => setIsMobileSidebarOpen(false)}
+        onCloseMobile={handleCloseMobileSidebar}
         eventTitle={currentEvent.title}
         totalPersonnelCount={currentEvent.records?.length || 0}
       />
@@ -739,11 +753,13 @@ export default function App() {
               {userRole !== 'guest' ? (
                 /* Mobile Hamburger for Logged In Officer */
                 <button
-                  onClick={() => setIsMobileSidebarOpen(true)}
-                  className="p-1.5 sm:p-2 -ml-1 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800 md:hidden cursor-pointer shrink-0"
+                  type="button"
+                  onClick={handleOpenMobileSidebar}
+                  className="p-1.5 sm:p-2 -ml-1 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800 active:bg-amber-500 active:text-slate-950 active:scale-90 transition-all duration-75 md:hidden cursor-pointer shrink-0 touch-manipulation select-none"
                   title="मेनू खोलें"
+                  aria-label="मेनू खोलें"
                 >
-                  <Menu className="w-5 h-5" />
+                  <Menu className="w-5 h-5 stroke-[2.5]" />
                 </button>
               ) : (
                 /* Police Emblem for Public / Guest */
@@ -1152,7 +1168,7 @@ export default function App() {
             events={events}
             activeEventId={activeEventId}
             onSelectActiveEvent={handleSelectActiveEvent}
-            onOpenBooklet={() => setActiveTab('booklet')}
+            onOpenBooklet={handleOpenBooklet}
           />
         )}
 
