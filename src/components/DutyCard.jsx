@@ -291,15 +291,17 @@ export default function DutyCard({
 
         {/* Action Buttons: Responsive Grid */}
         <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
-          {/* Edit Duty Details Button (Admin/Senior) */}
-          <button
-            onClick={handleOpenEditModal}
-            className="px-2.5 sm:px-3 py-2 rounded-lg sm:rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 font-bold text-[11px] sm:text-xs flex items-center justify-center gap-1 transition active:scale-95 cursor-pointer"
-            title="ड्यूटी स्थल, ज़ोन, सेक्टर व समय बदलें"
-          >
-            <Edit3 className="w-3.5 h-3.5 text-amber-700 shrink-0" />
-            <span>ड्यूटी बदलें</span>
-          </button>
+          {/* Edit Duty Details Button (Admin / Senior Officer Only - Hidden from Public View) */}
+          {(userRole === 'admin' || userRole === 'senior') && (
+            <button
+              onClick={handleOpenEditModal}
+              className="px-2.5 sm:px-3 py-2 rounded-lg sm:rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 font-bold text-[11px] sm:text-xs flex items-center justify-center gap-1 transition active:scale-95 cursor-pointer"
+              title="ड्यूटी स्थल, ज़ोन, सेक्टर व समय बदलें"
+            >
+              <Edit3 className="w-3.5 h-3.5 text-amber-700 shrink-0" />
+              <span>ड्यूटी बदलें</span>
+            </button>
+          )}
 
           {/* Direct PDF Download (Official Sahyogarth Layout) */}
           <button
