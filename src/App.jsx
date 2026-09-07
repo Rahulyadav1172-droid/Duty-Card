@@ -52,7 +52,8 @@ import {
   fetchGlobalActiveEventId,
   saveGlobalActiveEventId,
   subscribeToActiveEventIdRealtime,
-  checkSupabaseHealth
+  checkSupabaseHealth,
+  checkIfEventsUpdated
 } from './utils/supabaseSync';
 import {
   initCloudAuthConfig,
@@ -214,6 +215,11 @@ export default function App() {
     return events.find(e => e.id === activeEventId) || events[0];
   }, [events, activeEventId]);
 
+  const eventsRef = useRef(events);
+  useEffect(() => {
+    eventsRef.current = events;
+  }, [events]);
+
   // Load from Supabase on mount & subscribe to realtime changes across all devices
   useEffect(() => {
     let unsubscribeEvents = () => {};
@@ -299,46 +305,57 @@ export default function App() {
 
     initSupabase();
 
-    // Universal Multi-Device Refresh: Fetches fresh data on tab focus, visibility change, or heartbeat
-    const refreshCloudData = async () => {
+    // Quota-Safe Multi-Device Refresh: Uses lightweight timestamp check (~100 bytes) instead of downloading entire database
+    let lastCheckTime = 0;
+    const refreshCloudData = async (force = false) => {
+      const now = Date.now();
+      // Throttle focus checks to at most once per 30 seconds unless forced
+      if (!force && (now - lastCheckTime) < 30000) {
+        return;
+      }
+      lastCheckTime = now;
+
       try {
-        const cloudEvents = await fetchEventsFromSupabase();
-        if (cloudEvents && cloudEvents.length > 0) {
-          setEvents(cloudEvents);
-          try {
-            localStorage.setItem(EVENTS_STORAGE_KEY, JSON.stringify(cloudEvents));
-          } catch (e) {}
+        // 1. Quota Guard: Only fetch full events if timestamps or event counts actually changed
+        const hasEventUpdates = force ? true : await checkIfEventsUpdated(eventsRef.current || []);
+        if (hasEventUpdates) {
+          const cloudEvents = await fetchEventsFromSupabase();
+          if (cloudEvents && cloudEvents.length > 0) {
+            setEvents(cloudEvents);
+            try {
+              localStorage.setItem(EVENTS_STORAGE_KEY, JSON.stringify(cloudEvents));
+            } catch (e) {}
+          }
         }
+
+        // 2. Active Event ID Check
         const cloudActiveId = await fetchGlobalActiveEventId();
-        if (cloudActiveId) {
+        if (cloudActiveId && cloudActiveId !== activeEventId) {
           setActiveEventId(cloudActiveId);
           try {
             localStorage.setItem(ACTIVE_EVENT_ID_KEY, cloudActiveId);
           } catch (e) {}
         }
-        const cloudForce = await fetchMasterForceFromSupabase();
-        if (cloudForce && Array.isArray(cloudForce) && cloudForce.length > 0) {
-          setForceRecords(cloudForce);
-          try {
-            localStorage.setItem(FORCE_STORAGE_KEY, JSON.stringify(cloudForce));
-          } catch (e) {}
-        }
       } catch (err) {
-        console.warn('Cross-browser heartbeat sync notice:', err);
+        console.warn('Cross-browser lightweight sync notice:', err);
       }
     };
 
     const handleVisibilityOrFocus = () => {
       if (document.visibilityState === 'visible') {
-        refreshCloudData();
+        refreshCloudData(false);
       }
     };
 
     window.addEventListener('focus', handleVisibilityOrFocus);
     document.addEventListener('visibilitychange', handleVisibilityOrFocus);
 
-    // Heartbeat sync every 15 seconds to ensure absolute parity across all browsers
-    const heartbeatInterval = setInterval(refreshCloudData, 15000);
+    // Heartbeat: Gentle 2-minute check, only when tab is actively visible (saves database API quota)
+    const heartbeatInterval = setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        refreshCloudData(false);
+      }
+    }, 120000);
 
     return () => {
       unsubscribeEvents();

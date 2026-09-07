@@ -95,6 +95,7 @@ export async function fetchEventsFromSupabase() {
             startDate: row.start_date || row.created_at || '16.08.2026 से अग्रिम आदेश तक',
             status: row.status === 'archived' ? 'archived' : 'active',
             created_at: row.created_at,
+            updated_at: row.updated_at || row.created_at,
             signatoryText: row.signatory_text || 'वरिष्ठ पुलिस अधीक्षक, अयोध्या',
             signatureImg: row.signature_img || '',
             note: row.note || '',
@@ -160,7 +161,8 @@ export async function upsertEventToSupabase(eventObj) {
       briefing: eventObj.briefing,
       is_briefing_enabled: eventObj.isBriefingEnabled,
       records: eventObj.records || [],
-      attendance_map: attendanceMapWithExtra
+      attendance_map: attendanceMapWithExtra,
+      updated_at: new Date().toISOString()
     };
 
     const { error } = await supabase
@@ -174,6 +176,39 @@ export async function upsertEventToSupabase(eventObj) {
     return true;
   } catch (err) {
     console.warn('Supabase save error:', err);
+    return false;
+  }
+}
+
+/**
+ * Lightweight check: returns true ONLY if Supabase has newer events or modified timestamps.
+ * Downloads only 2 columns (id, updated_at) to avoid eating database bandwidth & API quota.
+ */
+export async function checkIfEventsUpdated(localEvents = []) {
+  try {
+    const { data, error } = await supabase
+      .from(EVENTS_TABLE)
+      .select('id, updated_at')
+      .not('id', 'like', 'global-%');
+
+    if (error || !Array.isArray(data)) return false;
+
+    // If event count changed (event added or deleted)
+    if (data.length !== localEvents.length) return true;
+
+    const localMap = new Map(localEvents.map(e => [e.id, e.updated_at || e.created_at]));
+
+    for (const row of data) {
+      const localTime = localMap.get(row.id);
+      if (!localTime) return true;
+      if (row.updated_at && localTime) {
+        if (new Date(row.updated_at).getTime() > new Date(localTime).getTime()) {
+          return true;
+        }
+      }
+    }
+    return false;
+  } catch (err) {
     return false;
   }
 }

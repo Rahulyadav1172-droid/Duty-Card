@@ -116,6 +116,10 @@ async function syncPDFsToCloud(pdfRecords) {
  * @returns {Promise<Object>}
  */
 export async function saveBookletPDF(file) {
+  if (file.size > 10 * 1024 * 1024) {
+    throw new Error('क्लाउड डेटाबेस सुरक्षा एवं तीव्र लोडिंग हेतु केवल 10 MB तक की PDF अपलोड की जा सकती है।');
+  }
+
   const db = await openDB();
 
   return new Promise((resolve, reject) => {
@@ -151,9 +155,9 @@ export async function saveBookletPDF(file) {
           console.warn('IndexedDB write error:', dbErr);
         }
 
-        // 2. Sync to Supabase Cloud (Across all devices)
+        // 2. Sync to Supabase Cloud (Safely pruned to latest 3 PDFs to prevent database limit hit)
         const currentCloud = (await fetchCloudPDFs()) || [];
-        const updatedCloudList = [pdfRecord, ...currentCloud.filter(p => p.name !== file.name)];
+        const updatedCloudList = [pdfRecord, ...currentCloud.filter(p => p.name !== file.name)].slice(0, 3);
         await syncPDFsToCloud(updatedCloudList);
 
         // 3. Create active Blob URL for immediate preview
