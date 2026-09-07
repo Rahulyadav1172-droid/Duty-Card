@@ -39,7 +39,6 @@ import DutyAllocationHub from './components/DutyAllocationHub';
 import ForceAamadManager from './components/ForceAamadManager';
 import ChangePasswordModal from './components/ChangePasswordModal';
 import AuditLogModal from './components/AuditLogModal';
-import CloudStatusModal from './components/CloudStatusModal';
 
 import initialData from './data/duty_data.json';
 import {
@@ -147,7 +146,6 @@ export default function App() {
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
   const [isAuditLogModalOpen, setIsAuditLogModalOpen] = useState(false);
-  const [isCloudModalOpen, setIsCloudModalOpen] = useState(false);
   const [cloudStatus, setCloudStatus] = useState('checking'); // 'checking' | 'connected' | 'error'
   const [cloudErrorDetail, setCloudErrorDetail] = useState(null);
   const [pendingTab, setPendingTab] = useState(null);
@@ -668,24 +666,28 @@ export default function App() {
                 </div>
               )}
 
-              {/* Event Badge & Selector */}
+              {/* Event Title */}
               <div className="min-w-0">
-                <div className="flex items-center gap-2">
-                  <h1 className="text-xs sm:text-sm font-black text-white truncate leading-tight">
-                    {userRole === 'guest' ? 'अयोध्या पुलिस ड्यूटी पास पोर्टल' : currentEvent.title}
-                  </h1>
-                  <span className="hidden sm:inline-block text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30 shrink-0">
-                    {currentEvent.title}
-                  </span>
-                </div>
-                {userRole === 'guest' && (
-                  <p className="text-[10px] text-slate-400 font-medium truncate">उत्तर प्रदेश पुलिस सुरक्षा व्यवस्था</p>
-                )}
+                <h1 className="text-xs sm:text-sm font-black text-white truncate leading-tight">
+                  {userRole === 'guest' ? 'अयोध्या पुलिस ड्यूटी पास पोर्टल' : currentEvent.title}
+                </h1>
+                <p className="text-[10px] text-slate-400 font-medium truncate">
+                  {userRole === 'guest' ? 'उत्तर प्रदेश पुलिस सुरक्षा व्यवस्था' : (currentEvent.subtitle || 'उत्तर प्रदेश पुलिस')}
+                </p>
               </div>
             </div>
 
-            {/* Right: Language Toggle, Cloud Sync & User Profile Dropdown */}
-            <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
+            {/* Right: Language Toggle & User Profile Dropdown */}
+            <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+              {/* Subtle Live Sync Indicator (Clean, non-intrusive) */}
+              <div
+                className="hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-800/80 border border-slate-700/60 text-[11px] font-bold text-slate-300 select-none"
+                title="सुरक्षित क्लाउड नेटवर्क से कनेक्टेड"
+              >
+                <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
+                <span>लाइव सिंक</span>
+              </div>
+
               {/* Quick 1-Click Language Switcher (Always visible in Header) */}
               <button
                 type="button"
@@ -696,41 +698,6 @@ export default function App() {
                 <Globe className="w-3.5 h-3.5 text-amber-400 shrink-0" />
                 <span className="font-mono text-amber-300 font-extrabold uppercase">
                   {language === 'hi' ? 'EN' : 'हिन्दी'}
-                </span>
-              </button>
-
-              {/* Reactive Live Cloud Sync Status Indicator */}
-              <button
-                type="button"
-                onClick={() => setIsCloudModalOpen(true)}
-                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border text-[11px] font-bold transition cursor-pointer active:scale-95 shadow-xs ${
-                  cloudStatus === 'connected'
-                    ? 'bg-emerald-950/40 hover:bg-emerald-900/60 border-emerald-500/40 text-emerald-300'
-                    : cloudStatus === 'error'
-                    ? 'bg-rose-950/60 hover:bg-rose-900/80 border-rose-500/50 text-rose-300 animate-pulse'
-                    : 'bg-amber-950/40 hover:bg-amber-900/60 border-amber-500/40 text-amber-300'
-                }`}
-                title={
-                  cloudStatus === 'connected'
-                    ? 'क्लाउड लाइव सिंक सक्रिय (सभी डिवाइस कनेक्टेड)'
-                    : cloudStatus === 'error'
-                    ? 'क्लाउड सिंक विफल (परिवर्तन केवल ब्राउज़र में सीमित हैं) - विवरण देखने के लिए क्लिक करें'
-                    : 'क्लाउड कनेक्शन की जांच की जा रही है...'
-                }
-              >
-                <span className={`w-2 h-2 rounded-full shrink-0 ${
-                  cloudStatus === 'connected'
-                    ? 'bg-emerald-400'
-                    : cloudStatus === 'error'
-                    ? 'bg-rose-500 ring-2 ring-rose-400'
-                    : 'bg-amber-400 animate-ping'
-                }`} />
-                <span className="hidden sm:inline">
-                  {cloudStatus === 'connected'
-                    ? t('cloudSyncActive', 'क्लाउड लाइव')
-                    : cloudStatus === 'error'
-                    ? (cloudErrorDetail?.isQuotaExceeded ? 'कोटा समाप्त ⚠️' : 'क्लाउड डिस्कनेक्ट ⚠️')
-                    : 'जांच जारी...'}
                 </span>
               </button>
 
@@ -1180,16 +1147,6 @@ export default function App() {
       <AuditLogModal
         isOpen={isAuditLogModalOpen}
         onClose={() => setIsAuditLogModalOpen(false)}
-      />
-
-      {/* Cloud Status and Diagnostics Modal */}
-      <CloudStatusModal
-        isOpen={isCloudModalOpen}
-        onClose={() => setIsCloudModalOpen(false)}
-        cloudStatus={cloudStatus}
-        cloudErrorDetail={cloudErrorDetail}
-        onRecheck={recheckCloudConnection}
-        userRole={userRole}
       />
 
       {/* Footer */}

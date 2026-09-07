@@ -42,39 +42,35 @@ export default function SidebarNavigation({
   // Navigation Items strictly organized and role-guarded
   const allNavSections = [
     {
-      title: language === 'en' ? 'Main Navigation' : 'मुख्य सेवाएं (Main Navigation)',
+      title: language === 'en' ? 'Main Services' : 'मुख्य सेवाएं',
       items: [
         {
           id: 'search',
           label: language === 'en' ? 'Search Pass' : 'कार्ड खोजें',
-          subLabel: language === 'en' ? 'Search Duty Pass' : 'Search Duty Pass',
           icon: Search,
           badge: null
         },
         {
           id: 'filter',
           label: language === 'en' ? 'Point Filter' : 'पॉइंट फ़िल्टर',
-          subLabel: language === 'en' ? 'Duty Point & Inspection' : 'Duty Point & Inspection',
           icon: MapPin,
           badge: totalPersonnelCount > 0 ? `${totalPersonnelCount}` : null
         },
         {
           id: 'booklet',
           label: language === 'en' ? 'Booklet PDF' : 'बुकलेट PDF',
-          subLabel: language === 'en' ? 'Roster Booklets' : 'Roster Booklets',
           icon: BookOpen,
           badge: null
         }
       ]
     },
     {
-      title: language === 'en' ? 'Operations' : 'ड्यूटी ऑपरेशन्स (Operations)',
+      title: language === 'en' ? 'Duty Operations' : 'ड्यूटी ऑपरेशन्स',
       allowedRoles: ['admin'],
       items: [
         {
           id: 'allocation',
           label: language === 'en' ? 'Duty Allocation' : 'ड्यूटी आवंटन',
-          subLabel: language === 'en' ? 'Allocation & Change Hub' : 'Allocation & Change Hub',
           icon: ShieldAlert,
           allowedRoles: ['admin'],
           badge: 'Live'
@@ -82,7 +78,6 @@ export default function SidebarNavigation({
         {
           id: 'aamad',
           label: language === 'en' ? 'Force Arrival' : 'बल आमद',
-          subLabel: language === 'en' ? 'Force Arrival Register' : 'Force Arrival Register',
           icon: UserCheck,
           allowedRoles: ['admin'],
           badge: null
@@ -90,13 +85,12 @@ export default function SidebarNavigation({
       ]
     },
     {
-      title: language === 'en' ? 'Administration' : 'एडमिनिस्ट्रेशन (System Control)',
+      title: language === 'en' ? 'Administration' : 'प्रशासनिक नियंत्रण',
       allowedRoles: ['admin'],
       items: [
         {
           id: 'events',
           label: language === 'en' ? 'Event Manager' : 'इवेंट्स मैनेजर',
-          subLabel: language === 'en' ? 'Event & Mela Setup' : 'Event & Mela Setup',
           icon: Calendar,
           allowedRoles: ['admin'],
           badge: null
@@ -104,15 +98,13 @@ export default function SidebarNavigation({
         {
           id: 'force',
           label: language === 'en' ? 'Master Force' : 'मास्टर फ़ोर्स',
-          subLabel: language === 'en' ? 'Force Master Database' : 'Force Master Database',
           icon: Layers,
           allowedRoles: ['admin'],
           badge: null
         },
         {
           id: 'upload',
-          label: language === 'en' ? 'Upload & Settings' : 'अपलोड / सेटिंग्स',
-          subLabel: language === 'en' ? 'Excel, Labels & Sign' : 'Excel, Labels & Sign',
+          label: language === 'en' ? 'Upload & Settings' : 'अपलोड व सेटिंग्स',
           icon: UploadCloud,
           allowedRoles: ['admin'],
           badge: null
@@ -225,18 +217,9 @@ export default function SidebarNavigation({
 
                     {!isCollapsed && (
                       <div className="flex-1 text-left min-w-0 flex items-center justify-between gap-2">
-                        <div className="truncate">
-                          <div className={`truncate ${isActive ? 'text-slate-950 font-black' : 'text-slate-200'}`}>
-                            {item.label}
-                          </div>
-                          <div
-                            className={`text-[10px] truncate ${
-                              isActive ? 'text-slate-900/80 font-bold' : 'text-slate-400'
-                            }`}
-                          >
-                            {item.subLabel}
-                          </div>
-                        </div>
+                        <span className={`truncate text-xs ${isActive ? 'text-slate-950 font-black' : 'text-slate-200 font-bold'}`}>
+                          {item.label}
+                        </span>
 
                         {/* Badge */}
                         {item.badge && (

@@ -610,41 +610,15 @@ export default function AdminUpload({
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex items-center gap-2">
           <button
             onClick={() => setIsBulkPdfModalOpen(true)}
-            className="px-4 py-2 bg-[#0b132b] hover:bg-slate-800 text-white rounded-xl text-xs font-black flex items-center gap-1.5 shadow-sm transition active:scale-95 cursor-pointer"
-            title="लीगल पेपर पर 4-इन-1 बल्क PDF डाउनलोड करें"
+            className="px-5 py-2.5 bg-[#0b132b] hover:bg-slate-800 text-white rounded-xl text-xs font-black flex items-center gap-2 shadow-sm transition active:scale-95 cursor-pointer"
+            title="ड्यूटी पास बल्क PDF डाउनलोड या प्रिंट करें"
           >
             <FileDown className="w-4 h-4 text-amber-400" />
-            <span>6-इन-1 बल्क PDF (Legal)</span>
+            <span>बल्क पास प्रिंट / PDF (A4 / Legal)</span>
           </button>
-
-          <button
-            onClick={handleExportJSON}
-            className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-900 border border-slate-300 rounded-xl text-xs font-black flex items-center gap-1.5 transition cursor-pointer"
-            title="क्लाउड JSON बैकअप डाउनलोड करें"
-          >
-            <FileDown className="w-4 h-4 text-amber-700" />
-            JSON बैकअप
-          </button>
-
-          <input
-            ref={jsonImportRef}
-            type="file"
-            accept=".json"
-            onChange={handleImportJSON}
-            className="hidden"
-            id="json-import-input"
-          />
-          <label
-            htmlFor="json-import-input"
-            className="cursor-pointer px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-900 border border-slate-300 rounded-xl text-xs font-black flex items-center gap-1.5 transition"
-            title="JSON बैकअप लोड करें"
-          >
-            <FileUp className="w-4 h-4 text-emerald-700" />
-            JSON लोड
-          </label>
         </div>
       </div>
 
@@ -658,8 +632,8 @@ export default function AdminUpload({
           <h2 className="text-xl sm:text-2xl font-black text-slate-950">
             "{eventTitle}" हेतु एक्सेल शीट अपलोड करें (.xlsx / .xls)
           </h2>
-          <p className="text-xs sm:text-sm font-bold text-slate-600 max-w-xl mx-auto mt-1">
-            मानक फ़ॉर्मेट कॉलम: <span className="font-mono text-amber-900 font-black">zone | zonal | sector | sector incharge | duty place | name | mob | thana | district | name thana district mob | time</span>
+          <p className="text-xs sm:text-sm font-medium text-slate-500 max-w-xl mx-auto mt-1">
+            मानक प्रारूप अनुसार एक्सेल फ़ाइल अपलोड करें अथवा नीचे दिए गए 11-कॉलम नमूने का उपयोग करें।
           </p>
         </div>
 
