@@ -3,8 +3,8 @@ import { createClient } from '@supabase/supabase-js';
 const STORAGE_URL_KEY = 'police_custom_supabase_url';
 const STORAGE_ANON_KEY = 'police_custom_supabase_key';
 
-const DEFAULT_URL = import.meta.env?.VITE_SUPABASE_URL || 'https://ykwdoatqrgjogbqaykiu.supabase.co';
-const DEFAULT_KEY = import.meta.env?.VITE_SUPABASE_ANON_KEY || 'sb_publishable_A_pgATCT4NOsK1iuyuR3SQ_LNnall5Z';
+const DEFAULT_URL = import.meta.env?.VITE_SUPABASE_URL || 'https://oriksrcvmzxnvysfqiuf.supabase.co';
+const DEFAULT_KEY = import.meta.env?.VITE_SUPABASE_ANON_KEY || 'sb_publishable_EsFmeOul48I88-4ilvoQtQ_RQvgrIEC';
 
 export function getSupabaseConfig() {
   try {
