@@ -196,36 +196,6 @@ export default function App() {
     };
   }, []);
 
-  // Cache duty pass locally for offline viewing in the field
-  useEffect(() => {
-    if (activeDuty) {
-      try {
-        const payload = {
-          duty: activeDuty,
-          eventTitle: currentEvent.title,
-          eventSubtitle: currentEvent.subtitle,
-          signatoryText: currentEvent.signatoryText,
-          signatureImg: currentEvent.signatureImg,
-          note: currentEvent.note,
-          briefing: currentEvent.briefing,
-          timestamp: Date.now()
-        };
-        localStorage.setItem('OFFLINE_DUTY_PASS_CACHE', JSON.stringify(payload));
-        setCachedOfflinePass(payload);
-      } catch (e) {}
-    }
-  }, [activeDuty, currentEvent]);
-
-  useEffect(() => {
-    function handleClickOutside(event) {
-      if (userMenuRef.current && !userMenuRef.current.contains(event.target)) {
-        setIsUserMenuOpen(false);
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
   // Current Active Event Object (Guaranteed fallback, respects active status everywhere)
   const activeEventsList = useMemo(() => {
     return (Array.isArray(events) ? events : []).filter(e => e.status !== 'archived');
@@ -260,6 +230,26 @@ export default function App() {
     // 3. Fallback to matched event or first event
     return events.find(e => e.id === activeEventId) || events[0];
   }, [events, activeEventId]);
+
+  // Cache duty pass locally for offline viewing in the field (Defined after currentEvent)
+  useEffect(() => {
+    if (activeDuty && currentEvent) {
+      try {
+        const payload = {
+          duty: activeDuty,
+          eventTitle: currentEvent.title || '',
+          eventSubtitle: currentEvent.subtitle || '',
+          signatoryText: currentEvent.signatoryText || '',
+          signatureImg: currentEvent.signatureImg || '',
+          note: currentEvent.note || '',
+          briefing: currentEvent.briefing || '',
+          timestamp: Date.now()
+        };
+        localStorage.setItem('OFFLINE_DUTY_PASS_CACHE', JSON.stringify(payload));
+        setCachedOfflinePass(payload);
+      } catch (e) {}
+    }
+  }, [activeDuty, currentEvent]);
 
   const eventsRef = useRef(events);
   useEffect(() => {
