@@ -1392,17 +1392,19 @@ export default function App() {
       />
 
       {/* In-App Digital QR Duty Pass Scanner Modal */}
-      <ScanDutyPassModal
-        isOpen={isScanModalOpen}
-        onClose={() => setIsScanModalOpen(false)}
-        allRecords={currentEvent.records || []}
-        currentEvent={currentEvent}
-        onSelectDuty={(rec) => {
-          setActiveDuty(rec);
-          setActiveTab('search');
-        }}
-        onMarkAttendance={handleMarkAttendance}
-      />
+      {isScanModalOpen && (
+        <ScanDutyPassModal
+          isOpen={isScanModalOpen}
+          onClose={() => setIsScanModalOpen(false)}
+          allRecords={currentEvent.records || []}
+          currentEvent={currentEvent}
+          onSelectDuty={(rec) => {
+            setActiveDuty(rec);
+            setActiveTab('search');
+          }}
+          onMarkAttendance={handleMarkAttendance}
+        />
+      )}
 
       {/* Footer */}
       <footer className="bg-white border-t border-slate-200 py-3.5 px-4 text-center text-xs text-slate-500 space-y-0.5 mt-auto no-print">

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   X,
   Camera,
@@ -27,7 +27,7 @@ export default function ScanDutyPassModal({
   onSelectDuty,
   onMarkAttendance
 }) {
-  const [scannerStatus, setScannerStatus] = useState('idle'); // 'idle' | 'scanning' | 'success' | 'invalid' | 'error'
+  const [scannerStatus, setScannerStatus] = useState('scanning'); // 'scanning' | 'success' | 'unmatched_event' | 'invalid' | 'error'
   const [verifiedRecord, setVerifiedRecord] = useState(null);
   const [scannedRawData, setScannedRawData] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
@@ -39,17 +39,116 @@ export default function ScanDutyPassModal({
   const fileInputRef = useRef(null);
   const readerId = 'duty-pass-qr-reader-viewport';
 
-  // Start Scanner
-  useEffect(() => {
-    if (!isOpen) {
-      stopScanner();
-      setScannerStatus('idle');
-      setVerifiedRecord(null);
-      setScannedRawData('');
-      setErrorMessage('');
-      return;
+  // Beep Audio
+  const playBeepSound = useCallback(() => {
+    try {
+      const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(880, audioCtx.currentTime); // A5 note
+      gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.15);
+    } catch (e) {}
+  }, []);
+
+  // Stop Scanner instance safely
+  const stopScanner = useCallback(async () => {
+    if (html5QrCodeRef.current) {
+      const scanner = html5QrCodeRef.current;
+      html5QrCodeRef.current = null;
+      try {
+        if (scanner.isScanning) {
+          await scanner.stop();
+        }
+      } catch (e) {}
+      try {
+        scanner.clear();
+      } catch (e) {}
+    }
+  }, []);
+
+  // Scan Success Processor
+  const handleScanSuccess = useCallback(async (decodedText) => {
+    // Haptic feedback
+    try {
+      navigator.vibrate?.([80, 50, 80]);
+    } catch (e) {}
+
+    playBeepSound();
+    await stopScanner();
+    setScannedRawData(decodedText);
+
+    // 1. Extract search term or parsed object
+    let searchTerm = '';
+    let parsedJson = null;
+
+    try {
+      if (decodedText.trim().startsWith('{') && decodedText.trim().endsWith('}')) {
+        parsedJson = JSON.parse(decodedText);
+      }
+    } catch (e) {}
+
+    if (parsedJson) {
+      searchTerm = parsedJson.pno || parsedJson.mobile || parsedJson.id || parsedJson.name || '';
+    } else {
+      // Check if it is a URL with search parameter
+      try {
+        if (decodedText.includes('?search=')) {
+          const urlObj = new URL(decodedText);
+          searchTerm = urlObj.searchParams.get('search') || '';
+        } else if (decodedText.includes('/')) {
+          const urlParts = decodedText.split('/');
+          searchTerm = urlParts[urlParts.length - 1];
+        } else {
+          searchTerm = decodedText.trim();
+        }
+      } catch (e) {
+        searchTerm = decodedText.trim();
+      }
     }
 
+    const cleanTerm = searchTerm.replace(/\D/g, '');
+    const cleanRaw = searchTerm.trim().toLowerCase();
+
+    // Find match in current event records
+    const matched = (Array.isArray(allRecords) ? allRecords : []).find((rec) => {
+      const recMob = String(rec.mobile || '').replace(/\D/g, '');
+      const recPno = String(rec.pno || '').trim().toLowerCase();
+      const recId = String(rec.id || '').trim().toLowerCase();
+      const recName = String(rec.name || '').trim().toLowerCase();
+
+      if (cleanTerm && cleanTerm.length >= 6 && recMob.includes(cleanTerm)) return true;
+      if (cleanTerm && cleanTerm.length >= 6 && recPno.includes(cleanTerm)) return true;
+      if (cleanRaw && recId === cleanRaw) return true;
+      if (cleanRaw && recPno === cleanRaw) return true;
+      if (cleanRaw && recName && (recName === cleanRaw || recName.includes(cleanRaw))) return true;
+
+      // Also check if parsed JSON matched
+      if (parsedJson && parsedJson.id && rec.id === parsedJson.id) return true;
+      if (parsedJson && parsedJson.name && rec.name === parsedJson.name && rec.duty_place === parsedJson.duty_place) return true;
+
+      return false;
+    });
+
+    if (matched) {
+      setVerifiedRecord(matched);
+      setScannerStatus('success');
+    } else if (parsedJson && (parsedJson.name || parsedJson.duty_place)) {
+      setVerifiedRecord(parsedJson);
+      setScannerStatus('unmatched_event');
+    } else {
+      setVerifiedRecord(null);
+      setScannerStatus('invalid');
+    }
+  }, [allRecords, playBeepSound, stopScanner]);
+
+  // Start Scanner on mount or facingMode change
+  useEffect(() => {
     let isMounted = true;
 
     const startScanner = async () => {
@@ -64,14 +163,7 @@ export default function ScanDutyPassModal({
         if (!element || !isMounted) return;
 
         // Clean any existing instance
-        if (html5QrCodeRef.current) {
-          try {
-            await html5QrCodeRef.current.stop();
-          } catch (e) {}
-          try {
-            html5QrCodeRef.current.clear();
-          } catch (e) {}
-        }
+        await stopScanner();
 
         const qrScanner = new Html5Qrcode(readerId);
         html5QrCodeRef.current = qrScanner;
@@ -97,12 +189,10 @@ export default function ScanDutyPassModal({
               handleScanSuccess(decodedText);
             }
           },
-          () => {
-            // Ignore frame parse error
-          }
+          () => {}
         );
 
-        // Check if torch/flash is supported
+        // Check torch capabilities
         try {
           const capabilities = qrScanner.getRunningTrackCapabilities?.();
           if (capabilities && 'torch' in capabilities) {
@@ -111,12 +201,12 @@ export default function ScanDutyPassModal({
         } catch (e) {}
       } catch (err) {
         if (!isMounted) return;
-        console.warn('Camera scan start failed:', err);
+        console.warn('Camera scan start error:', err);
         setScannerStatus('error');
         setErrorMessage(
           err?.message?.includes('Permission')
             ? 'कैमरा अनुमति (Permission) अस्वीकृत कर दी गई है। कृपया ब्राउज़र सेटिंग्स में कैमरा चालू करें।'
-            : 'कैमरा प्रारंभ करने में असमर्थ। कृपया सुनिश्चित करें कि कोई अन्य ऐप कैमरा इस्तेमाल नहीं कर रहा है।'
+            : 'कैमरा प्रारंभ करने में असमर्थ। कृपया सुनिश्चित करें कि कैमरा किसी अन्य ऐप में खुला नहीं है।'
         );
       }
     };
@@ -127,21 +217,7 @@ export default function ScanDutyPassModal({
       isMounted = false;
       stopScanner();
     };
-  }, [isOpen, facingMode]);
-
-  const stopScanner = async () => {
-    if (html5QrCodeRef.current) {
-      try {
-        if (html5QrCodeRef.current.isScanning) {
-          await html5QrCodeRef.current.stop();
-        }
-      } catch (e) {}
-      try {
-        html5QrCodeRef.current.clear();
-      } catch (e) {}
-      html5QrCodeRef.current = null;
-    }
-  };
+  }, [facingMode, handleScanSuccess, stopScanner]);
 
   // Toggle Torch
   const handleToggleTorch = async () => {
@@ -153,92 +229,13 @@ export default function ScanDutyPassModal({
       });
       setTorchOn(nextTorch);
     } catch (e) {
-      console.warn('Torch toggle failed:', e);
+      console.warn('Torch toggle error:', e);
     }
   };
 
   // Switch Front/Back Camera
   const handleToggleCamera = () => {
     setFacingMode((prev) => (prev === 'environment' ? 'user' : 'environment'));
-  };
-
-  // Scan Success Processor
-  const handleScanSuccess = async (decodedText) => {
-    // Haptic feedback
-    try {
-      navigator.vibrate?.([80, 50, 80]);
-    } catch (e) {}
-
-    // Audio beep feedback
-    playBeepSound();
-
-    await stopScanner();
-    setScannedRawData(decodedText);
-
-    // 1. Extract search term or parsed object
-    let searchTerm = '';
-    let parsedJson = null;
-
-    try {
-      if (decodedText.trim().startsWith('{') && decodedText.trim().endsWith('}')) {
-        parsedJson = JSON.parse(decodedText);
-      }
-    } catch (e) {}
-
-    if (parsedJson) {
-      searchTerm = parsedJson.pno || parsedJson.mobile || parsedJson.id || parsedJson.name || '';
-    } else {
-      // Check if it is a URL with search parameter
-      try {
-        if (decodedText.includes('?search=')) {
-          const urlObj = new URL(decodedText);
-          searchTerm = urlObj.searchParams.get('search') || '';
-        } else if (decodedText.includes('/')) {
-          // maybe URL without query, take last part
-          const urlParts = decodedText.split('/');
-          searchTerm = urlParts[urlParts.length - 1];
-        } else {
-          searchTerm = decodedText.trim();
-        }
-      } catch (e) {
-        searchTerm = decodedText.trim();
-      }
-    }
-
-    const cleanTerm = searchTerm.replace(/\D/g, '');
-    const cleanRaw = searchTerm.trim().toLowerCase();
-
-    // Find match in current event records
-    const matched = allRecords.find((rec) => {
-      const recMob = String(rec.mobile || '').replace(/\D/g, '');
-      const recPno = String(rec.pno || '').trim().toLowerCase();
-      const recId = String(rec.id || '').trim().toLowerCase();
-      const recName = String(rec.name || '').trim().toLowerCase();
-
-      if (cleanTerm && cleanTerm.length >= 6 && recMob.includes(cleanTerm)) return true;
-      if (cleanTerm && cleanTerm.length >= 6 && recPno.includes(cleanTerm)) return true;
-      if (cleanRaw && recId === cleanRaw) return true;
-      if (cleanRaw && recPno === cleanRaw) return true;
-      if (cleanRaw && recName && (recName === cleanRaw || recName.includes(cleanRaw))) return true;
-
-      // Also check if parsed JSON matched
-      if (parsedJson && parsedJson.id && rec.id === parsedJson.id) return true;
-      if (parsedJson && parsedJson.name && rec.name === parsedJson.name && rec.duty_place === parsedJson.duty_place) return true;
-
-      return false;
-    });
-
-    if (matched) {
-      setVerifiedRecord(matched);
-      setScannerStatus('success');
-    } else if (parsedJson && (parsedJson.name || parsedJson.duty_place)) {
-      // It was a valid duty pass JSON from another event or old archive
-      setVerifiedRecord(parsedJson);
-      setScannerStatus('unmatched_event');
-    } else {
-      setVerifiedRecord(null);
-      setScannerStatus('invalid');
-    }
   };
 
   // Fallback: Scan from Image file
@@ -270,24 +267,10 @@ export default function ScanDutyPassModal({
     setScannerStatus('scanning');
   };
 
-  // Beep Audio
-  const playBeepSound = () => {
-    try {
-      const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      const osc = audioCtx.createOscillator();
-      const gain = audioCtx.createGain();
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(880, audioCtx.currentTime); // A5 note
-      gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
-      osc.connect(gain);
-      gain.connect(audioCtx.destination);
-      osc.start();
-      osc.stop(audioCtx.currentTime + 0.15);
-    } catch (e) {}
+  const handleClose = () => {
+    stopScanner();
+    onClose?.();
   };
-
-  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200 font-devanagari select-none">
@@ -310,7 +293,7 @@ export default function ScanDutyPassModal({
 
           <button
             type="button"
-            onClick={onClose}
+            onClick={handleClose}
             className="p-1.5 rounded-xl text-slate-400 hover:text-white active:scale-90 bg-slate-800 hover:bg-slate-700 transition cursor-pointer touch-manipulation"
             title="बंद करें"
           >
@@ -522,7 +505,7 @@ export default function ScanDutyPassModal({
                   type="button"
                   onClick={() => {
                     onSelectDuty?.(verifiedRecord);
-                    onClose?.();
+                    handleClose();
                   }}
                   className="w-full py-2.5 px-3 bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-400 hover:to-amber-300 active:scale-95 text-slate-950 font-black text-xs sm:text-sm rounded-xl flex items-center justify-center gap-1.5 shadow-lg shadow-amber-500/20 transition cursor-pointer touch-manipulation"
                 >

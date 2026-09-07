@@ -44,9 +44,14 @@ class ErrorBoundary extends React.Component {
           <h2 style={{ fontSize: '20px', fontWeight: 'bold', marginBottom: '8px' }}>
             अयोध्या पुलिस ड्यूटी कार्ड पोर्टल
           </h2>
-          <p style={{ fontSize: '13px', color: '#cbd5e1', marginBottom: '20px', maxWidth: '360px' }}>
+          <p style={{ fontSize: '13px', color: '#cbd5e1', marginBottom: '16px', maxWidth: '360px' }}>
             पोर्टल लोड करने में कोई अस्थायी समस्या आई है। कृपया डेटा साफ़ करके पुनः लोड करें।
           </p>
+          {this.state.error && (
+            <div style={{ margin: '0 0 20px 0', padding: '10px', background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: '8px', maxWidth: '400px', fontSize: '11px', color: '#fca5a5', textAlign: 'left', wordBreak: 'break-word' }}>
+              {this.state.error.message || String(this.state.error)}
+            </div>
+          )}
           <button
             onClick={this.handleReset}
             style={{
