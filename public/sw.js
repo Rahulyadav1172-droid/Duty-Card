@@ -1,9 +1,12 @@
-const CACHE_NAME = 'police-duty-app-v1';
+const CACHE_NAME = 'police-duty-app-v2';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
   '/badge.png',
-  '/badge.svg',
+  '/badge-512.png',
+  '/badge-192.png',
+  '/badge-maskable-512.png',
+  '/badge-maskable-192.png',
   '/manifest.json'
 ];
 
