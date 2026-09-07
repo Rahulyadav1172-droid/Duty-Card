@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS public.police_events (
     id TEXT PRIMARY KEY,
     title TEXT NOT NULL,
     subtitle TEXT,
+    start_date TEXT,
     status TEXT DEFAULT 'active',
     signatory_text TEXT DEFAULT 'वरिष्ठ पुलिस अधीक्षक, अयोध्या',
     signature_img TEXT,

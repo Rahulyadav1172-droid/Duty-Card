@@ -34,11 +34,44 @@ const DEFAULT_OFFICIAL_HELPLINES = [
   { id: '3', title: 'मेला नियंत्रण कक्ष / ड्यूटी हेल्पडेस्क', number: '9454402655' }
 ];
 
+/**
+ * Check connectivity to Supabase and detect status (Quota exceeded / Offline / Connected)
+ */
+export async function checkSupabaseHealth() {
+  try {
+    const { error, status } = await supabase
+      .from(EVENTS_TABLE)
+      .select('id')
+      .limit(1);
+
+    if (error) {
+      const isQuotaExceeded = status === 402 || 
+        Boolean(error.message && (error.message.includes('quota') || error.message.includes('restricted') || error.message.includes('Payment Required')));
+      
+      return {
+        ok: false,
+        status,
+        isQuotaExceeded,
+        message: error.message || 'Supabase error'
+      };
+    }
+    return { ok: true, status: 200, isQuotaExceeded: false, message: 'Connected' };
+  } catch (err) {
+    return {
+      ok: false,
+      status: 0,
+      isQuotaExceeded: false,
+      message: err?.message || 'Network connection failed'
+    };
+  }
+}
+
 export async function fetchEventsFromSupabase() {
   try {
     const { data, error } = await supabase
       .from(EVENTS_TABLE)
       .select('*')
+      .not('id', 'like', 'global-%')
       .order('created_at', { ascending: false });
 
     if (error) {

@@ -39,6 +39,7 @@ import DutyAllocationHub from './components/DutyAllocationHub';
 import ForceAamadManager from './components/ForceAamadManager';
 import ChangePasswordModal from './components/ChangePasswordModal';
 import AuditLogModal from './components/AuditLogModal';
+import CloudStatusModal from './components/CloudStatusModal';
 
 import initialData from './data/duty_data.json';
 import {
@@ -51,7 +52,8 @@ import {
   subscribeToMasterForceRealtime,
   fetchGlobalActiveEventId,
   saveGlobalActiveEventId,
-  subscribeToActiveEventIdRealtime
+  subscribeToActiveEventIdRealtime,
+  checkSupabaseHealth
 } from './utils/supabaseSync';
 import { initCloudAuthConfig } from './utils/authManager';
 
@@ -134,6 +136,9 @@ export default function App() {
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
   const [isAuditLogModalOpen, setIsAuditLogModalOpen] = useState(false);
+  const [isCloudModalOpen, setIsCloudModalOpen] = useState(false);
+  const [cloudStatus, setCloudStatus] = useState('checking'); // 'checking' | 'connected' | 'error'
+  const [cloudErrorDetail, setCloudErrorDetail] = useState(null);
   const [pendingTab, setPendingTab] = useState(null);
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -198,6 +203,16 @@ export default function App() {
     let unsubscribeActiveEventId = () => {};
 
     async function initSupabase() {
+      // 0. Verify Supabase Cloud connection status
+      const health = await checkSupabaseHealth();
+      if (health.ok) {
+        setCloudStatus('connected');
+        setCloudErrorDetail(null);
+      } else {
+        setCloudStatus('error');
+        setCloudErrorDetail(health);
+      }
+
       // 1. Initialize Auth Config from Cloud
       initCloudAuthConfig();
 
@@ -272,6 +287,22 @@ export default function App() {
       unsubscribeActiveEventId();
     };
   }, []);
+
+  const recheckCloudConnection = async () => {
+    setCloudStatus('checking');
+    const health = await checkSupabaseHealth();
+    if (health.ok) {
+      setCloudStatus('connected');
+      setCloudErrorDetail(null);
+      const cloudEvents = await fetchEventsFromSupabase();
+      if (cloudEvents && cloudEvents.length > 0) {
+        setEvents(cloudEvents);
+      }
+    } else {
+      setCloudStatus('error');
+      setCloudErrorDetail(health);
+    }
+  };
 
   // Sync events to localStorage and Supabase Cloud
   const saveEvents = (newEvents, affectedEvent = null) => {
@@ -643,10 +674,40 @@ export default function App() {
                 </span>
               </button>
 
-              <div className="hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-800/80 border border-slate-700/60 text-[11px] font-bold text-slate-300">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
-                <span>{t('cloudSyncActive', 'क्लाउड सिंक सक्रिय')}</span>
-              </div>
+              {/* Reactive Live Cloud Sync Status Indicator */}
+              <button
+                type="button"
+                onClick={() => setIsCloudModalOpen(true)}
+                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border text-[11px] font-bold transition cursor-pointer active:scale-95 shadow-xs ${
+                  cloudStatus === 'connected'
+                    ? 'bg-emerald-950/40 hover:bg-emerald-900/60 border-emerald-500/40 text-emerald-300'
+                    : cloudStatus === 'error'
+                    ? 'bg-rose-950/60 hover:bg-rose-900/80 border-rose-500/50 text-rose-300 animate-pulse'
+                    : 'bg-amber-950/40 hover:bg-amber-900/60 border-amber-500/40 text-amber-300'
+                }`}
+                title={
+                  cloudStatus === 'connected'
+                    ? 'क्लाउड लाइव सिंक सक्रिय (सभी डिवाइस कनेक्टेड)'
+                    : cloudStatus === 'error'
+                    ? 'क्लाउड सिंक विफल (परिवर्तन केवल ब्राउज़र में सीमित हैं) - विवरण देखने के लिए क्लिक करें'
+                    : 'क्लाउड कनेक्शन की जांच की जा रही है...'
+                }
+              >
+                <span className={`w-2 h-2 rounded-full shrink-0 ${
+                  cloudStatus === 'connected'
+                    ? 'bg-emerald-400'
+                    : cloudStatus === 'error'
+                    ? 'bg-rose-500 ring-2 ring-rose-400'
+                    : 'bg-amber-400 animate-ping'
+                }`} />
+                <span className="hidden sm:inline">
+                  {cloudStatus === 'connected'
+                    ? t('cloudSyncActive', 'क्लाउड लाइव')
+                    : cloudStatus === 'error'
+                    ? (cloudErrorDetail?.isQuotaExceeded ? 'कोटा समाप्त ⚠️' : 'क्लाउड डिस्कनेक्ट ⚠️')
+                    : 'जांच जारी...'}
+                </span>
+              </button>
 
               {userRole !== 'guest' ? (
                 <div className="relative" ref={userMenuRef}>
@@ -1092,6 +1153,16 @@ export default function App() {
       <AuditLogModal
         isOpen={isAuditLogModalOpen}
         onClose={() => setIsAuditLogModalOpen(false)}
+      />
+
+      {/* Cloud Status and Diagnostics Modal */}
+      <CloudStatusModal
+        isOpen={isCloudModalOpen}
+        onClose={() => setIsCloudModalOpen(false)}
+        cloudStatus={cloudStatus}
+        cloudErrorDetail={cloudErrorDetail}
+        onRecheck={recheckCloudConnection}
+        userRole={userRole}
       />
 
       {/* Footer */}
