@@ -55,7 +55,12 @@ import {
   subscribeToActiveEventIdRealtime,
   checkSupabaseHealth
 } from './utils/supabaseSync';
-import { initCloudAuthConfig } from './utils/authManager';
+import {
+  initCloudAuthConfig,
+  validateSessionSignature,
+  setAuthenticatedSession,
+  clearAuthenticatedSession
+} from './utils/authManager';
 
 const EVENTS_STORAGE_KEY = 'police_portal_events_v3';
 const ACTIVE_EVENT_ID_KEY = 'police_portal_active_event_id';
@@ -112,10 +117,16 @@ export default function App() {
     return 'event-shravan-2026';
   });
 
-  // Role Authentication State: 'guest' | 'senior' | 'admin'
+  // Role Authentication State: 'guest' | 'senior' | 'admin' with cryptographic session signature validation
   const [userRole, setUserRole] = useState(() => {
     try {
-      return sessionStorage.getItem(ROLE_SESSION_KEY) || 'guest';
+      const savedRole = sessionStorage.getItem(ROLE_SESSION_KEY) || 'guest';
+      const sig = sessionStorage.getItem('police_portal_session_sig');
+      if (savedRole !== 'guest' && !validateSessionSignature(savedRole, sig)) {
+        clearAuthenticatedSession();
+        return 'guest';
+      }
+      return savedRole;
     } catch (e) {
       return 'guest';
     }
@@ -510,11 +521,19 @@ export default function App() {
     saveMasterForceToSupabase(newForce);
   };
 
+  const handleRestoreDatabase = (restoredEvents, restoredForce = null) => {
+    if (Array.isArray(restoredEvents) && restoredEvents.length > 0) {
+      saveEvents(restoredEvents);
+      setActiveEventId(restoredEvents[0].id);
+    }
+    if (Array.isArray(restoredForce) && restoredForce.length > 0) {
+      handleUpdateForce(restoredForce);
+    }
+  };
+
   const handleLoginSuccess = (role) => {
     setUserRole(role);
-    try {
-      sessionStorage.setItem(ROLE_SESSION_KEY, role);
-    } catch (e) {}
+    setAuthenticatedSession(role);
     setIsLoginModalOpen(false);
 
     if (pendingTab) {
@@ -529,9 +548,7 @@ export default function App() {
 
   const handleLogout = () => {
     setUserRole('guest');
-    try {
-      sessionStorage.removeItem(ROLE_SESSION_KEY);
-    } catch (e) {}
+    clearAuthenticatedSession();
     setActiveTab('search');
   };
 
@@ -1049,6 +1066,8 @@ export default function App() {
             onUpdateEvent={handleUpdateEvent}
             onDeleteEvent={handleDeleteEvent}
             onToggleEventStatus={handleToggleEventStatus}
+            masterForce={forceRecords}
+            onRestoreDatabase={handleRestoreDatabase}
           />
         )}
 

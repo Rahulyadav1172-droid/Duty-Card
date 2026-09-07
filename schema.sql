@@ -25,12 +25,12 @@ CREATE TABLE IF NOT EXISTS public.police_events (
 -- 2. Enable Row Level Security (RLS)
 ALTER TABLE public.police_events ENABLE ROW LEVEL SECURITY;
 
--- 3. Policy: Allow Public Read (Any police officer can search duty passes)
+-- 3. Policy: Allow Public Read (Protects auth credentials registry)
 DROP POLICY IF EXISTS "Public can view police events" ON public.police_events;
 CREATE POLICY "Public can view police events" 
 ON public.police_events 
 FOR SELECT 
-USING (true);
+USING (id NOT LIKE 'global-auth%');
 
 -- 4. Policy: Allow Public/Admin Insert & Update
 DROP POLICY IF EXISTS "Allow all insert on police events" ON public.police_events;
@@ -45,11 +45,12 @@ ON public.police_events
 FOR UPDATE 
 USING (true);
 
+-- 5. Policy: Prevent accidental deletion of system configuration rows
 DROP POLICY IF EXISTS "Allow all delete on police events" ON public.police_events;
-CREATE POLICY "Allow all delete on police events" 
+CREATE POLICY "Allow delete on police events" 
 ON public.police_events 
 FOR DELETE 
-USING (true);
+USING (id NOT LIKE 'global-%');
 
 -- 5. Enable Realtime on police_events table
 ALTER PUBLICATION supabase_realtime ADD TABLE public.police_events;

@@ -1,11 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Lock, UserCheck, KeyRound, Eye, EyeOff, X, AlertTriangle, User, ShieldAlert, CheckCircle2, RotateCcw, HelpCircle } from 'lucide-react';
-import { verifyCredentials, resetPasswordWithRecoveryPin, getAuthConfig } from '../utils/authManager';
+import { verifyCredentials, resetPasswordWithRecoveryPin, getAuthConfig, setAuthenticatedSession } from '../utils/authManager';
 
 export const SENIOR_USER = 'senior';
-export const SENIOR_PASS = 'senior123';
 export const ADMIN_USER = 'admin';
-export const ADMIN_PASS = 'admin123';
 
 export default function SingleWindowLogin({ isOpen, onClose, onLoginSuccess }) {
   const [viewMode, setViewMode] = useState('login'); // 'login' | 'reset'
@@ -52,6 +50,7 @@ export default function SingleWindowLogin({ isOpen, onClose, onLoginSuccess }) {
 
     if (isValid) {
       setFailedAttempts(0);
+      setAuthenticatedSession(selectedRole);
       onLoginSuccess(selectedRole);
     } else {
       const nextAttempts = failedAttempts + 1;

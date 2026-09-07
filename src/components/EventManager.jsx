@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   Calendar,
   Plus,
@@ -12,7 +12,10 @@ import {
   Check,
   X,
   AlertTriangle,
-  FolderOpen
+  FolderOpen,
+  Download,
+  Upload,
+  Database
 } from 'lucide-react';
 
 export default function EventManager({
@@ -22,10 +25,13 @@ export default function EventManager({
   onCreateEvent,
   onUpdateEvent,
   onDeleteEvent,
-  onToggleEventStatus
+  onToggleEventStatus,
+  masterForce = [],
+  onRestoreDatabase
 }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState(null);
+  const backupInputRef = useRef(null);
   const [formData, setFormData] = useState({
     title: '',
     subtitle: '',
@@ -34,6 +40,63 @@ export default function EventManager({
     note: '',
     briefing: ''
   });
+
+  const handleDownloadDatabaseBackup = () => {
+    try {
+      const backupData = {
+        exportedAt: new Date().toISOString(),
+        version: '2.0',
+        system: 'अयोध्या पुलिस ड्यूटी पास पोर्टल',
+        totalEvents: (events || []).length,
+        events: events || [],
+        masterForce: masterForce || []
+      };
+
+      const jsonStr = JSON.stringify(backupData, null, 2);
+      const blob = new Blob([jsonStr], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      const dateStr = new Date().toISOString().split('T')[0];
+      a.href = url;
+      a.download = `Ayodhya_Police_Duty_Backup_${dateStr}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      alert('बैकअप डाउनलोड करने में त्रुटि: ' + err.message);
+    }
+  };
+
+  const handleRestoreFile = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const parsed = JSON.parse(event.target.result);
+        if (!parsed || (!Array.isArray(parsed.events) && !Array.isArray(parsed))) {
+          alert('अमान्य बैकअप फ़ाइल: बैकअप फ़ाइल में इवेंट डेटा उपलब्ध नहीं है।');
+          return;
+        }
+
+        const eventsToRestore = Array.isArray(parsed.events) ? parsed.events : parsed;
+        const forceToRestore = Array.isArray(parsed.masterForce) ? parsed.masterForce : null;
+
+        if (window.confirm(`क्या आप इस बैकअप फ़ाइल से कुल ${eventsToRestore.length} इवेंट्स और ड्यूटी रिकॉर्ड्स रीस्टोर करना चाहते हैं?`)) {
+          if (onRestoreDatabase) {
+            onRestoreDatabase(eventsToRestore, forceToRestore);
+            alert('🎉 संपूर्ण डेटाबेस बैकअप सफलतापूर्वक रीस्टोर कर दिया गया है!');
+          }
+        }
+      } catch (err) {
+        alert('बैकअप फ़ाइल पढ़ने में त्रुटि: ' + err.message);
+      }
+    };
+    reader.readAsText(file);
+    if (backupInputRef.current) backupInputRef.current.value = '';
+  };
 
   const handleOpenModal = (eventObj = null) => {
     if (eventObj) {
@@ -95,6 +158,15 @@ export default function EventManager({
 
   return (
     <div className="w-full max-w-5xl mx-auto space-y-6 font-devanagari text-slate-900">
+      {/* Hidden File Input for Backup Restore */}
+      <input
+        ref={backupInputRef}
+        type="file"
+        accept=".json"
+        onChange={handleRestoreFile}
+        className="hidden"
+      />
+
       {/* Top Banner Header */}
       <div className="bg-white p-5 sm:p-7 rounded-3xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="flex items-start sm:items-center gap-3.5 min-w-0">
@@ -118,6 +190,43 @@ export default function EventManager({
           <Plus className="w-4 h-4 stroke-[3]" />
           <span>+ नया इवेंट / हेड बनाएं</span>
         </button>
+      </div>
+
+      {/* Disaster Recovery & Full Database Backup Bar */}
+      <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 text-white p-4 sm:p-5 rounded-2xl border border-slate-700 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-500/30 text-amber-400 flex items-center justify-center shrink-0">
+            <Database className="w-5 h-5" />
+          </div>
+          <div className="min-w-0">
+            <h3 className="text-sm font-black text-white truncate">डेटाबेस बैकअप व सुरक्षा (Disaster Recovery)</h3>
+            <p className="text-[11px] text-slate-300 truncate">
+              संपूर्ण पोर्टल के सभी इवेंट्स, बल आवंटन व उपस्थिति का 1-क्लिक बैकअप लें अथवा रीस्टोर करें
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 w-full sm:w-auto shrink-0">
+          <button
+            type="button"
+            onClick={handleDownloadDatabaseBackup}
+            className="flex-1 sm:flex-none px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-300 hover:text-amber-200 border border-slate-600 font-bold text-xs flex items-center justify-center gap-1.5 transition active:scale-95 cursor-pointer"
+            title="संपूर्ण डेटाबेस JSON बैकअप डाउनलोड करें"
+          >
+            <Download className="w-3.5 h-3.5" />
+            <span>बैकअप डाउनलोड (JSON)</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => backupInputRef.current?.click()}
+            className="flex-1 sm:flex-none px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs flex items-center justify-center gap-1.5 transition active:scale-95 cursor-pointer shadow-xs"
+            title="बैकअप फ़ाइल से संपूर्ण डेटा रीस्टोर करें"
+          >
+            <Upload className="w-3.5 h-3.5" />
+            <span>बैकअप रीस्टोर करें</span>
+          </button>
+        </div>
       </div>
 
       {/* Events Grid */}

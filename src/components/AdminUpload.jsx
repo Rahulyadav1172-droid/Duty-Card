@@ -268,6 +268,24 @@ export default function AdminUpload({
     try {
       const parsedRecords = await parseDutyFile(file);
       if (parsedRecords && parsedRecords.length > 0) {
+        // Detect duplicates by PNO and Mobile
+        const existingPnoSet = new Set(
+          (records || []).map(r => (r.id || '').trim().toLowerCase()).filter(Boolean)
+        );
+        const existingMobileSet = new Set(
+          (records || []).map(r => (r.mobile || '').replace(/\D/g, '')).filter(m => m.length >= 10)
+        );
+
+        let duplicatePnoCount = 0;
+        let duplicateMobileCount = 0;
+
+        for (const r of parsedRecords) {
+          const cleanPno = (r.id || '').trim().toLowerCase();
+          const cleanMob = (r.mobile || '').replace(/\D/g, '');
+          if (cleanPno && existingPnoSet.has(cleanPno)) duplicatePnoCount++;
+          if (cleanMob.length >= 10 && existingMobileSet.has(cleanMob)) duplicateMobileCount++;
+        }
+
         if (uploadMode === 'append' && records && records.length > 0) {
           // Smart merge without losing previous data
           const existingKeySet = new Set(
@@ -275,7 +293,7 @@ export default function AdminUpload({
           );
 
           const newUniqueRecords = [];
-          let duplicateCount = 0;
+          let duplicateExactCount = 0;
 
           for (const newRec of parsedRecords) {
             const key = `${(newRec.id || '').trim().toLowerCase()}_${(newRec.mobile || '').trim()}_${(newRec.name || '').trim().toLowerCase()}_${(newRec.duty_place || '').trim().toLowerCase()}`;
@@ -283,21 +301,31 @@ export default function AdminUpload({
               existingKeySet.add(key);
               newUniqueRecords.push(newRec);
             } else {
-              duplicateCount++;
+              duplicateExactCount++;
             }
           }
 
           const mergedRecords = [...records, ...newUniqueRecords];
           onUpdateRecords(mergedRecords);
+
+          let msg = `🎉 सफलता! Excel फ़ाइल "${file.name}" से कुल ${parsedRecords.length} में से ${newUniqueRecords.length} नए रिकॉर्ड्स जोड़े गए! - अब कुल: ${mergedRecords.length} जवान।`;
+          if (duplicatePnoCount > 0 || duplicateMobileCount > 0) {
+            msg += ` (⚠️ सूचना: ${duplicatePnoCount} PNO व ${duplicateMobileCount} मोबाइल नंबर पहले से मौजूद थे)`;
+          }
+
           setStatusMsg({
             type: 'success',
-            text: `🎉 सफलता! Excel फ़ाइल "${file.name}" से कुल ${parsedRecords.length} में से ${newUniqueRecords.length} नए रिकॉर्ड्स जोड़े गए! (पुराना डेटा सुरक्षित) - अब कुल: ${mergedRecords.length} जवान।`
+            text: msg
           });
         } else {
           onUpdateRecords(parsedRecords);
+          let msg = `🎉 सफलता! Excel फ़ाइल "${file.name}" से कुल ${parsedRecords.length} ड्यूटी पास रिकॉर्ड्स इनजेस्ट एवं सहेजे गए!`;
+          if (duplicatePnoCount > 0 || duplicateMobileCount > 0) {
+            msg += ` (⚠️ सूचना: पूर्व डेटाबेस के ${duplicatePnoCount} PNO / ${duplicateMobileCount} मोबाइल ओवरराइट किए गए)`;
+          }
           setStatusMsg({
             type: 'success',
-            text: `🎉 सफलता! Excel फ़ाइल "${file.name}" से कुल ${parsedRecords.length} ड्यूटी पास रिकॉर्ड्स इनजेस्ट एवं सहेजे गए!`
+            text: msg
           });
         }
       } else {
