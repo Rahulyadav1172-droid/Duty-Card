@@ -72,11 +72,11 @@ export default function AuditLogModal({ isOpen, onClose }) {
             <div>
               <div className="flex items-center gap-2">
                 <span className="leading-tight">
-                  {language === 'en' ? 'System Audit & Activity Trail' : 'सिस्टम ऑडिट एवं एक्टिविटी लॉग (Audit Trail)'}
+                  {language === 'en' ? 'System Audit & Activity Trail' : 'सिस्टम ऑडिट एवं एक्टिविटी लॉग'}
                 </span>
                 <span className="bg-slate-100 text-slate-700 text-[10px] px-2 py-0.5 rounded-full font-bold border border-slate-300 flex items-center gap-1">
                   <Lock className="w-2.5 h-2.5 text-slate-500" />
-                  <span>{language === 'en' ? 'Read-Only (Immutable)' : 'अपरिवर्तनीय (Read-Only)'}</span>
+                  <span>{language === 'en' ? 'Read-Only' : 'अपरिवर्तनीय'}</span>
                 </span>
               </div>
               <div className="text-[10px] font-bold text-slate-500">
@@ -120,7 +120,7 @@ export default function AuditLogModal({ isOpen, onClose }) {
 
                 <div className="bg-amber-50/90 p-2.5 rounded-xl border border-amber-200/90 text-amber-950 font-bold text-[11px] space-y-0.5">
                   <div className="text-[10px] text-amber-800 uppercase tracking-wider font-extrabold">
-                    📝 {language === 'en' ? 'Deletion Reason / Remark:' : 'हटाने का कारण / आधिकारिक रिमार्क:'}
+                    {language === 'en' ? 'Deletion Reason / Remark:' : 'हटाने का कारण / आधिकारिक रिमार्क:'}
                   </div>
                   <div className="text-slate-900 font-semibold">{log.remark || 'कोई रिमार्क दर्ज नहीं'}</div>
                 </div>
@@ -156,7 +156,7 @@ export default function AuditLogModal({ isOpen, onClose }) {
               className="px-3.5 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-xs font-black rounded-xl border border-emerald-300 flex items-center gap-1.5 transition cursor-pointer shadow-2xs"
             >
               <Download className="w-3.5 h-3.5" />
-              <span>{language === 'en' ? 'Export to Excel' : '📥 एक्सेल में एक्सपोर्ट करें'}</span>
+              <span>{language === 'en' ? 'Export to Excel' : 'एक्सेल में एक्सपोर्ट करें'}</span>
             </button>
           ) : <div />}
 
@@ -164,7 +164,7 @@ export default function AuditLogModal({ isOpen, onClose }) {
             onClick={onClose}
             className="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white font-black text-xs rounded-xl shadow-xs transition active:scale-95 cursor-pointer"
           >
-            {language === 'en' ? 'Close' : 'बंद करें (Close)'}
+            {language === 'en' ? 'Close' : 'बंद करें'}
           </button>
         </div>
       </div>

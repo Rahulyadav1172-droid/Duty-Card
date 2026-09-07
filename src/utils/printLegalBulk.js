@@ -2,6 +2,7 @@
 import React from 'react';
 import { renderToString } from 'react-dom/server';
 import { QRCodeSVG } from 'qrcode.react';
+import { resolvePoliceRank, stripRankFromName } from './rankResolver';
 
 export function printLegalBulk({
   records = [],
@@ -56,7 +57,7 @@ export function printLegalBulk({
         if (!duty) {
           cardsHtml += `
             <div class="duty-card empty-slot">
-              <div class="empty-text">स्थान रिक्त (Blank Slot)</div>
+              <div class="empty-text">स्थान रिक्त</div>
             </div>
           `;
           continue;
@@ -106,7 +107,7 @@ export function printLegalBulk({
           qrSvgHtml = renderToString(
             React.createElement(QRCodeSVG, {
               value: qrPayload,
-              size: is2In1 ? 52 : (is4In1 ? 42 : 32),
+              size: is2In1 ? 38 : (is4In1 ? 30 : 24),
               level: 'L',
               includeMargin: false
             })
@@ -115,24 +116,84 @@ export function printLegalBulk({
           qrSvgHtml = '';
         }
 
-        // 1-Line Compact Format for Each Co-deployed Officer
+        // Clean PNO (omit synthetic IDs)
+        const cleanPno = (duty.pno && !String(duty.pno).toUpperCase().startsWith('DUTY-'))
+          ? String(duty.pno)
+          : (duty.id && !String(duty.id).toUpperCase().startsWith('DUTY-') && String(duty.id).length <= 12)
+            ? String(duty.id)
+            : null;
+
+        // Clean Officer Name (remove duplicate mobile or trailing number noise)
+        const cleanOfficerName = (duty.name || '').trim()
+          .replace(/,\s*\d{10}\b/g, '')
+          .replace(/\b\d{10}\b/g, '')
+          .replace(/[,।]?\s*नं0?[-:]?\s*$/g, '')
+          .replace(/[,।]?\s*नं\s*\(?.*$/g, '')
+          .replace(/,\s*$/, '')
+          .trim() || duty.name;
+
+        const effectiveRank = resolvePoliceRank(duty.rank, cleanOfficerName);
+        const displayCleanName = stripRankFromName(cleanOfficerName);
+
+        // Clean & Parse Zone and Zonal Incharge
+        let cleanZone = (duty.zone || '').trim();
+        let cleanZonalIncharge = (duty.zonal_incharge || duty.zonal || '').trim();
+        if (cleanZonalIncharge === '-') cleanZonalIncharge = '';
+
+        if (!cleanZonalIncharge && cleanZone.includes('/')) {
+          const parts = cleanZone.split('/');
+          cleanZone = parts[0].trim();
+          cleanZonalIncharge = parts.slice(1).join('/').trim();
+        } else if (cleanZone.endsWith('/')) {
+          cleanZone = cleanZone.replace(/\/+\s*$/, '').trim();
+        }
+        if (cleanZonalIncharge && cleanZone.includes(cleanZonalIncharge)) {
+          cleanZone = cleanZone.replace(cleanZonalIncharge, '').replace(/\/+\s*$/, '').trim();
+        }
+
+        // Clean & Parse Sector and Sector Incharge
+        let cleanSector = (duty.sector || '').trim();
+        let cleanSectorIncharge = (duty.sector_incharge || '').trim();
+        if (cleanSectorIncharge === '-') cleanSectorIncharge = '';
+
+        if (!cleanSectorIncharge && cleanSector.includes('/')) {
+          const parts = cleanSector.split('/');
+          cleanSector = parts[0].trim();
+          cleanSectorIncharge = parts.slice(1).join('/').trim();
+        } else if (cleanSector.endsWith('/')) {
+          cleanSector = cleanSector.replace(/\/+\s*$/, '').trim();
+        }
+        if (cleanSectorIncharge && cleanSector.includes(cleanSectorIncharge)) {
+          cleanSector = cleanSector.replace(cleanSectorIncharge, '').replace(/\/+\s*$/, '').trim();
+        }
+
+        // 2-Column Compact Format for Co-deployed Force (Zero scrollbars)
         let coForceHtml = '';
-        if ((is2In1 || includeCoForce) && coForceList.length > 0) {
-          const coRows = coForceList.map((colleague, cIdx) => {
-            // Clean duplicate mobile or comma from name
-            const cleanColleagueName = (colleague.name || '').trim()
+        if (includeCoForce && coForceList.length > 0) {
+          const maxVisible = is2In1 ? 36 : 28;
+          const displayedCoForce = coForceList.slice(0, maxVisible);
+          const remainingCount = coForceList.length - displayedCoForce.length;
+
+          const coRows = displayedCoForce.map((colleague, cIdx) => {
+            let cleanColleagueName = (colleague.name || '').trim()
               .replace(/,\s*\d{10}\b/g, '')
               .replace(/\b\d{10}\b/g, '')
-              .replace(/,\s*,/g, ',')
+              .replace(/।\s*नं\s*\(?.*$/g, '')
               .replace(/,\s*$/, '')
               .trim();
 
+            // If name has trailing unit/posting separated by comma (e.g. "श्री नागेन्द्र..., कॉवड सेल..."),
+            // keep the officer name so it fits cleanly without ellipsis in 2-column grid
+            if (cleanColleagueName.includes(',')) {
+              cleanColleagueName = cleanColleagueName.split(',')[0].trim();
+            }
+
             return `
-              <div class="co-row">
-                <div class="co-col-num">${cIdx + 1}.</div>
-                <div class="co-col-name"><strong>${escapeHtml(cleanColleagueName)}</strong></div>
-                <div class="co-col-mob">${phoneSvg}<span>${escapeHtml(colleague.mobile || '-')}</span></div>
-                <div class="co-col-dist">${escapeHtml(colleague.posting || '')} ${colleague.district ? `(${escapeHtml(colleague.district)})` : ''}</div>
+              <div class="co-item">
+                <span class="co-idx">${cIdx + 1}.</span>
+                <span class="co-name" title="${escapeHtml(cleanColleagueName)}"><strong>${escapeHtml(cleanColleagueName)}</strong></span>
+                <span class="co-mob">${phoneSvg}<span>${escapeHtml(colleague.mobile || '-')}</span></span>
+                ${colleague.district ? `<span class="co-dist">(${escapeHtml(colleague.district)})</span>` : ''}
               </div>
             `;
           }).join('');
@@ -142,19 +203,24 @@ export function printLegalBulk({
               <div class="co-force-header">
                 <div class="co-hdr-title">
                   ${usersSvg}
-                  <span>सहयोगार्थ पुलिस बल (उसी स्थल पर तैनात अन्य पुलिसकर्मी):</span>
+                  <span>सहयोगार्थ पुलिस बल (उसी पॉइंट पर तैनात साथी):</span>
                 </div>
                 <span class="co-count font-mono">कुल: ${coForceList.length} जवान</span>
               </div>
-              <div class="co-force-body">
+              <div class="co-force-grid">
                 ${coRows}
               </div>
+              ${remainingCount > 0 ? `
+                <div class="co-more-note">
+                  + ${remainingCount} अन्य पुलिस बल (देखें संपूर्ण ड्यूटी बुकलेट)
+                </div>
+              ` : ''}
             </div>
           `;
         }
 
         cardsHtml += `
-          <div class="duty-card ${is2In1 ? 'card-2in1' : ''}">
+          <div class="duty-card ${is2In1 ? 'card-2in1' : ''} ${!coForceHtml ? 'no-co-force' : ''}">
             <!-- 1. Header Section -->
             <div class="card-header">
               <img src="/badge.png" class="badge-icon" alt="UP Police" />
@@ -165,7 +231,7 @@ export function printLegalBulk({
               <img src="/badge.png" class="badge-icon" alt="UP Police" />
             </div>
 
-            <!-- 2. Officer Profile Section (Photo Left | Details Center | Auth QR Right) -->
+            <!-- 2. Officer Profile Section (Photo Left | Full Details Right) -->
             <div class="officer-card">
               <div class="photo-frame">
                 ${photoHtml}
@@ -173,45 +239,72 @@ export function printLegalBulk({
               <div class="officer-info">
                 <div>
                   <span class="officer-tag">अधिकारी / कर्मचारी विवरण:</span>
-                  <h3 class="officer-name">${escapeHtml(duty.name || '-')}</h3>
+                  <h3 class="officer-name">
+                    <span>${escapeHtml(displayCleanName || '-')}</span>
+                    <span style="font-size:11px; background:#fef3c7; color:#78350f; padding:1px 6px; border-radius:4px; border:1px solid #fde68a; margin-left:6px; font-weight:bold;">${escapeHtml(effectiveRank)}</span>
+                  </h3>
                   <div class="officer-mobile">
                     ${phoneSvg}
                     <strong>${escapeHtml(duty.mobile || 'अनुपलब्ध')}</strong>
                   </div>
                 </div>
                 <div class="officer-sub-bar">
-                  <span>तैनाती: <strong>${escapeHtml(duty.posting || '-')}</strong> ${duty.district ? `(${escapeHtml(duty.district)})` : ''}</span>
+                  ${cleanPno ? `<span>P.No: <strong>${escapeHtml(cleanPno)}</strong></span>` : ''}
+                  <span>मूल तैनाती: <strong>${escapeHtml(duty.posting || '-')}</strong> ${duty.district ? `(${escapeHtml(duty.district)})` : ''}</span>
                 </div>
-              </div>
-              <div class="officer-qr-box" title="प्रमाणीकरण हेतु स्कैन करें">
-                ${qrSvgHtml}
-                <span class="qr-sub-text">स्कैन सत्यापन</span>
               </div>
             </div>
 
-            <!-- 3. Assignment Table -->
+            <!-- 3. Assignment Table (Clean, Bold, Professional) -->
             <div class="table-container">
               <table class="card-table">
                 <tbody>
                   <tr class="row-duty-place">
-                    <td class="td-lbl">ड्यूटी स्थान</td>
+                    <td class="td-lbl">ड्यूटी स्थल</td>
                     <td class="td-val td-duty-val">${escapeHtml(duty.duty_place || '-')}</td>
                   </tr>
                   <tr>
-                    <td class="td-lbl">दिनाँक/समय</td>
+                    <td class="td-lbl">दिनाँक व समय</td>
                     <td class="td-val font-bold">${escapeHtml(duty.shift || '-')}</td>
                   </tr>
+                  ${(!coForceHtml) ? `
+                  <tr>
+                    <td class="td-lbl">जोन</td>
+                    <td class="td-val font-semibold">${escapeHtml(cleanZone || '-')}</td>
+                  </tr>
+                  ${cleanZonalIncharge ? `
+                  <tr class="row-incharge">
+                    <td class="td-lbl">जोनल प्रभारी</td>
+                    <td class="td-val incharge-val"><strong>${escapeHtml(cleanZonalIncharge)}</strong></td>
+                  </tr>` : ''}
+                  <tr>
+                    <td class="td-lbl">सेक्टर</td>
+                    <td class="td-val font-semibold">${escapeHtml(cleanSector || '-')}</td>
+                  </tr>
+                  ${cleanSectorIncharge ? `
+                  <tr class="row-incharge">
+                    <td class="td-lbl">सेक्टर प्रभारी</td>
+                    <td class="td-val incharge-val"><strong>${escapeHtml(cleanSectorIncharge)}</strong></td>
+                  </tr>` : ''}
+                  ` : `
                   <tr>
                     <td class="td-lbl">जोन / प्रभारी</td>
-                    <td class="td-val">${escapeHtml(duty.zone || '-')} / <strong>${escapeHtml(duty.zonal_incharge || duty.zonal || '-')}</strong></td>
+                    <td class="td-val">
+                      ${escapeHtml(cleanZone || '-')}
+                      ${cleanZonalIncharge ? ` / <strong>${escapeHtml(cleanZonalIncharge)}</strong>` : ''}
+                    </td>
                   </tr>
                   <tr>
                     <td class="td-lbl">सेक्टर / प्रभारी</td>
-                    <td class="td-val">${escapeHtml(duty.sector || '-')} / <strong>${escapeHtml(duty.sector_incharge || '-')}</strong></td>
+                    <td class="td-val">
+                      ${escapeHtml(cleanSector || '-')}
+                      ${cleanSectorIncharge ? ` / <strong>${escapeHtml(cleanSectorIncharge)}</strong>` : ''}
+                    </td>
                   </tr>
+                  `}
                   ${activeBriefing ? `
                   <tr class="row-briefing">
-                    <td class="td-lbl">ब्रीफिंग स्थान</td>
+                    <td class="td-lbl">ब्रीफिंग स्थल</td>
                     <td class="td-val font-bold">${escapeHtml(activeBriefing)}</td>
                   </tr>` : ''}
                   ${activeNote ? `
@@ -226,12 +319,16 @@ export function printLegalBulk({
             <!-- 4. Co-deployed Force Section (सहयोगार्थ पुलिस बल) -->
             ${coForceHtml}
 
-            <!-- 5. Authorization Footer -->
+            <!-- 5. Authorization Footer (QR Code Left | Signature Right) -->
             <div class="card-footer">
               <div class="footer-left">
-                <div class="verified-pill">
-                  <span class="dot">●</span>
-                  <span>डिजिटल सत्यापित पास (UP POLICE)</span>
+                <div class="footer-qr-frame">${qrSvgHtml}</div>
+                <div class="footer-auth-details">
+                  <div class="verified-pill">
+                    <span class="dot">●</span>
+                    <span>सत्यापित पास</span>
+                  </div>
+                  <div class="auth-code">ID: ${escapeHtml(cleanPno || duty.id || '-')}</div>
                 </div>
               </div>
 
@@ -271,6 +368,9 @@ export function printLegalBulk({
       <head>
         <meta charset="utf-8">
         <title>${escapeHtml(eventTitle || 'ड्यूटी पास')} - Bulk Print (${layoutName} ${paperLabel})</title>
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Mukta:wght@400;500;600;700;800;900&family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
         <style>
           @page {
             size: ${isA4 ? 'A4 portrait' : 'legal portrait'};
@@ -282,11 +382,12 @@ export function printLegalBulk({
             padding: 0;
           }
           body {
-            font-family: 'Noto Sans Devanagari', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            font-family: 'Mukta', 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: #ffffff;
             color: #020617;
             -webkit-print-color-adjust: exact;
             print-color-adjust: exact;
+            letter-spacing: 0.15px;
           }
 
           /* Responsive Page Dimensions (A4: 210x297mm vs Legal: 215.9x355.6mm) */
@@ -351,22 +452,89 @@ export function printLegalBulk({
             z-index: 10;
           }
 
-          /* Individual Police Duty Card */
+          /* Individual Police Duty Card with VIP Dual Security Frame */
           .duty-card {
-            border: 1.5px solid #000000;
+            border: 2px solid #0b132b;
+            box-shadow: inset 0 0 0 1.5px #d97706;
             border-radius: 8px;
-            padding: ${is2In1 ? '10px 14px' : (is4In1 ? '8px 10px' : '5px 6px')};
+            padding: ${is2In1 ? '12px 16px' : (is4In1 ? '9px 12px' : '5px 7px')};
             display: flex;
             flex-direction: column;
-            justify-content: space-between;
             background: #ffffff;
             box-sizing: border-box;
             height: 100%;
             overflow: hidden;
+            position: relative;
+          }
+
+          /* Option B: When Co-force is absent, expand Assignment Table smoothly to fill the card */
+          .duty-card.no-co-force {
+            justify-content: flex-start;
+          }
+          .duty-card.no-co-force .officer-card {
+            margin-top: ${is2In1 ? '10px' : (is4In1 ? '6px' : '3px')};
+            padding: ${is2In1 ? '8px 12px' : (is4In1 ? '5px 8px' : '3px 5px')};
+          }
+          .duty-card.no-co-force .photo-frame {
+            width: ${is2In1 ? '56px' : (is4In1 ? '46px' : '34px')};
+            height: ${is2In1 ? '72px' : (is4In1 ? '58px' : '42px')};
+          }
+          .duty-card.no-co-force .officer-name {
+            font-size: ${is2In1 ? '14px' : (is4In1 ? '11.5px' : '9px')};
+          }
+          .duty-card.no-co-force .officer-mobile {
+            font-size: ${is2In1 ? '12.5px' : (is4In1 ? '10px' : '8px')};
+          }
+          .duty-card.no-co-force .table-container {
+            flex: 1;
+            margin-top: ${is2In1 ? '12px' : (is4In1 ? '8px' : '4px')};
+            margin-bottom: ${is2In1 ? '12px' : (is4In1 ? '8px' : '4px')};
+            display: flex;
+            flex-direction: column;
+            border: 2px solid #0f172a;
+          }
+          .duty-card.no-co-force .card-table {
+            height: 100%;
+            font-size: ${is2In1 ? '13px' : (is4In1 ? '10px' : '8px')};
+          }
+          .duty-card.no-co-force .card-table tbody {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            justify-content: space-between;
+          }
+          .duty-card.no-co-force .card-table tr {
+            display: flex;
+            align-items: stretch;
+            flex: 1;
+          }
+          .duty-card.no-co-force .td-lbl {
+            width: 28%;
+            display: flex;
+            align-items: center;
+            font-size: ${is2In1 ? '12.5px' : (is4In1 ? '10px' : '7.5px')};
+            padding: ${is2In1 ? '8px 12px' : (is4In1 ? '5px 8px' : '3px 5px')};
+          }
+          .duty-card.no-co-force .td-val {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            font-size: ${is2In1 ? '12.5px' : (is4In1 ? '10px' : '7.5px')};
+            padding: ${is2In1 ? '8px 12px' : (is4In1 ? '5px 8px' : '3px 5px')};
+            line-height: 1.4;
+          }
+          .duty-card.no-co-force .td-duty-val {
+            font-size: ${is2In1 ? '15px' : (is4In1 ? '11.5px' : '9px')};
+            font-weight: 900;
+          }
+          .duty-card.no-co-force .card-footer {
+            margin-top: auto;
+            padding-top: ${is2In1 ? '8px' : (is4In1 ? '4px' : '2px')};
           }
 
           .empty-slot {
             border: 1.5px dashed #cbd5e1;
+            box-shadow: none;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -383,8 +551,8 @@ export function printLegalBulk({
             display: flex;
             align-items: center;
             justify-content: space-between;
-            border-bottom: 1.5px solid #000000;
-            padding-bottom: ${is2In1 ? '5px' : (is4In1 ? '4px' : '2px')};
+            border-bottom: 2px solid #0b132b;
+            padding-bottom: ${is2In1 ? '6px' : (is4In1 ? '4px' : '2.5px')};
             gap: 4px;
             flex-shrink: 0;
           }
@@ -477,13 +645,27 @@ export function printLegalBulk({
             font-weight: bold;
           }
           .officer-name {
-            font-size: ${is2In1 ? '13px' : (is4In1 ? '11px' : '8.5px')};
+            font-size: ${is2In1 ? '13px' : (is4In1 ? '10.5px' : '8.5px')};
             font-weight: 900;
             color: #000000;
-            line-height: 1.15;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
+            line-height: 1.25;
+            white-space: normal;
+            word-break: break-word;
+            overflow-wrap: break-word;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 4px;
+          }
+          .rank-tag {
+            font-size: ${is2In1 ? '9px' : (is4In1 ? '7.5px' : '6.5px')};
+            background: #fef3c7;
+            color: #78350f;
+            border: 1px solid #fde68a;
+            padding: 0.5px 4px;
+            border-radius: 3px;
+            font-weight: 900;
+            display: inline-block;
           }
           .officer-mobile {
             font-size: ${is2In1 ? '11.5px' : (is4In1 ? '9.5px' : '7.5px')};
@@ -493,32 +675,19 @@ export function printLegalBulk({
             display: flex;
             align-items: center;
             gap: 4px;
+            margin-top: 1px;
           }
           .officer-sub-bar {
             display: flex;
+            flex-wrap: wrap;
             justify-content: space-between;
+            gap: 4px;
             border-top: 1px solid #e2e8f0;
             padding-top: 2px;
+            margin-top: 2px;
             font-size: ${is2In1 ? '9px' : (is4In1 ? '7.5px' : '6px')};
             color: #334155;
-          }
-          .officer-qr-box {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 2px;
-            background: #ffffff;
-            border: 1px solid #cbd5e1;
-            border-radius: 4px;
-            flex-shrink: 0;
-          }
-          .qr-sub-text {
-            font-size: ${is2In1 ? '7px' : '5.5px'};
-            font-weight: bold;
-            color: #15803d;
-            margin-top: 1px;
-            line-height: 1;
+            word-break: break-word;
           }
 
           /* Modern Vector SVG Icons */
@@ -541,77 +710,100 @@ export function printLegalBulk({
             margin-right: 4px;
           }
 
-          /* 3. Assignment Table */
+          /* 3. Assignment Table (Clean, Large, Highly Professional) */
           .table-container {
-            margin-top: ${is2In1 ? '6px' : (is4In1 ? '4px' : '2px')};
-            border: 1px solid #000000;
+            margin-top: ${is2In1 ? '7px' : (is4In1 ? '4px' : '2.5px')};
+            margin-bottom: ${is2In1 ? '5px' : (is4In1 ? '3px' : '2px')};
+            border: 1.5px solid #0f172a;
             border-radius: 6px;
             overflow: hidden;
             flex-shrink: 0;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.04);
           }
           .card-table {
             width: 100%;
             border-collapse: collapse;
-            font-size: ${is2In1 ? '10.5px' : (is4In1 ? '8.5px' : '6.5px')};
+            font-size: ${is2In1 ? '11.5px' : (is4In1 ? '9.5px' : '7.5px')};
+            line-height: 1.35;
           }
           .card-table tr {
-            border-bottom: 1px solid #e2e8f0;
+            border-bottom: 1px solid #cbd5e1;
           }
           .card-table tr:last-child {
             border-bottom: none;
           }
           .td-lbl {
-            width: 32%;
+            width: 28%;
             background: #f1f5f9;
-            font-weight: bold;
-            color: #1e293b;
-            padding: ${is2In1 ? '3.5px 7px' : (is4In1 ? '2.5px 5px' : '1.5px 3px')};
-            border-right: 1px solid #cbd5e1;
+            font-weight: 800;
+            color: #0f172a;
+            padding: ${is2In1 ? '5px 8px' : (is4In1 ? '3.5px 6px' : '2px 4px')};
+            border-right: 1.5px solid #cbd5e1;
             white-space: nowrap;
+            font-size: ${is2In1 ? '11.5px' : (is4In1 ? '9px' : '7px')};
           }
           .td-val {
-            padding: ${is2In1 ? '3.5px 7px' : (is4In1 ? '2.5px 5px' : '1.5px 3px')};
+            padding: ${is2In1 ? '5px 8px' : (is4In1 ? '3.5px 6px' : '2px 4px')};
             color: #020617;
             font-weight: 600;
+            font-size: ${is2In1 ? '11.5px' : (is4In1 ? '9px' : '7px')};
             word-break: break-word;
+            line-height: 1.35;
           }
           .td-duty-val {
             font-weight: 900;
             color: #78350f;
-            background: #fefce8;
-            font-size: ${is2In1 ? '11px' : (is4In1 ? '9px' : '7px')};
+            background: #fef3c7;
+            font-size: ${is2In1 ? '13px' : (is4In1 ? '10px' : '8px')};
+            letter-spacing: 0.2px;
+          }
+          .row-incharge .td-lbl {
+            background: #f8fafc;
+            color: #0369a1;
+            font-weight: 800;
+          }
+          .row-incharge .incharge-val {
+            color: #0369a1;
+            font-weight: 800;
           }
           .row-briefing td {
-            background: #f8fafc;
-            color: #0f172a;
+            background: #f0f9ff;
+            color: #0369a1;
+          }
+          .row-briefing .td-lbl {
+            background: #e0f2fe;
+            color: #075985;
           }
           .row-note td {
             background: #fffbeb;
             color: #92400e;
           }
+          .row-note .td-lbl {
+            background: #fef3c7;
+            color: #92400e;
+          }
           .note-val {
-            font-size: ${is2In1 ? '9.5px' : (is4In1 ? '7.5px' : '6px')};
+            font-size: ${is2In1 ? '10.5px' : (is4In1 ? '8.5px' : '6.5px')};
           }
 
-          /* 4. Co-deployed Force Section (सहयोगार्थ पुलिस बल) */
+          /* 4. Co-deployed Force Section (सहयोगार्थ पुलिस बल - 2 Column Grid, Zero Scrollbars) */
           .co-force-container {
-            margin-top: 6px;
-            border: 1px solid #000000;
+            margin-top: ${is2In1 ? '6px' : (is4In1 ? '4px' : '2.5px')};
+            border: 1.5px solid #0b132b;
             border-radius: 6px;
-            overflow: hidden;
+            overflow: hidden !important;
             background: #ffffff;
-            font-size: ${is2In1 ? '9.5px' : '8px'};
-            flex: 1;
+            font-size: ${is2In1 ? '9px' : '7.5px'};
             display: flex;
             flex-direction: column;
             min-height: 0;
           }
           .co-force-header {
             background: #f1f5f9;
-            padding: 3px 8px;
+            padding: ${is2In1 ? '3.5px 8px' : '2px 6px'};
             font-weight: 900;
             color: #0f172a;
-            border-bottom: 1px solid #cbd5e1;
+            border-bottom: 1.5px solid #cbd5e1;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -619,88 +811,130 @@ export function printLegalBulk({
           .co-hdr-title {
             display: flex;
             align-items: center;
+            font-size: ${is2In1 ? '10.5px' : (is4In1 ? '8.5px' : '7px')};
           }
           .co-count {
             color: #0369a1;
             font-weight: bold;
             font-family: monospace;
+            font-size: ${is2In1 ? '10px' : (is4In1 ? '8px' : '6.5px')};
           }
-          .co-force-body {
-            overflow-y: auto;
-            flex: 1;
+          .co-force-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            column-gap: ${is2In1 ? '8px' : '5px'};
+            row-gap: ${is2In1 ? '2.5px' : '1.5px'};
+            padding: ${is2In1 ? '4px 6px' : '2.5px 4px'};
             background: #ffffff;
+            overflow: hidden !important;
           }
-          .co-row {
+          .co-item {
             display: flex;
             align-items: center;
-            justify-content: space-between;
-            padding: 2.5px 8px;
-            border-bottom: 1px solid #f1f5f9;
-            font-size: ${is2In1 ? '9.5px' : '8px'};
-            line-height: 1.25;
-          }
-          .co-row:nth-child(even) {
+            gap: 3px;
+            padding: ${is2In1 ? '2px 4px' : '1px 3px'};
+            border-radius: 3px;
             background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            font-size: ${is2In1 ? '8.5px' : (is4In1 ? '7.5px' : '6.5px')};
+            line-height: 1.25;
+            white-space: nowrap;
+            overflow: hidden;
           }
-          .co-col-num {
-            width: 18px;
+          .co-idx {
             font-weight: bold;
             color: #64748b;
-            flex-shrink: 0;
             font-family: monospace;
+            font-size: ${is2In1 ? '8px' : (is4In1 ? '7px' : '6px')};
+            flex-shrink: 0;
           }
-          .co-col-name {
-            flex: 1.3;
-            font-weight: 600;
+          .co-name {
+            font-weight: 900;
             color: #0f172a;
-            white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            padding-right: 6px;
+            white-space: nowrap;
+            flex: 1;
+            min-width: 0;
           }
-          .co-col-mob {
+          .co-mob {
             font-family: monospace;
             font-weight: bold;
-            color: #0f172a;
-            width: 110px;
-            flex-shrink: 0;
+            color: #0369a1;
             display: flex;
             align-items: center;
+            flex-shrink: 0;
+            margin-left: auto;
           }
-          .co-col-dist {
-            flex: 1;
-            text-align: right;
+          .co-dist {
+            color: #64748b;
+            font-size: ${is2In1 ? '7.5px' : (is4In1 ? '6.5px' : '5.5px')};
+            flex-shrink: 0;
+          }
+          .co-more-note {
+            background: #f1f5f9;
+            border-top: 1px solid #e2e8f0;
+            padding: 2px 4px;
+            text-align: center;
+            font-size: ${is2In1 ? '8px' : '7px'};
+            font-weight: bold;
             color: #475569;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
           }
 
           /* 5. Authorization Footer */
           .card-footer {
             display: flex;
-            align-items: flex-end;
+            align-items: center;
             justify-content: space-between;
-            border-top: 1.5px solid #000000;
-            padding-top: ${is2In1 ? '5px' : (is4In1 ? '3px' : '2px')};
-            margin-top: ${is2In1 ? '6px' : (is4In1 ? '3px' : '2px')};
+            border-top: 1.5px solid #0b132b;
+            padding-top: ${is2In1 ? '6px' : (is4In1 ? '3px' : '2px')};
+            margin-top: auto;
             flex-shrink: 0;
+            gap: 6px;
+          }
+          .footer-left {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+          }
+          .footer-qr-frame {
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            border-radius: 4px;
+            padding: 1px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+          }
+          .footer-auth-details {
+            display: flex;
+            flex-direction: column;
+            gap: 1px;
           }
           .verified-pill {
             display: inline-flex;
             align-items: center;
             gap: 3px;
-            padding: 2px 6px;
+            padding: 1.5px 5px;
             background: #dcfce7;
             border: 1px solid #86efac;
             border-radius: 4px;
-            font-size: ${is2In1 ? '9px' : (is4In1 ? '7px' : '5.5px')};
+            font-size: ${is2In1 ? '8.5px' : (is4In1 ? '7px' : '5.5px')};
             font-weight: 900;
             color: #14532d;
+            white-space: nowrap;
           }
           .dot {
             color: #16a34a;
             font-size: 6px;
+          }
+          .auth-code {
+            font-size: ${is2In1 ? '8px' : (is4In1 ? '6.5px' : '5.5px')};
+            font-family: monospace;
+            font-weight: bold;
+            color: #475569;
+            white-space: nowrap;
           }
           .footer-right {
             text-align: right;
@@ -927,6 +1161,9 @@ export function generateIndividualPassHtml({
     <head>
       <meta charset="utf-8">
       <title>${escapeHtml(duty.name || 'ड्यूटी पास')} - ${escapeHtml(eventTitle || 'उत्तर प्रदेश पुलिस')}</title>
+      <link rel="preconnect" href="https://fonts.googleapis.com">
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+      <link href="https://fonts.googleapis.com/css2?family=Mukta:wght@400;500;600;700;800;900&family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
       <style>
         @page {
           size: A4 portrait;
@@ -938,26 +1175,28 @@ export function generateIndividualPassHtml({
           padding: 0;
         }
         body {
-          font-family: 'Noto Sans Devanagari', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+          font-family: 'Mukta', 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
           background: #ffffff;
           color: #020617;
           -webkit-print-color-adjust: exact;
           print-color-adjust: exact;
           padding: 10px;
+          letter-spacing: 0.15px;
         }
         .pass-container {
           max-width: 680px;
           margin: 0 auto;
-          border: 2.5px solid #000000;
+          border: 2.5px solid #0b132b;
+          box-shadow: inset 0 0 0 2px #d97706;
           border-radius: 12px;
-          padding: 14px 18px;
+          padding: 16px 20px;
           background: #ffffff;
         }
         .header-bar {
           display: flex;
           align-items: center;
           justify-content: space-between;
-          border-bottom: 2px solid #000000;
+          border-bottom: 2px solid #0b132b;
           padding-bottom: 8px;
           margin-bottom: 10px;
         }
@@ -1119,11 +1358,15 @@ export function generateIndividualPassHtml({
           <div class="officer-details">
             <div class="officer-name">
               <span>${escapeHtml(duty.name || '-')}</span>
-              <span class="rank-tag">${escapeHtml(duty.rank || 'का0')}</span>
             </div>
             <div class="officer-mob">📱 ${escapeHtml(duty.mobile || '-')}</div>
             <div class="officer-meta">
-              PNO: <strong style="font-family:monospace;">${escapeHtml(duty.id || '-')}</strong> | मूल तैनाती: <strong>${escapeHtml(duty.posting || '-')}</strong> ${duty.district ? `(${escapeHtml(duty.district)})` : ''}
+              ${(duty.pno && !String(duty.pno).toUpperCase().startsWith('DUTY-'))
+                ? `PNO: <strong style="font-family:monospace;">${escapeHtml(duty.pno)}</strong> | `
+                : (duty.id && !String(duty.id).toUpperCase().startsWith('DUTY-') && String(duty.id).length <= 12)
+                  ? `PNO: <strong style="font-family:monospace;">${escapeHtml(duty.id)}</strong> | `
+                  : ''
+              }मूल तैनाती: <strong>${escapeHtml(duty.posting || '-')}</strong> ${duty.district ? `(${escapeHtml(duty.district)})` : ''}
             </div>
           </div>
           <div style="text-align:center;padding:4px;background:#ffffff;border:1px solid #cbd5e1;border-radius:6px;">

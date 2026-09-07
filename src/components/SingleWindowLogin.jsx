@@ -42,7 +42,7 @@ export default function SingleWindowLogin({ isOpen, onClose, onLoginSuccess }) {
     setSuccessMsg('');
 
     if (lockoutTimer > 0) {
-      setErrorMsg(`⚠️ सुरक्षा कारणों से लॉगिन ${lockoutTimer} सेकंड हेतु अवरुद्ध है।`);
+      setErrorMsg(`सुरक्षा कारणों से लॉगिन ${lockoutTimer} सेकंड हेतु अवरुद्ध है।`);
       return;
     }
 
@@ -57,9 +57,9 @@ export default function SingleWindowLogin({ isOpen, onClose, onLoginSuccess }) {
       setFailedAttempts(nextAttempts);
       if (nextAttempts >= 5) {
         setLockoutTimer(30);
-        setErrorMsg('🛑 5 बार गलत प्रयास! सुरक्षा कारणों से 30 सेकंड का लॉक लगाया गया है।');
+        setErrorMsg('5 बार गलत प्रयास! सुरक्षा कारणों से 30 सेकंड का लॉक लगाया गया है।');
       } else {
-        setErrorMsg(`⚠️ क्रेडेंशियल गलत है! (शेष प्रयास: ${5 - nextAttempts})`);
+        setErrorMsg(`क्रेडेंशियल गलत है! (शेष प्रयास: ${5 - nextAttempts})`);
       }
     }
   };
@@ -70,12 +70,12 @@ export default function SingleWindowLogin({ isOpen, onClose, onLoginSuccess }) {
     setSuccessMsg('');
 
     if (!newPassword || newPassword.length < 6) {
-      setErrorMsg('⚠️ नया पासवर्ड कम से कम 6 अक्षरों का होना आवश्यक है!');
+      setErrorMsg('नया पासवर्ड कम से कम 6 अक्षरों का होना आवश्यक है!');
       return;
     }
 
     if (newPassword !== confirmPassword) {
-      setErrorMsg('⚠️ नया पासवर्ड और पुष्टि पासवर्ड मेल नहीं खाते!');
+      setErrorMsg('नया पासवर्ड और पुष्टि पासवर्ड मेल नहीं खाते!');
       return;
     }
 
@@ -168,7 +168,7 @@ export default function SingleWindowLogin({ isOpen, onClose, onLoginSuccess }) {
             <div className="space-y-3">
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">
-                  यूजरनेम (Username)
+                  यूजरनेम
                 </label>
                 <div className="relative flex items-center">
                   <User className="absolute left-3.5 w-4 h-4 text-slate-400 pointer-events-none" />
@@ -186,7 +186,7 @@ export default function SingleWindowLogin({ isOpen, onClose, onLoginSuccess }) {
               <div>
                 <div className="flex items-center justify-between mb-1">
                   <label className="block text-xs font-bold text-slate-700">
-                    पासवर्ड (Password)
+                    पासवर्ड
                   </label>
                   <button
                     type="button"
@@ -197,7 +197,7 @@ export default function SingleWindowLogin({ isOpen, onClose, onLoginSuccess }) {
                     }}
                     className="text-[11px] font-bold text-amber-700 hover:text-amber-800 hover:underline cursor-pointer"
                   >
-                    🔑 पासवर्ड भूल गए / रीसेट?
+                    पासवर्ड भूल गए / रीसेट?
                   </button>
                 </div>
 
@@ -249,7 +249,7 @@ export default function SingleWindowLogin({ isOpen, onClose, onLoginSuccess }) {
             <div className="bg-amber-50 border border-amber-200 p-3 rounded-2xl text-[11px] text-amber-950 font-medium space-y-1">
               <div className="font-bold flex items-center gap-1 text-amber-900">
                 <ShieldAlert className="w-3.5 h-3.5" />
-                सुरक्षा सत्यापन (Master Recovery PIN)
+                सुरक्षा सत्यापन
               </div>
               <p>
                 {selectedRole === 'admin' ? 'मुख्य एडमिन' : 'वरिष्ठ अधिकारी'} का पासवर्ड रीसेट करने हेतु अधिकृत मास्टर रिकवरी पिन दर्ज करें (डिफ़ॉल्ट: <code className="font-mono font-bold bg-amber-200/60 px-1 rounded">UPPOLICE@2026</code>)।
@@ -259,7 +259,7 @@ export default function SingleWindowLogin({ isOpen, onClose, onLoginSuccess }) {
             <div className="space-y-2.5">
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">
-                  मास्टर सुरक्षा रिकवरी पिन (Master Security PIN) *
+                  मास्टर सुरक्षा रिकवरी पिन *
                 </label>
                 <input
                   type="password"
@@ -274,7 +274,7 @@ export default function SingleWindowLogin({ isOpen, onClose, onLoginSuccess }) {
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">
-                  नया पासवर्ड दर्ज करें (New Password) *
+                  नया पासवर्ड *
                 </label>
                 <div className="relative flex items-center">
                   <input
@@ -297,7 +297,7 @@ export default function SingleWindowLogin({ isOpen, onClose, onLoginSuccess }) {
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">
-                  नए पासवर्ड की पुनः पुष्टि करें (Confirm Password) *
+                  पासवर्ड की पुनः पुष्टि करें *
                 </label>
                 <input
                   type="password"

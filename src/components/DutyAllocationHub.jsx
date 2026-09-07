@@ -157,6 +157,21 @@ export default function DutyAllocationHub({
   const sectorFileInputRef = useRef(null);
   const pointFileInputRef = useRef(null);
 
+  // Sync state if activeEvent.allocationData is updated from cloud/another browser
+  useEffect(() => {
+    if (activeEvent?.allocationData) {
+      if (Array.isArray(activeEvent.allocationData.zones) && activeEvent.allocationData.zones.length > 0) {
+        setMasterZones(activeEvent.allocationData.zones);
+      }
+      if (Array.isArray(activeEvent.allocationData.sectors) && activeEvent.allocationData.sectors.length > 0) {
+        setMasterSectors(activeEvent.allocationData.sectors);
+      }
+      if (Array.isArray(activeEvent.allocationData.points) && activeEvent.allocationData.points.length > 0) {
+        setMasterPoints(activeEvent.allocationData.points);
+      }
+    }
+  }, [activeEvent?.allocationData]);
+
   // Persistence helpers with Cloud Sync
   const saveZones = (list) => {
     setMasterZones(list);
@@ -353,7 +368,7 @@ export default function DutyAllocationHub({
     onUpdateEventRecords(updated);
 
     setSelectedPnos(new Set());
-    setSuccessToast(`🎉 सफलतापूर्वक ${newAllocations.length} जवानों को "${targetPoint}" पर तैनात किया गया!`);
+    setSuccessToast(`सफलतापूर्वक ${newAllocations.length} जवानों को "${targetPoint}" पर तैनात किया गया!`);
     setTimeout(() => setSuccessToast(null), 4000);
   };
 
@@ -384,7 +399,7 @@ export default function DutyAllocationHub({
         photo: newRecord.photo || ''
       });
 
-      setSuccessToast(`🔄 ${oldRecord.name} के स्थान पर ${newRecord.name} की प्रतिस्थानी ड्यूटी लगा दी गई!`);
+      setSuccessToast(`${oldRecord.name} के स्थान पर ${newRecord.name} की प्रतिस्थानी ड्यूटी लगा दी गई!`);
     } else if (replacementType === 'INTER_DISTRICT_SUBSTITUTION') {
       // In-place substitute for inter-district arrival
       const idx = updatedRecords.findIndex(r => r.id === oldRecord.id || (r.pno && r.pno === oldRecord.pno));
@@ -399,7 +414,7 @@ export default function DutyAllocationHub({
         updatedRecords.push(updatedItem);
       }
 
-      setSuccessToast(`🏢 गैर-जनपद आवक: ${newRecord.name} (PNO: ${newRecord.pno}) का ड्यूटी कार्ड व पास सफलतापूर्वक अपडेट हो गया!`);
+      setSuccessToast(`गैर-जनपद आवक: ${newRecord.name} (PNO: ${newRecord.pno}) का विवरण सफलतापूर्वक अपडेट हो गया!`);
     }
 
     onUpdateEventRecords(updatedRecords);
@@ -456,7 +471,7 @@ export default function DutyAllocationHub({
         return;
       }
       saveZones([...parsed, ...masterZones.filter(z => !seen.has(z.name))]);
-      setSuccessToast(`🎉 ${parsed.length} ज़ोन एक्सेल से सफलतापूर्वक अपलोड किए गए!`);
+      setSuccessToast(`${parsed.length} ज़ोन एक्सेल से सफलतापूर्वक अपलोड किए गए!`);
       setTimeout(() => setSuccessToast(null), 4000);
     } catch (err) {
       alert(`ज़ोन अपलोड त्रुटि: ${err.message}`);
@@ -493,7 +508,7 @@ export default function DutyAllocationHub({
         return;
       }
       saveSectors([...parsed, ...masterSectors.filter(s => !seen.has(s.name))]);
-      setSuccessToast(`🎉 ${parsed.length} सेक्टर एक्सेल से सफलतापूर्वक अपलोड किए गए!`);
+      setSuccessToast(`${parsed.length} सेक्टर एक्सेल से सफलतापूर्वक अपलोड किए गए!`);
       setTimeout(() => setSuccessToast(null), 4000);
     } catch (err) {
       alert(`सेक्टर अपलोड त्रुटि: ${err.message}`);
@@ -541,7 +556,7 @@ export default function DutyAllocationHub({
         return;
       }
       savePoints([...parsed, ...masterPoints.filter(p => !seen.has(p.name))]);
-      setSuccessToast(`🎉 ${parsed.length} ड्यूटी पॉइंट्स एक्सेल से सफलतापूर्वक अपलोड किए गए!`);
+      setSuccessToast(`${parsed.length} ड्यूटी पॉइंट्स एक्सेल से सफलतापूर्वक अपलोड किए गए!`);
       setTimeout(() => setSuccessToast(null), 4000);
     } catch (err) {
       alert(`ड्यूटी पॉइंट्स अपलोड त्रुटि: ${err.message}`);
@@ -614,7 +629,7 @@ export default function DutyAllocationHub({
       setTargetZone(newZoneForPoint.trim());
       setTargetSector(newSectorForPoint.trim());
     }
-    setSuccessToast(`🎉 ड्यूटी पॉइंट "${relocatePointName}" को ज़ोन "${newZoneForPoint}" / सेक्टर "${newSectorForPoint}" में स्थानांतरित कर दिया गया!`);
+    setSuccessToast(`ड्यूटी पॉइंट "${relocatePointName}" को ज़ोन "${newZoneForPoint}" / सेक्टर "${newSectorForPoint}" में स्थानांतरित कर दिया गया!`);
     setTimeout(() => setSuccessToast(null), 4000);
   };
 
@@ -651,10 +666,10 @@ export default function DutyAllocationHub({
                 type="button"
                 onClick={onOpenBooklet}
                 className="px-4 py-2.5 bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-400 hover:to-amber-300 text-slate-950 font-black text-xs sm:text-sm rounded-xl flex items-center gap-2 shadow-lg shadow-amber-500/20 transition active:scale-95 cursor-pointer shrink-0"
-                title="आधिकारिक ड्यूटी बुकलेट देखें एवं A4 PDF प्रिंट करें"
+                title="आधिकारिक ड्यूटी बुकलेट देखें एवं प्रिंट करें"
               >
                 <FileSpreadsheet className="w-4 h-4 stroke-[2.5]" />
-                <span>📖 बुकलेट देखें / Print A4</span>
+                <span>बुकलेट देखें</span>
               </button>
             )}
 
@@ -737,7 +752,7 @@ export default function DutyAllocationHub({
             }`}
           >
             <ArrowLeftRight className="w-4 h-4 shrink-0 stroke-[2.5]" />
-            <span className="truncate">5. स्थानांतरण ({masterPoints.length})</span>
+            <span className="truncate">5. बल स्थानांतरण</span>
           </button>
         </div>
       </div>
@@ -847,7 +862,7 @@ export default function DutyAllocationHub({
               {/* 1. Zone */}
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between text-slate-700">
-                  <span className="font-black text-slate-900">1. ज़ोन (Zone):</span>
+                  <span className="font-black text-slate-900">1. ज़ोन:</span>
                   <button type="button" onClick={() => setIsZoneModalOpen(true)} className="text-[11px] text-amber-700 hover:text-amber-800 font-bold cursor-pointer">+ नया</button>
                 </div>
                 <select
@@ -855,14 +870,14 @@ export default function DutyAllocationHub({
                   onChange={(e) => setTargetZone(e.target.value)}
                   className="w-full h-11 px-3.5 bg-slate-50 border border-slate-300 rounded-xl font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500 cursor-pointer text-xs"
                 >
-                  {allZoneNames.map(z => <option key={z} value={z}>🛡️ {z}</option>)}
+                  {allZoneNames.map(z => <option key={z} value={z}>{z}</option>)}
                 </select>
               </div>
 
               {/* 2. Sector */}
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between text-slate-700">
-                  <span className="font-black text-slate-900">2. सेक्टर (Sector):</span>
+                  <span className="font-black text-slate-900">2. सेक्टर:</span>
                   <button type="button" onClick={() => setIsSectorModalOpen(true)} className="text-[11px] text-amber-700 hover:text-amber-800 font-bold cursor-pointer">+ नया</button>
                 </div>
                 <select
@@ -870,14 +885,14 @@ export default function DutyAllocationHub({
                   onChange={(e) => setTargetSector(e.target.value)}
                   className="w-full h-11 px-3.5 bg-slate-50 border border-slate-300 rounded-xl font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500 cursor-pointer text-xs"
                 >
-                  {availableSectorsForZone.map(s => <option key={s} value={s}>🚩 {s}</option>)}
+                  {availableSectorsForZone.map(s => <option key={s} value={s}>{s}</option>)}
                 </select>
               </div>
 
               {/* 3. Duty Point */}
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between text-slate-900 font-black">
-                  <span className="font-black text-slate-900">3. ड्यूटी स्थल (Point) *:</span>
+                  <span className="font-black text-slate-900">3. ड्यूटी स्थल *:</span>
                   <button type="button" onClick={() => setIsPointModalOpen(true)} className="text-[11px] text-amber-700 hover:text-amber-800 font-bold cursor-pointer">+ नया</button>
                 </div>
                 <select
@@ -890,7 +905,7 @@ export default function DutyAllocationHub({
                   }}
                   className="w-full h-11 px-3.5 bg-amber-50/60 border-2 border-amber-400 rounded-xl font-black text-slate-950 focus:outline-none focus:ring-2 focus:ring-amber-500 cursor-pointer text-xs"
                 >
-                  {availablePointsForSector.map(p => <option key={p} value={p}>📍 {p}</option>)}
+                  {availablePointsForSector.map(p => <option key={p} value={p}>{p}</option>)}
                 </select>
               </div>
 
@@ -1016,8 +1031,8 @@ export default function DutyAllocationHub({
                   onChange={(e) => setAvailabilityFilter(e.target.value)}
                   className="w-full h-11 px-3.5 bg-slate-50 border border-slate-300 rounded-xl cursor-pointer focus:outline-none focus:ring-2 focus:ring-amber-500 font-bold"
                 >
-                  <option value="available">🟢 केवल उपलब्ध / खाली जवान</option>
-                  <option value="all">🌐 समस्त मास्टर फ़ोर्स (All Staff)</option>
+                  <option value="available">केवल उपलब्ध जवान</option>
+                  <option value="all">समस्त मास्टर फ़ोर्स</option>
                 </select>
               </div>
 
@@ -1027,7 +1042,7 @@ export default function DutyAllocationHub({
                   onChange={(e) => setRankFilter(e.target.value)}
                   className="w-full h-11 px-3.5 bg-slate-50 border border-slate-300 rounded-xl cursor-pointer focus:outline-none focus:ring-2 focus:ring-amber-500 font-bold"
                 >
-                  <option value="ALL">समस्त पद (All Ranks)</option>
+                  <option value="ALL">समस्त पद</option>
                   {uniqueRanks.map(r => <option key={r} value={r}>{r}</option>)}
                 </select>
               </div>
@@ -1038,7 +1053,7 @@ export default function DutyAllocationHub({
                   onChange={(e) => setDistrictFilter(e.target.value)}
                   className="w-full h-11 px-3.5 bg-slate-50 border border-slate-300 rounded-xl cursor-pointer focus:outline-none focus:ring-2 focus:ring-amber-500 font-bold"
                 >
-                  <option value="ALL">समस्त जनपद (All Districts)</option>
+                  <option value="ALL">समस्त जनपद</option>
                   {uniqueDistricts.map(d => <option key={d} value={d}>{d}</option>)}
                 </select>
               </div>
@@ -1086,12 +1101,12 @@ export default function DutyAllocationHub({
 
                       <div className="text-[11px] font-mono opacity-80 flex items-center justify-between pt-0.5">
                         <span>PNO: {p.pno || '-'}</span>
-                        <span>📱 {p.mobile || '-'}</span>
+                        <span>मो०: {p.mobile || '-'}</span>
                       </div>
 
                       {assignedRecord && (
                         <div className="text-[10px] text-rose-700 font-bold truncate mt-1 bg-rose-50 p-1.5 rounded-lg border border-rose-200">
-                          ⚠️ तैनात: {assignedRecord.duty_place}
+                          तैनात: {assignedRecord.duty_place}
                         </div>
                       )}
                     </div>
@@ -1328,8 +1343,8 @@ export default function DutyAllocationHub({
 
           onUpdateEventRecords(currentAssigned);
           const toastMsg = autoStrategy === 'vacancies_only'
-            ? `🎉 ${newlyAllocatedCount} जवानों की ड्यूटी रिक्त स्थानों पर सफलतापूर्वक आवंटित हो गई! पूर्व आवंटित जवान सुरक्षित हैं।`
-            : `🎉 ${currentAssigned.length} जवानों की ड्यूटी नए सिरे से स्वतः आवंटित हो गई! बुकलेट में तुरंत अपडेट हो गई है।`;
+            ? `${newlyAllocatedCount} जवानों की ड्यूटी रिक्त स्थानों पर सफलतापूर्वक आवंटित हो गई!`
+            : `${currentAssigned.length} जवानों की ड्यूटी नए सिरे से स्वतः आवंटित हो गई!`;
           setSuccessToast(toastMsg);
           setTimeout(() => setSuccessToast(null), 4000);
         };
@@ -1351,10 +1366,10 @@ export default function DutyAllocationHub({
         };
 
         const shortages = [];
-        if (reserveStats.si < netNeedStats.si) shortages.push({ name: 'उ०नि० (SI)', def: netNeedStats.si - reserveStats.si });
-        if (reserveStats.hc < netNeedStats.hc) shortages.push({ name: 'हे०का० (HC)', def: netNeedStats.hc - reserveStats.hc });
-        if (reserveStats.female < netNeedStats.female) shortages.push({ name: 'म०का० (WCP)', def: netNeedStats.female - reserveStats.female });
-        if (reserveStats.constable < netNeedStats.constable) shortages.push({ name: 'का० (Constable)', def: netNeedStats.constable - reserveStats.constable });
+        if (reserveStats.si < netNeedStats.si) shortages.push({ name: 'उ०नि०', def: netNeedStats.si - reserveStats.si });
+        if (reserveStats.hc < netNeedStats.hc) shortages.push({ name: 'हे०का०', def: netNeedStats.hc - reserveStats.hc });
+        if (reserveStats.female < netNeedStats.female) shortages.push({ name: 'म०का०', def: netNeedStats.female - reserveStats.female });
+        if (reserveStats.constable < netNeedStats.constable) shortages.push({ name: 'का०', def: netNeedStats.constable - reserveStats.constable });
 
         return (
           <div className="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200/90 shadow-sm space-y-6">
@@ -1367,7 +1382,7 @@ export default function DutyAllocationHub({
                 <div>
                   <div className="flex items-center gap-2">
                     <h2 className="text-base sm:text-lg font-black text-slate-950">
-                      स्मार्ट ऑटो-ड्यूटी एलोकेशन (Live Force Distribution Matrix)
+                      स्मार्ट ऑटो-ड्यूटी आवंटन
                     </h2>
                     <span className="bg-emerald-100 text-emerald-800 text-[10px] px-2 py-0.5 rounded-full font-black border border-emerald-300 flex items-center gap-1 animate-pulse">
                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>
@@ -1388,7 +1403,7 @@ export default function DutyAllocationHub({
                     className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-amber-400 font-bold text-xs rounded-xl flex items-center gap-1.5 shadow transition cursor-pointer"
                   >
                     <Printer className="w-3.5 h-3.5 text-amber-400" />
-                    <span>📄 आधिकारिक बुकलेट में देखें</span>
+                    <span>आधिकारिक बुकलेट में देखें</span>
                   </button>
                 )}
                 <button
@@ -1399,8 +1414,8 @@ export default function DutyAllocationHub({
                   <Zap className="w-3.5 h-3.5" />
                   <span>
                     {autoStrategy === 'vacancies_only'
-                      ? '⚡ रिक्त पदों पर बल तैनात करें'
-                      : '⚡ सभी पॉइंट्स पर नया बल तैनात करें'}
+                      ? 'रिक्त पदों पर बल तैनात करें'
+                      : 'सभी पॉइंट्स पर नया बल तैनात करें'}
                   </span>
                 </button>
               </div>
@@ -1418,7 +1433,7 @@ export default function DutyAllocationHub({
               {/* Card 2: Deployed Stats */}
               <div className="bg-blue-50/80 border border-blue-200 p-3.5 rounded-2xl space-y-1">
                 <div className="text-[11px] font-black text-blue-900 uppercase tracking-wider flex items-center justify-between">
-                  <span>🚨 वर्तमान तैनात बल</span>
+                  <span>वर्तमान तैनात बल</span>
                   <span className="bg-blue-600 text-white text-[10px] px-1.5 py-0.2 rounded font-mono font-bold">{totalDeployed}</span>
                 </div>
                 <div className="flex flex-wrap gap-1 text-[11px] font-bold text-blue-950 pt-1">
@@ -1432,7 +1447,7 @@ export default function DutyAllocationHub({
               {/* Card 3: Reserve / Available Stats */}
               <div className="bg-emerald-50/80 border border-emerald-200 p-3.5 rounded-2xl space-y-1">
                 <div className="text-[11px] font-black text-emerald-900 uppercase tracking-wider flex items-center justify-between">
-                  <span>🛡️ शेष उपलब्ध (रिजर्व फ़ोर्स)</span>
+                  <span>उपलब्ध रिज़र्व बल</span>
                   <span className="bg-emerald-600 text-white text-[10px] px-1.5 py-0.2 rounded font-mono font-bold">{totalReserve}</span>
                 </div>
                 <div className="flex flex-wrap gap-1 text-[11px] font-bold text-emerald-950 pt-1">
@@ -1446,7 +1461,7 @@ export default function DutyAllocationHub({
               {/* Card 4: Demand vs Fulfilled */}
               <div className="bg-amber-50/80 border border-amber-200 p-3.5 rounded-2xl space-y-1">
                 <div className="text-[11px] font-black text-amber-900 uppercase tracking-wider flex items-center justify-between">
-                  <span>🎯 कुल निर्धारित मांग</span>
+                  <span>कुल निर्धारित मांग</span>
                   <span className="bg-amber-500 text-slate-950 text-[10px] px-1.5 py-0.2 rounded font-mono font-bold">{totalDemanded}</span>
                 </div>
                 <div className="text-xs font-bold text-slate-700 pt-1">
@@ -1461,10 +1476,10 @@ export default function DutyAllocationHub({
                 <div className="space-y-0.5">
                   <div className="font-black text-slate-900 text-xs sm:text-sm flex items-center gap-1.5">
                     <SlidersHorizontal className="w-4 h-4 text-amber-600" />
-                    <span>ऑटो-आवंटन रणनीति (Allocation Strategy):</span>
+                    <span>ऑटो-आवंटन रणनीति:</span>
                   </div>
                   <p className="text-[11px] text-slate-500 font-medium">
-                    चुनें कि क्या पहले से मैनुअल रूप से तैनात जवानों/वीआईपी ड्यूटी को सुरक्षित रखना है या नए सिरे से पूरा आवंटन करना है।
+                    चुनें कि क्या पहले से मैनुअल रूप से तैनात जवानों को सुरक्षित रखना है या नए सिरे से पूरा आवंटन करना है।
                   </p>
                 </div>
 
@@ -1478,7 +1493,7 @@ export default function DutyAllocationHub({
                         : 'text-slate-700 hover:bg-slate-100'
                     }`}
                   >
-                    <span>🛡️ केवल रिक्त पद भरें (सुरक्षित)</span>
+                    <span>केवल रिक्त पद भरें</span>
                     {autoStrategy === 'vacancies_only' && <Check className="w-3.5 h-3.5" />}
                   </button>
 
@@ -1491,7 +1506,7 @@ export default function DutyAllocationHub({
                         : 'text-slate-700 hover:bg-slate-100'
                     }`}
                   >
-                    <span>⚡ नया आवंटन (Reset All)</span>
+                    <span>नया आवंटन</span>
                     {autoStrategy === 'fresh_reallocate' && <Check className="w-3.5 h-3.5" />}
                   </button>
                 </div>
@@ -1502,7 +1517,7 @@ export default function DutyAllocationHub({
                 <div className="p-3 bg-amber-50 border border-amber-300 rounded-xl text-xs font-bold text-amber-950 flex items-start gap-2">
                   <AlertTriangle className="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
                   <div>
-                    <span className="font-black">⚠️ रिज़र्व फ़ोर्स में पदों की कमी (Deficit Alert): </span>
+                    <span className="font-black">रिज़र्व फ़ोर्स में पदों की कमी: </span>
                     <span>
                       मांग पूरी करने हेतु रिज़र्व में {shortages.map(s => `${s.name}: ${s.def} कम`).join(', ')} हैं।
                       कमी रहने पर उपलब्ध अन्य जवानों को स्वतः विकल्प के रूप में तैनात किया जाएगा।
@@ -1517,13 +1532,13 @@ export default function DutyAllocationHub({
               <table className="w-full text-xs text-slate-900">
                 <thead className="bg-slate-100 font-black text-slate-900 border-b border-slate-200">
                   <tr>
-                    <th className="p-3.5 text-left">ड्यूटी स्थल (Point Name)</th>
+                    <th className="p-3.5 text-left">ड्यूटी स्थल</th>
                     <th className="p-3.5 text-left">जोन / सेक्टर</th>
-                    <th className="p-3.5 text-center w-24">उ०नि० (SI)</th>
-                    <th className="p-3.5 text-center w-24">हेकां (HC)</th>
-                    <th className="p-3.5 text-center w-24">का० (Const.)</th>
-                    <th className="p-3.5 text-center w-24">म०का० (Fem.)</th>
-                    <th className="p-3.5 text-center w-24 bg-slate-200">कुल बल (तैनात)</th>
+                    <th className="p-3.5 text-center w-24">उ०नि०</th>
+                    <th className="p-3.5 text-center w-24">हेकां</th>
+                    <th className="p-3.5 text-center w-24">का०</th>
+                    <th className="p-3.5 text-center w-24">म०का०</th>
+                    <th className="p-3.5 text-center w-24 bg-slate-200">कुल बल</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200 bg-white">
@@ -1617,7 +1632,7 @@ export default function DutyAllocationHub({
                   }}
                   className="px-4 py-2.5 bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs rounded-xl border border-rose-200 transition cursor-pointer"
                 >
-                  🔄 सभी ड्यूटी खाली करें (वापस रिजर्व में भेजें)
+                  सभी ड्यूटी खाली करें (रिजर्व में भेजें)
                 </button>
               </div>
             </div>
@@ -1634,7 +1649,7 @@ export default function DutyAllocationHub({
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
               <div>
                 <h2 className="text-lg font-black text-slate-900">
-                  📊 उच्चाधिकारी बल तैनाती समरी शीट (Force Deployment Matrix)
+                  उच्चाधिकारी बल तैनाती समरी शीट
                 </h2>
                 <p className="text-xs text-slate-500 font-medium mt-0.5">
                   ज़ोन-वार निरीक्षक, उ०नि०, हे०का०, आरक्षी, महिला पुलिस, यातायात व होमगार्ड का विस्तृत विवरण
@@ -1646,7 +1661,7 @@ export default function DutyAllocationHub({
                   onClick={onOpenBooklet}
                   className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-xl flex items-center gap-1.5 transition cursor-pointer shrink-0"
                 >
-                  <span>📖 बुकलेट में प्रिंट करें</span>
+                  <span>बुकलेट में प्रिंट करें</span>
                 </button>
               )}
             </div>
@@ -1813,7 +1828,7 @@ export default function DutyAllocationHub({
                     return (
                       <tr key={z.id || idx} className="hover:bg-slate-50/80">
                         <td className="p-3.5 text-center font-mono font-bold text-slate-400">{idx + 1}</td>
-                        <td className="p-3.5 font-black text-slate-950">🛡️ {z.name}</td>
+                        <td className="p-3.5 font-black text-slate-950">{z.name}</td>
                         <td className="p-3.5 text-slate-700">{z.incharge || '-'}</td>
                         <td className="p-3.5 font-mono text-slate-700">{z.mobile || '-'}</td>
                         <td className="p-3.5 text-center font-mono font-bold text-amber-800">{sectorCount} सेक्टर</td>
@@ -1831,8 +1846,8 @@ export default function DutyAllocationHub({
                   .map((s, idx) => (
                     <tr key={s.id || idx} className="hover:bg-slate-50/80">
                       <td className="p-3.5 text-center font-mono font-bold text-slate-400">{idx + 1}</td>
-                      <td className="p-3.5 font-black text-slate-950">🚩 {s.name}</td>
-                      <td className="p-3.5 font-bold text-slate-700">🛡️ {s.zone}</td>
+                      <td className="p-3.5 font-black text-slate-950">{s.name}</td>
+                      <td className="p-3.5 font-bold text-slate-700">{s.zone}</td>
                       <td className="p-3.5 text-slate-700">{s.incharge || '-'}</td>
                       <td className="p-3.5 font-mono text-slate-700">{s.mobile || '-'}</td>
                       <td className="p-3.5 text-center">
@@ -1848,7 +1863,7 @@ export default function DutyAllocationHub({
                   .map((p, idx) => (
                     <tr key={p.id || idx} className="hover:bg-slate-50/80">
                       <td className="p-3.5 text-center font-mono font-bold text-slate-400">{idx + 1}</td>
-                      <td className="p-3.5 font-black text-slate-950">📍 {p.name}</td>
+                      <td className="p-3.5 font-black text-slate-950">{p.name}</td>
                       <td className="p-3.5 font-bold text-slate-700">{p.zone}</td>
                       <td className="p-3.5 text-slate-700">{p.sector}</td>
                       <td className="p-3.5 font-mono text-[11px] text-slate-600">{p.shift}</td>
@@ -1903,10 +1918,10 @@ export default function DutyAllocationHub({
 
                     <div className="flex flex-wrap items-center gap-2 text-xs font-bold pt-1">
                       <span className="px-2.5 py-1 rounded-lg bg-slate-900 text-amber-300 font-mono text-[11px]">
-                        🛡️ {pt.zone}
+                        {pt.zone}
                       </span>
                       <span className="px-2.5 py-1 rounded-lg bg-slate-200 text-slate-800 font-mono text-[11px]">
-                        🚩 {pt.sector}
+                        {pt.sector}
                       </span>
                     </div>
                   </div>
@@ -2087,7 +2102,7 @@ export default function DutyAllocationHub({
             <form onSubmit={handleExecuteRelocatePoint} className="space-y-4 text-xs font-bold">
               <div className="bg-amber-50/70 p-3.5 rounded-2xl border border-amber-200">
                 <div className="text-[11px] text-amber-900 font-bold">चयनित ड्यूटी पॉइंट:</div>
-                <div className="text-sm font-black text-slate-950 mt-0.5">📍 {relocatePointName}</div>
+                <div className="text-sm font-black text-slate-950 mt-0.5">{relocatePointName}</div>
               </div>
               <div>
                 <label className="text-slate-800">नया ज़ोन चुनें या लिखें:</label>

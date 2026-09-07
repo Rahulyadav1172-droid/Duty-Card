@@ -204,10 +204,10 @@ export default function CheckingReportModal({
             </div>
             <div>
               <h2 className="text-base sm:text-lg font-black text-amber-400">
-                आधिकारिक चेकिंग रिपोर्ट (Checking Report Proforma)
+                आधिकारिक चेकिंग रिपोर्ट
               </h2>
               <p className="text-xs text-slate-400 font-medium">
-                दैनिक चेकिंग प्रपत्र व अनुपस्थित कर्मचारियों की आधिकारिक रिपोर्ट (A4 Format)
+                दैनिक चेकिंग प्रपत्र व अनुपस्थित कर्मचारियों की आधिकारिक रिपोर्ट
               </p>
             </div>
           </div>
@@ -245,7 +245,7 @@ export default function CheckingReportModal({
             {/* 1. Checking Date Picker */}
             <div>
               <label className="text-slate-700 font-black block mb-1">
-                📅 चेकिंग दिनांक:
+                चेकिंग दिनांक:
               </label>
               <input
                 type="date"
@@ -261,7 +261,7 @@ export default function CheckingReportModal({
             {/* 2. Zone Filter */}
             <div>
               <label className="text-slate-700 font-black block mb-1">
-                🛡️ ज़ोन फ़िल्टर:
+                ज़ोन फ़िल्टर:
               </label>
               <select
                 value={selectedZone}
@@ -271,7 +271,7 @@ export default function CheckingReportModal({
                 }}
                 className="w-full h-10 px-3 bg-white border border-slate-300 rounded-xl text-slate-900 font-bold focus:outline-none focus:ring-2 focus:ring-amber-500"
               >
-                <option value="ALL">समस्त ज़ोन (All Zones)</option>
+                <option value="ALL">समस्त ज़ोन</option>
                 {uniqueZones.map(z => <option key={z} value={z}>{z}</option>)}
               </select>
             </div>
@@ -279,14 +279,14 @@ export default function CheckingReportModal({
             {/* 3. Sector Filter */}
             <div>
               <label className="text-slate-700 font-black block mb-1">
-                🚩 सेक्टर फ़िल्टर:
+                सेक्टर फ़िल्टर:
               </label>
               <select
                 value={selectedSector}
                 onChange={(e) => setSelectedSector(e.target.value)}
                 className="w-full h-10 px-3 bg-white border border-slate-300 rounded-xl text-slate-900 font-bold focus:outline-none focus:ring-2 focus:ring-amber-500"
               >
-                <option value="ALL">समस्त सेक्टर (All Sectors)</option>
+                <option value="ALL">समस्त सेक्टर</option>
                 {availableSectors.map(s => <option key={s} value={s}>{s}</option>)}
               </select>
             </div>
@@ -294,15 +294,15 @@ export default function CheckingReportModal({
             {/* 4. Report Type */}
             <div>
               <label className="text-slate-700 font-black block mb-1">
-                📄 रिपोर्ट का प्रकार:
+                रिपोर्ट का प्रकार:
               </label>
               <select
                 value={reportType}
                 onChange={(e) => setReportType(e.target.value)}
                 className="w-full h-10 px-3 bg-white border border-slate-300 rounded-xl text-slate-900 font-bold focus:outline-none focus:ring-2 focus:ring-amber-500"
               >
-                <option value="live">🔴 केवल गैरहाजिर ({absentRecords.length} कर्मचारी)</option>
-                <option value="blank">📝 ब्लैंक प्रोफ़ार्मा (हाथ से चेकिंग हेतु)</option>
+                <option value="live">केवल गैरहाजिर ({absentRecords.length} कर्मचारी)</option>
+                <option value="blank">ब्लैंक प्रोफ़ार्मा (हाथ से चेकिंग हेतु)</option>
               </select>
             </div>
           </div>

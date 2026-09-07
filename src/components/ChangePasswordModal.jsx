@@ -63,10 +63,10 @@ export default function ChangePasswordModal({ isOpen, onClose, userRole }) {
           </div>
           <div>
             <h3 className="text-base sm:text-lg font-black text-slate-950">
-              पासवर्ड बदलें (Change Password)
+              पासवर्ड बदलें
             </h3>
             <p className="text-xs font-semibold text-slate-500">
-              सक्रिय रोल: <strong className="text-amber-700">{userRole === 'admin' ? 'मुख्य एडमिन (Admin)' : 'वरिष्ठ अधिकारी (Senior Officer)'}</strong>
+              सक्रिय रोल: <strong className="text-amber-700">{userRole === 'admin' ? 'मुख्य एडमिन' : 'वरिष्ठ अधिकारी'}</strong>
             </p>
           </div>
         </div>
@@ -75,7 +75,7 @@ export default function ChangePasswordModal({ isOpen, onClose, userRole }) {
           {/* Old Password */}
           <div>
             <label className="block text-slate-700 mb-1">
-              वर्तमान (पुराना) पासवर्ड दर्ज करें *
+              वर्तमान पासवर्ड दर्ज करें *
             </label>
             <div className="relative flex items-center">
               <input

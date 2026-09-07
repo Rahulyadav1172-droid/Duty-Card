@@ -306,7 +306,7 @@ export default function ForceAamadManager({
     syncToMasterForce([newEntry]);
 
     setIsAddModalOpen(false);
-    setSuccessToast(`🎉 ${cleanName} (${cleanRank}) की आमद सर्वर समय (${finalServerTime}) पर दर्ज की गई एवं मास्टर फ़ोर्स में जोड़ी गई!`);
+    setSuccessToast(`${cleanName} (${cleanRank}) की आमद सर्वर समय (${finalServerTime}) पर दर्ज की गई एवं मास्टर फ़ोर्स में जोड़ी गई!`);
     setTimeout(() => setSuccessToast(null), 4000);
   };
 
@@ -343,7 +343,7 @@ export default function ForceAamadManager({
     setRecordToDelete(null);
     setDeleteRemark('');
 
-    setSuccessToast(`🗑️ रिकॉर्ड हटाया गया एवं ऑडिट लॉग में सुरक्षित कर दिया गया।`);
+    setSuccessToast(`रिकॉर्ड हटाया गया एवं ऑडिट लॉग में सुरक्षित कर दिया गया।`);
     setTimeout(() => setSuccessToast(null), 4000);
   };
 
@@ -388,7 +388,7 @@ export default function ForceAamadManager({
         saveAamadState(updated);
         syncToMasterForce(newAamadList);
 
-        setSuccessToast(`🎉 एक्सेल फ़ाइल से कुल ${newAamadList.length} पुलिसकर्मियों की आमद मानकीकृत प्रारूप में दर्ज की गई!`);
+        setSuccessToast(`एक्सेल फ़ाइल से कुल ${newAamadList.length} पुलिसकर्मियों की आमद मानकीकृत प्रारूप में दर्ज की गई!`);
         setTimeout(() => setSuccessToast(null), 4000);
       }
     } catch (err) {
@@ -409,17 +409,27 @@ export default function ForceAamadManager({
       'क्र०सं०': idx + 1,
       'नाम': r.name,
       'पद': r.rank,
-      'पी०एन०ओ० (PNO)': r.pno,
-      'मोबाईल नंबर': r.mobile,
+      'पी०एन०ओ० (PNO)': String(r.pno || ''),
+      'मोबाईल नंबर': String(r.mobile || ''),
       'मूल तैनाती / थाना': r.posting,
       'जनपद': r.district,
-      'रेंज (Range)': r.range || '-',
-      'ज़ोन (Zone)': r.police_zone || '-',
+      'रेंज': r.range || '-',
+      'ज़ोन': r.police_zone || '-',
       'आमद दिनांक व सर्वर समय': r.aamad_time,
       'दर्जकर्ता': r.recorded_by
     }));
 
     const ws = XLSX.utils.json_to_sheet(exportRows);
+    // Enforce string formatting (t: 's') so Excel preserves leading zeroes
+    Object.keys(ws).forEach((cellKey) => {
+      if (cellKey[0] === '!') return;
+      const cell = ws[cellKey];
+      if (cell && typeof cell.v === 'string' && /^\d+$/.test(cell.v)) {
+        cell.t = 's';
+        cell.z = '@';
+      }
+    });
+
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'बल आमद रजिस्टर');
     XLSX.writeFile(wb, `पुलिस_बल_आमद_रजिस्टर_अयोध्या_${new Date().toISOString().slice(0, 10)}.xlsx`);
@@ -473,7 +483,7 @@ export default function ForceAamadManager({
             <div className="min-w-0">
               <div className="flex items-center gap-2.5 flex-wrap">
                 <h2 className="text-lg sm:text-xl font-black text-slate-900 leading-tight">
-                  पुलिस बल आमद रजिस्टर (Force Arrival)
+                  पुलिस बल आमद रजिस्टर
                 </h2>
                 <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-800 font-bold border border-emerald-300 flex items-center gap-1 shrink-0">
                   <Server className="w-3 h-3 text-emerald-600" />
@@ -481,7 +491,7 @@ export default function ForceAamadManager({
                 </span>
               </div>
               <p className="text-xs text-slate-500 font-medium mt-1">
-                बाहरी जनपदों एवं रेंजों से आए पुलिस बल की आमद दर्ज करें (डेटा स्वतः मास्टर फ़ोर्स में जुड़ता है)
+                बाहरी जनपदों एवं रेंजों से आए पुलिस बल की आमद दर्ज करें
               </p>
             </div>
           </div>
@@ -534,7 +544,7 @@ export default function ForceAamadManager({
             <div className="text-lg font-black text-emerald-950 font-mono">{uniqueDistricts.length} <span className="text-xs font-bold font-sans text-emerald-800">जनपद</span></div>
           </div>
           <div className="bg-amber-50/60 p-3 rounded-2xl border border-amber-200/80 text-center space-y-0.5">
-            <div className="text-amber-800 font-bold text-[10px] uppercase tracking-wider">संबंधित रेंज (Ranges)</div>
+            <div className="text-amber-800 font-bold text-[10px] uppercase tracking-wider">संबंधित रेंज</div>
             <div className="text-lg font-black text-amber-950 font-mono">{uniqueRanges.length} <span className="text-xs font-bold font-sans text-amber-800">रेंज</span></div>
           </div>
           <div className="bg-slate-50/80 p-3 rounded-2xl border border-slate-200/80 text-center space-y-0.5">
@@ -575,7 +585,7 @@ export default function ForceAamadManager({
               onChange={(e) => setDistrictFilter(e.target.value)}
               className="w-full py-2 px-3 bg-slate-50 border border-slate-300 rounded-xl cursor-pointer focus:outline-none focus:ring-2 focus:ring-amber-500"
             >
-              <option value="ALL">समस्त जनपद (All Districts)</option>
+              <option value="ALL">समस्त जनपद</option>
               {uniqueDistricts.map(d => <option key={d} value={d}>{d}</option>)}
             </select>
           </div>
@@ -586,7 +596,7 @@ export default function ForceAamadManager({
               onChange={(e) => setRangeFilter(e.target.value)}
               className="w-full py-2 px-3 bg-slate-50 border border-slate-300 rounded-xl cursor-pointer focus:outline-none focus:ring-2 focus:ring-amber-500"
             >
-              <option value="ALL">समस्त रेंज (All Ranges)</option>
+              <option value="ALL">समस्त रेंज</option>
               {uniqueRanges.map(r => <option key={r} value={r}>{r}</option>)}
             </select>
           </div>
@@ -597,7 +607,7 @@ export default function ForceAamadManager({
               onChange={(e) => setZoneFilter(e.target.value)}
               className="w-full py-2 px-3 bg-slate-50 border border-slate-300 rounded-xl cursor-pointer focus:outline-none focus:ring-2 focus:ring-amber-500"
             >
-              <option value="ALL">समस्त पुलिस ज़ोन (All Zones)</option>
+              <option value="ALL">समस्त पुलिस ज़ोन</option>
               {uniquePoliceZones.map(z => <option key={z} value={z}>{z}</option>)}
             </select>
           </div>
@@ -614,9 +624,9 @@ export default function ForceAamadManager({
                 <th className="p-3 font-mono">मोबाईल नंबर</th>
                 <th className="p-3">मूल तैनाती (थाना)</th>
                 <th className="p-3">जनपद</th>
-                <th className="p-3">रेंज (Range)</th>
-                <th className="p-3">ज़ोन (Zone)</th>
-                <th className="p-3 font-mono">आमद समय (Server Time)</th>
+                <th className="p-3">रेंज</th>
+                <th className="p-3">ज़ोन</th>
+                <th className="p-3 font-mono">आमद समय</th>
                 <th className="p-3 text-center w-16">हटाएं</th>
               </tr>
             </thead>
@@ -708,28 +718,28 @@ export default function ForceAamadManager({
 
                 {/* Rank (Standard UP Police Ranks) */}
                 <div className="space-y-1">
-                  <label className="text-slate-800 font-black">पदनाम (Standard Rank) *:</label>
+                  <label className="text-slate-800 font-black">पदनाम *:</label>
                   <select
                     value={formData.rank}
                     onChange={(e) => setFormData({ ...formData, rank: e.target.value })}
                     className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl font-bold focus:outline-none focus:ring-2 focus:ring-amber-500 cursor-pointer focus:bg-white"
                   >
-                    <optgroup label="महिला पुलिस बल (Female Officers)">
-                      <option value="म०का०">म०का० (महिला आरक्षी / Lady Constable)</option>
-                      <option value="म०उ०नि०">म०उ०नि० (महिला उप निरीक्षक / WSI)</option>
+                    <optgroup label="महिला पुलिस बल">
+                      <option value="म०का०">म०का० (महिला आरक्षी)</option>
+                      <option value="म०उ०नि०">म०उ०नि० (महिला उप निरीक्षक)</option>
                       <option value="म०हे०का०">म०हे०का० (महिला मुख्य आरक्षी)</option>
                       <option value="म०नि०">म०नि० (महिला निरीक्षक)</option>
                     </optgroup>
-                    <optgroup label="पुरुष पुलिस बल (Male Officers)">
-                      <option value="का०">का० (आरक्षी / Constable)</option>
-                      <option value="हे०का०">हे०का० (मुख्य आरक्षी / Head Constable)</option>
-                      <option value="उ०नि०">उ०नि० (उप निरीक्षक / Sub Inspector)</option>
-                      <option value="नि०">नि० (निरीक्षक / Inspector / SHO)</option>
+                    <optgroup label="पुरुष पुलिस बल">
+                      <option value="का०">का० (आरक्षी)</option>
+                      <option value="हे०का०">हे०का० (मुख्य आरक्षी)</option>
+                      <option value="उ०नि०">उ०नि० (उप निरीक्षक)</option>
+                      <option value="नि०">नि० (निरीक्षक)</option>
                       <option value="उ०नि० (स०पु०)">उ०नि० (स०पु०)</option>
                     </optgroup>
-                    <optgroup label="विशेष बल (Special Wings)">
-                      <option value="यातायात">यातायात (Traffic Police)</option>
-                      <option value="होमगार्ड">होमगार्ड (Home Guard / PRD)</option>
+                    <optgroup label="विशेष बल">
+                      <option value="यातायात">यातायात</option>
+                      <option value="होमगार्ड">होमगार्ड / पीआरडी</option>
                       <option value="अन्य">अन्य पुलिस बल</option>
                     </optgroup>
                   </select>
@@ -737,7 +747,7 @@ export default function ForceAamadManager({
 
                 {/* PNO */}
                 <div className="space-y-1">
-                  <label className="text-slate-800 font-black">PNO (मानकीकृत पी०एन०ओ०):</label>
+                  <label className="text-slate-800 font-black">PNO:</label>
                   <input
                     type="text"
                     value={formData.pno}
@@ -749,7 +759,7 @@ export default function ForceAamadManager({
 
                 {/* Mobile */}
                 <div className="space-y-1">
-                  <label className="text-slate-800 font-black">मोबाईल नंबर (10-अंक) *:</label>
+                  <label className="text-slate-800 font-black">मोबाईल नंबर *:</label>
                   <input
                     type="tel"
                     maxLength="10"
@@ -763,7 +773,7 @@ export default function ForceAamadManager({
 
                 {/* Posting / Thana */}
                 <div className="space-y-1">
-                  <label className="text-slate-800">मूल तैनाती (थाना / यूनिट):</label>
+                  <label className="text-slate-800">मूल तैनाती (थाना):</label>
                   <input
                     type="text"
                     value={formData.posting}
@@ -776,8 +786,8 @@ export default function ForceAamadManager({
                 {/* District with Auto-Cascade to Range & Zone */}
                 <div className="space-y-1">
                   <div className="flex items-center justify-between">
-                    <label className="text-slate-800 font-black">तैनाती जनपद (District):</label>
-                    <span className="text-[10px] text-amber-700 font-bold">✨ रेंज/ज़ोन स्वतः भरेगा</span>
+                    <label className="text-slate-800 font-black">तैनाती जनपद:</label>
+                    <span className="text-[10px] text-amber-700 font-bold">रेंज व ज़ोन स्वतः भरेगा</span>
                   </div>
                   <input
                     type="text"
@@ -799,7 +809,7 @@ export default function ForceAamadManager({
 
                 {/* Police Zone Dropdown (8 Official UP Zones) */}
                 <div className="space-y-1">
-                  <label className="text-slate-800 font-black">पुलिस ज़ोन (UP Police 8 Zones) *:</label>
+                  <label className="text-slate-800 font-black">पुलिस ज़ोन *:</label>
                   <select
                     value={formData.police_zone}
                     onChange={(e) => {
@@ -817,7 +827,7 @@ export default function ForceAamadManager({
                     <option value="">-- पुलिस ज़ोन चुनें --</option>
                     {UP_POLICE_ZONES.map((z) => (
                       <option key={z} value={z}>
-                        🛡️ {z}
+                        {z}
                       </option>
                     ))}
                   </select>
@@ -825,7 +835,7 @@ export default function ForceAamadManager({
 
                 {/* Police Range Dropdown (18 Official UP Ranges) */}
                 <div className="space-y-1">
-                  <label className="text-slate-800 font-black">पुलिस रेंज (UP Police 18 Ranges) *:</label>
+                  <label className="text-slate-800 font-black">पुलिस रेंज *:</label>
                   <select
                     value={formData.range}
                     onChange={(e) => {
@@ -844,7 +854,7 @@ export default function ForceAamadManager({
                       .filter(r => !formData.police_zone || r.zone === formData.police_zone)
                       .map((r) => (
                         <option key={r.name} value={r.name}>
-                          📍 {r.name} ({r.zone})
+                          {r.name} ({r.zone})
                         </option>
                       ))}
                   </select>
@@ -864,7 +874,7 @@ export default function ForceAamadManager({
                   className="px-5 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black rounded-xl shadow transition active:scale-95 cursor-pointer flex items-center gap-1.5"
                 >
                   <CheckCircle2 className="w-4 h-4" />
-                  <span>मानक आमद दर्ज करें (Save Arrival)</span>
+                  <span>मानक आमद दर्ज करें</span>
                 </button>
               </div>
             </form>
@@ -880,13 +890,13 @@ export default function ForceAamadManager({
           <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl border border-slate-200 space-y-4 font-devanagari text-slate-900 animate-in fade-in zoom-in-95">
             <div className="flex items-center gap-2 text-rose-600 font-black text-base border-b border-slate-200 pb-3">
               <AlertTriangle className="w-5 h-5 shrink-0" />
-              <span>आमद रिकॉर्ड हटाने हेतु रिमार्क (Audit Trail)</span>
+              <span>आमद रिकॉर्ड हटाने हेतु रिमार्क</span>
             </div>
 
             <form onSubmit={handleConfirmDelete} className="space-y-3.5 text-xs font-bold">
               <div className="bg-rose-50 p-3 rounded-2xl border border-rose-200 text-slate-900 space-y-1">
                 <div>हटाया जाने वाला जवान: <strong className="text-rose-950 font-black">{recordToDelete?.name} ({recordToDelete?.rank})</strong></div>
-                <div className="font-mono text-[11px] text-slate-600">PNO: {recordToDelete?.pno} | 📱 {recordToDelete?.mobile}</div>
+                <div className="font-mono text-[11px] text-slate-600">PNO: {recordToDelete?.pno} | मो०: {recordToDelete?.mobile}</div>
                 <div className="text-[11px] text-slate-600">थाना: {recordToDelete?.posting} ({recordToDelete?.district})</div>
               </div>
 

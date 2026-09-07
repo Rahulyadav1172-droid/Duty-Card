@@ -1,4 +1,5 @@
 import { classifyRank } from '../components/ForceDeploymentMatrix';
+import { resolvePoliceRank, stripRankFromName } from './rankResolver';
 
 /**
  * Helper to clean officer name
@@ -240,10 +241,13 @@ export function printOfficialBookletDocument({
               <tbody>
                 ${placeRecords.map((row, idx) => {
                   const cleanName = cleanOfficerName(row.name, row.posting, row.district, row.mobile);
+                  const effectiveRank = resolvePoliceRank(row.rank, row.name);
+                  const displayCleanName = stripRankFromName(cleanName);
+                  const fullOfficerTitle = `${effectiveRank} ${displayCleanName}`;
                   return `
                     <tr>
                       <td style="text-align:center; font-weight:bold; font-size:12px; background:#f8fafc;">${idx + 1}</td>
-                      <td style="font-weight:bold; font-size:13px; color:#000;">${cleanName}</td>
+                      <td style="font-weight:bold; font-size:13px; color:#000;">${fullOfficerTitle}</td>
                       <td style="text-align:center; font-family:monospace; font-weight:bold; font-size:13px; color:#0f172a;">${row.mobile || '-'}</td>
                       <td style="font-size:12.5px; font-weight:600; color:#1e293b;">${row.posting || '-'}</td>
                       <td style="font-size:12.5px; font-weight:600; color:#1e293b;">${row.district || '-'}</td>
@@ -272,7 +276,7 @@ export function printOfficialBookletDocument({
   <title>${(eventTitle || 'ड्यूटी_पुस्तिका').replace(/\s+/g, '_')}_आधिकारिक_आदेश_अयोध्या</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com">
-  <link href="https://fonts.googleapis.com/css2?family=Mukta:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Mukta:wght@400;500;600;700;800;900&family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <style>
     @page {
       size: A4 landscape;
@@ -288,7 +292,7 @@ export function printOfficialBookletDocument({
       padding: 0;
       background: #fff;
       color: #000;
-      font-family: 'Mukta', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-family: 'Mukta', 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       font-size: 12.5px;
       line-height: 1.4;
       width: 100%;

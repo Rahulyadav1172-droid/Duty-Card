@@ -37,7 +37,7 @@ export default function AdminAuthModal({ isOpen, onClose, onSuccess }) {
       setErrorMsg('');
       onSuccess();
     } else {
-      setErrorMsg('⚠️ पासवर्ड अमान्य है! सही पासवर्ड दर्ज करें। (Default: police123)');
+      setErrorMsg('पासवर्ड अमान्य है! कृपया सही पासवर्ड दर्ज करें।');
     }
   };
 
@@ -46,20 +46,20 @@ export default function AdminAuthModal({ isOpen, onClose, onSuccess }) {
     const currentPass = getAdminPassword();
 
     if (passwordInput !== currentPass) {
-      setErrorMsg('⚠️ वर्तमान पासवर्ड गलत है!');
+      setErrorMsg('वर्तमान पासवर्ड गलत है!');
       return;
     }
     if (!newPass || newPass.length < 4) {
-      setErrorMsg('⚠️ नया पासवर्ड कम से कम 4 अक्षरों का होना चाहिए!');
+      setErrorMsg('नया पासवर्ड कम से कम 4 अक्षरों का होना चाहिए!');
       return;
     }
     if (newPass !== confirmPass) {
-      setErrorMsg('⚠️ नया पासवर्ड और पुष्टि पासवर्ड मेल नहीं खाते!');
+      setErrorMsg('नया पासवर्ड और पुष्टि पासवर्ड मेल नहीं खाते!');
       return;
     }
 
     setAdminPassword(newPass);
-    setSuccessMsg('✅ पासवर्ड सफलतापूर्वक बदल दिया गया है!');
+    setSuccessMsg('पासवर्ड सफलतापूर्वक बदल दिया गया है!');
     setErrorMsg('');
     setTimeout(() => {
       setIsChangingPass(false);
@@ -68,31 +68,29 @@ export default function AdminAuthModal({ isOpen, onClose, onSuccess }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 font-devanagari animate-in fade-in duration-200">
-      <div className="bg-slate-900 border border-slate-700/80 rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl space-y-6 relative overflow-hidden">
-        {/* Background Decorative Element */}
-        <div className="absolute -top-12 -right-12 w-36 h-36 bg-amber-500/10 rounded-full blur-2xl pointer-events-none"></div>
-
+    <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4 font-devanagari animate-in fade-in duration-200">
+      <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-7 max-w-md w-full shadow-2xl space-y-5 relative text-slate-900">
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 p-2 text-slate-400 hover:text-white bg-slate-800/60 hover:bg-slate-800 rounded-xl transition"
+          className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition cursor-pointer"
+          title="बंद करें"
         >
           <X className="w-5 h-5" />
         </button>
 
         {/* Header Icon & Title */}
-        <div className="text-center space-y-2">
-          <div className="w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-400 flex items-center justify-center mx-auto shadow-inner">
-            <Lock className="w-8 h-8" />
+        <div className="text-center space-y-1.5">
+          <div className="w-14 h-14 rounded-2xl bg-amber-50 border border-amber-200 text-amber-700 flex items-center justify-center mx-auto shadow-xs">
+            <Lock className="w-7 h-7 stroke-[2.2]" />
           </div>
-          <h2 className="text-xl font-black text-slate-100">
-            वरिष्ठ अधिकारी / एडमिन एक्सेस 🔐
+          <h2 className="text-lg sm:text-xl font-black text-slate-950">
+            वरिष्ठ अधिकारी व एडमिन एक्सेस
           </h2>
-          <p className="text-xs text-slate-400">
+          <p className="text-xs text-slate-500 font-medium">
             {isChangingPass
               ? 'पासवर्ड बदलने के लिए वर्तमान एवं नया पासवर्ड दर्ज करें'
-              : 'एक्सेल डेटा या बुकलेट अपलोड करने के लिए एडमिन पासवर्ड दर्ज करें'}
+              : 'प्रशासनिक संपादन एवं डेटा अपलोड के लिए पासवर्ड दर्ज करें'}
           </p>
         </div>
 
@@ -100,8 +98,8 @@ export default function AdminAuthModal({ isOpen, onClose, onSuccess }) {
         {!isChangingPass ? (
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-xs font-bold text-slate-300 mb-1.5">
-                एडमिन पासवर्ड (Admin Password):
+              <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                एडमिन पासवर्ड
               </label>
               <div className="relative">
                 <input
@@ -111,37 +109,34 @@ export default function AdminAuthModal({ isOpen, onClose, onSuccess }) {
                     setPasswordInput(e.target.value);
                     setErrorMsg('');
                   }}
-                  placeholder="पासवर्ड दर्ज करें (e.g. police123)"
-                  className="w-full pl-4 pr-12 py-3 bg-slate-950 border border-slate-700 rounded-2xl text-sm font-mono text-slate-100 placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-amber-500 transition"
+                  placeholder="पासवर्ड दर्ज करें..."
+                  className="w-full pl-4 pr-12 py-3 bg-slate-50 border border-slate-300 rounded-2xl text-sm font-mono text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500 transition"
                   autoFocus
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-3 text-slate-400 hover:text-amber-400 p-1"
+                  className="absolute right-3 top-3 text-slate-400 hover:text-slate-700 p-1 cursor-pointer"
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
-              <p className="text-[11px] text-slate-500 mt-1 font-mono">
-                * डिफ़ॉल्ट पासवर्ड (Default Password): <span className="text-amber-400 font-bold">police123</span>
-              </p>
             </div>
 
             {errorMsg && (
-              <div className="p-3 bg-rose-950/80 border border-rose-800 rounded-xl text-rose-200 text-xs flex items-start gap-2">
-                <ShieldAlert className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+              <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-rose-800 text-xs flex items-start gap-2 font-bold">
+                <ShieldAlert className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
                 <span>{errorMsg}</span>
               </div>
             )}
 
-            <div className="space-y-2 pt-2">
+            <div className="space-y-2 pt-1">
               <button
                 type="submit"
-                className="w-full py-3.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-sm rounded-2xl shadow-lg shadow-amber-500/20 transition active:scale-98 flex items-center justify-center gap-2"
+                className="w-full py-3 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-sm rounded-2xl shadow-xs transition active:scale-98 flex items-center justify-center gap-2 cursor-pointer"
               >
                 <KeyRound className="w-4 h-4" />
-                लॉग इन करें (Verify & Unlock)
+                <span>सत्यापित कर आगे बढ़ें</span>
               </button>
 
               <button
@@ -150,57 +145,57 @@ export default function AdminAuthModal({ isOpen, onClose, onSuccess }) {
                   setIsChangingPass(true);
                   setErrorMsg('');
                 }}
-                className="w-full py-2 text-slate-400 hover:text-amber-300 text-xs font-bold transition"
+                className="w-full py-1.5 text-slate-500 hover:text-amber-700 text-xs font-bold transition cursor-pointer"
               >
-                पासवर्ड बदलना चाहते हैं? (Change Password)
+                पासवर्ड बदलना चाहते हैं?
               </button>
             </div>
           </form>
         ) : (
-          <form onSubmit={handleChangePassword} className="space-y-3">
+          <form onSubmit={handleChangePassword} className="space-y-3 text-xs font-bold">
             <div>
-              <label className="block text-xs font-bold text-slate-300 mb-1">वर्तमान पासवर्ड:</label>
+              <label className="block text-slate-700 mb-1">वर्तमान पासवर्ड:</label>
               <input
                 type="password"
                 value={passwordInput}
                 onChange={(e) => setPasswordInput(e.target.value)}
-                placeholder="वर्तमान पासवर्ड (police123)"
-                className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-xs text-slate-100 focus:outline-none focus:ring-1 focus:ring-amber-500 font-mono"
+                placeholder="वर्तमान पासवर्ड दर्ज करें..."
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500 font-mono"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-300 mb-1">नया पासवर्ड:</label>
+              <label className="block text-slate-700 mb-1">नया पासवर्ड:</label>
               <input
                 type="password"
                 value={newPass}
                 onChange={(e) => setNewPass(e.target.value)}
-                placeholder="नया पासवर्ड दर्ज करें"
-                className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-xs text-slate-100 focus:outline-none focus:ring-1 focus:ring-amber-500 font-mono"
+                placeholder="नया पासवर्ड दर्ज करें..."
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500 font-mono"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-300 mb-1">नया पासवर्ड पुनः दर्ज करें:</label>
+              <label className="block text-slate-700 mb-1">नए पासवर्ड की पुनः पुष्टि करें:</label>
               <input
                 type="password"
                 value={confirmPass}
                 onChange={(e) => setConfirmPass(e.target.value)}
-                placeholder="पुष्टि के लिए पुनः दर्ज करें"
-                className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-xs text-slate-100 focus:outline-none focus:ring-1 focus:ring-amber-500 font-mono"
+                placeholder="पुष्टि हेतु पुनः दर्ज करें..."
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500 font-mono"
               />
             </div>
 
             {errorMsg && (
-              <div className="p-2.5 bg-rose-950/80 border border-rose-800 rounded-xl text-rose-200 text-xs flex items-center gap-2">
-                <ShieldAlert className="w-4 h-4 text-rose-400 shrink-0" />
+              <div className="p-2.5 bg-rose-50 border border-rose-200 rounded-xl text-rose-800 text-xs flex items-center gap-2">
+                <ShieldAlert className="w-4 h-4 text-rose-600 shrink-0" />
                 <span>{errorMsg}</span>
               </div>
             )}
 
             {successMsg && (
-              <div className="p-2.5 bg-emerald-950/80 border border-emerald-800 rounded-xl text-emerald-200 text-xs flex items-center gap-2">
-                <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+              <div className="p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-800 text-xs flex items-center gap-2">
+                <Check className="w-4 h-4 text-emerald-600 shrink-0" />
                 <span>{successMsg}</span>
               </div>
             )}
@@ -209,13 +204,13 @@ export default function AdminAuthModal({ isOpen, onClose, onSuccess }) {
               <button
                 type="button"
                 onClick={() => setIsChangingPass(false)}
-                className="flex-1 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold rounded-xl"
+                className="flex-1 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl cursor-pointer"
               >
-                रद्द करें (Back)
+                रद्द करें
               </button>
               <button
                 type="submit"
-                className="flex-1 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs rounded-xl shadow"
+                className="flex-1 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs rounded-xl shadow-xs cursor-pointer"
               >
                 पासवर्ड सहेजें
               </button>

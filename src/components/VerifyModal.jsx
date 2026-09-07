@@ -41,8 +41,8 @@ export default function VerifyModal({
           </div>
 
           <div className="space-y-0.5">
-            <span className="inline-block px-3 py-0.5 rounded-full bg-emerald-50 text-emerald-800 font-bold text-xs border border-emerald-200 font-mono">
-              OFFICIAL VERIFIED PASS 🟢
+            <span className="inline-block px-3 py-0.5 rounded-full bg-emerald-50 text-emerald-800 font-bold text-xs border border-emerald-200">
+              आधिकारिक सत्यापित पास
             </span>
             <h2 className="text-lg sm:text-xl font-black text-slate-950 pt-1 leading-tight">
               {eventTitle}
@@ -67,7 +67,7 @@ export default function VerifyModal({
 
           <div className="flex items-center justify-between border-b border-slate-200 pb-1.5">
             <span className="font-bold text-slate-600">मोबाइल:</span>
-            <span className="font-mono font-bold text-slate-900">📱 {duty.mobile}</span>
+            <span className="font-mono font-bold text-slate-900">{duty.mobile}</span>
           </div>
 
           <div className="flex items-start justify-between border-b border-slate-200 pb-1.5">
@@ -102,7 +102,7 @@ export default function VerifyModal({
             onClick={onClose}
             className="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl transition shadow-xs cursor-pointer"
           >
-            बंद करें (Close)
+            बंद करें
           </button>
         </div>
       </div>

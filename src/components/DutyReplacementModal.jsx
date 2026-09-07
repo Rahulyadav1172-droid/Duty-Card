@@ -157,7 +157,7 @@ export default function DutyReplacementModal({
               <RefreshCw className="w-5 h-5 stroke-[2.5]" />
             </div>
             <div>
-              <div className="leading-tight">ड्यूटी प्रतिस्थानी प्रबंधन (Duty Replacement)</div>
+              <div className="leading-tight">ड्यूटी प्रतिस्थानी प्रबंधन</div>
               <div className="text-xs text-slate-500 font-medium mt-0.5">
                 तैनात जवान को रिजर्व बल अथवा गैर-जनपद नए जवान से बदलें
               </div>
@@ -175,7 +175,7 @@ export default function DutyReplacementModal({
         {/* Current Assigned Officer Summary Card */}
         <div className="p-3.5 bg-slate-900 text-white rounded-2xl space-y-2 border border-black shadow-xs">
           <div className="text-[10px] font-mono text-amber-400 font-bold uppercase tracking-wider flex items-center justify-between">
-            <span>🔴 वर्तमान में तैनात जवान (Original Deployed Officer)</span>
+            <span>वर्तमान में तैनात जवान</span>
             <span className="bg-rose-600 text-white px-2 py-0.2 rounded font-sans text-[10px]">हटाया / बदला जा रहा है</span>
           </div>
 
@@ -192,10 +192,10 @@ export default function DutyReplacementModal({
           </div>
 
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-300 border-t border-slate-800 pt-1.5">
-            <span>📍 ड्यूटी स्थल: <strong className="text-amber-200">{targetRecord.duty_place}</strong></span>
-            <span>🛡️ ज़ोन: <strong>{targetRecord.zone}</strong></span>
-            <span>🚩 सेक्टर: <strong>{targetRecord.sector}</strong></span>
-            <span>🏢 जनपद: <strong>{targetRecord.district || '-'}</strong></span>
+            <span>ड्यूटी स्थल: <strong className="text-amber-200">{targetRecord.duty_place}</strong></span>
+            <span>ज़ोन: <strong>{targetRecord.zone}</strong></span>
+            <span>सेक्टर: <strong>{targetRecord.sector}</strong></span>
+            <span>जनपद: <strong>{targetRecord.district || '-'}</strong></span>
           </div>
         </div>
 
@@ -211,7 +211,7 @@ export default function DutyReplacementModal({
             }`}
           >
             <Shield className="w-3.5 h-3.5 text-amber-600" />
-            <span>1. रिजर्व बल से बदलें (Reserve Swap)</span>
+            <span>1. रिजर्व बल से बदलें</span>
           </button>
           <button
             type="button"
@@ -223,7 +223,7 @@ export default function DutyReplacementModal({
             }`}
           >
             <UserPlus className="w-3.5 h-3.5 text-blue-600" />
-            <span>2. गैर-जनपद नया जवान आवक (Arrival Substitute)</span>
+            <span>2. गैर-जनपद नया जवान आवक</span>
           </button>
         </div>
 
@@ -250,10 +250,10 @@ export default function DutyReplacementModal({
                   className="bg-slate-50 border border-slate-200 text-xs font-bold px-2 py-2 rounded-xl text-slate-900"
                 >
                   <option value="ALL">समस्त पद</option>
-                  <option value="उ०नि">उ०नि० (SI)</option>
-                  <option value="हे०का">हे०का० (HC)</option>
-                  <option value="का0">आरक्षी (Const.)</option>
-                  <option value="महिला">महिला आरक्षी (Fem.)</option>
+                  <option value="उ०नि">उ०नि०</option>
+                  <option value="हे०का">हे०का०</option>
+                  <option value="का0">आरक्षी</option>
+                  <option value="महिला">महिला आरक्षी</option>
                   <option value="यातायात">यातायात</option>
                 </select>
               </div>
@@ -356,7 +356,7 @@ export default function DutyReplacementModal({
           <form onSubmit={handleInterDistrictSubmit} className="space-y-3.5 flex-1 overflow-y-auto pr-1">
             <div className="p-3 bg-blue-50/80 rounded-2xl border border-blue-200 space-y-1 text-xs text-blue-950 font-medium">
               <div className="font-black text-blue-900 flex items-center gap-1.5">
-                <span>🏢 गैर-जनपद आवक स्पॉट प्रतिस्थानी (Spot Substitution)</span>
+                <span>गैर-जनपद आवक स्पॉट प्रतिस्थानी</span>
               </div>
               <p className="text-[11px] text-blue-800">
                 यदि गैर-जनपद से मूल जवान के स्थान पर कोई दूसरा जवान आमद कराने आया है, तो उसका विवरण यहाँ दर्ज करें। उस सीट पर तुरंत नए जवान का कार्ड व ड्यूटी पास बन जाएगा।
@@ -389,17 +389,17 @@ export default function DutyReplacementModal({
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-black text-slate-800">पदनाम (Rank)</label>
+                <label className="text-xs font-black text-slate-800">पदनाम</label>
                 <select
                   value={newRank}
                   onChange={(e) => setNewRank(e.target.value)}
                   className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold"
                 >
-                  <option value="उ०नि०">उ०नि० (Sub Inspector)</option>
-                  <option value="म०उ०नि०">म०उ०नि० (WSI)</option>
-                  <option value="हे०का०">हे०का० (Head Constable)</option>
-                  <option value="का0">आरक्षी (Constable)</option>
-                  <option value="म०का०">महिला आरक्षी (Lady Constable)</option>
+                  <option value="उ०नि०">उ०नि० (उप-निरीक्षक)</option>
+                  <option value="म०उ०नि०">म०उ०नि० (महिला उप-निरीक्षक)</option>
+                  <option value="हे०का०">हे०का० (मुख्य आरक्षी)</option>
+                  <option value="का0">आरक्षी</option>
+                  <option value="म०का०">महिला आरक्षी</option>
                   <option value="यातायात">यातायात पुलिस</option>
                   <option value="होमगार्ड">होमगार्ड</option>
                 </select>

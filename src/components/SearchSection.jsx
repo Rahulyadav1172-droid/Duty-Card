@@ -80,19 +80,11 @@ export default function SearchSection({
 
       {/* Main Search Card (Optimized for Mobile Touch) */}
       <div className="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-6 shadow-sm space-y-3.5 sm:space-y-4 text-center select-none">
-        {/* Title & Tagline */}
+        {/* Title */}
         <div className="space-y-1">
-          <div className="inline-flex items-center gap-1.5 px-3 py-0.5 sm:py-1 rounded-full bg-amber-50 border border-amber-200/80 text-amber-900 text-[11px] sm:text-xs font-bold shadow-2xs">
-            <ShieldCheck className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-            <span>{language === 'en' ? 'Ayodhya Police Digital Duty Pass' : 'अयोध्या पुलिस डिजिटल ड्यूटी पास'}</span>
-          </div>
-
-          <h2 className="text-lg sm:text-2xl font-black text-slate-900 tracking-tight pt-1">
+          <h2 className="text-lg sm:text-2xl font-black text-slate-900 tracking-tight">
             {t('searchHeading', 'अपना ड्यूटी कार्ड खोजें')}
           </h2>
-          <p className="text-[11px] sm:text-xs text-slate-600 font-medium max-w-md mx-auto leading-relaxed">
-            {t('searchSubheading', '10-अंकीय मोबाइल नंबर या अपना नाम दर्ज करें और तुरंत अपना ड्यूटी पास प्राप्त करें')}
-          </p>
         </div>
 
         {/* Centered Search Box with Mobile-friendly Touch Sizing */}
@@ -109,7 +101,7 @@ export default function SearchSection({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && onSearchSubmit?.()}
-            placeholder={language === 'en' ? 'Enter Mobile Number or Name...' : 'मोबाइल नंबर या नाम लिखें...'}
+            placeholder={language === 'en' ? 'Enter PNO, Mobile Number or Name...' : 'PNO, मोबाइल नंबर या नाम लिखें...'}
             className="w-full pl-11 sm:pl-12 pr-10 py-3 sm:py-3.5 bg-slate-50 border border-slate-300 rounded-xl text-xs sm:text-sm font-bold text-slate-900 placeholder:text-slate-400 placeholder:font-normal focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 focus:bg-white transition shadow-inner select-text cursor-text"
             autoFocus
           />

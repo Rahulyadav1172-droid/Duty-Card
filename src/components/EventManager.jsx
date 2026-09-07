@@ -175,7 +175,7 @@ export default function EventManager({
           </div>
           <div className="min-w-0">
             <h2 className="text-lg sm:text-xl font-black text-slate-900 leading-tight">
-              इवेंट्स एवं हेड्स मैनेजर (Multi-Event Manager)
+              इवेंट्स एवं हेड प्रबंधन
             </h2>
             <p className="text-xs text-slate-500 font-medium mt-1">
               विभिन्न मेलों, वीआईपी दौरों व सुरक्षा व्यवस्थाओं के लिए अलग-अलग डेटाबेस बनाएं व प्रबंधित करें
@@ -199,7 +199,7 @@ export default function EventManager({
             <Database className="w-5 h-5" />
           </div>
           <div className="min-w-0">
-            <h3 className="text-sm font-black text-white truncate">डेटाबेस बैकअप व सुरक्षा (Disaster Recovery)</h3>
+            <h3 className="text-sm font-black text-white truncate">डेटाबेस बैकअप व सुरक्षा</h3>
             <p className="text-[11px] text-slate-300 truncate">
               संपूर्ण पोर्टल के सभी इवेंट्स, बल आवंटन व उपस्थिति का 1-क्लिक बैकअप लें अथवा रीस्टोर करें
             </p>
@@ -214,7 +214,7 @@ export default function EventManager({
             title="संपूर्ण डेटाबेस JSON बैकअप डाउनलोड करें"
           >
             <Download className="w-3.5 h-3.5" />
-            <span>बैकअप डाउनलोड (JSON)</span>
+            <span>बैकअप डाउनलोड</span>
           </button>
 
           <button
@@ -261,7 +261,7 @@ export default function EventManager({
                       }`}
                     >
                       <span className={`w-1.5 h-1.5 rounded-full ${isArchived ? 'bg-slate-500' : 'bg-emerald-500 animate-pulse'}`} />
-                      {isArchived ? '📦 आर्काइव्ड (Archived)' : '🟢 सक्रिय (Active)'}
+                      {isArchived ? 'आर्काइव्ड' : 'सक्रिय'}
                     </span>
 
                     {isActive && (
@@ -371,7 +371,7 @@ export default function EventManager({
             <form onSubmit={handleFormSubmit} className="space-y-3.5 text-xs sm:text-sm font-bold">
               <div>
                 <label className="block text-slate-700 mb-1">
-                  मुख्य शीर्षक (Event Main Name) *
+                  मुख्य शीर्षक *
                 </label>
                 <input
                   type="text"
@@ -386,7 +386,7 @@ export default function EventManager({
 
               <div>
                 <label className="block text-slate-700 mb-1">
-                  उप-शीर्षक (Sub Heading / District)
+                  उप-शीर्षक / जनपद
                 </label>
                 <input
                   type="text"
@@ -399,7 +399,7 @@ export default function EventManager({
 
               <div>
                 <label className="block text-slate-700 mb-1">
-                  इवेंट प्रारंभ दिनांक / अवधि (Event Start Date / Duration) *
+                  इवेंट प्रारंभ दिनांक / समयावधि *
                 </label>
                 <input
                   type="text"
@@ -413,7 +413,7 @@ export default function EventManager({
 
               <div>
                 <label className="block text-slate-700 mb-1">
-                  हस्ताक्षरकर्ता पदनाम (Designation Text)
+                  हस्ताक्षरकर्ता पदनाम
                 </label>
                 <input
                   type="text"
@@ -426,7 +426,7 @@ export default function EventManager({
 
               <div>
                 <label className="block text-slate-700 mb-1">
-                  विशेष नोट (Optional Briefing Note)
+                  विशेष निर्देश / नोट
                 </label>
                 <textarea
                   rows={2}

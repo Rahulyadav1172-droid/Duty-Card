@@ -111,6 +111,7 @@ export async function fetchEventsFromSupabase() {
             attendanceByDate: rawExtra.attendanceByDate || {},
             allocationData: rawExtra.allocationData || {},
             bookletInstructions: rawExtra.bookletInstructions || [],
+            manualInstructions: rawExtra.manualInstructions || rawExtra.bookletInstructions || null,
             patrank: rawExtra.patrank || ''
           };
         });
@@ -140,7 +141,8 @@ export async function upsertEventToSupabase(eventObj) {
         customLabels: eventObj.customLabels || {},
         attendanceByDate: eventObj.attendanceByDate || {},
         allocationData: eventObj.allocationData || {},
-        bookletInstructions: eventObj.bookletInstructions || [],
+        bookletInstructions: eventObj.manualInstructions || eventObj.bookletInstructions || [],
+        manualInstructions: eventObj.manualInstructions || null,
         patrank: eventObj.patrank || ''
       }
     };

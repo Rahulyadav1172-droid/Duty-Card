@@ -56,7 +56,7 @@ export default function PrintTemplate({
           <div className="font-bold text-sm text-black">
             {duty.name}
           </div>
-          <div className="font-mono text-black font-bold">📱 {duty.mobile}</div>
+          <div className="font-mono text-black font-bold">मो०: {duty.mobile}</div>
           <div className="text-[10px] text-gray-800">
             P.No: <strong>{duty.id}</strong> | मूल तैनाती: <strong>{duty.posting || ''}</strong> {duty.district ? `(${duty.district})` : ''}
           </div>
@@ -118,7 +118,7 @@ export default function PrintTemplate({
         <div className="border border-emerald-700 rounded-md overflow-hidden bg-white text-xs">
           <div className="bg-emerald-50 px-2 py-1 border-b border-emerald-300 flex items-center justify-between">
             <div className="font-black text-emerald-900 text-[11px]">
-              👥 सहयोगार्थ पुलिस बल (उसी स्थल पर तैनात अन्य पुलिसकर्मी):
+              सहयोगार्थ पुलिस बल (उसी स्थल पर तैनात अन्य पुलिसकर्मी):
             </div>
             <span className="font-mono text-[10px] font-bold text-emerald-800 bg-emerald-100 px-1.5 py-0.5 rounded">
               कुल: {coDeployedOfficers.length} जवान
@@ -131,7 +131,7 @@ export default function PrintTemplate({
                 <span className="flex-1 font-bold text-slate-900">
                   {peer.name} <span className="text-[9px] px-1 rounded bg-slate-200">{peer.rank || 'का0'}</span>
                 </span>
-                <span className="w-28 font-mono font-bold text-emerald-800">📱 {peer.mobile || '-'}</span>
+                <span className="w-28 font-mono font-bold text-emerald-800">मो०: {peer.mobile || '-'}</span>
                 <span className="w-36 text-slate-600 truncate">{peer.posting || ''} {peer.district ? `(${peer.district})` : ''}</span>
               </div>
             ))}

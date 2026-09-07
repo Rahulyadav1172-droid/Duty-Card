@@ -1,6 +1,7 @@
 import * as XLSX from 'xlsx';
 import mammoth from 'mammoth';
 import { convertKrutiToUnicode } from './kruti2unicode';
+import { resolvePoliceRank } from './rankResolver';
 
 export function cleanMobileNumber(text) {
   if (!text) return "";
@@ -136,12 +137,8 @@ function processObjectRows(rows) {
     const displayName = compositeCol || nameCol || (mobCol ? `पुलिसकर्मी (${mobCol})` : '');
     const finalMobile = mobCol || cleanMobileNumber(compositeCol) || cleanMobileNumber(nameCol);
 
-    let rank = "का0";
-    if (displayName.includes("उ0नि0") || displayName.includes("उ.नि.")) rank = "उ0नि0";
-    else if (displayName.includes("हे0का0") || displayName.includes("हे.का.")) rank = "हे0का0";
-    else if (displayName.includes("म0का0") || displayName.includes("म.का.")) rank = "म0का0";
-    else if (displayName.includes("नि0") || displayName.includes("नि.")) rank = "नि0";
-    else if (displayName.includes("क्षेत्राधिकारी") || displayName.includes("सीओ")) rank = "क्षेत्राधिकारी";
+    const rankCol = getRowValueByPattern(row, ['rank', 'पद', 'पदनाम', 'पद नाम', 'designation']);
+    const rank = resolvePoliceRank(rankCol, displayName);
 
     records.push({
       id: `DUTY-${String(records.length + 1).padStart(4, '0')}`,
@@ -201,6 +198,7 @@ function processRawRows(rawRows) {
   let colSector = headers.findIndex(h => h === 'sector' || (h.includes('sector') && !h.includes('incharge')));
   let colSectorIncharge = headers.findIndex(h => h.includes('sector incharge') || h.includes('sectorincharge') || h.includes('सेक्टर प्रभारी'));
   let colDutyPlace = headers.findIndex(h => h.includes('duty place') || h.includes('duty_place') || h.includes('स्थान'));
+  let colRank = headers.findIndex(h => h === 'rank' || h === 'पद' || h === 'पदनाम' || h === 'पद नाम' || h.includes('designation'));
   let colThana = headers.findIndex(h => h === 'thana' || h === 'थाना');
   let colDistrict = headers.findIndex(h => h === 'district' || h === 'जनपद' || h === 'जिला');
   let colTime = headers.findIndex(h => h.includes('time') || h.includes('समय') || h.includes('दिनांक'));
@@ -244,12 +242,8 @@ function processRawRows(rawRows) {
 
     if (!displayName && !mobNumber) continue;
 
-    let rank = "का0";
-    if (displayName.includes("उ0नि0") || displayName.includes("उ.नि.")) rank = "उ0नि0";
-    else if (displayName.includes("हे0का0") || displayName.includes("हे.का.")) rank = "हे0का0";
-    else if (displayName.includes("म0का0") || displayName.includes("म.का.")) rank = "म0का0";
-    else if (displayName.includes("नि0") || displayName.includes("नि.")) rank = "नि0";
-    else if (displayName.includes("क्षेत्राधिकारी")) rank = "क्षेत्राधिकारी";
+    const rawRank = colRank !== -1 ? convertKrutiToUnicode(cells[colRank] || '') : '';
+    const rank = resolvePoliceRank(rawRank, displayName);
 
     records.push({
       id: `DUTY-${String(records.length + 1).padStart(4, '0')}`,

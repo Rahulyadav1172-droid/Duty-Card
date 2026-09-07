@@ -11,13 +11,16 @@ import {
   Zap,
   Filter,
   Check,
-  Grid
+  Grid,
+  Users
 } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { printLegalBulk } from '../utils/printLegalBulk';
 import { useLanguage } from '../context/LanguageContext';
+import ToggleSwitch from './ToggleSwitch';
+import { resolvePoliceRank, stripRankFromName } from '../utils/rankResolver';
 
 export default function BulkLegalPdfModal({
   isOpen,
@@ -39,6 +42,7 @@ export default function BulkLegalPdfModal({
   const [rangeMode, setRangeMode] = useState('all'); // 'all' | 'custom'
   const [paperSize, setPaperSize] = useState('a4'); // 'a4' | 'legal'
   const [layoutMode, setLayoutMode] = useState(4); // 4 or 2 for A4, 6 or 4 or 2 for Legal
+  const [includeCoForce, setIncludeCoForce] = useState(true);
   const [startPage, setStartPage] = useState(1);
   const [endPage, setEndPage] = useState(25);
   const [activeBatch, setActiveBatch] = useState([]);
@@ -80,7 +84,8 @@ export default function BulkLegalPdfModal({
       customBriefing,
       isBriefingEnabled,
       layoutMode,
-      paperSize
+      paperSize,
+      includeCoForce
     });
   };
 
@@ -195,25 +200,75 @@ export default function BulkLegalPdfModal({
       return placeA && placeB && placeA === placeB;
     });
 
+    const cleanPno = (duty.pno && !String(duty.pno).toUpperCase().startsWith('DUTY-'))
+      ? String(duty.pno)
+      : (duty.id && !String(duty.id).toUpperCase().startsWith('DUTY-') && String(duty.id).length <= 12)
+        ? String(duty.id)
+        : null;
+
+    const cleanOfficerName = (duty.name || '').trim()
+      .replace(/,\s*\d{10}\b/g, '')
+      .replace(/\b\d{10}\b/g, '')
+      .replace(/[,।]?\s*नं0?[-:]?\s*$/g, '')
+      .replace(/[,।]?\s*नं\s*\(?.*$/g, '')
+      .replace(/,\s*$/, '')
+      .trim() || duty.name;
+
+    const effectiveRank = resolvePoliceRank(duty.rank, cleanOfficerName);
+    const displayCleanName = stripRankFromName(cleanOfficerName);
+
+    // Clean & Parse Zone and Zonal Incharge
+    let cleanZone = (duty.zone || '').trim();
+    let cleanZonalIncharge = (duty.zonal_incharge || duty.zonal || '').trim();
+    if (cleanZonalIncharge === '-') cleanZonalIncharge = '';
+
+    if (!cleanZonalIncharge && cleanZone.includes('/')) {
+      const parts = cleanZone.split('/');
+      cleanZone = parts[0].trim();
+      cleanZonalIncharge = parts.slice(1).join('/').trim();
+    } else if (cleanZone.endsWith('/')) {
+      cleanZone = cleanZone.replace(/\/+\s*$/, '').trim();
+    }
+    if (cleanZonalIncharge && cleanZone.includes(cleanZonalIncharge)) {
+      cleanZone = cleanZone.replace(cleanZonalIncharge, '').replace(/\/+\s*$/, '').trim();
+    }
+
+    // Clean & Parse Sector and Sector Incharge
+    let cleanSector = (duty.sector || '').trim();
+    let cleanSectorIncharge = (duty.sector_incharge || '').trim();
+    if (cleanSectorIncharge === '-') cleanSectorIncharge = '';
+
+    if (!cleanSectorIncharge && cleanSector.includes('/')) {
+      const parts = cleanSector.split('/');
+      cleanSector = parts[0].trim();
+      cleanSectorIncharge = parts.slice(1).join('/').trim();
+    } else if (cleanSector.endsWith('/')) {
+      cleanSector = cleanSector.replace(/\/+\s*$/, '').trim();
+    }
+    if (cleanSectorIncharge && cleanSector.includes(cleanSectorIncharge)) {
+      cleanSector = cleanSector.replace(cleanSectorIncharge, '').replace(/\/+\s*$/, '').trim();
+    }
+
     return (
       <div
         key={idx}
         style={{
-          border: '1.5px solid #000000',
+          border: '2px solid #0b132b',
+          boxShadow: 'inset 0 0 0 1.5px #d97706',
           borderRadius: '8px',
-          padding: layoutMode === 2 ? '10px 12px' : '6px 8px',
+          padding: layoutMode === 2 ? '12px 14px' : '6px 8px',
           backgroundColor: '#ffffff',
           color: '#000000',
           display: 'flex',
           flexDirection: 'column',
-          justifyContent: 'space-between',
+          justifyContent: hasCoForce ? 'space-between' : 'flex-start',
           boxSizing: 'border-box',
           fontSize: layoutMode === 2 ? '10px' : '9.5px',
           lineHeight: '1.25'
         }}
       >
         {/* Card Top Header */}
-        <div style={{ borderBottom: '1.5px solid #000000', paddingBottom: '3px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ borderBottom: '2px solid #0b132b', paddingBottom: '3px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <img src="/badge.png" alt="Badge" style={{ width: layoutMode === 2 ? '36px' : '30px', height: layoutMode === 2 ? '36px' : '30px', objectFit: 'contain' }} />
           <div style={{ textAlign: 'center', flex: 1, padding: '0 4px' }}>
             <div style={{ fontSize: layoutMode === 2 ? '13px' : '11.5px', fontWeight: '900', color: '#000000', lineHeight: '1.2' }}>
@@ -227,8 +282,8 @@ export default function BulkLegalPdfModal({
         </div>
 
         {/* Officer Photo & Info Row */}
-        <div style={{ display: 'flex', gap: '6px', border: '1px solid #94a3b8', padding: '4px', borderRadius: '6px', backgroundColor: '#f8fafc', margin: '3px 0' }}>
-          <div style={{ width: layoutMode === 2 ? '48px' : '44px', height: layoutMode === 2 ? '60px' : '56px', border: '1px dashed #64748b', borderRadius: '4px', backgroundColor: '#ffffff', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', flexShrink: 0, overflow: 'hidden' }}>
+        <div style={{ display: 'flex', gap: '6px', border: '1px solid #94a3b8', padding: layoutMode === 2 && !hasCoForce ? '6px 8px' : '4px', borderRadius: '6px', backgroundColor: '#f8fafc', margin: layoutMode === 2 && !hasCoForce ? '8px 0 6px' : '3px 0' }}>
+          <div style={{ width: layoutMode === 2 ? (hasCoForce ? '48px' : '56px') : '44px', height: layoutMode === 2 ? (hasCoForce ? '60px' : '70px') : '56px', border: '1px dashed #64748b', borderRadius: '4px', backgroundColor: '#ffffff', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', flexShrink: 0, overflow: 'hidden' }}>
             {duty.photo ? (
               <img src={duty.photo} alt={duty.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             ) : (
@@ -241,92 +296,129 @@ export default function BulkLegalPdfModal({
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
             <div>
               <div style={{ fontSize: layoutMode === 2 ? '8.5px' : '7.5px', fontWeight: 'bold', color: '#64748b' }}>अधिकारी / कर्मचारी:</div>
-              <div style={{ fontSize: layoutMode === 2 ? '11.5px' : '10px', fontWeight: '900', color: '#000000', lineHeight: '1.2' }}>
-                {duty.name || '-'}
+              <div style={{ fontSize: layoutMode === 2 ? (hasCoForce ? '11.5px' : '13px') : '10px', fontWeight: '900', color: '#000000', lineHeight: '1.2', display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '4px', wordBreak: 'break-word' }}>
+                <span>{displayCleanName || '-'}</span>
+                <span style={{ fontSize: '9px', background: '#fef3c7', color: '#78350f', padding: '1px 5px', borderRadius: '4px', border: '1px solid #fde68a', fontWeight: 'bold' }}>{effectiveRank}</span>
               </div>
-              <div style={{ fontSize: layoutMode === 2 ? '9.5px' : '8.5px', fontFamily: 'monospace', fontWeight: 'bold', color: '#1e293b' }}>
-                📱 {duty.mobile || '-'}
+              <div style={{ fontSize: layoutMode === 2 ? (hasCoForce ? '9.5px' : '11px') : '8.5px', fontFamily: 'monospace', fontWeight: 'bold', color: '#1e293b' }}>
+                {duty.mobile || '-'}
               </div>
             </div>
             <div style={{ fontSize: layoutMode === 2 ? '8.5px' : '7.5px', color: '#334155', borderTop: '1px solid #cbd5e1', paddingTop: '2px', display: 'flex', justifyContent: 'space-between' }}>
-              {duty.id && !String(duty.id).toUpperCase().startsWith('DUTY-') && !String(duty.id).toUpperCase().startsWith('PN-') ? (
-                <span>P.No: <strong>{duty.id}</strong></span>
-              ) : <span />}
-              <span>तैनाती: <strong>{duty.posting || '-'}</strong> {duty.district ? `(${duty.district})` : ''}</span>
+              {cleanPno ? (
+                <span>P.No: <strong>{cleanPno}</strong></span>
+              ) : null}
+              <span>मूल तैनाती: <strong>{duty.posting || '-'}</strong> {duty.district ? `(${duty.district})` : ''}</span>
             </div>
           </div>
         </div>
 
         {/* Duty Details Table */}
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: layoutMode === 2 ? '9.5px' : '8.5px', border: '1px solid #cbd5e1', margin: '2px 0' }}>
+        <table style={{ width: '100%', flex: hasCoForce ? 'none' : 1, borderCollapse: 'collapse', fontSize: layoutMode === 2 ? (hasCoForce ? '11px' : '12.5px') : '8.5px', border: '1.5px solid #0f172a', margin: layoutMode === 2 ? (hasCoForce ? '6px 0 4px' : '10px 0') : '2px 0', lineHeight: '1.4' }}>
           <tbody>
             <tr style={{ borderBottom: '1px solid #cbd5e1' }}>
-              <td style={{ width: '35%', backgroundColor: '#f1f5f9', fontWeight: 'bold', padding: '2px 4px', borderRight: '1px solid #cbd5e1' }}>स्थान</td>
-              <td style={{ padding: '2px 4px', fontWeight: '900', color: '#000000', backgroundColor: '#fffbeb' }}>{duty.duty_place || '-'}</td>
+              <td style={{ width: '28%', backgroundColor: '#f1f5f9', fontWeight: '800', color: '#0f172a', padding: layoutMode === 2 ? (hasCoForce ? '5px 8px' : '7px 10px') : '2.5px 4px', borderRight: '1.5px solid #cbd5e1', whiteSpace: 'nowrap' }}>ड्यूटी स्थल</td>
+              <td style={{ padding: layoutMode === 2 ? (hasCoForce ? '5px 8px' : '7px 10px') : '2.5px 4px', fontWeight: '900', color: '#78350f', backgroundColor: '#fef3c7', fontSize: layoutMode === 2 ? (hasCoForce ? '12.5px' : '14.5px') : '9.5px' }}>{duty.duty_place || '-'}</td>
             </tr>
             <tr style={{ borderBottom: '1px solid #cbd5e1' }}>
-              <td style={{ backgroundColor: '#f1f5f9', fontWeight: 'bold', padding: '2px 4px', borderRight: '1px solid #cbd5e1' }}>दिनाँक व समय</td>
-              <td style={{ padding: '2px 4px', fontWeight: 'bold' }}>{duty.shift || '-'}</td>
+              <td style={{ backgroundColor: '#f1f5f9', fontWeight: '800', color: '#0f172a', padding: layoutMode === 2 ? (hasCoForce ? '5px 8px' : '7px 10px') : '2.5px 4px', borderRight: '1.5px solid #cbd5e1', whiteSpace: 'nowrap' }}>दिनाँक व समय</td>
+              <td style={{ padding: layoutMode === 2 ? (hasCoForce ? '5px 8px' : '7px 10px') : '2.5px 4px', fontWeight: 'bold' }}>{duty.shift || '-'}</td>
             </tr>
-            <tr style={{ borderBottom: '1px solid #cbd5e1' }}>
-              <td style={{ backgroundColor: '#f1f5f9', fontWeight: 'bold', padding: '2px 4px', borderRight: '1px solid #cbd5e1' }}>जोन / प्रभारी</td>
-              <td style={{ padding: '2px 4px' }}>{duty.zone || '-'} / {duty.zonal_incharge || duty.zonal || '-'}</td>
-            </tr>
-            <tr style={{ borderBottom: '1px solid #cbd5e1' }}>
-              <td style={{ backgroundColor: '#f1f5f9', fontWeight: 'bold', padding: '2px 4px', borderRight: '1px solid #cbd5e1' }}>सेक्टर / प्रभारी</td>
-              <td style={{ padding: '2px 4px' }}>{duty.sector || '-'} / {duty.sector_incharge || '-'}</td>
-            </tr>
+            {!hasCoForce ? (
+              <>
+                <tr style={{ borderBottom: '1px solid #cbd5e1' }}>
+                  <td style={{ backgroundColor: '#f1f5f9', fontWeight: '800', color: '#0f172a', padding: layoutMode === 2 ? '7px 10px' : '2.5px 4px', borderRight: '1.5px solid #cbd5e1', whiteSpace: 'nowrap' }}>जोन</td>
+                  <td style={{ padding: layoutMode === 2 ? '7px 10px' : '2.5px 4px', fontWeight: '600' }}>{cleanZone || '-'}</td>
+                </tr>
+                {cleanZonalIncharge && (
+                  <tr style={{ borderBottom: '1px solid #cbd5e1' }}>
+                    <td style={{ backgroundColor: '#f8fafc', fontWeight: '800', color: '#0369a1', padding: layoutMode === 2 ? '7px 10px' : '2.5px 4px', borderRight: '1.5px solid #cbd5e1', whiteSpace: 'nowrap' }}>जोनल प्रभारी</td>
+                    <td style={{ padding: layoutMode === 2 ? '7px 10px' : '2.5px 4px', fontWeight: '900', color: '#0369a1' }}>{cleanZonalIncharge}</td>
+                  </tr>
+                )}
+                <tr style={{ borderBottom: '1px solid #cbd5e1' }}>
+                  <td style={{ backgroundColor: '#f1f5f9', fontWeight: '800', color: '#0f172a', padding: layoutMode === 2 ? '7px 10px' : '2.5px 4px', borderRight: '1.5px solid #cbd5e1', whiteSpace: 'nowrap' }}>सेक्टर</td>
+                  <td style={{ padding: layoutMode === 2 ? '7px 10px' : '2.5px 4px', fontWeight: '600' }}>{cleanSector || '-'}</td>
+                </tr>
+                {cleanSectorIncharge && (
+                  <tr style={{ borderBottom: '1px solid #cbd5e1' }}>
+                    <td style={{ backgroundColor: '#f8fafc', fontWeight: '800', color: '#0369a1', padding: layoutMode === 2 ? '7px 10px' : '2.5px 4px', borderRight: '1.5px solid #cbd5e1', whiteSpace: 'nowrap' }}>सेक्टर प्रभारी</td>
+                    <td style={{ padding: layoutMode === 2 ? '7px 10px' : '2.5px 4px', fontWeight: '900', color: '#0369a1' }}>{cleanSectorIncharge}</td>
+                  </tr>
+                )}
+              </>
+            ) : (
+              <>
+                <tr style={{ borderBottom: '1px solid #cbd5e1' }}>
+                  <td style={{ backgroundColor: '#f1f5f9', fontWeight: '800', color: '#0f172a', padding: layoutMode === 2 ? '5px 8px' : '2.5px 4px', borderRight: '1.5px solid #cbd5e1', whiteSpace: 'nowrap' }}>जोन / प्रभारी</td>
+                  <td style={{ padding: layoutMode === 2 ? '5px 8px' : '2.5px 4px' }}>{cleanZone || '-'} {cleanZonalIncharge ? ` / ${cleanZonalIncharge}` : ''}</td>
+                </tr>
+                <tr style={{ borderBottom: '1px solid #cbd5e1' }}>
+                  <td style={{ backgroundColor: '#f1f5f9', fontWeight: '800', color: '#0f172a', padding: layoutMode === 2 ? '5px 8px' : '2.5px 4px', borderRight: '1.5px solid #cbd5e1', whiteSpace: 'nowrap' }}>सेक्टर / प्रभारी</td>
+                  <td style={{ padding: layoutMode === 2 ? '5px 8px' : '2.5px 4px' }}>{cleanSector || '-'} {cleanSectorIncharge ? ` / ${cleanSectorIncharge}` : ''}</td>
+                </tr>
+              </>
+            )}
             {activeBriefingText && (
-              <tr style={{ borderBottom: '1px solid #cbd5e1', backgroundColor: '#fffbeb' }}>
-                <td style={{ backgroundColor: '#fef3c7', fontWeight: '900', padding: '2px 4px', borderRight: '1px solid #cbd5e1' }}>ब्रीफिंग</td>
-                <td style={{ padding: '2px 4px', fontWeight: 'bold' }}>{activeBriefingText}</td>
+              <tr style={{ borderBottom: '1px solid #cbd5e1', backgroundColor: '#f0f9ff' }}>
+                <td style={{ backgroundColor: '#e0f2fe', fontWeight: '900', color: '#075985', padding: layoutMode === 2 ? (hasCoForce ? '5px 8px' : '7px 10px') : '2.5px 4px', borderRight: '1.5px solid #cbd5e1', whiteSpace: 'nowrap' }}>ब्रीफिंग स्थल</td>
+                <td style={{ padding: layoutMode === 2 ? (hasCoForce ? '5px 8px' : '7px 10px') : '2.5px 4px', fontWeight: 'bold', color: '#0369a1' }}>{activeBriefingText}</td>
               </tr>
             )}
             {activeNoteText && (
               <tr style={{ backgroundColor: '#fffbeb' }}>
-                <td style={{ backgroundColor: '#fef3c7', fontWeight: '900', padding: '2px 4px', borderRight: '1px solid #cbd5e1' }}>नोट</td>
-                <td style={{ padding: '2px 4px', fontWeight: 'bold', fontSize: '7.5px' }}>{activeNoteText}</td>
+                <td style={{ backgroundColor: '#fef3c7', fontWeight: '900', color: '#92400e', padding: layoutMode === 2 ? (hasCoForce ? '5px 8px' : '7px 10px') : '2.5px 4px', borderRight: '1.5px solid #cbd5e1', whiteSpace: 'nowrap' }}>विशेष निर्देश</td>
+                <td style={{ padding: layoutMode === 2 ? (hasCoForce ? '5px 8px' : '7px 10px') : '2.5px 4px', fontWeight: 'bold', fontSize: layoutMode === 2 ? (hasCoForce ? '10.5px' : '12px') : '7.5px', color: '#92400e' }}>{activeNoteText}</td>
               </tr>
             )}
           </tbody>
         </table>
 
-        {/* Co-deployed Force for 2-in-1 layout (1-Line Compact Format) */}
-        {layoutMode === 2 && coForceList.length > 0 && (
-          <div style={{ border: '1px solid #cbd5e1', borderRadius: '4px', overflow: 'hidden', margin: '3px 0', fontSize: '8px' }}>
-            <div style={{ backgroundColor: '#f1f5f9', fontWeight: '900', padding: '2px 4px', borderBottom: '1px solid #cbd5e1', display: 'flex', justifyContent: 'space-between' }}>
-              <span>🤝 सहयोगार्थ पुलिस बल (उसी स्थल पर तैनात साथी):</span>
-              <span>कुल: {coForceList.length} जवान</span>
-            </div>
-            <div style={{ maxHeight: '85px', overflowY: 'hidden' }}>
-              {coForceList.map((colleague, cIdx) => {
-                const cleanName = (colleague.name || '').trim()
-                  .replace(/,\s*\d{10}\b/g, '')
-                  .replace(/\b\d{10}\b/g, '')
-                  .replace(/,\s*,/g, ',')
-                  .replace(/,\s*$/, '')
-                  .trim();
+        {/* Co-deployed Force (Gated by includeCoForce) */}
+        {includeCoForce && coForceList.length > 0 && (() => {
+          const maxVisible = layoutMode === 2 ? 36 : 28;
+          const displayedList = coForceList.slice(0, maxVisible);
+          const remainingCount = coForceList.length - displayedList.length;
 
-                return (
-                  <div key={cIdx} style={{ display: 'flex', justifyContent: 'space-between', padding: '1.5px 4px', borderBottom: '1px solid #f1f5f9', fontSize: '8px', lineHeight: '1.2' }}>
-                    <span style={{ fontWeight: 'bold', maxWidth: '45%', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      {cIdx + 1}. {cleanName}
-                    </span>
-                    <span style={{ fontFamily: 'monospace', fontWeight: 'bold' }}>
-                      📱 {colleague.mobile || '-'}
-                    </span>
-                    <span style={{ color: '#475569', maxWidth: '35%', textAlign: 'right', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      {colleague.posting || ''} {colleague.district ? `(${colleague.district})` : ''}
-                    </span>
-                  </div>
-                );
-              })}
+          return (
+            <div style={{ border: '1.5px solid #0b132b', borderRadius: '6px', overflow: 'hidden', margin: layoutMode === 2 ? '5px 0 4px' : '3px 0', fontSize: layoutMode === 2 ? '8.5px' : '7.5px' }}>
+              <div style={{ backgroundColor: '#f1f5f9', fontWeight: '900', padding: layoutMode === 2 ? '3px 8px' : '2px 5px', borderBottom: '1.5px solid #cbd5e1', display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ fontSize: layoutMode === 2 ? '10px' : '8.5px', color: '#0f172a' }}>सहयोगार्थ पुलिस बल:</span>
+                <span style={{ color: '#0369a1', fontFamily: 'monospace', fontWeight: 'bold' }}>कुल: {coForceList.length} जवान</span>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', columnGap: layoutMode === 2 ? '8px' : '5px', rowGap: layoutMode === 2 ? '2.5px' : '1.5px', padding: layoutMode === 2 ? '4px 6px' : '2.5px 4px', overflow: 'hidden' }}>
+                {displayedList.map((colleague, cIdx) => {
+                  let cleanName = (colleague.name || '').trim()
+                    .replace(/,\s*\d{10}\b/g, '')
+                    .replace(/\b\d{10}\b/g, '')
+                    .replace(/।\s*नं\s*\(?.*$/g, '')
+                    .replace(/,\s*$/, '')
+                    .trim();
+
+                  if (cleanName.includes(',')) {
+                    cleanName = cleanName.split(',')[0].trim();
+                  }
+
+                  return (
+                    <div key={cIdx} style={{ display: 'flex', alignItems: 'center', gap: '3px', padding: layoutMode === 2 ? '2px 4px' : '1px 3px', border: '1px solid #e2e8f0', borderRadius: '3px', backgroundColor: '#f8fafc', whiteSpace: 'nowrap', overflow: 'hidden' }}>
+                      <span style={{ fontWeight: 'bold', color: '#64748b', fontFamily: 'monospace', fontSize: layoutMode === 2 ? '8px' : '6.5px' }}>{cIdx + 1}.</span>
+                      <span style={{ fontWeight: '900', color: '#0f172a', overflow: 'hidden', textOverflow: 'ellipsis', flex: 1 }}>{cleanName}</span>
+                      <span style={{ fontFamily: 'monospace', fontWeight: 'bold', color: '#0369a1', marginLeft: 'auto' }}>{colleague.mobile || '-'}</span>
+                    </div>
+                  );
+                })}
+              </div>
+              {remainingCount > 0 && (
+                <div style={{ backgroundColor: '#f1f5f9', borderTop: '1px solid #e2e8f0', padding: '2px 4px', textAlign: 'center', fontSize: layoutMode === 2 ? '8px' : '7px', fontWeight: 'bold', color: '#475569' }}>
+                  + {remainingCount} अन्य पुलिस बल (देखें संपूर्ण ड्यूटी बुकलेट)
+                </div>
+              )}
             </div>
-          </div>
-        )}
+          );
+        })()}
 
         {/* Footer Authority & QR Code */}
-        <div style={{ borderTop: '1.5px solid #000000', paddingTop: '3px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ borderTop: '1.5px solid #000000', paddingTop: '3px', marginTop: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
             <QRCodeSVG value={qrData} size={layoutMode === 2 ? 34 : 28} level="M" />
             <div>
@@ -363,11 +455,8 @@ export default function BulkLegalPdfModal({
               </div>
               <div>
                 <h3 className="text-base font-black text-white leading-tight">
-                  बल्क ड्यूटी पास प्रिंट / PDF ({paperSize === 'a4' ? 'A4 Paper' : 'Legal Paper'})
+                  बल्क ड्यूटी पास प्रिंट / PDF
                 </h3>
-                <p className="text-xs text-amber-400 font-bold mt-0.5">
-                  {paperSize === 'a4' ? 'A4 Size (मानक प्रिंटर) - 2 या 4 कार्ड प्रति पेज' : 'Legal Size (8.5 × 14 inch) - 2, 4 या 6 कार्ड प्रति पेज'}
-                </p>
               </div>
             </div>
             {!isGenerating && (
@@ -382,9 +471,9 @@ export default function BulkLegalPdfModal({
 
           {/* Content Body */}
           <div className="p-5 space-y-4 text-slate-800 text-xs max-h-[75vh] overflow-y-auto">
-            {/* 📄 PAPER SIZE SELECTOR (A4 VS LEGAL) */}
+            {/* PAPER SIZE SELECTOR */}
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 p-2.5 bg-slate-100 rounded-2xl border border-slate-300">
-              <span className="font-black text-slate-900 text-xs">🖨️ प्रिंटर पेपर साइज (Paper Size):</span>
+              <span className="font-black text-slate-900 text-xs">प्रिंटर पेपर:</span>
               <div className="flex items-center gap-1.5 w-full sm:w-auto">
                 <button
                   type="button"
@@ -398,7 +487,7 @@ export default function BulkLegalPdfModal({
                       : 'bg-white text-slate-700 hover:bg-slate-200 border border-slate-200'
                   }`}
                 >
-                  <span>📄 A4 पेपर (मानक)</span>
+                  <span>A4</span>
                   {paperSize === 'a4' && <Check className="w-3.5 h-3.5 stroke-[3]" />}
                 </button>
                 <button
@@ -410,15 +499,15 @@ export default function BulkLegalPdfModal({
                       : 'bg-white text-slate-700 hover:bg-slate-200 border border-slate-200'
                   }`}
                 >
-                  <span>📜 Legal पेपर (8.5×14")</span>
+                  <span>Legal</span>
                   {paperSize === 'legal' && <Check className="w-3.5 h-3.5 stroke-[3]" />}
                 </button>
               </div>
             </div>
 
-            {/* 🌟 LAYOUT TOGGLE (2-IN-1 ELECTION VS 4-IN-1 VS 6-IN-1) */}
+            {/* LAYOUT TOGGLE */}
             <div className="space-y-1">
-              <div className="text-[11px] font-bold text-slate-600">प्रति पृष्ठ कार्ड लेआउट (Layout):</div>
+              <div className="text-[11px] font-bold text-slate-600">प्रति पृष्ठ कार्ड:</div>
               <div className="bg-slate-100 p-1.5 rounded-xl border border-slate-300 flex flex-wrap sm:flex-nowrap items-center gap-1.5">
                 <button
                   type="button"
@@ -428,9 +517,8 @@ export default function BulkLegalPdfModal({
                       ? 'bg-amber-500 text-slate-950 shadow-sm'
                       : 'bg-transparent text-slate-700 hover:bg-slate-200'
                   }`}
-                  title="2 कार्ड प्रति पेज (सहयोगार्थ बल सहित - बड़ा फॉन्ट)"
                 >
-                  <span>2-इन-1 (सहयोगार्थ बल)</span>
+                  <span>2 कार्ड / पेज</span>
                   {layoutMode === 2 && <Check className="w-3.5 h-3.5 stroke-[3]" />}
                 </button>
 
@@ -442,9 +530,8 @@ export default function BulkLegalPdfModal({
                       ? 'bg-amber-500 text-slate-950 shadow-sm'
                       : 'bg-transparent text-slate-700 hover:bg-slate-200'
                   }`}
-                  title={paperSize === 'a4' ? "4 कार्ड प्रति A4 पेज (अनुशंसित)" : "4 कार्ड प्रति लीगल पेज"}
                 >
-                  <span>4-इन-1 {paperSize === 'a4' ? '(A4 अनुशंसित)' : '(मानक)'}</span>
+                  <span>4 कार्ड / पेज</span>
                   {layoutMode === 4 && <Check className="w-3.5 h-3.5 stroke-[3]" />}
                 </button>
 
@@ -457,70 +544,48 @@ export default function BulkLegalPdfModal({
                         ? 'bg-amber-500 text-slate-950 shadow-sm'
                         : 'bg-transparent text-slate-700 hover:bg-slate-200'
                     }`}
-                    title="6 कार्ड प्रति लीगल पेज (कॉम्पैक्ट)"
                   >
-                    <span>6-इन-1 (कॉम्पैक्ट)</span>
+                    <span>6 कार्ड / पेज</span>
                     {layoutMode === 6 && <Check className="w-3.5 h-3.5 stroke-[3]" />}
                   </button>
                 )}
               </div>
             </div>
 
-            {/* FAST OPTION 1: 1-CLICK INSTANT PRINT / SAVE AS PDF */}
-            <div className="p-4 bg-emerald-50 border-2 border-emerald-500/50 rounded-2xl space-y-2.5 shadow-xs">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Zap className="w-5 h-5 text-emerald-600 fill-emerald-500" />
-                  <strong className="text-emerald-950 text-sm">
-                    ⚡ 1-सेकंड सुपरफास्ट प्रिंट ({layoutMode}-इन-1 {paperSize === 'a4' ? 'A4' : 'Legal'}):
-                  </strong>
+            {/* TOGGLE OPTION: INCLUDE CO-DEPLOYED FORCE */}
+            <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 flex items-center justify-between shadow-xs">
+              <div className="flex items-center gap-2.5">
+                <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${includeCoForce ? 'bg-amber-100 text-amber-800' : 'bg-slate-200 text-slate-500'}`}>
+                  <Users className="w-4 h-4" />
                 </div>
-                <span className="text-[10px] bg-emerald-200 text-emerald-900 px-2 py-0.5 rounded-full font-black">
-                  Instant
-                </span>
+                <div>
+                  <div className="text-xs font-black text-slate-900">
+                    सहयोगार्थ पुलिस बल
+                  </div>
+                  <div className="text-[10px] text-slate-500 font-medium mt-0.5">
+                    {includeCoForce
+                      ? 'उसी ड्यूटी स्थल के अन्य जवानों का विवरण शामिल रहेगा'
+                      : 'कार्ड पर सहयोगार्थ बल नहीं छपेगा'}
+                  </div>
+                </div>
               </div>
-              <p className="text-[11px] text-emerald-800 font-medium leading-relaxed">
-                सीधे ब्राउज़र के नेटिव प्रिंट इंजन से <strong>सभी {targetRecords.length} कार्ड ({totalPossiblePages} {paperSize.toUpperCase()} पेज)</strong> मात्र 2 सेकंड में "Save as PDF" या सीधे प्रिंट करें।
-              </p>
-              <button
-                onClick={handleInstantBrowserPrint}
-                className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs sm:text-sm rounded-xl shadow flex items-center justify-center gap-2 transition active:scale-98 cursor-pointer"
-              >
-                <Printer className="w-4 h-4" />
-                <span>🖨️ तुरंत प्रिंट / Save PDF ({layoutMode} कार्ड प्रति {paperSize.toUpperCase()} पेज)</span>
-              </button>
-            </div>
 
-            {/* Summary Box */}
-            <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-2">
-              <div className="flex justify-between items-center text-slate-600 font-semibold border-b border-slate-200 pb-2">
-                <span>इवेंट:</span>
-                <strong className="text-slate-900">{eventTitle}</strong>
-              </div>
-              <div className="flex justify-between items-center text-slate-600 font-semibold">
-                <span>कुल पास / जवान:</span>
-                <span className="font-mono text-xs px-2 py-0.5 rounded bg-amber-100 text-amber-900 font-black">
-                  {targetRecords.length} कार्ड
-                </span>
-              </div>
-              <div className="flex justify-between items-center text-slate-600 font-semibold">
-                <span>कुल लीगल पेज (Legal Pages):</span>
-                <span className="font-mono text-xs px-2 py-0.5 rounded bg-blue-100 text-blue-900 font-black">
-                  {totalPossiblePages} पेज ({layoutMode} कार्ड / पेज)
-                </span>
-              </div>
+              <ToggleSwitch
+                enabled={includeCoForce}
+                onChange={setIncludeCoForce}
+              />
             </div>
 
             {/* Filter by Duty Point Option */}
             {uniqueDutyPoints.length > 1 && !isGenerating && (
               <div className="space-y-1">
-                <label className="block font-bold text-slate-700">
-                  ड्यूटी पॉइंट फ़िल्टर (वैकल्पिक):
+                <label className="block font-bold text-slate-700 text-xs">
+                  ड्यूटी पॉइंट फ़िल्टर:
                 </label>
                 <select
                   value={selectedPointFilter}
                   onChange={(e) => setSelectedPointFilter(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500 cursor-pointer"
+                  className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500 cursor-pointer"
                 >
                   <option value="ALL">सभी ड्यूटी पॉइंट ({validRecords.length} जवान)</option>
                   {uniqueDutyPoints.map((pt, idx) => (
@@ -532,86 +597,114 @@ export default function BulkLegalPdfModal({
               </div>
             )}
 
-            {/* DIRECT FILE DOWNLOAD SECTION WITH BATCH RANGE */}
-            <div className="border border-slate-200 rounded-xl p-3.5 bg-slate-50/50 space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="font-bold text-slate-900">📥 डायरेक्ट PDF फाइल डाउनलोड ({layoutMode}-इन-1):</span>
-                <div className="flex items-center gap-1 bg-slate-200 p-0.5 rounded-lg text-[10px] font-bold">
-                  <button
-                    onClick={() => setRangeMode('all')}
-                    className={`px-2 py-1 rounded-md transition ${rangeMode === 'all' ? 'bg-white shadow text-slate-950 font-black' : 'text-slate-600'}`}
-                  >
-                    सभी
-                  </button>
-                  <button
-                    onClick={() => setRangeMode('custom')}
-                    className={`px-2 py-1 rounded-md transition ${rangeMode === 'custom' ? 'bg-white shadow text-slate-950 font-black' : 'text-slate-600'}`}
-                  >
-                    पेज रेंज
-                  </button>
-                </div>
+            {/* Summary Row */}
+            <div className="bg-slate-100/80 border border-slate-200 rounded-xl px-4 py-2 flex flex-wrap items-center justify-between gap-2 text-xs">
+              <div className="flex items-center gap-1.5">
+                <span className="text-slate-500 font-bold">कुल पास:</span>
+                <span className="font-mono px-2 py-0.5 rounded bg-amber-100 text-amber-900 font-black">
+                  {targetRecords.length}
+                </span>
               </div>
+              <div className="flex items-center gap-1.5">
+                <span className="text-slate-500 font-bold">कुल पृष्ठ:</span>
+                <span className="font-mono px-2 py-0.5 rounded bg-blue-100 text-blue-900 font-black">
+                  {totalPossiblePages} ({paperSize.toUpperCase()})
+                </span>
+              </div>
+            </div>
 
-              {rangeMode === 'custom' && (
-                <div className="flex items-center gap-2 pt-1">
-                  <div className="flex-1">
-                    <label className="text-[10px] text-slate-500 font-bold block">शुरुआती पेज:</label>
-                    <input
-                      type="number"
-                      min={1}
-                      max={totalPossiblePages}
-                      value={startPage}
-                      onChange={(e) => setStartPage(e.target.value)}
-                      className="w-full p-2 bg-white border border-slate-300 rounded-lg text-xs font-bold text-slate-900"
-                    />
-                  </div>
-                  <div className="flex-1">
-                    <label className="text-[10px] text-slate-500 font-bold block">अंतिम पेज:</label>
-                    <input
-                      type="number"
-                      min={1}
-                      max={totalPossiblePages}
-                      value={endPage}
-                      onChange={(e) => setEndPage(e.target.value)}
-                      className="w-full p-2 bg-white border border-slate-300 rounded-lg text-xs font-bold text-slate-900"
-                    />
-                  </div>
-                </div>
-              )}
-
-              {/* Progress Indicator */}
-              {isGenerating && (
-                <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl space-y-1.5 text-center">
-                  <div className="flex items-center justify-center gap-2 text-amber-900 font-black text-xs">
-                    <Loader2 className="w-3.5 h-3.5 animate-spin text-amber-600" />
-                    <span>PDF तैयार हो रही है... ({progress.page} / {progress.totalPages} पेज)</span>
-                  </div>
-                  <div className="w-full bg-amber-200 rounded-full h-1.5 overflow-hidden">
-                    <div
-                      className="bg-amber-600 h-1.5 rounded-full transition-all duration-150"
-                      style={{ width: `${Math.round(((progress.current || 1) / (progress.total || 1)) * 100)}%` }}
-                    />
-                  </div>
-                </div>
-              )}
-
+            {/* UNIFIED PRINT & EXPORT SECTION */}
+            <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-3 shadow-xs">
+              {/* Primary Instant Print Button */}
               <button
-                onClick={handleStartFastJsPdf}
-                disabled={isGenerating || targetRecords.length === 0}
-                className="w-full py-2.5 bg-[#0b132b] hover:bg-slate-800 text-white font-black text-xs rounded-xl shadow flex items-center justify-center gap-1.5 transition active:scale-98 disabled:opacity-50 cursor-pointer"
+                onClick={handleInstantBrowserPrint}
+                className="w-full py-3 bg-emerald-700 hover:bg-emerald-600 text-white font-black text-xs sm:text-sm rounded-xl shadow flex items-center justify-center gap-2 transition active:scale-98 cursor-pointer"
               >
-                {isGenerating ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    <span>डाउनलोड हो रहा है ({progress.current}/{progress.total})...</span>
-                  </>
-                ) : (
-                  <>
-                    <FileDown className="w-4 h-4 text-amber-400" />
-                    <span>📥 PDF फ़ाइल बनाएं ({selectedSlicePages} लीगल पेज / {selectedSlicePages * layoutMode} कार्ड)</span>
-                  </>
-                )}
+                <Printer className="w-4 h-4" />
+                <span>प्रिंट / Save PDF</span>
               </button>
+
+              {/* Direct PDF File Generator with Page Range */}
+              <div className="pt-2 border-t border-slate-200 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-slate-800 text-xs">PDF फ़ाइल डाउनलोड:</span>
+                  <div className="flex items-center gap-1 bg-slate-200 p-0.5 rounded-lg text-[10px] font-bold">
+                    <button
+                      onClick={() => setRangeMode('all')}
+                      className={`px-2 py-0.5 rounded-md transition ${rangeMode === 'all' ? 'bg-white shadow text-slate-950 font-black' : 'text-slate-600'}`}
+                    >
+                      सभी पेज
+                    </button>
+                    <button
+                      onClick={() => setRangeMode('custom')}
+                      className={`px-2 py-0.5 rounded-md transition ${rangeMode === 'custom' ? 'bg-white shadow text-slate-950 font-black' : 'text-slate-600'}`}
+                    >
+                      पेज रेंज
+                    </button>
+                  </div>
+                </div>
+
+                {rangeMode === 'custom' && (
+                  <div className="flex items-center gap-2 pt-0.5">
+                    <div className="flex-1">
+                      <label className="text-[10px] text-slate-500 font-bold block">शुरुआती पेज:</label>
+                      <input
+                        type="number"
+                        min={1}
+                        max={totalPossiblePages}
+                        value={startPage}
+                        onChange={(e) => setStartPage(e.target.value)}
+                        className="w-full p-1.5 bg-white border border-slate-300 rounded-lg text-xs font-bold text-slate-900"
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <label className="text-[10px] text-slate-500 font-bold block">अंतिम पेज:</label>
+                      <input
+                        type="number"
+                        min={1}
+                        max={totalPossiblePages}
+                        value={endPage}
+                        onChange={(e) => setEndPage(e.target.value)}
+                        className="w-full p-1.5 bg-white border border-slate-300 rounded-lg text-xs font-bold text-slate-900"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* Progress Indicator */}
+                {isGenerating && (
+                  <div className="p-2.5 bg-amber-50 border border-amber-200 rounded-xl space-y-1 text-center">
+                    <div className="flex items-center justify-center gap-2 text-amber-900 font-black text-xs">
+                      <Loader2 className="w-3.5 h-3.5 animate-spin text-amber-600" />
+                      <span>PDF तैयार हो रही है... ({progress.page} / {progress.totalPages} पेज)</span>
+                    </div>
+                    <div className="w-full bg-amber-200 rounded-full h-1.5 overflow-hidden">
+                      <div
+                        className="bg-amber-600 h-1.5 rounded-full transition-all duration-150"
+                        style={{ width: `${Math.round(((progress.current || 1) / (progress.total || 1)) * 100)}%` }}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                <button
+                  onClick={handleStartFastJsPdf}
+                  disabled={isGenerating || targetRecords.length === 0}
+                  className="w-full py-2 bg-[#0b132b] hover:bg-slate-800 text-white font-bold text-xs rounded-xl shadow flex items-center justify-center gap-1.5 transition active:scale-98 disabled:opacity-50 cursor-pointer"
+                >
+                  {isGenerating ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <span>डाउनलोड हो रहा है ({progress.current}/{progress.total})...</span>
+                    </>
+                  ) : (
+                    <>
+                      <FileDown className="w-3.5 h-3.5 text-amber-400" />
+                      <span>PDF फ़ाइल जनरेट करें ({selectedSlicePages} पेज / {selectedSlicePages * layoutMode} कार्ड)</span>
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
           </div>
 

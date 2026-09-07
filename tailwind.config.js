@@ -18,8 +18,10 @@ export default {
         }
       },
       fontFamily: {
-        sans: ['Inter', 'Noto Sans Devanagari', 'system-ui', 'sans-serif'],
-        devanagari: ['Noto Sans Devanagari', 'sans-serif']
+        sans: ['Mukta', 'Poppins', 'Inter', 'system-ui', 'sans-serif'],
+        devanagari: ['Mukta', 'Poppins', 'sans-serif'],
+        mukta: ['Mukta', 'sans-serif'],
+        poppins: ['Poppins', 'sans-serif']
       }
     },
   },

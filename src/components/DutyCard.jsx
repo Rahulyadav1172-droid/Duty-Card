@@ -25,6 +25,7 @@ import html2canvas from 'html2canvas';
 import VerifyModal from './VerifyModal';
 import { useLanguage } from '../context/LanguageContext';
 import { printIndividualPass, generateIndividualPassHtml } from '../utils/printLegalBulk';
+import { resolvePoliceRank, stripRankFromName } from '../utils/rankResolver';
 
 export default function DutyCard({
   duty,
@@ -277,8 +278,11 @@ export default function DutyCard({
     sector: duty.sector
   });
 
+  const effectiveRank = resolvePoliceRank(duty?.rank, duty?.name);
+  const cleanOfficerName = stripRankFromName(duty?.name);
+
   return (
-    <div className="w-full max-w-2xl mx-auto space-y-4 font-devanagari animate-in fade-in duration-300">
+    <div className="w-full max-w-4xl mx-auto space-y-4 font-devanagari text-slate-900 animate-in fade-in zoom-in-95 duration-300">
       {/* Hidden File Input for Photo Upload */}
       <input
         ref={photoInputRef}
@@ -287,7 +291,6 @@ export default function DutyCard({
         onChange={handlePhotoUpload}
         className="hidden"
       />
-
       {/* Action Toolbar (Perfect for all mobile screen sizes) */}
       <div className="bg-white p-2.5 sm:p-4 rounded-xl sm:rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 no-print">
         <div className="flex items-center gap-2">
@@ -297,7 +300,7 @@ export default function DutyCard({
           <div className="min-w-0">
             <div className="text-xs sm:text-sm font-black text-slate-900 leading-tight truncate">अयोध्या पुलिस ड्यूटी पास</div>
             <div className="text-[10px] sm:text-xs text-slate-500 font-mono font-bold">
-              {cleanPno ? `P.No: ${cleanPno}` : (duty.rank ? `${duty.rank} • ${duty.district || 'अयोध्या'}` : 'अयोध्या पुलिस')}
+              {cleanPno ? `P.No: ${cleanPno}` : `${effectiveRank} • ${duty.district || 'अयोध्या'}`}
             </div>
           </div>
         </div>
@@ -352,7 +355,7 @@ export default function DutyCard({
       {/* Main Printable Duty Card Container */}
       <div
         id="printable-duty-card"
-        className="bg-white text-slate-900 p-4 sm:p-6 rounded-xl sm:rounded-2xl border-2 border-slate-900 shadow-md space-y-3.5 sm:space-y-4"
+        className="bg-white text-slate-900 p-4 sm:p-6 rounded-xl sm:rounded-2xl border-[2.5px] border-[#0b132b] shadow-xl ring-2 ring-amber-500/80 ring-offset-2 space-y-3.5 sm:space-y-4"
       >
         {/* Pass Header */}
         <div className="border-b-2 border-slate-900 pb-2.5 sm:pb-3.5 flex items-center justify-between gap-2 sm:gap-3">
@@ -405,20 +408,21 @@ export default function DutyCard({
           <div className="flex-1 flex flex-col justify-between text-slate-900 py-0.5 min-w-0">
             <div>
               <span className="text-[10px] sm:text-[11px] font-bold text-slate-500">अधिकारी / कर्मचारी:</span>
-              <div className="text-sm sm:text-lg font-black text-slate-950 mt-0.5 break-words">
-                {duty.name}
+              <div className="text-sm sm:text-lg font-black text-slate-950 mt-0.5 break-words flex items-center gap-2">
+                <span>{cleanOfficerName}</span>
+                <span className="text-[11px] px-2 py-0.5 rounded-md bg-amber-100 text-amber-950 font-black border border-amber-300 shrink-0">
+                  {effectiveRank}
+                </span>
               </div>
               <div className="text-xs font-mono font-bold text-slate-800 mt-1 flex items-center gap-1.5">
-                <span>📱</span>
+                <Phone className="w-3.5 h-3.5 text-slate-500" />
                 <span>{duty.mobile || 'मोबाइल अनुपलब्ध'}</span>
               </div>
             </div>
 
             <div className="text-[10px] sm:text-xs text-slate-600 border-t border-slate-200 pt-1.5 flex flex-wrap items-center justify-between gap-1">
-              {cleanPno ? (
+              {cleanPno && (
                 <div>P.No: <strong className="font-mono text-slate-950">{cleanPno}</strong></div>
-              ) : (
-                <div>पद: <strong className="text-slate-950">{duty.rank || 'आरक्षी'}</strong></div>
               )}
               <div>मूल तैनाती: <strong className="text-slate-950">{duty.posting || '-'}</strong> {duty.district ? `(${duty.district})` : ''}</div>
             </div>
@@ -612,7 +616,7 @@ export default function DutyCard({
                     {peer.posting || 'थाना कोतवाली'} {peer.district ? `(${peer.district})` : ''}
                   </div>
                   <div className="text-[10px] sm:text-[11px] font-mono font-bold text-slate-700">
-                    📱 {peer.mobile || '-'}
+                    मो० {peer.mobile || '-'}
                   </div>
                 </div>
 
@@ -676,7 +680,7 @@ export default function DutyCard({
               {/* Duty Place */}
               <div>
                 <label className="text-slate-800 font-black">
-                  ड्यूटी का स्थान (Duty Place) *
+                  ड्यूटी का स्थान *
                 </label>
                 <input
                   type="text"
@@ -692,7 +696,7 @@ export default function DutyCard({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="text-slate-800 font-black">
-                    जोन / व्यवस्था (Zone)
+                    जोन / व्यवस्था
                   </label>
                   <input
                     type="text"
@@ -705,7 +709,7 @@ export default function DutyCard({
 
                 <div>
                   <label className="text-slate-800 font-black">
-                    सेक्टर (Sector)
+                    सेक्टर
                   </label>
                   <input
                     type="text"
@@ -720,7 +724,7 @@ export default function DutyCard({
               {/* Shift & Time */}
               <div>
                 <label className="text-slate-800 font-black">
-                  दिनाँक व समय / पाली (Shift & Timing)
+                  दिनाँक व समय / पाली
                 </label>
                 <input
                   type="text"
@@ -773,7 +777,7 @@ export default function DutyCard({
                   className="px-5 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black rounded-xl shadow transition active:scale-95 cursor-pointer flex items-center gap-1.5"
                 >
                   <Check className="w-4 h-4 stroke-[3]" />
-                  <span>ड्यूटी कार्ड में सहेजें (Save)</span>
+                  <span>ड्यूटी कार्ड में सहेजें</span>
                 </button>
               </div>
             </form>

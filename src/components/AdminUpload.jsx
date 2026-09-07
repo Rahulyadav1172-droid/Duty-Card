@@ -31,6 +31,7 @@ import {
 import { parseDutyFile } from '../utils/fileParser';
 import * as XLSX from 'xlsx';
 import BulkLegalPdfModal from './BulkLegalPdfModal';
+import ToggleSwitch from './ToggleSwitch';
 
 export default function AdminUpload({
   records = [],
@@ -216,10 +217,10 @@ export default function AdminUpload({
         name: '',
         rank: 'का0',
         mobile: '',
-        duty_place: 'प्रवेश व्यवस्था बैरियर न०-2',
-        zone: 'सिंहाचल',
+        duty_place: 'राम जन्मभूमि परिसर - मुख्य द्वार',
+        zone: 'जोन-01 (मंदिर परिसर)',
         zonal_incharge: '',
-        sector: 'मन्दिर परिसर सेक्टर-प्रथम',
+        sector: 'सेक्टर-01 (मुख्य प्रवेश द्वार)',
         sector_incharge: '',
         posting: 'थाना कोतवाली',
         district: 'अयोध्या',
@@ -469,29 +470,29 @@ export default function AdminUpload({
   const handleDownloadSampleExcel = () => {
     const sampleData = [
       {
-        "zone": "सिंहाचल",
-        "zonal": "क्षेत्राधिकारी वाहन जनपद अमेठी",
-        "sector": "मन्दिर परिसर सेक्टर-प्रथम",
-        "sector incharge": "शैलेश कुमार, क्षेत्राधिकारी - 9450744400",
-        "duty place": "प्रवेश व्यवस्था बैरियर न०-2 (कंट्रोल रूम से आगे)",
-        "name": "गोकुल सिंह",
-        "mob": "8604815398",
-        "thana": "थाना बछरावां",
-        "district": "रायबरेली",
-        "name thana district mob": "का0 गोकुल सिंह थाना बछरावां रायबरेली 8604815398",
+        "zone": "जोन-01 (मंदिर परिसर)",
+        "zonal": "क्षेत्राधिकारी नगर, अयोध्या - 9454402648",
+        "sector": "सेक्टर-01 (मुख्य प्रवेश द्वार)",
+        "sector incharge": "निरीक्षक कोतवाली, अयोध्या - 9454402655",
+        "duty place": "राम जन्मभूमि परिसर - मुख्य द्वार बैरियर",
+        "name": "अमित कुमार",
+        "mob": "9454400001",
+        "thana": "थाना कोतवाली",
+        "district": "अयोध्या",
+        "name thana district mob": "उ0नि0 अमित कुमार थाना कोतवाली अयोध्या 9454400001",
         "time": "दिनांक 15.08.2026 को प्रातः 09.00 बजे से मेला समाप्ति तक"
       },
       {
-        "zone": "सिंहाचल",
-        "zonal": "क्षेत्राधिकारी वाहन जनपद अमेठी",
-        "sector": "मन्दिर परिसर सेक्टर-प्रथम",
-        "sector incharge": "शैलेश कुमार, क्षेत्राधिकारी - 9450744400",
-        "duty place": "प्रवेश व्यवस्था बैरियर न०-2 (कंट्रोल रूम से आगे)",
-        "name": "अनिल कुमार सिंह",
-        "mob": "9450744400",
-        "thana": "थाना महानन्दपुर",
-        "district": "अमेठी",
-        "name thana district mob": "उ0नि0 अनिल कुमार सिंह थाना महानन्दपुर अमेठी 9450744400",
+        "zone": "जोन-01 (मंदिर परिसर)",
+        "zonal": "क्षेत्राधिकारी नगर, अयोध्या - 9454402648",
+        "sector": "सेक्टर-01 (मुख्य प्रवेश द्वार)",
+        "sector incharge": "निरीक्षक कोतवाली, अयोध्या - 9454402655",
+        "duty place": "कनक भवन - निकास बैरियर",
+        "name": "सुरेश सिंह",
+        "mob": "9454400002",
+        "thana": "थाना पूराकलंदर",
+        "district": "अयोध्या",
+        "name thana district mob": "का0 सुरेश सिंह थाना पूराकलंदर अयोध्या 9454400002",
         "time": "दिनांक 15.08.2026 को प्रातः 09.00 बजे से मेला समाप्ति तक"
       }
     ];
@@ -569,7 +570,7 @@ export default function AdminUpload({
               <Layers className="w-5 h-5" />
             </div>
             <div>
-              <div className="text-xs text-slate-500 font-bold">वर्तमान सक्रिय कार्यक्षेत्र (Active Event):</div>
+              <div className="text-xs text-slate-500 font-bold">सक्रिय इवेंट:</div>
               <div className="text-base sm:text-lg font-black text-slate-950">{eventTitle}</div>
             </div>
           </div>
@@ -599,13 +600,13 @@ export default function AdminUpload({
           </div>
           <div>
             <h3 className="text-base font-black text-slate-950 flex items-center gap-2">
-              लाइव ड्यूटी उपस्थिति (Field Attendance)
+              लाइव उपस्थिति
               <span className="text-xs px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-950 font-black font-mono border border-emerald-300">
                 {attendancePercent}% उपस्थित
               </span>
             </h3>
             <p className="text-xs font-bold text-slate-600">
-              कुल {totalCount} जवानों में से <strong>{reportedCount}</strong> जवान ड्यूटी स्थल पर रिपोर्ट कर चुके हैं।
+              कुल {totalCount} में से <strong>{reportedCount}</strong> जवान ड्यूटी स्थल पर उपस्थित हैं।
             </p>
           </div>
         </div>
@@ -614,27 +615,26 @@ export default function AdminUpload({
           <button
             onClick={() => setIsBulkPdfModalOpen(true)}
             className="px-5 py-2.5 bg-[#0b132b] hover:bg-slate-800 text-white rounded-xl text-xs font-black flex items-center gap-2 shadow-sm transition active:scale-95 cursor-pointer"
-            title="ड्यूटी पास बल्क PDF डाउनलोड या प्रिंट करें"
           >
             <FileDown className="w-4 h-4 text-amber-400" />
-            <span>बल्क पास प्रिंट / PDF (A4 / Legal)</span>
+            <span>बल्क पास प्रिंट / PDF</span>
           </button>
         </div>
       </div>
 
       {/* 1. TOP EXCEL UPLOAD DROPZONE */}
-      <div className="bg-white p-6 sm:p-8 rounded-2xl border-2 border-dashed border-amber-500/50 text-center space-y-4 shadow-sm relative overflow-hidden">
-        <div className="w-16 h-16 rounded-2xl bg-amber-500/15 border border-amber-500/40 text-amber-700 flex items-center justify-center mx-auto">
-          <FileSpreadsheet className="w-9 h-9" />
+      <div className="bg-white p-6 sm:p-7 rounded-2xl border-2 border-dashed border-amber-500/50 text-center space-y-4 shadow-sm relative overflow-hidden">
+        <div className="w-14 h-14 rounded-2xl bg-amber-500/15 border border-amber-500/40 text-amber-700 flex items-center justify-center mx-auto">
+          <FileSpreadsheet className="w-8 h-8" />
         </div>
 
         <div>
-          <h2 className="text-xl sm:text-2xl font-black text-slate-950">
-            "{eventTitle}" हेतु एक्सेल शीट अपलोड करें (.xlsx / .xls)
+          <div className="text-xs font-black text-amber-700 uppercase tracking-wide">
+            {eventTitle}
+          </div>
+          <h2 className="text-lg sm:text-xl font-black text-slate-950 mt-1">
+            ड्यूटी एक्सेल शीट अपलोड करें
           </h2>
-          <p className="text-xs sm:text-sm font-medium text-slate-500 max-w-xl mx-auto mt-1">
-            मानक प्रारूप अनुसार एक्सेल फ़ाइल अपलोड करें अथवा नीचे दिए गए 11-कॉलम नमूने का उपयोग करें।
-          </p>
         </div>
 
         {/* Upload Mode Selector */}
@@ -648,7 +648,7 @@ export default function AdminUpload({
                 : 'text-slate-700 hover:bg-slate-200'
             }`}
           >
-            <span>➕ पुराने डेटा में जोड़ें (Merge)</span>
+            <span>पुराने डेटा में जोड़ें</span>
           </button>
           <button
             type="button"
@@ -659,7 +659,7 @@ export default function AdminUpload({
                 : 'text-slate-700 hover:bg-slate-200'
             }`}
           >
-            <span>🔄 पुराना हटाकर नया बदलें (Replace)</span>
+            <span>नया डेटा बदलें</span>
           </button>
         </div>
 
@@ -685,7 +685,7 @@ export default function AdminUpload({
             className="px-4 py-3.5 bg-slate-100 hover:bg-slate-200 text-slate-900 font-black text-xs sm:text-sm rounded-xl border border-slate-300 flex items-center gap-2 transition cursor-pointer"
           >
             <Download className="w-4 h-4 text-amber-700" />
-            11-कॉलम नमूना Excel डाउनलोड
+            नमूना Excel डाउनलोड
           </button>
         </div>
       </div>
@@ -706,11 +706,8 @@ export default function AdminUpload({
       <div className="space-y-3">
         <div className="flex items-center gap-2 px-1">
           <h3 className="text-base font-black text-slate-900">
-            ⚙️ पोर्टल व ड्यूटी पास सेटिंग्स (Portal & Pass Settings)
+            पोर्टल व ड्यूटी पास सेटिंग्स
           </h3>
-          <span className="text-xs font-bold text-slate-500">
-            (शीर्षक, हस्ताक्षर, नोट एवं स्थान)
-          </span>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -723,18 +720,15 @@ export default function AdminUpload({
                 </div>
                 <div>
                   <h3 className="text-base font-black text-slate-950">
-                    मेला / कार्यक्रम का शीर्षक बदलें
+                    मेला / कार्यक्रम का शीर्षक
                   </h3>
-                  <p className="text-xs font-bold text-slate-600">
-                    ड्यूटी कार्ड के मुख्य शीर्षकों को कस्टमाइज़ करें
-                  </p>
                 </div>
               </div>
 
               <form onSubmit={handleSaveHeadings} className="space-y-3 pt-1">
                 <div>
                   <label className="block text-xs font-black text-slate-900 mb-1">
-                    मुख्य शीर्षक (Main Event Name):
+                    मुख्य शीर्षक:
                   </label>
                   <input
                     type="text"
@@ -747,7 +741,7 @@ export default function AdminUpload({
 
                 <div>
                   <label className="block text-xs font-black text-slate-900 mb-1">
-                    उप-शीर्षक (Sub Heading / District):
+                    उप-शीर्षक / जनपद:
                   </label>
                   <input
                     type="text"
@@ -780,18 +774,15 @@ export default function AdminUpload({
                 </div>
                 <div>
                   <h3 className="text-base font-black text-slate-950">
-                    हस्ताक्षर अपलोड व पदनाम सेटिंग
+                    हस्ताक्षर व पदनाम
                   </h3>
-                  <p className="text-xs font-bold text-slate-600">
-                    पास पर नीचे छपने वाला हस्ताक्षर व पदनाम बदलें
-                  </p>
                 </div>
               </div>
 
               <div className="space-y-3 pt-1">
                 <div>
                   <label className="block text-xs font-black text-slate-900 mb-1">
-                    हस्ताक्षरकर्ता पदनाम (Designation Text):
+                    हस्ताक्षरकर्ता पदनाम:
                   </label>
                   <div className="flex gap-2">
                     <input
@@ -870,28 +861,15 @@ export default function AdminUpload({
                   </div>
                   <div>
                     <h3 className="text-base font-black text-slate-950">
-                      'नोट' (Briefing Note) सेटिंग
+                      नोट
                     </h3>
-                    <p className="text-xs font-bold text-slate-600">
-                      कार्ड पर नोट दिखाएं या पूरी तरह बंद करें
-                    </p>
                   </div>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={() => handleToggleNote(!noteToggle)}
-                  className={`w-12 h-6.5 rounded-full transition-colors relative flex items-center p-0.5 cursor-pointer ${
-                    noteToggle ? 'bg-emerald-600' : 'bg-slate-300'
-                  }`}
-                  title={noteToggle ? "नोट चालू है" : "नोट बंद है"}
-                >
-                  <div
-                    className={`w-5.5 h-5.5 bg-white rounded-full shadow transform transition-transform ${
-                      noteToggle ? 'translate-x-5.5' : 'translate-x-0'
-                    }`}
-                  />
-                </button>
+                <ToggleSwitch
+                  enabled={noteToggle}
+                  onChange={handleToggleNote}
+                />
               </div>
 
               <form onSubmit={handleSaveNoteSetting} className="space-y-3">
@@ -920,7 +898,7 @@ export default function AdminUpload({
                     }}
                     className="px-3 py-1.5 bg-slate-100 hover:bg-rose-100 text-rose-800 text-xs rounded-xl border border-slate-300 font-black cursor-pointer"
                   >
-                    नोट हटाएं (Clear)
+                    नोट हटाएं
                   </button>
 
                   <button
@@ -945,28 +923,15 @@ export default function AdminUpload({
                   </div>
                   <div>
                     <h3 className="text-base font-black text-slate-950">
-                      'ब्रीफिंग का स्थान' सेटिंग
+                      ब्रीफिंग स्थल
                     </h3>
-                    <p className="text-xs font-bold text-slate-600">
-                      मैनुअल ब्रीफिंग स्थल लिखें या खाली रखें
-                    </p>
                   </div>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={() => handleToggleBriefing(!briefingToggle)}
-                  className={`w-12 h-6.5 rounded-full transition-colors relative flex items-center p-0.5 cursor-pointer ${
-                    briefingToggle ? 'bg-emerald-600' : 'bg-slate-300'
-                  }`}
-                  title={briefingToggle ? "ब्रीफिंग स्थान चालू है" : "ब्रीफिंग स्थान बंद है"}
-                >
-                  <div
-                    className={`w-5.5 h-5.5 bg-white rounded-full shadow transform transition-transform ${
-                      briefingToggle ? 'translate-x-5.5' : 'translate-x-0'
-                    }`}
-                  />
-                </button>
+                <ToggleSwitch
+                  enabled={briefingToggle}
+                  onChange={handleToggleBriefing}
+                />
               </div>
 
               <form onSubmit={handleSaveBriefingSetting} className="space-y-3">
@@ -995,7 +960,7 @@ export default function AdminUpload({
                     }}
                     className="px-3 py-1.5 bg-slate-100 hover:bg-rose-100 text-rose-800 text-xs rounded-xl border border-slate-300 font-black cursor-pointer"
                   >
-                    ब्रीफिंग हटाएं (Clear)
+                    स्थान हटाएं
                   </button>
 
                   <button
@@ -1020,11 +985,8 @@ export default function AdminUpload({
               </div>
               <div>
                 <h3 className="text-base font-black text-slate-950">
-                  🏷️ ड्यूटी पास टेबल हेडिंग्स कस्टमाइज़ करें (Custom Column Labels)
+                  ड्यूटी पास टेबल हेडिंग्स (कॉलम नाम)
                 </h3>
-                <p className="text-xs font-bold text-slate-600">
-                  विशिष्ट आयोजनों हेतु ड्यूटी पास के कॉलम नामों (जोन, सेक्टर, ड्यूटी स्थान आदि) को इच्छानुसार बदलें
-                </p>
               </div>
             </div>
 
@@ -1045,7 +1007,7 @@ export default function AdminUpload({
               }}
               className="text-xs font-black text-slate-600 hover:text-slate-950 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 rounded-xl border border-slate-200 cursor-pointer"
             >
-              🔄 डिफ़ॉल्ट नाम रीसेट करें
+              डिफ़ॉल्ट नाम रीसेट करें
             </button>
           </div>
 
@@ -1149,7 +1111,7 @@ export default function AdminUpload({
                 className="px-5 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs sm:text-sm rounded-xl shadow flex items-center gap-1.5 active:scale-95 transition cursor-pointer"
               >
                 {labelsSaved ? <Check className="w-4 h-4 stroke-[3]" /> : <Layers className="w-4 h-4" />}
-                <span>{labelsSaved ? 'हेडिंग्स सहेजी गईं!' : 'कॉलम हेडिंग्स सहेजें (Save Labels)'}</span>
+                <span>{labelsSaved ? 'हेडिंग्स सहेजी गईं!' : 'कॉलम हेडिंग्स सहेजें'}</span>
               </button>
             </div>
           </form>
@@ -1164,32 +1126,16 @@ export default function AdminUpload({
               </div>
               <div>
                 <h3 className="text-base font-black text-slate-950">
-                  📞 'कंट्रोल रूम व हेल्पलाइन नंबर' सेटिंग (Manual Helpline & Contacts)
+                  कंट्रोल रूम व हेल्पलाइन नंबर
                 </h3>
-                <p className="text-xs font-bold text-slate-600">
-                  पब्लिक सर्च पेज पर जवानों की सहायता हेतु कंट्रोल रूम, नोडल व तकनीकी हेल्पलाइन नंबर जोड़ें या बदलें
-                </p>
               </div>
             </div>
 
             <div className="flex items-center gap-3">
-              <span className="text-xs font-black text-slate-700">
-                {helplineToggle ? '✅ हेल्पलाइन चालू है' : '❌ हेल्पलाइन बंद है'}
-              </span>
-              <button
-                type="button"
-                onClick={() => handleToggleHelpline(!helplineToggle)}
-                className={`w-12 h-6.5 rounded-full transition-colors relative flex items-center p-0.5 cursor-pointer ${
-                  helplineToggle ? 'bg-emerald-600' : 'bg-slate-300'
-                }`}
-                title={helplineToggle ? "हेल्पलाइन चालू है" : "हेल्पलाइन बंद है"}
-              >
-                <div
-                  className={`w-5.5 h-5.5 bg-white rounded-full shadow transform transition-transform ${
-                    helplineToggle ? 'translate-x-5.5' : 'translate-x-0'
-                  }`}
-                />
-              </button>
+              <ToggleSwitch
+                enabled={helplineToggle}
+                onChange={handleToggleHelpline}
+              />
             </div>
           </div>
 
@@ -1202,7 +1148,7 @@ export default function AdminUpload({
                 >
                   <div className="w-full sm:w-1/2">
                     <label className="text-[11px] font-black text-slate-700 block mb-1">
-                      संपर्क / अधिकारी का नाम (Title {idx + 1}):
+                      संपर्क / पदनाम:
                     </label>
                     <input
                       type="text"
@@ -1258,7 +1204,7 @@ export default function AdminUpload({
                 className="px-5 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs sm:text-sm rounded-xl shadow flex items-center gap-1.5 active:scale-95 transition cursor-pointer"
               >
                 {helplineSaved ? <Check className="w-4 h-4 stroke-[3]" /> : <Phone className="w-4 h-4" />}
-                <span>{helplineSaved ? 'हेल्पलाइन सहेजी गई!' : 'हेल्पलाइन नंबर सहेजें (Save Contacts)'}</span>
+                <span>{helplineSaved ? 'हेल्पलाइन सहेजी गई!' : 'हेल्पलाइन नंबर सहेजें'}</span>
               </button>
             </div>
           </form>
@@ -1279,10 +1225,10 @@ export default function AdminUpload({
             <button
               onClick={() => setIsBulkPdfModalOpen(true)}
               className="px-3.5 py-2 bg-[#0b132b] hover:bg-slate-800 text-white font-black text-xs rounded-xl flex items-center gap-1.5 shadow transition active:scale-95 cursor-pointer"
-              title="लीगल पेपर पर प्रति पेज 4 कार्ड PDF डाउनलोड करें"
+              title="ड्यूटी पास बल्क PDF डाउनलोड या प्रिंट करें"
             >
               <FileDown className="w-4 h-4 text-amber-400" />
-              बल्क Legal PDF (6-इन-1)
+              बल्क पास प्रिंट / PDF
             </button>
 
             <button
@@ -1330,7 +1276,7 @@ export default function AdminUpload({
                 <th className="p-3 border-r border-slate-200">ID</th>
                 <th className="p-3 border-r border-slate-200">नाम एवं पदनाम</th>
                 <th className="p-3 border-r border-slate-200">मोबाईल नंबर</th>
-                <th className="p-3 border-r border-slate-200">ड्यूटी स्थान (Duty Place)</th>
+                <th className="p-3 border-r border-slate-200">ड्यूटी स्थान</th>
                 <th className="p-3 border-r border-slate-200">जोन / सेक्टर</th>
                 <th className="p-3 border-r border-slate-200">उपस्थिति</th>
                 <th className="p-3 text-right">कार्रवाई</th>
@@ -1359,7 +1305,7 @@ export default function AdminUpload({
                       <td className="p-3 border-r border-slate-200">
                         {isReported ? (
                           <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-900 font-bold text-xs">
-                            उपस्थित 🟢
+                            उपस्थित
                           </span>
                         ) : (
                           <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 text-xs">
@@ -1472,7 +1418,7 @@ export default function AdminUpload({
                   />
                 </div>
                 <div>
-                  <label className="block text-slate-800 mb-1">पदनाम (Rank)</label>
+                  <label className="block text-slate-800 mb-1">पदनाम</label>
                   <select
                     value={dutyFormData.rank}
                     onChange={(e) => setDutyFormData({ ...dutyFormData, rank: e.target.value })}
@@ -1480,33 +1426,33 @@ export default function AdminUpload({
                   >
                     <option value="उ0नि0">उ0नि0 (उप-निरीक्षक)</option>
                     <option value="नि0">नि0 (निरीक्षक)</option>
-                    <option value="हे0का0">हे0का0 (हेड कान्स्टेबल)</option>
-                    <option value="का0">का0 (कान्स्टेबल)</option>
-                    <option value="म0का0">म0का0 (महिला कान्स्टेबल)</option>
+                    <option value="हे0का0">हे0का0 (मुख्य आरक्षी)</option>
+                    <option value="का0">का0 (आरक्षी)</option>
+                    <option value="म0का0">म0का0 (महिला आरक्षी)</option>
                   </select>
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-slate-800 mb-1">पूरा नाम (Full Name)</label>
+                  <label className="block text-slate-800 mb-1">पूरा नाम</label>
                   <input
                     type="text"
                     value={dutyFormData.name}
                     onChange={(e) => setDutyFormData({ ...dutyFormData, name: e.target.value })}
-                    placeholder="e.g. गोकुल सिंह"
+                    placeholder="e.g. अमित कुमार"
                     className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl font-black text-slate-950"
                     required
                   />
                 </div>
                 <div>
-                  <label className="block text-slate-800 mb-1">मोबाईल नंबर (10 Digits)</label>
+                  <label className="block text-slate-800 mb-1">मोबाईल नंबर</label>
                   <input
                     type="text"
                     maxLength={10}
                     value={dutyFormData.mobile}
                     onChange={(e) => setDutyFormData({ ...dutyFormData, mobile: e.target.value })}
-                    placeholder="8604815398"
+                    placeholder="9454400001"
                     className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl font-mono font-black text-slate-950"
                     required
                   />
@@ -1514,12 +1460,12 @@ export default function AdminUpload({
               </div>
 
               <div>
-                <label className="block text-slate-800 mb-1">ड्यूटी का स्थान (Duty Place)</label>
+                <label className="block text-slate-800 mb-1">ड्यूटी का स्थान</label>
                 <input
                   type="text"
                   value={dutyFormData.duty_place}
                   onChange={(e) => setDutyFormData({ ...dutyFormData, duty_place: e.target.value })}
-                  placeholder="e.g. प्रवेश व्यवस्था बैरियर न०-2"
+                  placeholder="e.g. राम जन्मभूमि परिसर - मुख्य द्वार"
                   className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl font-black text-slate-950"
                   required
                 />
@@ -1527,22 +1473,22 @@ export default function AdminUpload({
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-slate-800 mb-1">जोन (Zone)</label>
+                  <label className="block text-slate-800 mb-1">जोन</label>
                   <input
                     type="text"
                     value={dutyFormData.zone}
                     onChange={(e) => setDutyFormData({ ...dutyFormData, zone: e.target.value })}
-                    placeholder="e.g. सिंहाचल"
+                    placeholder="e.g. जोन-01 (मंदिर परिसर)"
                     className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-950"
                   />
                 </div>
                 <div>
-                  <label className="block text-slate-800 mb-1">सेक्टर (Sector)</label>
+                  <label className="block text-slate-800 mb-1">सेक्टर</label>
                   <input
                     type="text"
                     value={dutyFormData.sector}
                     onChange={(e) => setDutyFormData({ ...dutyFormData, sector: e.target.value })}
-                    placeholder="e.g. मन्दिर परिसर सेक्टर-प्रथम"
+                    placeholder="e.g. सेक्टर-01 (मुख्य प्रवेश द्वार)"
                     className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-950"
                   />
                 </div>
@@ -1550,22 +1496,22 @@ export default function AdminUpload({
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-slate-800 mb-1">मूल तैनाती / थाना (Posting)</label>
+                  <label className="block text-slate-800 mb-1">मूल तैनाती / थाना</label>
                   <input
                     type="text"
                     value={dutyFormData.posting}
                     onChange={(e) => setDutyFormData({ ...dutyFormData, posting: e.target.value })}
-                    placeholder="e.g. थाना बछरावां"
+                    placeholder="e.g. थाना कोतवाली"
                     className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-950"
                   />
                 </div>
                 <div>
-                  <label className="block text-slate-800 mb-1">जनपद (District)</label>
+                  <label className="block text-slate-800 mb-1">जनपद</label>
                   <input
                     type="text"
                     value={dutyFormData.district}
                     onChange={(e) => setDutyFormData({ ...dutyFormData, district: e.target.value })}
-                    placeholder="e.g. रायबरेली"
+                    placeholder="e.g. अयोध्या"
                     className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-950"
                   />
                 </div>
@@ -1593,7 +1539,7 @@ export default function AdminUpload({
                   type="submit"
                   className="px-5 py-2.5 bg-amber-500 text-slate-950 font-black rounded-xl shadow cursor-pointer"
                 >
-                  सहेजें (Save Record)
+                  सहेजें
                 </button>
               </div>
             </form>

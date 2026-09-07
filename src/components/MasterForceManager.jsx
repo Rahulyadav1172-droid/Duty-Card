@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Users, Plus, Search, Edit, Trash2, Shield, Phone, Building, UserCheck, Upload, Save, RefreshCw } from 'lucide-react';
+import { Users, Plus, Search, Edit, Trash2, Shield, Phone, Building, UserCheck, Upload, Save, RefreshCw, Download } from 'lucide-react';
+import * as XLSX from 'xlsx';
 import { parseDutyFile } from '../utils/fileParser';
 
 export default function MasterForceManager({ forceRecords, onUpdateForce }) {
@@ -82,6 +83,38 @@ export default function MasterForceManager({ forceRecords, onUpdateForce }) {
     }
   };
 
+  const handleExportExcel = () => {
+    if (!forceRecords || forceRecords.length === 0) {
+      alert('डाउनलोड करने के लिए कोई मास्टर फ़ोर्स रिकॉर्ड मौजूद नहीं है।');
+      return;
+    }
+
+    const exportRows = forceRecords.map((r, idx) => ({
+      'क्र०सं०': idx + 1,
+      'PNO': String(r.pno || ''),
+      'नाम': r.name,
+      'पदनाम': r.rank,
+      'मोबाईल': String(r.mobile || ''),
+      'मूल तैनाती / थाना': r.posting,
+      'जनपद': r.district,
+      'स्थिति': r.status === 'deployed' ? 'तैनात' : 'रिजर्व'
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(exportRows);
+    Object.keys(ws).forEach((cellKey) => {
+      if (cellKey[0] === '!') return;
+      const cell = ws[cellKey];
+      if (cell && typeof cell.v === 'string' && /^\d+$/.test(cell.v)) {
+        cell.t = 's';
+        cell.z = '@';
+      }
+    });
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'मास्टर_फ़ोर्स');
+    XLSX.writeFile(wb, `मास्टर_पुलिस_बल_अयोध्या_${new Date().toISOString().slice(0, 10)}.xlsx`);
+  };
+
   const filteredForce = forceRecords.filter(p =>
     (p.name || '').toLowerCase().includes(filterQuery.toLowerCase()) ||
     (p.mobile || '').includes(filterQuery) ||
@@ -97,10 +130,10 @@ export default function MasterForceManager({ forceRecords, onUpdateForce }) {
         <div>
           <div className="flex items-center gap-2.5">
             <Users className="w-6 h-6 text-amber-600" />
-            <h2 className="text-xl font-bold text-slate-900">कर्मचारी मास्टर डेटाबेस (Master Force Database)</h2>
+            <h2 className="text-xl font-bold text-slate-900">कर्मचारी मास्टर डेटाबेस</h2>
           </div>
           <p className="text-xs text-slate-500 mt-1">
-            जनपद के समस्त पुलिसकर्मियों (P.No, नाम, पद, मोबाईल, थाना) का मास्टर रजिस्टर। यहाँ से ड्यूटी स्वतः ऑटो-फिल होती है।
+            जनपद के समस्त पुलिसकर्मियों का मास्टर रजिस्टर
           </p>
         </div>
 
@@ -118,6 +151,15 @@ export default function MasterForceManager({ forceRecords, onUpdateForce }) {
             मास्टर एक्सेल अपलोड
             <input type="file" accept=".xlsx,.xls,.docx,.json" onChange={handleFileUpload} className="hidden" />
           </label>
+
+          <button
+            type="button"
+            onClick={handleExportExcel}
+            className="px-3.5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold rounded-xl border border-slate-300 flex items-center gap-1.5 transition cursor-pointer"
+          >
+            <Download className="w-4 h-4 text-emerald-600" />
+            एक्सेल डाउनलोड
+          </button>
         </div>
       </div>
 
@@ -127,7 +169,7 @@ export default function MasterForceManager({ forceRecords, onUpdateForce }) {
           <div className="flex items-center gap-2">
             <UserCheck className="w-4 h-4 text-amber-600" />
             <h3 className="text-sm font-bold text-slate-900">
-              पंजीकृत बल सूची ({forceRecords.length} कुल कर्मचारी)
+              पंजीकृत बल ({forceRecords.length})
             </h3>
           </div>
 

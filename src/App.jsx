@@ -160,6 +160,7 @@ export default function App() {
     return '';
   });
   const [activeDuty, setActiveDuty] = useState(null);
+  const [searchResults, setSearchResults] = useState([]);
   const [activeTab, setActiveTab] = useState('search');
   const [searchAttempted, setSearchAttempted] = useState(false);
   const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
@@ -298,10 +299,54 @@ export default function App() {
 
     initSupabase();
 
+    // Universal Multi-Device Refresh: Fetches fresh data on tab focus, visibility change, or heartbeat
+    const refreshCloudData = async () => {
+      try {
+        const cloudEvents = await fetchEventsFromSupabase();
+        if (cloudEvents && cloudEvents.length > 0) {
+          setEvents(cloudEvents);
+          try {
+            localStorage.setItem(EVENTS_STORAGE_KEY, JSON.stringify(cloudEvents));
+          } catch (e) {}
+        }
+        const cloudActiveId = await fetchGlobalActiveEventId();
+        if (cloudActiveId) {
+          setActiveEventId(cloudActiveId);
+          try {
+            localStorage.setItem(ACTIVE_EVENT_ID_KEY, cloudActiveId);
+          } catch (e) {}
+        }
+        const cloudForce = await fetchMasterForceFromSupabase();
+        if (cloudForce && Array.isArray(cloudForce) && cloudForce.length > 0) {
+          setForceRecords(cloudForce);
+          try {
+            localStorage.setItem(FORCE_STORAGE_KEY, JSON.stringify(cloudForce));
+          } catch (e) {}
+        }
+      } catch (err) {
+        console.warn('Cross-browser heartbeat sync notice:', err);
+      }
+    };
+
+    const handleVisibilityOrFocus = () => {
+      if (document.visibilityState === 'visible') {
+        refreshCloudData();
+      }
+    };
+
+    window.addEventListener('focus', handleVisibilityOrFocus);
+    document.addEventListener('visibilitychange', handleVisibilityOrFocus);
+
+    // Heartbeat sync every 15 seconds to ensure absolute parity across all browsers
+    const heartbeatInterval = setInterval(refreshCloudData, 15000);
+
     return () => {
       unsubscribeEvents();
       unsubscribeForce();
       unsubscribeActiveEventId();
+      window.removeEventListener('focus', handleVisibilityOrFocus);
+      document.removeEventListener('visibilitychange', handleVisibilityOrFocus);
+      clearInterval(heartbeatInterval);
     };
   }, []);
 
@@ -408,6 +453,25 @@ export default function App() {
     const updatedObj = { ...currentEvent, records: newRecords };
     const updated = events.map(e => e.id === currentEvent.id ? updatedObj : e);
     saveEvents(updated, updatedObj);
+
+    // Sync Master Force deployed/reserve status
+    if (Array.isArray(forceRecords) && forceRecords.length > 0) {
+      const assignedPnos = new Set((newRecords || []).map(r => String(r.pno || '').trim()).filter(Boolean));
+      const assignedMobiles = new Set((newRecords || []).map(r => String(r.mobile || '').trim()).filter(Boolean));
+      let forceChanged = false;
+      const updatedForce = forceRecords.map(f => {
+        const isDeployed = (f.pno && assignedPnos.has(String(f.pno).trim())) || (f.mobile && assignedMobiles.has(String(f.mobile).trim()));
+        const newStatus = isDeployed ? 'deployed' : 'reserve';
+        if (f.status !== newStatus) {
+          forceChanged = true;
+          return { ...f, status: newStatus };
+        }
+        return f;
+      });
+      if (forceChanged) {
+        handleUpdateForce(updatedForce);
+      }
+    }
   };
 
   const handleResetActiveEventToDefault = () => {
@@ -585,6 +649,7 @@ export default function App() {
   useEffect(() => {
     if (!searchQuery.trim()) {
       setActiveDuty(null);
+      setSearchResults([]);
       setSearchAttempted(false);
       return;
     }
@@ -593,18 +658,27 @@ export default function App() {
     const textQuery = searchQuery.trim().toLowerCase();
 
     const activeRecords = currentEvent.records || [];
-    const match = activeRecords.find(record => {
+    const matches = activeRecords.filter(record => {
       const recordMob = (record.mobile || '').replace(/\D/g, '');
       const recordName = (record.name || '').toLowerCase();
       const recordId = (record.id || '').toLowerCase();
+      const recordPno = (record.pno || '').toLowerCase();
 
       if (cleanQuery.length >= 4 && recordMob.includes(cleanQuery)) return true;
       if (textQuery.length >= 2 && recordName.includes(textQuery)) return true;
-      if (textQuery.length >= 3 && recordId.includes(textQuery)) return true;
+      if (textQuery.length >= 3 && (recordId.includes(textQuery) || recordPno.includes(textQuery))) return true;
       return false;
     });
 
-    setActiveDuty(match || null);
+    setSearchResults(matches);
+    if (matches.length === 1) {
+      setActiveDuty(matches[0]);
+    } else if (matches.length > 1) {
+      // If currently selected duty is in matches, keep it, otherwise let user choose from list
+      setActiveDuty(prev => (prev && matches.some(m => m.id === prev.id)) ? prev : null);
+    } else {
+      setActiveDuty(null);
+    }
     setSearchAttempted(true);
   }, [searchQuery, currentEvent]);
 
@@ -624,8 +698,6 @@ export default function App() {
           if (tab) setPendingTab(tab);
           setIsLoginModalOpen(true);
         }}
-        isCollapsed={isSidebarCollapsed}
-        onToggleCollapse={() => setIsSidebarCollapsed(prev => !prev)}
         isMobileOpen={isMobileSidebarOpen}
         onCloseMobile={() => setIsMobileSidebarOpen(false)}
         eventTitle={currentEvent.title}
@@ -635,7 +707,7 @@ export default function App() {
       {/* 2. Main Content Wrapper */}
       <div
         className={`flex-1 flex flex-col min-w-0 transition-all duration-200 ease-in-out ${
-          userRole !== 'guest' ? (isSidebarCollapsed ? 'md:pl-20' : 'md:pl-64') : 'pl-0'
+          userRole !== 'guest' ? 'md:pl-64' : 'pl-0'
         }`}
       >
         {/* Modern Clean Top Header */}
@@ -717,15 +789,16 @@ export default function App() {
                           : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
                       }`}
                     >
-                      {userRole === 'admin' ? '👑' : '👮'}
+                      {userRole === 'admin' ? (
+                        <ShieldCheck className="w-4 h-4" />
+                      ) : (
+                        <UserCheck className="w-4 h-4" />
+                      )}
                     </div>
 
                     <div className="text-left hidden sm:block">
                       <div className="text-xs font-black text-white leading-tight">
                         {userRole === 'admin' ? t('superAdmin', 'सुपर एडमिन') : t('seniorOfficer', 'वरिष्ठ अधिकारी')}
-                      </div>
-                      <div className="text-[10px] text-slate-400 font-medium">
-                        {userRole === 'admin' ? t('adminPortal', 'Admin Portal') : t('inspectionOfficer', 'Inspection Officer')}
                       </div>
                     </div>
 
@@ -743,13 +816,13 @@ export default function App() {
                       <div className="p-3 bg-slate-800/90 rounded-xl border border-slate-700/60 space-y-1">
                         <div className="flex items-center justify-between">
                           <span className="text-[10px] uppercase tracking-wider font-bold text-slate-400">
-                            {t('activeSession', 'सक्रिय सत्र (Active Session)')}
+                            {t('activeSession', 'सक्रिय सत्र')}
                           </span>
                           <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
                         </div>
                         <div className="font-black text-sm text-white flex items-center gap-1.5">
                           <span>
-                            {userRole === 'admin' ? t('superAdminTitle', '👑 सुपर एडमिनिस्ट्रेटर') : t('seniorOfficerTitle', '👮 वरिष्ठ पुलिस अधिकारी')}
+                            {userRole === 'admin' ? t('superAdminTitle', 'सुपर एडमिनिस्ट्रेटर') : t('seniorOfficerTitle', 'वरिष्ठ पुलिस अधिकारी')}
                           </span>
                         </div>
                         <div className="text-[11px] text-amber-400 font-semibold truncate">
@@ -762,7 +835,7 @@ export default function App() {
                         <div className="flex items-center justify-between text-[11px] font-bold text-slate-300">
                           <div className="flex items-center gap-1.5">
                             <Globe className="w-3.5 h-3.5 text-amber-400" />
-                            <span>{t('switchLanguage', 'भाषा / Language')}</span>
+                            <span>{t('switchLanguage', 'भाषा')}</span>
                           </div>
                           <span className="text-[10px] text-amber-400 font-mono font-bold uppercase">{language}</span>
                         </div>
@@ -807,7 +880,7 @@ export default function App() {
                             <KeyRound className="w-4 h-4" />
                           </div>
                           <div>
-                            <div>{language === 'en' ? 'Change Password' : 'पासवर्ड बदलें (Change Password)'}</div>
+                            <div>{language === 'en' ? 'Change Password' : 'पासवर्ड बदलें'}</div>
                             <div className="text-[10px] text-slate-400 font-medium">{language === 'en' ? 'Update account security' : 'खाता सुरक्षा अपडेट करें'}</div>
                           </div>
                         </button>
@@ -825,7 +898,7 @@ export default function App() {
                             <History className="w-4 h-4" />
                           </div>
                           <div>
-                            <div>{language === 'en' ? 'Audit Log & History' : 'ऑडिट लॉग (Audit Trail)'}</div>
+                            <div>{language === 'en' ? 'Audit Log & History' : 'ऑडिट लॉग'}</div>
                             <div className="text-[10px] text-slate-400 font-medium">{language === 'en' ? 'View deletion & security logs' : 'विलोपन व सुरक्षा रिकॉर्ड्स देखें'}</div>
                           </div>
                         </button>
@@ -844,7 +917,7 @@ export default function App() {
                               <ShieldCheck className="w-4 h-4" />
                             </div>
                             <div>
-                              <div>{language === 'en' ? 'Portal Settings' : 'पोर्टल सेटिंग्स (Portal Settings)'}</div>
+                              <div>{language === 'en' ? 'Portal Settings' : 'पोर्टल सेटिंग्स'}</div>
                               <div className="text-[10px] text-slate-400 font-medium">{language === 'en' ? 'Headings, Excel & Signatures' : 'हेडिंग्स, एक्सेल व हस्ताक्षर'}</div>
                             </div>
                           </button>
@@ -902,30 +975,77 @@ export default function App() {
               />
             </div>
 
-            {activeDuty ? (
-              <DutyCard
-                duty={activeDuty}
-                allRecords={currentEvent.records || []}
-                onPrintClick={handlePrintTrigger}
-                customNote={currentEvent.note || ''}
-                isNoteEnabled={currentEvent.isNoteEnabled}
-                customBriefing={currentEvent.briefing || ''}
-                isBriefingEnabled={currentEvent.isBriefingEnabled}
-                attendanceMap={currentEvent.attendanceMap || {}}
-                onMarkAttendance={handleMarkAttendance}
-                eventTitle={currentEvent.title}
-                eventSubtitle={currentEvent.subtitle}
-                signatureImg={currentEvent.signatureImg || ''}
-                signatoryText={currentEvent.signatoryText || 'वरिष्ठ पुलिस अधीक्षक, अयोध्या'}
-                onUpdateDutyPhoto={handleUpdateDutyPhoto}
-                onUpdateDutyRecord={handleUpdateDutyRecord}
-                userRole={userRole}
-                onRequestAuth={(callback) => {
-                  setPendingTab('search');
-                  setIsLoginModalOpen(true);
-                }}
-                customLabels={currentEvent.customLabels || {}}
-              />
+            {searchResults.length > 1 && !activeDuty ? (
+              <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+                <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
+                  <div className="flex items-center gap-2">
+                    <Users className="w-4 h-4 text-amber-600" />
+                    <h3 className="text-xs sm:text-sm font-black text-slate-900">
+                      {searchResults.length} संबंधित जवान मिले (अपना कार्ड चुनें)
+                    </h3>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  {searchResults.map((rec) => (
+                    <button
+                      key={rec.id}
+                      type="button"
+                      onClick={() => setActiveDuty(rec)}
+                      className="p-3 bg-slate-50 hover:bg-amber-50/60 border border-slate-200 hover:border-amber-300 rounded-xl text-left transition cursor-pointer flex items-center justify-between gap-2 shadow-2xs group"
+                    >
+                      <div className="min-w-0">
+                        <div className="font-black text-slate-900 text-xs sm:text-sm group-hover:text-amber-900 truncate">
+                          {rec.name}
+                        </div>
+                        <div className="text-[10px] text-slate-500 truncate mt-0.5">
+                          {rec.rank || 'जवान'} • {rec.posting || 'थाना कोतवाली'} {rec.district ? `(${rec.district})` : ''}
+                        </div>
+                        <div className="text-[10px] font-mono font-bold text-slate-700 mt-0.5">
+                          {rec.pno ? `PNO: ${rec.pno}` : `मो०: ${rec.mobile || '-'}`}
+                        </div>
+                      </div>
+                      <span className="text-[11px] font-bold px-2.5 py-1 rounded-lg bg-amber-500 text-slate-950 shrink-0">
+                        कार्ड देखें
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : activeDuty ? (
+              <div className="space-y-3">
+                {searchResults.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => setActiveDuty(null)}
+                    className="px-3 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-800 text-xs font-bold rounded-xl flex items-center gap-1.5 transition cursor-pointer"
+                  >
+                    <span>← अन्य {searchResults.length} परिणाम देखें</span>
+                  </button>
+                )}
+                <DutyCard
+                  duty={activeDuty}
+                  allRecords={currentEvent.records || []}
+                  onPrintClick={handlePrintTrigger}
+                  customNote={currentEvent.note || ''}
+                  isNoteEnabled={currentEvent.isNoteEnabled}
+                  customBriefing={currentEvent.briefing || ''}
+                  isBriefingEnabled={currentEvent.isBriefingEnabled}
+                  attendanceMap={currentEvent.attendanceMap || {}}
+                  onMarkAttendance={handleMarkAttendance}
+                  eventTitle={currentEvent.title}
+                  eventSubtitle={currentEvent.subtitle}
+                  signatureImg={currentEvent.signatureImg || ''}
+                  signatoryText={currentEvent.signatoryText || 'वरिष्ठ पुलिस अधीक्षक, अयोध्या'}
+                  onUpdateDutyPhoto={handleUpdateDutyPhoto}
+                  onUpdateDutyRecord={handleUpdateDutyRecord}
+                  userRole={userRole}
+                  onRequestAuth={(callback) => {
+                    setPendingTab('search');
+                    setIsLoginModalOpen(true);
+                  }}
+                  customLabels={currentEvent.customLabels || {}}
+                />
+              </div>
             ) : searchAttempted && searchQuery.trim() ? (
               <div className="p-6 bg-white rounded-2xl border border-rose-200 text-center space-y-3 shadow-xs">
                 <AlertTriangle className="w-10 h-10 text-rose-500 mx-auto" />
@@ -938,22 +1058,6 @@ export default function App() {
               </div>
             ) : (
               <div className="space-y-4">
-                <div className="bg-white p-7 rounded-2xl border border-slate-200 text-center space-y-2.5 shadow-xs">
-                  <div className="w-12 h-12 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center mx-auto text-amber-600">
-                    <Smartphone className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-bold text-slate-900">
-                      {language === 'en' ? 'Enter Mobile Number or Name' : 'अपना मोबाईल नंबर या नाम दर्ज करें'}
-                    </h3>
-                    <p className="text-xs text-slate-500 max-w-sm mx-auto mt-0.5">
-                      {language === 'en'
-                        ? 'Type your mobile number or name above to view your duty location, timing, and co-deployed colleagues.'
-                        : 'अपनी ड्यूटी स्थान, सेक्टर, समय एवं साथ में तैनात अन्य पुलिसकर्मियों की सूची देखने के लिए ऊपर सर्च बॉक्स में नंबर लिखें।'}
-                    </p>
-                  </div>
-                </div>
-
                 {/* Quick Emergency & Police Helpline Widget (Permanent 24x7 Display) */}
                 {(() => {
                   const defaultHelplines = [
@@ -1076,6 +1180,8 @@ export default function App() {
             eventStartDate={currentEvent.startDate || currentEvent.created_at || '16.08.2026 से अग्रिम आदेश तक'}
             masterForce={forceRecords}
             onUpdateEventRecords={handleUpdateActiveEventRecords}
+            activeEvent={currentEvent}
+            onUpdateEvent={handleUpdateEvent}
           />
         )}
 

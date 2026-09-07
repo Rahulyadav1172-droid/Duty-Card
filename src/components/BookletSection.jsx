@@ -33,7 +33,9 @@ export default function BookletSection({
   eventSubtitle = '',
   eventStartDate = '',
   masterForce = [],
-  onUpdateEventRecords
+  onUpdateEventRecords,
+  activeEvent = null,
+  onUpdateEvent = null
 }) {
   const [pdfList, setPdfList] = useState([]);
   const [selectedPdfId, setSelectedPdfId] = useState(null);
@@ -169,7 +171,7 @@ export default function BookletSection({
           </div>
           <div>
             <h2 className="text-lg sm:text-xl font-black text-slate-900 leading-tight">
-              आधिकारिक सुरक्षा ड्यूटी बुकलेट (Official Booklet Portal)
+              आधिकारिक सुरक्षा ड्यूटी बुकलेट
             </h2>
             <p className="text-xs text-slate-500 font-medium mt-0.5">
               {eventTitle} — {eventSubtitle}
@@ -203,7 +205,7 @@ export default function BookletSection({
               }`}
             >
               <FileText className="w-4 h-4" />
-              <span>अपलोड PDF {pdfList.length > 0 && `(${pdfList.length})`}</span>
+              <span>अपलोड PDF</span>
             </button>
             <button
               onClick={() => setViewMode('interactive')}
@@ -212,7 +214,7 @@ export default function BookletSection({
               }`}
             >
               <Eye className="w-4 h-4" />
-              <span>डायनेमिक बुकलेट ({records.length})</span>
+              <span>डायनेमिक बुकलेट</span>
             </button>
           </div>
         </div>
@@ -240,7 +242,7 @@ export default function BookletSection({
                   <span>मुख्यालय द्वारा जारी मूल PDF बुकलेट</span>
                   {pdfList.length > 0 && (
                     <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-mono font-bold">
-                      {pdfList.length} VERIFIED PDF 🟢
+                      {pdfList.length} उपलब्ध
                     </span>
                   )}
                 </h3>
@@ -400,6 +402,8 @@ export default function BookletSection({
             eventStartDate={eventStartDate}
             masterForce={masterForce}
             onUpdateEventRecords={onUpdateEventRecords}
+            activeEvent={activeEvent}
+            onUpdateEvent={onUpdateEvent}
           />
         </div>
       )}

@@ -4,6 +4,7 @@ import ForceDeploymentMatrix from './ForceDeploymentMatrix';
 import { printOfficialBookletDocument } from '../utils/printOfficialBooklet';
 import DutyReplacementModal from './DutyReplacementModal';
 import { logReplacementToAuditTrail } from '../utils/aamadSync';
+import { resolvePoliceRank, stripRankFromName } from '../utils/rankResolver';
 
 /**
  * Helper to clean raw name string by stripping duplicate mobile numbers,
@@ -61,17 +62,26 @@ export default function OfficialBooklet({
   eventSubtitle = '',
   eventStartDate = '',
   masterForce = [],
-  onUpdateEventRecords
+  onUpdateEventRecords,
+  activeEvent = null,
+  onUpdateEvent = null
 }) {
   const instructionsStorageKey = `OFFICIAL_BOOKLET_INSTRUCTIONS_${(eventTitle || 'default').replace(/\s+/g, '_')}`;
 
   const [patrankInput, setPatrankInput] = useState(() => {
+    if (activeEvent?.patrank) return activeEvent.patrank;
     try {
       return localStorage.getItem('OFFICIAL_PATRANK_KEY') || 'सुरक्षा-2026/ड्यूटी-आदेश';
     } catch (e) {
       return 'सुरक्षा-2026/ड्यूटी-आदेश';
     }
   });
+
+  useEffect(() => {
+    if (activeEvent?.patrank && activeEvent.patrank !== patrankInput) {
+      setPatrankInput(activeEvent.patrank);
+    }
+  }, [activeEvent?.patrank]);
 
   const [dateInput, setDateInput] = useState(() => new Date().toLocaleDateString('hi-IN'));
 
@@ -100,7 +110,7 @@ export default function OfficialBooklet({
         photo: newRecord.photo || ''
       });
 
-      setToastMsg(`🔄 ${oldRecord.name} के स्थान पर ${newRecord.name} की प्रतिस्थानी ड्यूटी लगा दी गई!`);
+      setToastMsg(`${oldRecord.name} के स्थान पर ${newRecord.name} की प्रतिस्थानी ड्यूटी लगा दी गई!`);
     } else if (replacementType === 'INTER_DISTRICT_SUBSTITUTION') {
       const idx = updatedRecords.findIndex(r => r.id === oldRecord.id || (r.pno && r.pno === oldRecord.pno));
       const updatedItem = {
@@ -114,7 +124,7 @@ export default function OfficialBooklet({
         updatedRecords.push(updatedItem);
       }
 
-      setToastMsg(`🏢 गैर-जनपद आवक: ${newRecord.name} (PNO: ${newRecord.pno}) का विवरण बुकलेट में अपडेट हो गया!`);
+      setToastMsg(`गैर-जनपद आवक: ${newRecord.name} (PNO: ${newRecord.pno}) का विवरण बुकलेट में अपडेट हो गया!`);
     }
 
     if (onUpdateEventRecords) {
@@ -138,6 +148,7 @@ export default function OfficialBooklet({
   // MULTI-LEVEL MANUAL INSTRUCTIONS STATE (ZONE / SECTOR / POINT / GENERAL)
   // =========================================================================
   const [manualInstructions, setManualInstructions] = useState(() => {
+    if (activeEvent?.manualInstructions) return activeEvent.manualInstructions;
     try {
       const saved = localStorage.getItem(instructionsStorageKey);
       if (saved) return JSON.parse(saved);
@@ -153,11 +164,23 @@ export default function OfficialBooklet({
     };
   });
 
+  useEffect(() => {
+    if (activeEvent?.manualInstructions) {
+      setManualInstructions(activeEvent.manualInstructions);
+    }
+  }, [activeEvent?.manualInstructions]);
+
   const saveManualInstructions = (updated) => {
     setManualInstructions(updated);
     try {
       localStorage.setItem(instructionsStorageKey, JSON.stringify(updated));
     } catch (e) {}
+    if (onUpdateEvent && activeEvent) {
+      onUpdateEvent(activeEvent.id, {
+        ...activeEvent,
+        manualInstructions: updated
+      });
+    }
   };
 
   // Edit Instruction Modal State
@@ -310,6 +333,14 @@ function stripNumbering(rawText = '') {
                   localStorage.setItem('OFFICIAL_PATRANK_KEY', e.target.value);
                 } catch (err) {}
               }}
+              onBlur={(e) => {
+                if (onUpdateEvent && activeEvent) {
+                  onUpdateEvent(activeEvent.id, {
+                    ...activeEvent,
+                    patrank: e.target.value
+                  });
+                }
+              }}
               placeholder="पत्रांक दर्ज करें..."
               className="px-2 py-1 bg-white border border-slate-300 rounded-lg text-xs font-black text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500 w-44 sm:w-52"
             />
@@ -334,7 +365,7 @@ function stripNumbering(rawText = '') {
             className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-900 font-bold text-xs rounded-xl border border-slate-300 flex items-center gap-1.5 cursor-pointer"
           >
             <FileText className="w-4 h-4 text-amber-600" />
-            <span>📝 अंतिम निर्देश</span>
+            <span>अंतिम निर्देश</span>
           </button>
 
           {/* Edit Pratilipi Button */}
@@ -343,7 +374,7 @@ function stripNumbering(rawText = '') {
             className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-900 font-bold text-xs rounded-xl border border-slate-300 flex items-center gap-1.5 cursor-pointer"
           >
             <Edit3 className="w-4 h-4 text-blue-600" />
-            <span>📋 प्रतिलिपि बदलें</span>
+            <span>प्रतिलिपि बदलें</span>
           </button>
         </div>
 
@@ -353,7 +384,7 @@ function stripNumbering(rawText = '') {
             className="px-5 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-xs sm:text-sm rounded-xl flex items-center gap-2 shadow transition active:scale-95 cursor-pointer"
           >
             <Printer className="w-4 h-4 stroke-[2.5]" />
-            <span>📄 A4 लैंडस्केप बुकलेट प्रिंट करें / Save PDF</span>
+            <span>A4 लैंडस्केप बुकलेट प्रिंट करें</span>
           </button>
         </div>
       </div>
@@ -397,7 +428,7 @@ function stripNumbering(rawText = '') {
             {/* Central Prominent Event Title Box */}
             <div className="max-w-2xl mx-auto border-3 border-black rounded-2xl p-6 sm:p-8 bg-white shadow-lg space-y-3">
               <div className="text-xs sm:text-sm font-black uppercase tracking-widest text-amber-950 bg-amber-100/90 py-1.5 px-5 rounded-full inline-block border border-amber-300 shadow-2xs">
-                ⭐ आधिकारिक ड्यूटी आदेश पुस्तिका ⭐
+                आधिकारिक ड्यूटी आदेश पुस्तिका
               </div>
 
               <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black text-black tracking-tight leading-tight">
@@ -464,13 +495,13 @@ function stripNumbering(rawText = '') {
                       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-300 font-medium">
                         {zonalIncharge && (
                           <span className="flex items-center gap-1">
-                            <span className="text-amber-400 font-black">👮 ज़ोनल प्रभारी:</span>
+                            <span className="text-amber-400 font-black">ज़ोनल प्रभारी:</span>
                             <span className="font-bold text-white bg-slate-800 px-2 py-0.5 rounded border border-slate-700">{zonalIncharge}</span>
                           </span>
                         )}
                         {zonalSahyogarth && (
                           <span className="flex items-center gap-1">
-                            <span className="text-emerald-400 font-black">🤝 सहयोगार्थ:</span>
+                            <span className="text-emerald-400 font-black">सहयोगार्थ:</span>
                             <span className="font-bold text-white bg-slate-800 px-2 py-0.5 rounded border border-slate-700">{zonalSahyogarth}</span>
                           </span>
                         )}
@@ -493,7 +524,6 @@ function stripNumbering(rawText = '') {
                 {zoneInstruction && (
                   <div className="bg-amber-50 border border-amber-500/80 border-l-4 border-l-amber-600 p-3 rounded-lg text-xs font-medium text-slate-900 space-y-1 shadow-2xs">
                     <div className="font-black text-amber-900 flex items-center gap-1.5 border-b border-amber-200 pb-1">
-                      <span>📋</span>
                       <span>विशेष ज़ोन निर्देश ({zoneName}):</span>
                     </div>
                     <div className="whitespace-pre-line leading-relaxed text-slate-950 font-semibold">{zoneInstruction}</div>
@@ -516,20 +546,19 @@ function stripNumbering(rawText = '') {
                       <div className="bg-slate-100 border border-slate-300 border-l-4 border-l-blue-700 px-3 py-2 rounded-lg flex items-center justify-between gap-2 shadow-2xs">
                         <div className="space-y-0.5 min-w-0">
                           <div className="flex items-center gap-1.5 text-xs sm:text-sm font-black text-slate-950">
-                            <span className="text-blue-700">🚩</span>
                             <span>सेक्टर: {sectorName}</span>
                           </div>
                           {(sectorIncharge || sectorSahyogarth) && (
                             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-700 font-semibold pt-0.5">
                               {sectorIncharge && (
                                 <span className="flex items-center gap-1">
-                                  <span className="text-blue-800 font-black">👮 सेक्टर प्रभारी:</span>
+                                  <span className="text-blue-800 font-black">सेक्टर प्रभारी:</span>
                                   <span className="font-bold text-slate-900 bg-white px-1.5 py-0.5 rounded border border-slate-300 shadow-2xs">{sectorIncharge}</span>
                                 </span>
                               )}
                               {sectorSahyogarth && (
                                 <span className="flex items-center gap-1">
-                                  <span className="text-emerald-800 font-black">🤝 सहयोगार्थ:</span>
+                                  <span className="text-emerald-800 font-black">सहयोगार्थ:</span>
                                   <span className="font-bold text-slate-900 bg-white px-1.5 py-0.5 rounded border border-slate-300 shadow-2xs">{sectorSahyogarth}</span>
                                 </span>
                               )}
@@ -549,7 +578,6 @@ function stripNumbering(rawText = '') {
                       {sectorInstruction && (
                         <div className="bg-blue-50 border border-blue-400 border-l-4 border-l-blue-600 p-3 rounded-lg text-xs font-medium text-slate-900 space-y-1 shadow-2xs">
                           <div className="font-black text-blue-900 flex items-center gap-1.5 border-b border-blue-200 pb-1">
-                            <span>📋</span>
                             <span>सेक्टर सुरक्षा निर्देश ({sectorName}):</span>
                           </div>
                           <div className="whitespace-pre-line leading-relaxed text-slate-950 font-semibold">{sectorInstruction}</div>
@@ -601,7 +629,7 @@ function stripNumbering(rawText = '') {
                             {/* Point-Level Printed Instruction Box (if present) */}
                             {pointInstruction && (
                               <div className="bg-amber-50/70 border-b border-amber-300 px-3 py-1.5 text-[11px] font-bold text-amber-950">
-                                📌 <strong>विशेष स्थल हिदायत / निर्देश:</strong> <span className="font-medium text-black">{pointInstruction}</span>
+                                <strong>विशेष स्थल हिदायत / निर्देश:</strong> <span className="font-medium text-black">{pointInstruction}</span>
                               </div>
                             )}
 
@@ -620,19 +648,22 @@ function stripNumbering(rawText = '') {
                                 <tbody>
                                   {placeRecords.map((row, rIdx) => {
                                     const cleanName = cleanOfficerName(row.name, row.posting, row.district, row.mobile);
+                                    const effectiveRank = resolvePoliceRank(row.rank, row.name);
+                                    const displayCleanName = stripRankFromName(cleanName);
+                                    const fullOfficerTitle = `${effectiveRank} ${displayCleanName}`;
 
                                     return (
                                       <tr key={rIdx} className="border-b border-gray-300 hover:bg-gray-50 last:border-b-0 text-xs sm:text-sm">
                                         <td className="border-r border-gray-300 py-2.5 px-2.5 text-center font-mono font-bold bg-slate-50/70">{rIdx + 1}</td>
                                         <td className="border-r border-gray-300 py-2 px-3.5 font-black text-slate-950">
                                           <div className="flex items-center justify-between gap-1">
-                                            <span>{cleanName}</span>
+                                            <span>{fullOfficerTitle}</span>
                                             {onUpdateEventRecords && (
                                               <button
                                                 type="button"
                                                 onClick={() => setReplacementRecord(row)}
                                                 className="no-print opacity-60 hover:opacity-100 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 rounded px-1.5 py-0.5 text-[10px] font-bold inline-flex items-center gap-0.5 cursor-pointer shrink-0 transition"
-                                                title="जवान बदलें (Reserve Swap / Inter-District Substitute)"
+                                                title="जवान बदलें (प्रतिस्थानी)"
                                               >
                                                 <RefreshCw className="w-2.5 h-2.5" />
                                                 <span>रिप्लेस</span>
@@ -759,7 +790,7 @@ function stripNumbering(rawText = '') {
                       }}
                       className="text-[11px] bg-amber-100 hover:bg-amber-200 text-amber-950 px-2 py-0.5 rounded-md font-bold transition flex items-center gap-1 border border-amber-300 cursor-pointer shadow-2xs"
                     >
-                      <span>🔢 1, 2, 3 नंबर लगाएं</span>
+                      <span>1, 2, 3 नंबर लगाएं</span>
                     </button>
                     <button
                       type="button"
@@ -771,7 +802,7 @@ function stripNumbering(rawText = '') {
                       }}
                       className="text-[11px] bg-slate-150 hover:bg-slate-200 text-slate-800 px-2 py-0.5 rounded-md font-bold transition flex items-center gap-1 border border-slate-300 cursor-pointer shadow-2xs"
                     >
-                      <span>❌ नंबर हटाएं</span>
+                      <span>नंबर हटाएं</span>
                     </button>
                   </div>
                 </div>
@@ -783,7 +814,7 @@ function stripNumbering(rawText = '') {
                   className="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500 leading-relaxed text-xs sm:text-sm font-devanagari"
                 />
                 <div className="text-[11px] text-slate-500">
-                  💡 <em>टिप: आप अपनी इच्छानुसार लाइन में बदलाव कर सकते हैं, सेव करने पर आपका लिखा टेक्स्ट ही सुरक्षित होगा।</em>
+                  <em>टिप: आप अपनी इच्छानुसार लाइन में बदलाव कर सकते हैं, सेव करने पर आपका लिखा टेक्स्ट ही सुरक्षित होगा।</em>
                 </div>
               </div>
 
@@ -812,7 +843,7 @@ function stripNumbering(rawText = '') {
                     className="px-5 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black rounded-xl shadow transition active:scale-95 cursor-pointer flex items-center gap-1.5"
                   >
                     <Check className="w-4 h-4 stroke-[3]" />
-                    <span>बुकलेट में सहेजें (Save)</span>
+                    <span>बुकलेट में सहेजें</span>
                   </button>
                 </div>
               </div>

@@ -59,7 +59,7 @@ class ErrorBoundary extends React.Component {
               cursor: 'pointer'
             }}
           >
-            🔄 पोर्टल पुनः लोड करें (Reload)
+            पोर्टल पुनः लोड करें
           </button>
         </div>
       );

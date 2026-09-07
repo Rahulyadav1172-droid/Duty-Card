@@ -19,6 +19,7 @@ import {
   Printer
 } from 'lucide-react';
 import CheckingReportModal from './CheckingReportModal';
+import { resolvePoliceRank, stripRankFromName } from '../utils/rankResolver';
 
 /**
  * Helper to clean raw name string by stripping duplicate mobile numbers,
@@ -280,23 +281,20 @@ export default function DutyPointFilterSection({
             title="आधिकारिक दैनिक चेकिंग रिपोर्ट A4 प्रोफ़ार्मा खोलें"
           >
             <FileText className="w-4 h-4 stroke-[2.5]" />
-            <span>📑 दैनिक चेकिंग रिपोर्ट (Print Proforma)</span>
+            <span>दैनिक चेकिंग रिपोर्ट</span>
           </button>
         </div>
       </div>
 
       {/* Date-Wise Checking Bar */}
-      <div className="bg-amber-50/80 border border-amber-200 p-4 rounded-2xl flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 shadow-xs no-print">
+      <div className="bg-amber-50/80 border border-amber-200 p-3.5 sm:p-4 rounded-2xl flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 shadow-xs no-print">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-amber-500 text-slate-950 flex items-center justify-center shrink-0 shadow-xs">
-            <Calendar className="w-5 h-5 stroke-[2.5]" />
+          <div className="w-9 h-9 rounded-xl bg-amber-500 text-slate-950 flex items-center justify-center shrink-0 shadow-xs">
+            <Calendar className="w-4 h-4 stroke-[2.5]" />
           </div>
           <div>
             <div className="text-xs font-black text-amber-950">
-              📅 चेकिंग दिनांक (Inspection Date):
-            </div>
-            <div className="text-[11px] text-amber-800 font-medium">
-              चयनित दिनांक के अनुसार बल की दैनिक उपस्थिति/गैरहाजिरी मार्क व रिकॉर्ड करें
+              चेकिंग दिनांक:
             </div>
           </div>
         </div>
@@ -306,15 +304,15 @@ export default function DutyPointFilterSection({
             type="date"
             value={checkingDate}
             onChange={(e) => setCheckingDate(e.target.value)}
-            className="h-10 px-3 bg-white border border-amber-300 rounded-xl font-bold font-mono text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500 shadow-2xs"
+            className="h-9 px-3 bg-white border border-amber-300 rounded-xl font-bold font-mono text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500 shadow-2xs"
           />
 
           <button
             onClick={handleSetTodayDate}
-            className="h-10 px-3 bg-white hover:bg-amber-100 text-amber-900 border border-amber-300 font-black text-xs rounded-xl transition cursor-pointer active:scale-95"
+            className="h-9 px-3 bg-white hover:bg-amber-100 text-amber-900 border border-amber-300 font-black text-xs rounded-xl transition cursor-pointer active:scale-95"
             title="आज की दिनांक चुनें"
           >
-            आज (Today)
+            आज
           </button>
         </div>
       </div>
@@ -328,26 +326,26 @@ export default function DutyPointFilterSection({
             </div>
             <div>
               <h3 className="text-sm sm:text-base font-black text-slate-900 flex items-center gap-2">
-                <span>दैनिक बल उपस्थिति मीटर (Live Force Attendance Bar)</span>
+                <span>दैनिक बल उपस्थिति</span>
                 <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-950 font-mono font-black border border-emerald-300">
                   {grandPresentPercent}% उपस्थित
                 </span>
               </h3>
               <p className="text-xs text-slate-500 font-medium">
-                दिनांक: <strong className="font-mono text-slate-800">{checkingDate}</strong> | कुल तैनात बल: <strong className="font-mono text-slate-900">{totalRecordsCount}</strong>
+                दिनांक: <strong className="font-mono text-slate-800">{checkingDate}</strong> | कुल बल: <strong className="font-mono text-slate-900">{totalRecordsCount}</strong>
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-2 text-xs font-bold self-start sm:self-auto">
             <span className="px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-800 border border-emerald-200">
-              🟢 उपस्थित: <strong className="font-mono">{grandPresentCount}</strong>
+              उपस्थित: <strong className="font-mono">{grandPresentCount}</strong>
             </span>
             <span className="px-2.5 py-1 rounded-lg bg-rose-50 text-rose-800 border border-rose-200">
-              🔴 गैरहाजिर: <strong className="font-mono">{grandAbsentCount}</strong>
+              गैरहाजिर: <strong className="font-mono">{grandAbsentCount}</strong>
             </span>
             <span className="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 border border-slate-200">
-              ⚪ लंबित: <strong className="font-mono">{grandPendingCount}</strong>
+              लंबित: <strong className="font-mono">{grandPendingCount}</strong>
             </span>
           </div>
         </div>
@@ -402,7 +400,7 @@ export default function DutyPointFilterSection({
           {/* 1. ZONE SELECTOR */}
           <div className="space-y-1.5">
             <label className="text-xs font-black text-slate-800 flex items-center justify-between">
-              <span>1. ज़ोन चुनें (Select Zone):</span>
+              <span>1. ज़ोन:</span>
               {selectedZone !== 'ALL' && (
                 <span className="text-[10px] text-amber-700 bg-amber-50 px-1.5 py-0.2 rounded font-mono font-bold">
                   सक्रिय
@@ -417,11 +415,11 @@ export default function DutyPointFilterSection({
                 className="w-full appearance-none pl-10 pr-9 py-2.5 bg-slate-50 hover:bg-slate-100/80 border border-slate-300 rounded-xl text-xs font-black text-slate-950 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:bg-white transition cursor-pointer shadow-2xs truncate"
               >
                 <option value="ALL">
-                  🛡️ समस्त ज़ोन ({uniqueZones.length} ज़ोन)
+                  समस्त ज़ोन ({uniqueZones.length})
                 </option>
                 {uniqueZones.map((z) => (
                   <option key={z} value={z}>
-                    🛡️ {z} ({zoneStats[z]} जवान)
+                    {z} ({zoneStats[z]} जवान)
                   </option>
                 ))}
               </select>
@@ -432,7 +430,7 @@ export default function DutyPointFilterSection({
           {/* 2. SECTOR SELECTOR */}
           <div className="space-y-1.5">
             <label className="text-xs font-black text-slate-800 flex items-center justify-between">
-              <span>2. सेक्टर चुनें (Select Sector):</span>
+              <span>2. सेक्टर:</span>
               {selectedSector !== 'ALL' && (
                 <span className="text-[10px] text-amber-700 bg-amber-50 px-1.5 py-0.2 rounded font-mono font-bold">
                   सक्रिय
@@ -447,11 +445,11 @@ export default function DutyPointFilterSection({
                 className="w-full appearance-none pl-10 pr-9 py-2.5 bg-slate-50 hover:bg-slate-100/80 border border-slate-300 rounded-xl text-xs font-black text-slate-950 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:bg-white transition cursor-pointer shadow-2xs truncate"
               >
                 <option value="ALL">
-                  📑 समस्त सेक्टर ({uniqueSectors.length} सेक्टर)
+                  समस्त सेक्टर ({uniqueSectors.length})
                 </option>
                 {uniqueSectors.map((s) => (
                   <option key={s} value={s}>
-                    📑 {s} ({sectorStats[s]} जवान)
+                    {s} ({sectorStats[s]} जवान)
                   </option>
                 ))}
               </select>
@@ -462,7 +460,7 @@ export default function DutyPointFilterSection({
           {/* 3. DUTY POINT SELECTOR */}
           <div className="space-y-1.5">
             <label className="text-xs font-black text-slate-800 flex items-center justify-between">
-              <span>3. ड्यूटी पॉइंट चुनें (Duty Point):</span>
+              <span>3. ड्यूटी पॉइंट:</span>
               {selectedPoint !== 'ALL' && (
                 <span className="text-[10px] text-amber-700 bg-amber-50 px-1.5 py-0.2 rounded font-mono font-bold">
                   सक्रिय
@@ -477,13 +475,13 @@ export default function DutyPointFilterSection({
                 className="w-full appearance-none pl-10 pr-9 py-2.5 bg-slate-50 hover:bg-slate-100/80 border border-slate-300 rounded-xl text-xs font-black text-slate-950 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:bg-white transition cursor-pointer shadow-2xs truncate"
               >
                 <option value="ALL">
-                  📍 समस्त पॉइंट ({uniqueDutyPoints.length} पॉइंट)
+                  समस्त पॉइंट ({uniqueDutyPoints.length})
                 </option>
                 {uniqueDutyPoints.map((point) => {
                   const count = dutyPointStats[point]?.length || 0;
                   return (
                     <option key={point} value={point}>
-                      📍 {point} ({count} जवान)
+                      {point} ({count} जवान)
                     </option>
                   );
                 })}
@@ -496,14 +494,14 @@ export default function DutyPointFilterSection({
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
               <label className="text-xs font-bold text-slate-700 block">
-                4. खोजें (Search):
+                4. खोजें:
               </label>
               {(selectedZone !== 'ALL' || selectedSector !== 'ALL' || selectedPoint !== 'ALL' || pointSearchQuery) && (
                 <button
                   onClick={handleResetFilters}
                   className="text-[10px] text-rose-600 hover:text-rose-800 font-black underline cursor-pointer"
                 >
-                  फ़िल्टर रीसेट ✕
+                  रीसेट ✕
                 </button>
               )}
             </div>
@@ -543,7 +541,7 @@ export default function DutyPointFilterSection({
               }`}
             >
               <CheckCircle2 className="w-3.5 h-3.5" />
-              <span>🟢 उपस्थित ({presentCount})</span>
+              <span>उपस्थित ({presentCount})</span>
             </button>
 
             <button
@@ -555,7 +553,7 @@ export default function DutyPointFilterSection({
               }`}
             >
               <XCircle className="w-3.5 h-3.5" />
-              <span>🔴 गैरहाजिर ({absentCount})</span>
+              <span>गैरहाजिर ({absentCount})</span>
             </button>
 
             <button
@@ -567,12 +565,12 @@ export default function DutyPointFilterSection({
               }`}
             >
               <Clock className="w-3.5 h-3.5" />
-              <span>⚪ शेष / लंबित ({pendingCount})</span>
+              <span>शेष / लंबित ({pendingCount})</span>
             </button>
           </div>
 
           <div className="text-[11px] font-bold text-slate-500">
-            📡 रियल-टाइम क्लाउड सिंक सक्रिय
+            रियल-टाइम क्लाउड सिंक सक्रिय
           </div>
         </div>
       </div>
@@ -588,7 +586,7 @@ export default function DutyPointFilterSection({
               </span>
             </h3>
             <p className="text-xs text-slate-500">
-              चयनित पॉइंट: <strong className="text-amber-900">{selectedPoint === 'ALL' ? 'समस्त ड्यूटी पॉइंट्स (All Staff)' : selectedPoint}</strong>
+              चयनित पॉइंट: <strong className="text-amber-900">{selectedPoint === 'ALL' ? 'समस्त ड्यूटी पॉइंट्स' : selectedPoint}</strong>
             </p>
           </div>
         </div>
@@ -605,6 +603,8 @@ export default function DutyPointFilterSection({
               const rosterIndex = records.findIndex(r => r.id === p.id);
               const stableSerialNo = rosterIndex >= 0 ? rosterIndex + 1 : (idx + 1);
               const cleanName = cleanOfficerName(p.name, p.posting, p.district, p.mobile);
+              const displayCleanName = stripRankFromName(cleanName);
+              const effectiveRank = resolvePoliceRank(p.rank, p.name);
 
               return (
                 <div
@@ -630,14 +630,14 @@ export default function DutyPointFilterSection({
                       </div>
 
                       <span className="text-[11px] px-2 py-0.5 rounded-md bg-amber-100 text-amber-950 font-black shrink-0 border border-amber-300">
-                        {p.rank || 'जवान'}
+                        {effectiveRank}
                       </span>
                     </div>
 
                     {/* Officer Name & Posting */}
                     <div>
                       <h4 className="font-black text-slate-950 text-sm leading-snug">
-                        {cleanName}
+                        {displayCleanName}
                       </h4>
                       <p className="text-xs text-slate-600 font-medium mt-0.5">
                         थाना: <strong className="text-slate-900">{p.posting || 'थाना कोतवाली'}</strong> {p.district ? `(${p.district})` : ''}
@@ -663,19 +663,19 @@ export default function DutyPointFilterSection({
                       {isPresent ? (
                         <div className="flex items-center gap-1.5 font-bold text-emerald-800">
                           <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                          <span>🟢 उपस्थित</span>
+                          <span>उपस्थित</span>
                           {att?.time && <span className="font-mono text-[10px] text-emerald-600">({att.time})</span>}
                         </div>
                       ) : isAbsent ? (
                         <div className="flex items-center gap-1.5 font-bold text-rose-800">
                           <XCircle className="w-4 h-4 text-rose-600 shrink-0" />
-                          <span>🔴 गैरहाजिर</span>
+                          <span>गैरहाजिर</span>
                           {att?.time && <span className="font-mono text-[10px] text-rose-600">({att.time})</span>}
                         </div>
                       ) : (
                         <div className="flex items-center gap-1 text-slate-500 font-bold text-[11px]">
                           <Clock className="w-3.5 h-3.5 text-slate-400" />
-                          <span>⚪ उपस्थिति लंबित</span>
+                          <span>उपस्थिति लंबित</span>
                         </div>
                       )}
 
