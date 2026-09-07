@@ -4,9 +4,18 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/badge.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <meta name="theme-color" content="#0b132b" />
+    <meta name="theme-color" content="#0f172a" />
     <meta name="description" content="अयोध्या पुलिस ड्यूटी पास एवं प्रबंधन पोर्टल" />
     <title>अयोध्या पुलिस ड्यूटी पास | Digital Police Duty Portal</title>
+    
+    <!-- PWA Manifest & Mobile Web App Meta -->
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="ड्यूटी पास" />
+    <link rel="apple-touch-icon" href="/badge.png" />
+
     <!-- Google Fonts: Mukta, Poppins, Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -16,20 +25,13 @@
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
     <script>
-      // Clean up any stale service workers that could cause blank screens on mobile
-      if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.getRegistrations().then(function(registrations) {
-          for(let registration of registrations) {
-            registration.unregister();
-          }
-        });
-        if ('caches' in window) {
-          caches.keys().then(function(names) {
-            for (let name of names) {
-              caches.delete(name);
-            }
+      // Production PWA Service Worker Registration
+      if ('serviceWorker' in navigator && window.location.protocol.startsWith('http')) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js').catch(err => {
+            console.warn('SW registration notice:', err);
           });
-        }
+        });
       }
     </script>
   </body>

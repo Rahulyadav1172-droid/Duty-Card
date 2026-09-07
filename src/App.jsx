@@ -39,6 +39,7 @@ import DutyAllocationHub from './components/DutyAllocationHub';
 import ForceAamadManager from './components/ForceAamadManager';
 import ChangePasswordModal from './components/ChangePasswordModal';
 import AuditLogModal from './components/AuditLogModal';
+import InstallPwaModal from './components/InstallPwaModal';
 
 import initialData from './data/duty_data.json';
 import {
@@ -705,6 +706,9 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-slate-100/70 text-slate-900 flex font-sans selection:bg-amber-500 selection:text-slate-950 font-devanagari">
+      {/* 0. PWA 1-Click Mobile Install Banner & Modal */}
+      <InstallPwaModal />
+
       {/* 1. Responsive Sidebar Navigation */}
       <SidebarNavigation
         activeTab={activeTab}

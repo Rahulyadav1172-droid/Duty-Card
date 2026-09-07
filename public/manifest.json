@@ -1,16 +1,32 @@
 {
-  "short_name": "Police Duty",
-  "name": "Digital Police Duty Card Management System",
+  "short_name": "ड्यूटी पास",
+  "name": "अयोध्या पुलिस ड्यूटी पास एवं प्रबंधन पोर्टल",
+  "description": "उत्तर प्रदेश पुलिस डिजिटल ड्यूटी पास एवं प्रबंधन प्रणाली",
   "icons": [
+    {
+      "src": "/badge.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any"
+    },
+    {
+      "src": "/badge.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    },
     {
       "src": "/badge.svg",
       "type": "image/svg+xml",
-      "sizes": "192x192 512x512"
+      "sizes": "any",
+      "purpose": "any"
     }
   ],
   "start_url": "/",
-  "background_color": "#0a1128",
-  "theme_color": "#0a1128",
+  "scope": "/",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
   "display": "standalone",
-  "orientation": "portrait"
+  "orientation": "portrait-primary",
+  "categories": ["government", "productivity", "utilities"]
 }

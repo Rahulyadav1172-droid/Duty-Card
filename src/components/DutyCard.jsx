@@ -282,7 +282,7 @@ export default function DutyCard({
   const cleanOfficerName = stripRankFromName(duty?.name);
 
   return (
-    <div className="w-full max-w-4xl mx-auto space-y-4 font-devanagari text-slate-900 animate-in fade-in zoom-in-95 duration-300">
+    <div className="w-full max-w-4xl mx-auto space-y-4 font-devanagari text-slate-900 animate-in fade-in zoom-in-95 duration-300 pb-20 md:pb-0">
       {/* Hidden File Input for Photo Upload */}
       <input
         ref={photoInputRef}
@@ -784,6 +784,42 @@ export default function DutyCard({
           </div>
         </div>
       )}
+
+      {/* Mobile Sticky Bottom Action Dock (Native Mobile App Experience) */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-slate-900/95 backdrop-blur-md border-t border-slate-800 p-2.5 px-3 flex items-center justify-between gap-2 shadow-2xl safe-area-bottom no-print">
+        <button
+          onClick={handleDownloadDirectPDF}
+          disabled={isDownloadingPDF}
+          className="flex-1 py-2 px-1.5 bg-slate-800 hover:bg-slate-700 active:bg-slate-950 text-white rounded-xl text-xs font-bold flex flex-col items-center justify-center gap-0.5 shadow transition active:scale-95 cursor-pointer disabled:opacity-50"
+        >
+          <FileDown className="w-4 h-4 text-amber-400" />
+          <span className="text-[10px] truncate max-w-full">{isDownloadingPDF ? 'तैयार...' : 'PDF पास'}</span>
+        </button>
+
+        <button
+          onClick={handleWhatsAppShare}
+          className="flex-1 py-2 px-1.5 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white rounded-xl text-xs font-bold flex flex-col items-center justify-center gap-0.5 shadow transition active:scale-95 cursor-pointer"
+        >
+          <Share2 className="w-4 h-4 text-white" />
+          <span className="text-[10px]">WhatsApp</span>
+        </button>
+
+        <button
+          onClick={() => setIsVerifyModalOpen(true)}
+          className="flex-1 py-2 px-1.5 bg-amber-500 hover:bg-amber-400 active:bg-amber-600 text-slate-950 rounded-xl text-xs font-black flex flex-col items-center justify-center gap-0.5 shadow transition active:scale-95 cursor-pointer"
+        >
+          <ShieldCheck className="w-4 h-4 text-slate-950" />
+          <span className="text-[10px] truncate max-w-full">सत्यापित पास</span>
+        </button>
+
+        <button
+          onClick={handlePrintIndividualPass}
+          className="p-2.5 bg-slate-800 hover:bg-slate-700 active:bg-slate-950 text-white rounded-xl flex items-center justify-center transition active:scale-95 cursor-pointer shrink-0"
+          title="प्रिंट पास"
+        >
+          <Printer className="w-4 h-4 text-amber-400" />
+        </button>
+      </div>
     </div>
   );
 }
