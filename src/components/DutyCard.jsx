@@ -256,7 +256,12 @@ export default function DutyCard({
     }
   };
 
-  const qrPayload = JSON.stringify({
+  // Direct live verification URL so scanning with any phone camera opens the verified card directly
+  const qrVerificationUrl = typeof window !== 'undefined' && window.location?.origin
+    ? `${window.location.origin}/?search=${encodeURIComponent(duty.mobile || duty.pno || duty.id || '')}`
+    : '';
+
+  const qrPayload = qrVerificationUrl || JSON.stringify({
     id: duty.id,
     name: duty.name,
     rank: duty.rank || 'का0',

@@ -55,6 +55,7 @@ export default function DutyAllocationHub({
 }) {
   const [allocationMode, setAllocationMode] = useState('manual'); // 'manual' | 'auto' | 'hierarchy_upload' | 'zone_manager'
   const [masterSubTab, setMasterSubTab] = useState('zones'); // 'zones' | 'sectors' | 'points'
+  const [autoStrategy, setAutoStrategy] = useState('vacancies_only'); // 'vacancies_only' | 'fresh_reallocate'
   const eventRecords = activeEvent?.records || [];
 
   const zonesStorageKey = `police_master_zones_${activeEventId || 'default'}`;
@@ -1233,30 +1234,73 @@ export default function DutyAllocationHub({
           onUpdateEventRecords(updatedRecords);
         };
 
-        // Smart Full Allocation
+        // Smart Allocation (Vacancies Only vs Fresh Reallocation)
         const handleSmartAutoDistributeAll = () => {
           if (masterForce.length === 0) {
             alert('कृपया पहले मास्टर पुलिस बल सूची अपलोड या सिंक करें।');
             return;
           }
 
-          let currentAssigned = [];
-          let unassignedPool = [...masterForce];
+          let currentAssigned = autoStrategy === 'vacancies_only' ? [...eventRecords] : [];
+
+          // Existing deployed officers set to prevent duplicate allocation
+          const assignedPnoSet = new Set(currentAssigned.map(r => r.pno).filter(Boolean));
+          const assignedMobSet = new Set(currentAssigned.map(r => r.mobile).filter(Boolean));
+          const assignedNameSet = new Set(currentAssigned.map(r => r.name).filter(Boolean));
+
+          let unassignedPool = masterForce.filter(p =>
+            !assignedPnoSet.has(p.pno) &&
+            !assignedMobSet.has(p.mobile) &&
+            !assignedNameSet.has(p.name)
+          );
+
+          let newlyAllocatedCount = 0;
 
           masterPoints.forEach(tpl => {
+            // In vacancies_only mode, count already present personnel at this point
+            const existingAtPoint = currentAssigned.filter(r => (r.duty_place || '').trim() === tpl.name.trim());
+            const existingCounts = { si: 0, hc: 0, female: 0, constable: 0 };
+            existingAtPoint.forEach(r => {
+              const cat = getOfficerCategory(r);
+              existingCounts[cat] = (existingCounts[cat] || 0) + 1;
+            });
+
             const quotas = [
-              { cat: 'si', count: Number(tpl.reqSI) || 0, defaultRank: 'उ०नि०' },
-              { cat: 'hc', count: Number(tpl.reqHC) || 0, defaultRank: 'हे०का०' },
-              { cat: 'female', count: Number(tpl.reqFemale) || 0, defaultRank: 'म०का०' },
-              { cat: 'constable', count: Number(tpl.reqConstable) || 0, defaultRank: 'का०' }
+              {
+                cat: 'si',
+                count: autoStrategy === 'vacancies_only'
+                  ? Math.max(0, (Number(tpl.reqSI) || 0) - existingCounts.si)
+                  : (Number(tpl.reqSI) || 0),
+                defaultRank: 'उ०नि०'
+              },
+              {
+                cat: 'hc',
+                count: autoStrategy === 'vacancies_only'
+                  ? Math.max(0, (Number(tpl.reqHC) || 0) - existingCounts.hc)
+                  : (Number(tpl.reqHC) || 0),
+                defaultRank: 'हे०का०'
+              },
+              {
+                cat: 'female',
+                count: autoStrategy === 'vacancies_only'
+                  ? Math.max(0, (Number(tpl.reqFemale) || 0) - existingCounts.female)
+                  : (Number(tpl.reqFemale) || 0),
+                defaultRank: 'म०का०'
+              },
+              {
+                cat: 'constable',
+                count: autoStrategy === 'vacancies_only'
+                  ? Math.max(0, (Number(tpl.reqConstable) || 0) - existingCounts.constable)
+                  : (Number(tpl.reqConstable) || 0),
+                defaultRank: 'का०'
+              }
             ];
 
             quotas.forEach(q => {
               for (let i = 0; i < q.count; i++) {
-                // Find matching rank from unassigned
                 let pIdx = unassignedPool.findIndex(p => getOfficerCategory(p) === q.cat);
                 if (pIdx === -1 && unassignedPool.length > 0) {
-                  pIdx = 0; // Fallback to any available personnel
+                  pIdx = 0; // Fallback to available personnel if exact rank exhausted
                 }
 
                 if (pIdx !== -1) {
@@ -1276,15 +1320,41 @@ export default function DutyAllocationHub({
                     shift: tpl.shift || 'प्रातः 08:00 बजे से 20:30 बजे तक',
                     photo: person.photo || ''
                   });
+                  newlyAllocatedCount++;
                 }
               }
             });
           });
 
           onUpdateEventRecords(currentAssigned);
-          setSuccessToast(`🎉 ${currentAssigned.length} जवानों की ड्यूटी सफलतापूर्वक स्वतः आवंटित हो गई! बुकलेट में तुरंत अपडेट हो गई है।`);
+          const toastMsg = autoStrategy === 'vacancies_only'
+            ? `🎉 ${newlyAllocatedCount} जवानों की ड्यूटी रिक्त स्थानों पर सफलतापूर्वक आवंटित हो गई! पूर्व आवंटित जवान सुरक्षित हैं।`
+            : `🎉 ${currentAssigned.length} जवानों की ड्यूटी नए सिरे से स्वतः आवंटित हो गई! बुकलेट में तुरंत अपडेट हो गई है।`;
+          setSuccessToast(toastMsg);
           setTimeout(() => setSuccessToast(null), 4000);
         };
+
+        // Demand stats for force deficit analysis
+        const demandedStats = { si: 0, hc: 0, female: 0, constable: 0 };
+        masterPoints.forEach(t => {
+          demandedStats.si += Number(t.reqSI) || 0;
+          demandedStats.hc += Number(t.reqHC) || 0;
+          demandedStats.female += Number(t.reqFemale) || 0;
+          demandedStats.constable += Number(t.reqConstable) || 0;
+        });
+
+        const netNeedStats = {
+          si: Math.max(0, demandedStats.si - (autoStrategy === 'vacancies_only' ? deployedStats.si : 0)),
+          hc: Math.max(0, demandedStats.hc - (autoStrategy === 'vacancies_only' ? deployedStats.hc : 0)),
+          female: Math.max(0, demandedStats.female - (autoStrategy === 'vacancies_only' ? deployedStats.female : 0)),
+          constable: Math.max(0, demandedStats.constable - (autoStrategy === 'vacancies_only' ? deployedStats.constable : 0))
+        };
+
+        const shortages = [];
+        if (reserveStats.si < netNeedStats.si) shortages.push({ name: 'उ०नि० (SI)', def: netNeedStats.si - reserveStats.si });
+        if (reserveStats.hc < netNeedStats.hc) shortages.push({ name: 'हे०का० (HC)', def: netNeedStats.hc - reserveStats.hc });
+        if (reserveStats.female < netNeedStats.female) shortages.push({ name: 'म०का० (WCP)', def: netNeedStats.female - reserveStats.female });
+        if (reserveStats.constable < netNeedStats.constable) shortages.push({ name: 'का० (Constable)', def: netNeedStats.constable - reserveStats.constable });
 
         return (
           <div className="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200/90 shadow-sm space-y-6">
@@ -1327,7 +1397,11 @@ export default function DutyAllocationHub({
                   className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs rounded-xl flex items-center gap-1.5 shadow transition cursor-pointer"
                 >
                   <Zap className="w-3.5 h-3.5" />
-                  <span>⚡ सभी पॉइंट्स पर एक साथ बल तैनात करें</span>
+                  <span>
+                    {autoStrategy === 'vacancies_only'
+                      ? '⚡ रिक्त पदों पर बल तैनात करें'
+                      : '⚡ सभी पॉइंट्स पर नया बल तैनात करें'}
+                  </span>
                 </button>
               </div>
             </div>
@@ -1379,6 +1453,63 @@ export default function DutyAllocationHub({
                   पूर्ति दर: <strong className="text-slate-950 font-mono text-sm">{totalDemanded > 0 ? Math.min(100, Math.round((totalDeployed / totalDemanded) * 100)) : 100}%</strong>
                 </div>
               </div>
+            </div>
+
+            {/* ALLOCATION STRATEGY & FORCE DEFICIT WARNING */}
+            <div className="bg-slate-50 border border-slate-200 p-4 rounded-2xl space-y-3">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                <div className="space-y-0.5">
+                  <div className="font-black text-slate-900 text-xs sm:text-sm flex items-center gap-1.5">
+                    <SlidersHorizontal className="w-4 h-4 text-amber-600" />
+                    <span>ऑटो-आवंटन रणनीति (Allocation Strategy):</span>
+                  </div>
+                  <p className="text-[11px] text-slate-500 font-medium">
+                    चुनें कि क्या पहले से मैनुअल रूप से तैनात जवानों/वीआईपी ड्यूटी को सुरक्षित रखना है या नए सिरे से पूरा आवंटन करना है।
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-1.5 bg-white p-1 rounded-xl border border-slate-300 w-full sm:w-auto">
+                  <button
+                    type="button"
+                    onClick={() => setAutoStrategy('vacancies_only')}
+                    className={`flex-1 sm:flex-none px-3.5 py-1.5 rounded-lg text-xs font-black transition cursor-pointer flex items-center justify-center gap-1.5 ${
+                      autoStrategy === 'vacancies_only'
+                        ? 'bg-emerald-600 text-white shadow-xs'
+                        : 'text-slate-700 hover:bg-slate-100'
+                    }`}
+                  >
+                    <span>🛡️ केवल रिक्त पद भरें (सुरक्षित)</span>
+                    {autoStrategy === 'vacancies_only' && <Check className="w-3.5 h-3.5" />}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setAutoStrategy('fresh_reallocate')}
+                    className={`flex-1 sm:flex-none px-3.5 py-1.5 rounded-lg text-xs font-black transition cursor-pointer flex items-center justify-center gap-1.5 ${
+                      autoStrategy === 'fresh_reallocate'
+                        ? 'bg-amber-500 text-slate-950 shadow-xs'
+                        : 'text-slate-700 hover:bg-slate-100'
+                    }`}
+                  >
+                    <span>⚡ नया आवंटन (Reset All)</span>
+                    {autoStrategy === 'fresh_reallocate' && <Check className="w-3.5 h-3.5" />}
+                  </button>
+                </div>
+              </div>
+
+              {/* Force Deficit Alert */}
+              {shortages.length > 0 && (
+                <div className="p-3 bg-amber-50 border border-amber-300 rounded-xl text-xs font-bold text-amber-950 flex items-start gap-2">
+                  <AlertTriangle className="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
+                  <div>
+                    <span className="font-black">⚠️ रिज़र्व फ़ोर्स में पदों की कमी (Deficit Alert): </span>
+                    <span>
+                      मांग पूरी करने हेतु रिज़र्व में {shortages.map(s => `${s.name}: ${s.def} कम`).join(', ')} हैं।
+                      कमी रहने पर उपलब्ध अन्य जवानों को स्वतः विकल्प के रूप में तैनात किया जाएगा।
+                    </span>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Matrix Table with Live Increment/Decrement */}

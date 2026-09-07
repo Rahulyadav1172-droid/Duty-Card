@@ -13,8 +13,9 @@ export function printLegalBulk({
   isNoteEnabled = true,
   customBriefing = '',
   isBriefingEnabled = true,
-  layoutMode = 6, // 2 (Election Special with Co-force), 4, or 6 cards per Legal page
-  includeCoForce = true
+  layoutMode = 6, // 2 (Election Special with Co-force), 4, or 6 cards per page
+  includeCoForce = true,
+  paperSize = 'a4' // 'a4' | 'legal'
 }) {
   try {
     const validRecords = (records || []).filter(r => r && (r.name || r.id));
@@ -260,6 +261,8 @@ export function printLegalBulk({
       `;
     }
 
+    const isA4 = paperSize === 'a4';
+    const paperLabel = isA4 ? 'A4' : 'Legal';
     const layoutName = is2In1 ? '2-in-1 Election Special' : (is4In1 ? '4-in-1 Standard' : '6-in-1 Compact');
 
     const fullHtml = `
@@ -267,10 +270,10 @@ export function printLegalBulk({
       <html lang="hi">
       <head>
         <meta charset="utf-8">
-        <title>${escapeHtml(eventTitle || 'ड्यूटी पास')} - Bulk Print (${layoutName} Legal)</title>
+        <title>${escapeHtml(eventTitle || 'ड्यूटी पास')} - Bulk Print (${layoutName} ${paperLabel})</title>
         <style>
           @page {
-            size: legal portrait;
+            size: ${isA4 ? 'A4 portrait' : 'legal portrait'};
             margin: 3mm 4mm;
           }
           * {
@@ -286,14 +289,14 @@ export function printLegalBulk({
             print-color-adjust: exact;
           }
 
-          /* Legal Page dimensions (215.9mm x 355.6mm) */
+          /* Responsive Page Dimensions (A4: 210x297mm vs Legal: 215.9x355.6mm) */
           .legal-page {
-            width: 207.9mm;
-            height: 349.6mm;
+            width: ${isA4 ? '202mm' : '207.9mm'};
+            height: ${isA4 ? '290mm' : '349.6mm'};
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            grid-template-rows: ${is4In1 ? '1fr 1fr' : '1fr 1fr 1fr'};
-            gap: ${is4In1 ? '5mm' : '3.5mm'};
+            grid-template-columns: ${is2In1 ? '1fr' : '1fr 1fr'};
+            grid-template-rows: ${is2In1 ? '1fr 1fr' : is4In1 ? '1fr 1fr' : '1fr 1fr 1fr'};
+            gap: ${isA4 ? (is4In1 ? '3.5mm' : '2.5mm') : (is4In1 ? '5mm' : '3.5mm')};
             padding: 1mm;
             page-break-after: always;
             break-after: page;
@@ -302,11 +305,11 @@ export function printLegalBulk({
             background: #ffffff;
           }
 
-          /* 2-in-1 Full Legal Vertical Layout */
+          /* 2-in-1 Full Vertical Layout */
           .page-2in1 {
             grid-template-columns: 1fr;
             grid-template-rows: 1fr 1fr;
-            gap: 6mm;
+            gap: ${isA4 ? '4mm' : '6mm'};
             padding: 2mm;
           }
 
@@ -727,7 +730,13 @@ export function printLegalBulk({
         ${pagesHtml}
         <script>
           window.onload = function() {
-            window.print();
+            if (document.fonts && document.fonts.ready) {
+              document.fonts.ready.then(function() {
+                setTimeout(function() { window.print(); }, 250);
+              });
+            } else {
+              setTimeout(function() { window.print(); }, 400);
+            }
           };
         </script>
       </body>

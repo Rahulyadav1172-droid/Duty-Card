@@ -152,7 +152,15 @@ export default function App() {
   const [cloudErrorDetail, setCloudErrorDetail] = useState(null);
   const [pendingTab, setPendingTab] = useState(null);
 
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState(() => {
+    try {
+      if (typeof window !== 'undefined' && window.location?.search) {
+        const params = new URLSearchParams(window.location.search);
+        return params.get('search') || params.get('id') || params.get('mobile') || params.get('pno') || '';
+      }
+    } catch (e) {}
+    return '';
+  });
   const [activeDuty, setActiveDuty] = useState(null);
   const [activeTab, setActiveTab] = useState('search');
   const [searchAttempted, setSearchAttempted] = useState(false);

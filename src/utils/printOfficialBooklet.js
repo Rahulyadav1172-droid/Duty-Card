@@ -822,11 +822,36 @@ export function printOfficialBookletDocument({
   doc.write(fullHtml);
   doc.close();
 
-  iframe.contentWindow.focus();
-  setTimeout(() => {
-    iframe.contentWindow.print();
-    setTimeout(() => {
-      document.body.removeChild(iframe);
-    }, 1500);
-  }, 400);
+  const triggerPrint = () => {
+    try {
+      iframe.contentWindow.focus();
+      iframe.contentWindow.print();
+    } catch (err) {
+      console.error('Official booklet print error:', err);
+    }
+  };
+
+  // Safe iframe cleanup: trigger only after user completes or cancels print dialog
+  const cleanupIframe = () => {
+    try {
+      if (document.body.contains(iframe)) {
+        document.body.removeChild(iframe);
+      }
+    } catch (e) {}
+  };
+
+  iframe.contentWindow.onafterprint = cleanupIframe;
+  // Safety timeout of 60 seconds (never prematurely dismisses print dialog)
+  setTimeout(cleanupIframe, 60000);
+
+  // Await web fonts ready to ensure zero font clipping or Devanagari displacement
+  if (doc.fonts && doc.fonts.ready) {
+    doc.fonts.ready.then(() => {
+      setTimeout(triggerPrint, 250);
+    }).catch(() => {
+      setTimeout(triggerPrint, 500);
+    });
+  } else {
+    setTimeout(triggerPrint, 500);
+  }
 }

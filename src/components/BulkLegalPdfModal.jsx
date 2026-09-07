@@ -37,7 +37,8 @@ export default function BulkLegalPdfModal({
   const [progress, setProgress] = useState({ current: 0, total: 0, page: 0, totalPages: 0 });
   const [selectedPointFilter, setSelectedPointFilter] = useState('ALL');
   const [rangeMode, setRangeMode] = useState('all'); // 'all' | 'custom'
-  const [layoutMode, setLayoutMode] = useState(6); // 4 or 6 cards per page
+  const [paperSize, setPaperSize] = useState('a4'); // 'a4' | 'legal'
+  const [layoutMode, setLayoutMode] = useState(4); // 4 or 2 for A4, 6 or 4 or 2 for Legal
   const [startPage, setStartPage] = useState(1);
   const [endPage, setEndPage] = useState(25);
   const [activeBatch, setActiveBatch] = useState([]);
@@ -65,7 +66,7 @@ export default function BulkLegalPdfModal({
   ).sort();
 
   // -------------------------------------------------------------
-  // METHOD 1: ULTRA-FAST ISOLATED LEGAL PRINT / SAVE AS PDF (1 SECOND)
+  // METHOD 1: ULTRA-FAST ISOLATED A4 / LEGAL PRINT / SAVE AS PDF (1 SECOND)
   // -------------------------------------------------------------
   const handleInstantBrowserPrint = () => {
     printLegalBulk({
@@ -78,7 +79,8 @@ export default function BulkLegalPdfModal({
       isNoteEnabled,
       customBriefing,
       isBriefingEnabled,
-      layoutMode
+      layoutMode,
+      paperSize
     });
   };
 
@@ -98,11 +100,12 @@ export default function BulkLegalPdfModal({
         await document.fonts.ready;
       }
 
-      // Legal Paper dimensions in mm: 215.9mm x 355.6mm (8.5 x 14 inches)
+      const isA4 = paperSize === 'a4';
+      // Dynamic Paper dimensions in mm: A4 (210x297mm) vs Legal (215.9x355.6mm)
       const pdf = new jsPDF({
         orientation: 'portrait',
         unit: 'mm',
-        format: 'legal',
+        format: isA4 ? 'a4' : 'legal',
         compress: true
       });
 
@@ -140,7 +143,7 @@ export default function BulkLegalPdfModal({
         const imgData = canvas.toDataURL('image/jpeg', 0.85);
 
         if (p > 0) {
-          pdf.addPage('legal', 'portrait');
+          pdf.addPage(isA4 ? 'a4' : 'legal', 'portrait');
         }
 
         const marginX = 5;
@@ -152,7 +155,7 @@ export default function BulkLegalPdfModal({
       }
 
       const safeTitle = (eventTitle || 'DutyPass').replace(/\s+/g, '_');
-      pdf.save(`Bulk_Duty_Cards_Legal_${layoutMode}in1_${safeTitle}_Pages_${actualStart}_to_${actualEnd}.pdf`);
+      pdf.save(`Bulk_Duty_Cards_${paperSize.toUpperCase()}_${layoutMode}in1_${safeTitle}_Pages_${actualStart}_to_${actualEnd}.pdf`);
       onClose();
     } catch (err) {
       console.error('Fast PDF Generation Error:', err);
@@ -171,7 +174,11 @@ export default function BulkLegalPdfModal({
     const activeNoteText = (isNoteEnabled !== false && customNote) ? customNote : (isNoteEnabled ? (duty.note || '') : '');
     const activeBriefingText = (isBriefingEnabled !== false && customBriefing) ? customBriefing : (isBriefingEnabled ? (duty.briefing_place || '') : '');
 
-    const qrData = JSON.stringify({
+    const qrDirectUrl = typeof window !== 'undefined' && window.location?.origin
+      ? `${window.location.origin}/?search=${encodeURIComponent(duty.mobile || duty.pno || duty.id || '')}`
+      : '';
+
+    const qrData = qrDirectUrl || JSON.stringify({
       id: duty.id || 'DUTY',
       name: duty.name || '',
       duty_place: duty.duty_place || '',
@@ -356,10 +363,10 @@ export default function BulkLegalPdfModal({
               </div>
               <div>
                 <h3 className="text-base font-black text-white leading-tight">
-                  बल्क ड्यूटी पास प्रिंट / PDF (Legal Paper)
+                  बल्क ड्यूटी पास प्रिंट / PDF ({paperSize === 'a4' ? 'A4 Paper' : 'Legal Paper'})
                 </h3>
                 <p className="text-xs text-amber-400 font-bold mt-0.5">
-                  Legal Size (8.5 × 14 inch) - 2, 4 या 6 कार्ड प्रति पेज
+                  {paperSize === 'a4' ? 'A4 Size (मानक प्रिंटर) - 2 या 4 कार्ड प्रति पेज' : 'Legal Size (8.5 × 14 inch) - 2, 4 या 6 कार्ड प्रति पेज'}
                 </p>
               </div>
             </div>
@@ -375,47 +382,88 @@ export default function BulkLegalPdfModal({
 
           {/* Content Body */}
           <div className="p-5 space-y-4 text-slate-800 text-xs max-h-[75vh] overflow-y-auto">
+            {/* 📄 PAPER SIZE SELECTOR (A4 VS LEGAL) */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 p-2.5 bg-slate-100 rounded-2xl border border-slate-300">
+              <span className="font-black text-slate-900 text-xs">🖨️ प्रिंटर पेपर साइज (Paper Size):</span>
+              <div className="flex items-center gap-1.5 w-full sm:w-auto">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPaperSize('a4');
+                    if (layoutMode === 6) setLayoutMode(4);
+                  }}
+                  className={`flex-1 sm:flex-none px-3.5 py-1.5 rounded-xl font-black text-xs transition cursor-pointer flex items-center justify-center gap-1 ${
+                    paperSize === 'a4'
+                      ? 'bg-amber-500 text-slate-950 shadow-xs'
+                      : 'bg-white text-slate-700 hover:bg-slate-200 border border-slate-200'
+                  }`}
+                >
+                  <span>📄 A4 पेपर (मानक)</span>
+                  {paperSize === 'a4' && <Check className="w-3.5 h-3.5 stroke-[3]" />}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPaperSize('legal')}
+                  className={`flex-1 sm:flex-none px-3.5 py-1.5 rounded-xl font-black text-xs transition cursor-pointer flex items-center justify-center gap-1 ${
+                    paperSize === 'legal'
+                      ? 'bg-amber-500 text-slate-950 shadow-xs'
+                      : 'bg-white text-slate-700 hover:bg-slate-200 border border-slate-200'
+                  }`}
+                >
+                  <span>📜 Legal पेपर (8.5×14")</span>
+                  {paperSize === 'legal' && <Check className="w-3.5 h-3.5 stroke-[3]" />}
+                </button>
+              </div>
+            </div>
+
             {/* 🌟 LAYOUT TOGGLE (2-IN-1 ELECTION VS 4-IN-1 VS 6-IN-1) */}
-            <div className="bg-slate-100 p-1.5 rounded-xl border border-slate-300 flex flex-wrap sm:flex-nowrap items-center gap-1.5">
-              <button
-                type="button"
-                onClick={() => setLayoutMode(2)}
-                className={`flex-1 py-2 px-2 rounded-lg text-[11px] sm:text-xs font-black flex items-center justify-center gap-1 transition cursor-pointer ${
-                  layoutMode === 2
-                    ? 'bg-amber-500 text-slate-950 shadow-sm'
-                    : 'bg-transparent text-slate-700 hover:bg-slate-200'
-                }`}
-                title="2 कार्ड प्रति लीगल पेज (सहयोगार्थ बल सहित - चुनाव स्पेशल)"
-              >
-                <span>2-इन-1 (सहयोगार्थ बल)</span>
-                {layoutMode === 2 && <Check className="w-3.5 h-3.5 stroke-[3]" />}
-              </button>
+            <div className="space-y-1">
+              <div className="text-[11px] font-bold text-slate-600">प्रति पृष्ठ कार्ड लेआउट (Layout):</div>
+              <div className="bg-slate-100 p-1.5 rounded-xl border border-slate-300 flex flex-wrap sm:flex-nowrap items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => setLayoutMode(2)}
+                  className={`flex-1 py-2 px-2 rounded-lg text-[11px] sm:text-xs font-black flex items-center justify-center gap-1 transition cursor-pointer ${
+                    layoutMode === 2
+                      ? 'bg-amber-500 text-slate-950 shadow-sm'
+                      : 'bg-transparent text-slate-700 hover:bg-slate-200'
+                  }`}
+                  title="2 कार्ड प्रति पेज (सहयोगार्थ बल सहित - बड़ा फॉन्ट)"
+                >
+                  <span>2-इन-1 (सहयोगार्थ बल)</span>
+                  {layoutMode === 2 && <Check className="w-3.5 h-3.5 stroke-[3]" />}
+                </button>
 
-              <button
-                type="button"
-                onClick={() => setLayoutMode(4)}
-                className={`flex-1 py-2 px-2 rounded-lg text-[11px] sm:text-xs font-black flex items-center justify-center gap-1 transition cursor-pointer ${
-                  layoutMode === 4
-                    ? 'bg-amber-500 text-slate-950 shadow-sm'
-                    : 'bg-transparent text-slate-700 hover:bg-slate-200'
-                }`}
-              >
-                <span>4-इन-1 (मानक)</span>
-                {layoutMode === 4 && <Check className="w-3.5 h-3.5 stroke-[3]" />}
-              </button>
+                <button
+                  type="button"
+                  onClick={() => setLayoutMode(4)}
+                  className={`flex-1 py-2 px-2 rounded-lg text-[11px] sm:text-xs font-black flex items-center justify-center gap-1 transition cursor-pointer ${
+                    layoutMode === 4
+                      ? 'bg-amber-500 text-slate-950 shadow-sm'
+                      : 'bg-transparent text-slate-700 hover:bg-slate-200'
+                  }`}
+                  title={paperSize === 'a4' ? "4 कार्ड प्रति A4 पेज (अनुशंसित)" : "4 कार्ड प्रति लीगल पेज"}
+                >
+                  <span>4-इन-1 {paperSize === 'a4' ? '(A4 अनुशंसित)' : '(मानक)'}</span>
+                  {layoutMode === 4 && <Check className="w-3.5 h-3.5 stroke-[3]" />}
+                </button>
 
-              <button
-                type="button"
-                onClick={() => setLayoutMode(6)}
-                className={`flex-1 py-2 px-2 rounded-lg text-[11px] sm:text-xs font-black flex items-center justify-center gap-1 transition cursor-pointer ${
-                  layoutMode === 6
-                    ? 'bg-amber-500 text-slate-950 shadow-sm'
-                    : 'bg-transparent text-slate-700 hover:bg-slate-200'
-                }`}
-              >
-                <span>6-इन-1 (कॉम्पैक्ट)</span>
-                {layoutMode === 6 && <Check className="w-3.5 h-3.5 stroke-[3]" />}
-              </button>
+                {paperSize === 'legal' && (
+                  <button
+                    type="button"
+                    onClick={() => setLayoutMode(6)}
+                    className={`flex-1 py-2 px-2 rounded-lg text-[11px] sm:text-xs font-black flex items-center justify-center gap-1 transition cursor-pointer ${
+                      layoutMode === 6
+                        ? 'bg-amber-500 text-slate-950 shadow-sm'
+                        : 'bg-transparent text-slate-700 hover:bg-slate-200'
+                    }`}
+                    title="6 कार्ड प्रति लीगल पेज (कॉम्पैक्ट)"
+                  >
+                    <span>6-इन-1 (कॉम्पैक्ट)</span>
+                    {layoutMode === 6 && <Check className="w-3.5 h-3.5 stroke-[3]" />}
+                  </button>
+                )}
+              </div>
             </div>
 
             {/* FAST OPTION 1: 1-CLICK INSTANT PRINT / SAVE AS PDF */}
@@ -424,7 +472,7 @@ export default function BulkLegalPdfModal({
                 <div className="flex items-center gap-2">
                   <Zap className="w-5 h-5 text-emerald-600 fill-emerald-500" />
                   <strong className="text-emerald-950 text-sm">
-                    ⚡ 1-सेकंड सुपरफास्ट प्रिंट ({layoutMode}-इन-1):
+                    ⚡ 1-सेकंड सुपरफास्ट प्रिंट ({layoutMode}-इन-1 {paperSize === 'a4' ? 'A4' : 'Legal'}):
                   </strong>
                 </div>
                 <span className="text-[10px] bg-emerald-200 text-emerald-900 px-2 py-0.5 rounded-full font-black">
@@ -432,14 +480,14 @@ export default function BulkLegalPdfModal({
                 </span>
               </div>
               <p className="text-[11px] text-emerald-800 font-medium leading-relaxed">
-                सीधे ब्राउज़र के नेटिव प्रिंट इंजन से <strong>सभी {targetRecords.length} कार्ड ({totalPossiblePages} लीगल पेज)</strong> मात्र 2 सेकंड में "Save as PDF" या सीधे प्रिंट करें।
+                सीधे ब्राउज़र के नेटिव प्रिंट इंजन से <strong>सभी {targetRecords.length} कार्ड ({totalPossiblePages} {paperSize.toUpperCase()} पेज)</strong> मात्र 2 सेकंड में "Save as PDF" या सीधे प्रिंट करें।
               </p>
               <button
                 onClick={handleInstantBrowserPrint}
                 className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs sm:text-sm rounded-xl shadow flex items-center justify-center gap-2 transition active:scale-98 cursor-pointer"
               >
                 <Printer className="w-4 h-4" />
-                <span>🖨️ तुरंत प्रिंट / Save PDF ({layoutMode} कार्ड प्रति Legal पेज)</span>
+                <span>🖨️ तुरंत प्रिंट / Save PDF ({layoutMode} कार्ड प्रति {paperSize.toUpperCase()} पेज)</span>
               </button>
             </div>
 
