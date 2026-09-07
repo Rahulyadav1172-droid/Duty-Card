@@ -705,7 +705,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-100/70 text-slate-900 flex font-sans selection:bg-amber-500 selection:text-slate-950 font-devanagari">
+    <div className="min-h-screen bg-slate-100/70 text-slate-900 flex font-sans selection:bg-amber-500 selection:text-slate-950 font-devanagari overflow-x-hidden">
       {/* 0. PWA 1-Click Mobile Install Banner & Modal */}
       <InstallPwaModal />
 
@@ -735,23 +735,23 @@ export default function App() {
         <header className="sticky top-0 z-20 bg-slate-900 text-white border-b border-slate-800 shadow-sm no-print">
           <div className="px-3 sm:px-6 py-2.5 sm:py-3 flex items-center justify-between gap-3 max-w-7xl mx-auto w-full">
             {/* Left: Police Emblem & Title / Mobile Hamburger */}
-            <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
               {userRole !== 'guest' ? (
                 /* Mobile Hamburger for Logged In Officer */
                 <button
                   onClick={() => setIsMobileSidebarOpen(true)}
-                  className="p-2 -ml-1 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800 md:hidden cursor-pointer"
+                  className="p-1.5 sm:p-2 -ml-1 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800 md:hidden cursor-pointer shrink-0"
                   title="मेनू खोलें"
                 >
                   <Menu className="w-5 h-5" />
                 </button>
               ) : (
                 /* Police Emblem for Public / Guest */
-                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 p-0.5 shadow-md shrink-0 flex items-center justify-center">
+                <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 p-0.5 shadow-md shrink-0 flex items-center justify-center">
                   <img
                     src="/badge.png"
                     alt="Police Emblem"
-                    className="w-7 h-7 object-contain filter drop-shadow"
+                    className="w-6 h-6 sm:w-7 sm:h-7 object-contain filter drop-shadow"
                     onError={(e) => {
                       e.target.style.display = 'none';
                     }}
@@ -760,7 +760,7 @@ export default function App() {
               )}
 
               {/* Event Title */}
-              <div className="min-w-0">
+              <div className="min-w-0 flex-1">
                 <h1 className="text-xs sm:text-sm font-black text-white truncate leading-tight">
                   {userRole === 'guest' ? 'अयोध्या पुलिस ड्यूटी पास पोर्टल' : currentEvent.title}
                 </h1>
@@ -980,7 +980,7 @@ export default function App() {
         </header>
 
         {/* Main Page Content */}
-        <main className="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-6 lg:p-8 space-y-6">
+        <main className="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-6 lg:p-8 space-y-6 overflow-x-hidden min-w-0">
         {/* PUBLICLY ACCESSIBLE SEARCH TAB */}
         {activeTab === 'search' && (
           <div className="max-w-xl mx-auto space-y-5">

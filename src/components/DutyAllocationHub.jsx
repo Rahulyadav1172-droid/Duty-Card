@@ -638,34 +638,34 @@ export default function DutyAllocationHub({
       {/* ========================================================================= */}
       {/* 1. EXECUTIVE DARK COMMAND HERO & PILL NAVIGATION                           */}
       {/* ========================================================================= */}
-      <div className="bg-slate-950 text-white rounded-3xl p-5 sm:p-7 shadow-2xl border border-slate-800 space-y-5">
-        <div className="flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4">
-          <div className="flex items-start sm:items-center gap-4 min-w-0">
-            <div className="w-13 h-13 rounded-2xl bg-gradient-to-br from-amber-400 via-amber-500 to-amber-600 text-slate-950 flex items-center justify-center font-black shadow-lg shadow-amber-500/20 shrink-0">
-              <Shield className="w-7 h-7 stroke-[2.5]" />
+      <div className="bg-slate-950 text-white rounded-2xl sm:rounded-3xl p-4 sm:p-7 shadow-2xl border border-slate-800 space-y-4 sm:space-y-5 overflow-hidden">
+        <div className="flex flex-col xl:flex-row items-start xl:items-center justify-between gap-3 sm:gap-4">
+          <div className="flex items-start sm:items-center gap-3 sm:gap-4 min-w-0 w-full xl:w-auto">
+            <div className="w-10 h-10 sm:w-13 sm:h-13 rounded-xl sm:rounded-2xl bg-gradient-to-br from-amber-400 via-amber-500 to-amber-600 text-slate-950 flex items-center justify-center font-black shadow-lg shadow-amber-500/20 shrink-0">
+              <Shield className="w-5 h-5 sm:w-7 sm:h-7 stroke-[2.5]" />
             </div>
-            <div className="min-w-0">
-              <div className="flex items-center gap-2.5 flex-wrap">
-                <h1 className="text-lg sm:text-xl md:text-2xl font-black tracking-tight text-white leading-tight">
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h1 className="text-base sm:text-xl md:text-2xl font-black tracking-tight text-white leading-tight">
                   पुलिस ड्यूटी आवंटन एवं ज़ोन-सेक्टर कमान केंद्र
                 </h1>
-                <span className="inline-flex px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-bold text-xs border border-amber-500/30 shrink-0">
+                <span className="inline-flex px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-bold text-[10px] sm:text-xs border border-amber-500/30 shrink-0">
                   लाइव कमान
                 </span>
               </div>
-              <p className="text-xs sm:text-sm text-slate-400 font-medium mt-1">
+              <p className="text-xs sm:text-sm text-slate-400 font-medium mt-1 leading-snug">
                 इवेंट: <strong className="text-amber-400 font-black">{activeEvent?.title || 'सक्रिय सुरक्षा व्यवस्था'}</strong> | बल प्रबंधन, ज़ोन पदानुक्रम व ड्यूटी पास आवंटन
               </p>
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2.5 self-stretch xl:self-auto justify-end shrink-0">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-2.5 w-full xl:w-auto min-w-0">
             {/* Direct Booklet Button */}
             {onOpenBooklet && (
               <button
                 type="button"
                 onClick={onOpenBooklet}
-                className="px-4 py-2.5 bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-400 hover:to-amber-300 text-slate-950 font-black text-xs sm:text-sm rounded-xl flex items-center gap-2 shadow-lg shadow-amber-500/20 transition active:scale-95 cursor-pointer shrink-0"
+                className="w-full sm:w-auto px-4 py-2 sm:py-2.5 bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-400 hover:to-amber-300 text-slate-950 font-black text-xs sm:text-sm rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-amber-500/20 transition active:scale-95 cursor-pointer shrink-0"
                 title="आधिकारिक ड्यूटी बुकलेट देखें एवं प्रिंट करें"
               >
                 <FileSpreadsheet className="w-4 h-4 stroke-[2.5]" />
@@ -673,14 +673,14 @@ export default function DutyAllocationHub({
               </button>
             )}
 
-            {/* Event Selector Dropdown */}
+            {/* Event Selector Dropdown - Clean Responsive Container */}
             {events.length > 0 && (
-              <div className="flex items-center gap-2 bg-slate-900 px-3.5 py-2.5 rounded-xl border border-slate-800 shadow-inner">
+              <div className="flex items-center gap-2 bg-slate-900 px-3 py-2 sm:px-3.5 sm:py-2.5 rounded-xl border border-slate-800 shadow-inner w-full sm:w-auto min-w-0 max-w-full">
                 <span className="text-xs font-bold text-slate-400 shrink-0">इवेंट:</span>
                 <select
                   value={activeEventId}
                   onChange={(e) => onSelectActiveEvent?.(e.target.value)}
-                  className="bg-transparent text-amber-400 text-xs sm:text-sm font-black focus:outline-none cursor-pointer pr-2"
+                  className="bg-transparent text-amber-400 text-xs sm:text-sm font-black focus:outline-none cursor-pointer flex-1 min-w-0 truncate pr-1"
                 >
                   {events.map((evt) => (
                     <option key={evt.id} value={evt.id} className="bg-slate-900 text-white font-bold">
@@ -694,10 +694,10 @@ export default function DutyAllocationHub({
         </div>
 
         {/* 5-Tab Sleek Pill-Style Navigation */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 bg-slate-900 p-1.5 rounded-2xl border border-slate-800 text-xs font-black">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-1.5 sm:gap-2 bg-slate-900 p-1.5 rounded-2xl border border-slate-800 text-xs font-black">
           <button
             onClick={() => setAllocationMode('manual')}
-            className={`py-3 px-3 rounded-xl transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer ${
+            className={`py-2.5 sm:py-3 px-2 sm:px-3 rounded-xl transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer ${
               allocationMode === 'manual'
                 ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/25 font-black scale-[1.01]'
                 : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
@@ -709,7 +709,7 @@ export default function DutyAllocationHub({
 
           <button
             onClick={() => setAllocationMode('auto')}
-            className={`py-3 px-3 rounded-xl transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer ${
+            className={`py-2.5 sm:py-3 px-2 sm:px-3 rounded-xl transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer ${
               allocationMode === 'auto'
                 ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/25 font-black scale-[1.01]'
                 : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
@@ -721,7 +721,7 @@ export default function DutyAllocationHub({
 
           <button
             onClick={() => setAllocationMode('matrix')}
-            className={`py-3 px-3 rounded-xl transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer ${
+            className={`py-2.5 sm:py-3 px-2 sm:px-3 rounded-xl transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer ${
               allocationMode === 'matrix'
                 ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/25 font-black scale-[1.01]'
                 : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
@@ -733,7 +733,7 @@ export default function DutyAllocationHub({
 
           <button
             onClick={() => setAllocationMode('hierarchy_upload')}
-            className={`py-3 px-3 rounded-xl transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer ${
+            className={`py-2.5 sm:py-3 px-2 sm:px-3 rounded-xl transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer ${
               allocationMode === 'hierarchy_upload'
                 ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/25 font-black scale-[1.01]'
                 : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
@@ -745,7 +745,7 @@ export default function DutyAllocationHub({
 
           <button
             onClick={() => setAllocationMode('zone_manager')}
-            className={`py-3 px-3 rounded-xl transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer ${
+            className={`col-span-2 sm:col-span-1 py-2.5 sm:py-3 px-2 sm:px-3 rounded-xl transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer ${
               allocationMode === 'zone_manager'
                 ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/25 font-black scale-[1.01]'
                 : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
@@ -760,55 +760,57 @@ export default function DutyAllocationHub({
       {/* ========================================================================= */}
       {/* 2. REFINED 4 CLEAN STAT & METRIC CARDS                                     */}
       {/* ========================================================================= */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 text-slate-900">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4 text-slate-900">
         {/* Card 1: Master Force Pool */}
-        <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-amber-50 border border-amber-200/80 text-amber-700 flex items-center justify-center shrink-0">
-            <Users className="w-6 h-6 stroke-[2.5]" />
+        <div className="bg-white p-3 sm:p-5 rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 min-w-0">
+          <div className="w-9 h-9 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-amber-50 border border-amber-200/80 text-amber-700 flex items-center justify-center shrink-0">
+            <Users className="w-4 h-4 sm:w-6 sm:h-6 stroke-[2.5]" />
           </div>
-          <div>
-            <div className="text-xs font-bold text-slate-500">मास्टर फ़ोर्स पूल</div>
-            <div className="text-xl sm:text-2xl font-black text-slate-950 font-mono tracking-tight mt-0.5">
-              {masterForce.length} <span className="text-xs font-bold text-slate-500">जवान</span>
+          <div className="min-w-0 flex-1">
+            <div className="text-[11px] sm:text-xs font-bold text-slate-500 truncate">मास्टर फ़ोर्स पूल</div>
+            <div className="text-lg sm:text-2xl font-black text-slate-950 font-mono tracking-tight mt-0.5 flex items-baseline gap-1">
+              <span>{masterForce.length}</span> <span className="text-[10px] sm:text-xs font-bold text-slate-500 font-sans">जवान</span>
             </div>
           </div>
         </div>
 
         {/* Card 2: Deployed Force */}
-        <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-emerald-50 border border-emerald-200/80 text-emerald-700 flex items-center justify-center shrink-0">
-            <CheckCircle2 className="w-6 h-6 stroke-[2.5]" />
+        <div className="bg-white p-3 sm:p-5 rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 min-w-0">
+          <div className="w-9 h-9 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-emerald-50 border border-emerald-200/80 text-emerald-700 flex items-center justify-center shrink-0">
+            <CheckCircle2 className="w-4 h-4 sm:w-6 sm:h-6 stroke-[2.5]" />
           </div>
-          <div>
-            <div className="text-xs font-bold text-slate-500">वर्तमान में तैनात बल</div>
-            <div className="text-xl sm:text-2xl font-black text-emerald-950 font-mono tracking-tight mt-0.5">
-              {eventRecords.length} <span className="text-xs font-bold text-emerald-700">जवान</span>
+          <div className="min-w-0 flex-1">
+            <div className="text-[11px] sm:text-xs font-bold text-slate-500 truncate">वर्तमान में तैनात बल</div>
+            <div className="text-lg sm:text-2xl font-black text-emerald-950 font-mono tracking-tight mt-0.5 flex items-baseline gap-1">
+              <span>{eventRecords.length}</span> <span className="text-[10px] sm:text-xs font-bold text-emerald-700 font-sans">जवान</span>
             </div>
           </div>
         </div>
 
         {/* Card 3: Zones & Sectors Master */}
-        <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-indigo-50 border border-indigo-200/80 text-indigo-700 flex items-center justify-center shrink-0">
-            <Building className="w-6 h-6 stroke-[2.5]" />
+        <div className="bg-white p-3 sm:p-5 rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 min-w-0">
+          <div className="w-9 h-9 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-indigo-50 border border-indigo-200/80 text-indigo-700 flex items-center justify-center shrink-0">
+            <Building className="w-4 h-4 sm:w-6 sm:h-6 stroke-[2.5]" />
           </div>
-          <div>
-            <div className="text-xs font-bold text-slate-500">ज़ोन एवं सेक्टर मास्टर</div>
-            <div className="text-xl sm:text-2xl font-black text-indigo-950 font-mono tracking-tight mt-0.5">
-              {masterZones.length} <span className="text-xs font-bold text-indigo-600">ज़ोन</span> / {masterSectors.length} <span className="text-xs font-bold text-indigo-600">सेक्टर</span>
+          <div className="min-w-0 flex-1">
+            <div className="text-[11px] sm:text-xs font-bold text-slate-500 truncate">ज़ोन एवं सेक्टर मास्टर</div>
+            <div className="text-lg sm:text-2xl font-black text-indigo-950 font-mono tracking-tight mt-0.5 flex flex-wrap items-baseline gap-1">
+              <span>{masterZones.length}</span> <span className="text-[10px] sm:text-xs font-bold text-indigo-600 font-sans">ज़ोन</span>
+              <span className="text-slate-300">/</span>
+              <span>{masterSectors.length}</span> <span className="text-[10px] sm:text-xs font-bold text-indigo-600 font-sans">सेक्टर</span>
             </div>
           </div>
         </div>
 
         {/* Card 4: Duty Points */}
-        <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-violet-50 border border-violet-200/80 text-violet-700 flex items-center justify-center shrink-0">
-            <MapPin className="w-6 h-6 stroke-[2.5]" />
+        <div className="bg-white p-3 sm:p-5 rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 min-w-0">
+          <div className="w-9 h-9 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-violet-50 border border-violet-200/80 text-violet-700 flex items-center justify-center shrink-0">
+            <MapPin className="w-4 h-4 sm:w-6 sm:h-6 stroke-[2.5]" />
           </div>
-          <div>
-            <div className="text-xs font-bold text-slate-500">सक्रिय ड्यूटी स्थल</div>
-            <div className="text-xl sm:text-2xl font-black text-violet-950 font-mono tracking-tight mt-0.5">
-              {masterPoints.length} <span className="text-xs font-bold text-violet-600">पॉइंट्स</span>
+          <div className="min-w-0 flex-1">
+            <div className="text-[11px] sm:text-xs font-bold text-slate-500 truncate">सक्रिय ड्यूटी स्थल</div>
+            <div className="text-lg sm:text-2xl font-black text-violet-950 font-mono tracking-tight mt-0.5 flex items-baseline gap-1">
+              <span>{masterPoints.length}</span> <span className="text-[10px] sm:text-xs font-bold text-violet-600 font-sans">पॉइंट्स</span>
             </div>
           </div>
         </div>
