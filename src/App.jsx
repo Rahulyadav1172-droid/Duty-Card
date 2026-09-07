@@ -21,7 +21,9 @@ import {
   ShieldCheck,
   Globe,
   History,
-  Phone
+  Phone,
+  QrCode,
+  WifiOff
 } from 'lucide-react';
 
 import { useLanguage } from './context/LanguageContext';
@@ -40,6 +42,7 @@ import ForceAamadManager from './components/ForceAamadManager';
 import ChangePasswordModal from './components/ChangePasswordModal';
 import AuditLogModal from './components/AuditLogModal';
 import InstallPwaModal from './components/InstallPwaModal';
+import ScanDutyPassModal from './components/ScanDutyPassModal';
 
 import initialData from './data/duty_data.json';
 import {
@@ -169,7 +172,49 @@ export default function App() {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [isScanModalOpen, setIsScanModalOpen] = useState(false);
+  const [isOffline, setIsOffline] = useState(typeof navigator !== 'undefined' ? !navigator.onLine : false);
+  const [cachedOfflinePass, setCachedOfflinePass] = useState(() => {
+    try {
+      const saved = localStorage.getItem('OFFLINE_DUTY_PASS_CACHE');
+      return saved ? JSON.parse(saved) : null;
+    } catch (e) {
+      return null;
+    }
+  });
   const userMenuRef = useRef(null);
+
+  // Network Online / Offline Detection
+  useEffect(() => {
+    const handleOnline = () => setIsOffline(false);
+    const handleOffline = () => setIsOffline(true);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
+  // Cache duty pass locally for offline viewing in the field
+  useEffect(() => {
+    if (activeDuty) {
+      try {
+        const payload = {
+          duty: activeDuty,
+          eventTitle: currentEvent.title,
+          eventSubtitle: currentEvent.subtitle,
+          signatoryText: currentEvent.signatoryText,
+          signatureImg: currentEvent.signatureImg,
+          note: currentEvent.note,
+          briefing: currentEvent.briefing,
+          timestamp: Date.now()
+        };
+        localStorage.setItem('OFFLINE_DUTY_PASS_CACHE', JSON.stringify(payload));
+        setCachedOfflinePass(payload);
+      } catch (e) {}
+    }
+  }, [activeDuty, currentEvent]);
 
   useEffect(() => {
     function handleClickOutside(event) {
@@ -641,6 +686,10 @@ export default function App() {
   }, []);
 
   const handleTabClick = useCallback((tabName) => {
+    if (tabName === 'scan_qr') {
+      setIsScanModalOpen(true);
+      return;
+    }
     if ((tabName === 'force' || tabName === 'upload' || tabName === 'events') && userRole !== 'admin') {
       setPendingTab(tabName);
       setIsLoginModalOpen(true);
@@ -796,6 +845,19 @@ export default function App() {
                 <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
                 <span>लाइव सिंक</span>
               </div>
+
+              {/* Quick 1-Tap QR Duty Pass Scanner Button for Senior Officers & Admins */}
+              {(userRole === 'admin' || userRole === 'senior') && (
+                <button
+                  type="button"
+                  onClick={() => setIsScanModalOpen(true)}
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-500/20 to-amber-600/20 hover:from-amber-500/30 hover:to-amber-600/30 border border-amber-500/40 text-amber-300 hover:text-white transition cursor-pointer shadow-xs active:scale-95 text-xs font-bold touch-manipulation"
+                  title="ड्यूटी पास QR स्कैन करें"
+                >
+                  <QrCode className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                  <span className="hidden sm:inline">स्कैन पास</span>
+                </button>
+              )}
 
               {/* Quick 1-Click Language Switcher (Always visible in Header) */}
               <button
@@ -995,6 +1057,18 @@ export default function App() {
           </div>
         </header>
 
+        {/* Offline Network Notification Banner */}
+        {isOffline && (
+          <div className="bg-amber-500 text-slate-950 px-4 py-2 text-xs font-black flex items-center justify-between shadow-md select-none border-b border-amber-600 no-print">
+            <div className="flex items-center gap-2 max-w-7xl mx-auto w-full">
+              <span className="w-2.5 h-2.5 rounded-full bg-slate-950 animate-ping shrink-0" />
+              <span className="truncate">
+                📶 ऑफ़लाइन मोड: इंटरनेट उपलब्ध नहीं है। आपका सहेजा गया ड्यूटी पास सुरक्षित रूप से प्रदर्शित है।
+              </span>
+            </div>
+          </div>
+        )}
+
         {/* Main Page Content */}
         <main className="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-6 lg:p-8 space-y-6 overflow-x-hidden min-w-0">
         {/* PUBLICLY ACCESSIBLE SEARCH TAB */}
@@ -1011,6 +1085,30 @@ export default function App() {
                 onSelectActiveEvent={handleSelectActiveEvent}
               />
             </div>
+
+            {/* Quick 1-Click Cached Offline Pass Restore Banner */}
+            {!activeDuty && cachedOfflinePass?.duty && (
+              <div className="p-3.5 bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent border border-amber-500/30 rounded-2xl flex items-center justify-between gap-3 shadow-2xs">
+                <div className="min-w-0">
+                  <div className="text-xs font-black text-slate-900 flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+                    <span className="truncate">
+                      सहेजा गया ऑफ़लाइन पास: <strong>{cachedOfflinePass.duty.name}</strong>
+                    </span>
+                  </div>
+                  <div className="text-[10px] text-slate-500 font-medium truncate mt-0.5">
+                    {cachedOfflinePass.duty.rank || 'जवान'} • {cachedOfflinePass.duty.duty_place} (बिना इंटरनेट भी उपलब्ध)
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setActiveDuty(cachedOfflinePass.duty)}
+                  className="px-3 py-1.5 bg-amber-500 hover:bg-amber-400 active:scale-95 text-slate-950 text-xs font-black rounded-xl transition shadow-xs cursor-pointer shrink-0 touch-manipulation"
+                >
+                  पास देखें
+                </button>
+              </div>
+            )}
 
             {searchResults.length > 1 && !activeDuty ? (
               <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3">
@@ -1081,6 +1179,7 @@ export default function App() {
                     setIsLoginModalOpen(true);
                   }}
                   customLabels={currentEvent.customLabels || {}}
+                  isOffline={isOffline}
                 />
               </div>
             ) : searchAttempted && searchQuery.trim() ? (
@@ -1290,6 +1389,19 @@ export default function App() {
       <AuditLogModal
         isOpen={isAuditLogModalOpen}
         onClose={() => setIsAuditLogModalOpen(false)}
+      />
+
+      {/* In-App Digital QR Duty Pass Scanner Modal */}
+      <ScanDutyPassModal
+        isOpen={isScanModalOpen}
+        onClose={() => setIsScanModalOpen(false)}
+        allRecords={currentEvent.records || []}
+        currentEvent={currentEvent}
+        onSelectDuty={(rec) => {
+          setActiveDuty(rec);
+          setActiveTab('search');
+        }}
+        onMarkAttendance={handleMarkAttendance}
       />
 
       {/* Footer */}

@@ -45,7 +45,8 @@ export default function DutyCard({
   onUpdateDutyRecord,
   userRole = 'guest',
   onRequestAuth,
-  customLabels = {}
+  customLabels = {},
+  isOffline = false
 }) {
   const { language, t } = useLanguage();
   const [isDownloadingPDF, setIsDownloadingPDF] = useState(false);
@@ -298,7 +299,16 @@ export default function DutyCard({
             <ShieldCheck className="w-4 h-4 sm:w-6 sm:h-6" />
           </div>
           <div className="min-w-0">
-            <div className="text-xs sm:text-sm font-black text-slate-900 leading-tight truncate">अयोध्या पुलिस ड्यूटी पास</div>
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span className="text-xs sm:text-sm font-black text-slate-900 leading-tight truncate">
+                अयोध्या पुलिस ड्यूटी पास
+              </span>
+              {isOffline && (
+                <span className="px-1.5 py-0.5 rounded-full bg-amber-100 border border-amber-300 text-amber-900 font-bold text-[9px] sm:text-[10px]">
+                  📶 ऑफ़लाइन सुरक्षित
+                </span>
+              )}
+            </div>
             <div className="text-[10px] sm:text-xs text-slate-500 font-mono font-bold">
               {cleanPno ? `P.No: ${cleanPno}` : `${effectiveRank} • ${duty.district || 'अयोध्या'}`}
             </div>

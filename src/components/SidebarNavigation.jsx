@@ -12,7 +12,8 @@ import {
   ChevronRight,
   X,
   Shield,
-  Sparkles
+  Sparkles,
+  QrCode
 } from 'lucide-react';
 
 import { useLanguage } from '../context/LanguageContext';
@@ -45,6 +46,12 @@ function SidebarNavigation({
       id: 'search',
       label: language === 'en' ? 'Search Pass' : 'कार्ड खोजें',
       icon: Search
+    },
+    {
+      id: 'scan_qr',
+      label: language === 'en' ? 'Scan Duty Pass' : 'ड्यूटी पास स्कैन करें',
+      icon: QrCode,
+      allowedRoles: ['admin', 'senior']
     },
     {
       id: 'filter',
