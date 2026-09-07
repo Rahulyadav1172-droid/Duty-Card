@@ -107,7 +107,7 @@ function SidebarNavigation({
     }
   };
 
-  const renderSidebarContent = () => (
+  const renderSidebarContent = (isMobile = false) => (
     <div className="flex flex-col h-full bg-[#0b1329] text-slate-200 border-r border-slate-800/70 select-none font-devanagari">
       {/* Brand Header */}
       <div className="p-4 border-b border-slate-800/80 flex items-center justify-between transition-all duration-200">
