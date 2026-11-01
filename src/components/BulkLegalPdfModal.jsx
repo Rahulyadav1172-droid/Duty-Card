@@ -43,6 +43,7 @@ export default function BulkLegalPdfModal({
   const [paperSize, setPaperSize] = useState('a4'); // 'a4' | 'legal'
   const [layoutMode, setLayoutMode] = useState(4); // 4 or 2 for A4, 6 or 4 or 2 for Legal
   const [includeCoForce, setIncludeCoForce] = useState(true);
+  const [includeBackSide, setIncludeBackSide] = useState(false);
   const [startPage, setStartPage] = useState(1);
   const [endPage, setEndPage] = useState(25);
   const [activeBatch, setActiveBatch] = useState([]);
@@ -85,7 +86,8 @@ export default function BulkLegalPdfModal({
       isBriefingEnabled,
       layoutMode,
       paperSize,
-      includeCoForce
+      includeCoForce,
+      includeBackSide
     });
   };
 
@@ -219,7 +221,17 @@ export default function BulkLegalPdfModal({
 
     // Clean & Parse Zone and Zonal Incharge
     let cleanZone = (duty.zone || '').trim();
-    let cleanZonalIncharge = (duty.zonal_incharge || duty.zonal || '').trim();
+    let cleanZonalIncharge = (
+      duty.zonal_incharge || 
+      duty.zonal || 
+      duty.zonal_officer || 
+      duty.zonalOfficer || 
+      duty.zone_incharge || 
+      duty.zonal_magistrate ||
+      duty['जोनाल प्रभारी'] ||
+      duty['जोनल प्रभारी'] ||
+      ''
+    ).trim();
     if (cleanZonalIncharge === '-') cleanZonalIncharge = '';
 
     if (!cleanZonalIncharge && cleanZone.includes('/')) {
@@ -233,9 +245,42 @@ export default function BulkLegalPdfModal({
       cleanZone = cleanZone.replace(cleanZonalIncharge, '').replace(/\/+\s*$/, '').trim();
     }
 
+    if (!cleanZonalIncharge && cleanZone && Array.isArray(records)) {
+      const matchedZone = records.find(r => 
+        r && 
+        (r.zone || '').trim().toLowerCase() === cleanZone.toLowerCase() && 
+        (r.zonal_incharge || r.zonal || r.zonal_officer || r.zonalOfficer || r.zone_incharge || r['जोनाल प्रभारी'] || r['जोनल प्रभारी'])
+      );
+      if (matchedZone) {
+        cleanZonalIncharge = (
+          matchedZone.zonal_incharge || 
+          matchedZone.zonal || 
+          matchedZone.zonal_officer || 
+          matchedZone.zonalOfficer || 
+          matchedZone.zone_incharge || 
+          matchedZone['जोनाल प्रभारी'] || 
+          matchedZone['जोनल प्रभारी'] || 
+          ''
+        ).trim();
+      }
+    }
+
     // Clean & Parse Sector and Sector Incharge
     let cleanSector = (duty.sector || '').trim();
-    let cleanSectorIncharge = (duty.sector_incharge || '').trim();
+    let cleanSectorIncharge = (
+      duty.sector_incharge || 
+      duty.sector_officer || 
+      duty.sectorOfficer || 
+      duty.sectorIncharge || 
+      duty.sector_magistrate || 
+      duty.sectorMagistrate || 
+      duty.incharge || 
+      duty['सेक्टर प्रभारी'] ||
+      duty['सेक्टर अधिकारी'] ||
+      duty['सेक्टर मजिस्ट्रेट'] ||
+      duty['प्रभारी'] ||
+      ''
+    ).trim();
     if (cleanSectorIncharge === '-') cleanSectorIncharge = '';
 
     if (!cleanSectorIncharge && cleanSector.includes('/')) {
@@ -247,6 +292,46 @@ export default function BulkLegalPdfModal({
     }
     if (cleanSectorIncharge && cleanSector.includes(cleanSectorIncharge)) {
       cleanSector = cleanSector.replace(cleanSectorIncharge, '').replace(/\/+\s*$/, '').trim();
+    }
+
+    if (!cleanSectorIncharge && cleanSector && Array.isArray(records)) {
+      const matchedSector = records.find(r => {
+        if (!r) return false;
+        const rSec = (r.sector || '').trim().toLowerCase();
+        const currSec = cleanSector.toLowerCase();
+        const isSame = rSec === currSec || rSec.startsWith(currSec) || currSec.startsWith(rSec);
+        const inc = (
+          r.sector_incharge || 
+          r.sector_officer || 
+          r.sectorOfficer || 
+          r.sectorIncharge || 
+          r.sector_magistrate || 
+          r.sectorMagistrate || 
+          r.incharge || 
+          r['सेक्टर प्रभारी'] ||
+          r['सेक्टर अधिकारी'] ||
+          r['सेक्टर मजिस्ट्रेट'] ||
+          r['प्रभारी'] ||
+          ''
+        ).trim();
+        return isSame && inc && inc !== '-';
+      });
+      if (matchedSector) {
+        cleanSectorIncharge = (
+          matchedSector.sector_incharge || 
+          matchedSector.sector_officer || 
+          matchedSector.sectorOfficer || 
+          matchedSector.sectorIncharge || 
+          matchedSector.sector_magistrate || 
+          matchedSector.sectorMagistrate || 
+          matchedSector.incharge || 
+          matchedSector['सेक्टर प्रभारी'] || 
+          matchedSector['सेक्टर अधिकारी'] || 
+          matchedSector['सेक्टर मजिस्ट्रेट'] || 
+          matchedSector['प्रभारी'] || 
+          ''
+        ).trim();
+      }
     }
 
     return (
@@ -481,26 +566,26 @@ export default function BulkLegalPdfModal({
                     setPaperSize('a4');
                     if (layoutMode === 6) setLayoutMode(4);
                   }}
-                  className={`flex-1 sm:flex-none px-3.5 py-1.5 rounded-xl font-black text-xs transition cursor-pointer flex items-center justify-center gap-1 ${
+                  className={`flex-1 sm:flex-none px-3.5 py-1.5 rounded-xl font-bold text-xs transition cursor-pointer flex items-center justify-center gap-1 ${
                     paperSize === 'a4'
-                      ? 'bg-amber-500 text-slate-950 shadow-xs'
+                      ? 'bg-slate-900 text-white shadow-xs'
                       : 'bg-white text-slate-700 hover:bg-slate-200 border border-slate-200'
                   }`}
                 >
                   <span>A4</span>
-                  {paperSize === 'a4' && <Check className="w-3.5 h-3.5 stroke-[3]" />}
+                  {paperSize === 'a4' && <Check className="w-3.5 h-3.5 stroke-[2.5]" />}
                 </button>
                 <button
                   type="button"
                   onClick={() => setPaperSize('legal')}
-                  className={`flex-1 sm:flex-none px-3.5 py-1.5 rounded-xl font-black text-xs transition cursor-pointer flex items-center justify-center gap-1 ${
+                  className={`flex-1 sm:flex-none px-3.5 py-1.5 rounded-xl font-bold text-xs transition cursor-pointer flex items-center justify-center gap-1 ${
                     paperSize === 'legal'
-                      ? 'bg-amber-500 text-slate-950 shadow-xs'
+                      ? 'bg-slate-900 text-white shadow-xs'
                       : 'bg-white text-slate-700 hover:bg-slate-200 border border-slate-200'
                   }`}
                 >
                   <span>Legal</span>
-                  {paperSize === 'legal' && <Check className="w-3.5 h-3.5 stroke-[3]" />}
+                  {paperSize === 'legal' && <Check className="w-3.5 h-3.5 stroke-[2.5]" />}
                 </button>
               </div>
             </div>
@@ -512,36 +597,36 @@ export default function BulkLegalPdfModal({
                 <button
                   type="button"
                   onClick={() => setLayoutMode(2)}
-                  className={`flex-1 py-2 px-2 rounded-lg text-[11px] sm:text-xs font-black flex items-center justify-center gap-1 transition cursor-pointer ${
+                  className={`flex-1 py-2 px-2 rounded-lg text-[11px] sm:text-xs font-bold flex items-center justify-center gap-1 transition cursor-pointer ${
                     layoutMode === 2
-                      ? 'bg-amber-500 text-slate-950 shadow-sm'
+                      ? 'bg-slate-900 text-white shadow-xs'
                       : 'bg-transparent text-slate-700 hover:bg-slate-200'
                   }`}
                 >
                   <span>2 कार्ड / पेज</span>
-                  {layoutMode === 2 && <Check className="w-3.5 h-3.5 stroke-[3]" />}
+                  {layoutMode === 2 && <Check className="w-3.5 h-3.5 stroke-[2.5]" />}
                 </button>
 
                 <button
                   type="button"
                   onClick={() => setLayoutMode(4)}
-                  className={`flex-1 py-2 px-2 rounded-lg text-[11px] sm:text-xs font-black flex items-center justify-center gap-1 transition cursor-pointer ${
+                  className={`flex-1 py-2 px-2 rounded-lg text-[11px] sm:text-xs font-bold flex items-center justify-center gap-1 transition cursor-pointer ${
                     layoutMode === 4
-                      ? 'bg-amber-500 text-slate-950 shadow-sm'
+                      ? 'bg-slate-900 text-white shadow-xs'
                       : 'bg-transparent text-slate-700 hover:bg-slate-200'
                   }`}
                 >
                   <span>4 कार्ड / पेज</span>
-                  {layoutMode === 4 && <Check className="w-3.5 h-3.5 stroke-[3]" />}
+                  {layoutMode === 4 && <Check className="w-3.5 h-3.5 stroke-[2.5]" />}
                 </button>
 
                 {paperSize === 'legal' && (
                   <button
                     type="button"
                     onClick={() => setLayoutMode(6)}
-                    className={`flex-1 py-2 px-2 rounded-lg text-[11px] sm:text-xs font-black flex items-center justify-center gap-1 transition cursor-pointer ${
+                    className={`flex-1 py-2 px-2 rounded-lg text-[11px] sm:text-xs font-bold flex items-center justify-center gap-1 transition cursor-pointer ${
                       layoutMode === 6
-                        ? 'bg-amber-500 text-slate-950 shadow-sm'
+                        ? 'bg-slate-900 text-white shadow-xs'
                         : 'bg-transparent text-slate-700 hover:bg-slate-200'
                     }`}
                   >
@@ -573,6 +658,30 @@ export default function BulkLegalPdfModal({
               <ToggleSwitch
                 enabled={includeCoForce}
                 onChange={setIncludeCoForce}
+              />
+            </div>
+
+            {/* TOGGLE OPTION: INCLUDE ELECTION BACK SIDE (16 INSTRUCTIONS & CUG DIRECTORY) */}
+            <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 flex items-center justify-between shadow-xs">
+              <div className="flex items-center gap-2.5">
+                <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${includeBackSide ? 'bg-indigo-100 text-indigo-800' : 'bg-slate-200 text-slate-500'}`}>
+                  <FileText className="w-4 h-4" />
+                </div>
+                <div>
+                  <div className="text-xs font-black text-slate-900">
+                    कार्ड बैक-साइड (16 पुलिस निर्देश + सीयूजी डायरेक्टरी)
+                  </div>
+                  <div className="text-[10px] text-slate-500 font-medium mt-0.5">
+                    {includeBackSide
+                      ? 'ड्यूटी कार्ड के पीछे 16 आचार संहिता निर्देश व CUG फोन छपेंगे'
+                      : 'केवल फ्रंट पास प्रिंट होगा (सिंगल साइडेड)'}
+                  </div>
+                </div>
+              </div>
+
+              <ToggleSwitch
+                enabled={includeBackSide}
+                onChange={setIncludeBackSide}
               />
             </div>
 
@@ -713,7 +822,7 @@ export default function BulkLegalPdfModal({
             {!isGenerating && (
               <button
                 onClick={onClose}
-                className="px-4 py-2 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold text-xs cursor-pointer transition"
+                className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs cursor-pointer transition"
               >
                 बंद करें
               </button>

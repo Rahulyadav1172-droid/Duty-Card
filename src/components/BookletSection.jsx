@@ -201,7 +201,7 @@ export default function BookletSection({
             <button
               onClick={() => setViewMode('pdf')}
               className={`flex-1 md:flex-initial px-3.5 py-1.5 rounded-lg transition flex items-center justify-center gap-1.5 cursor-pointer ${
-                viewMode === 'pdf' ? 'bg-amber-500 text-slate-950 font-black shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                viewMode === 'pdf' ? 'bg-slate-900 text-white font-bold shadow-xs' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
               <FileText className="w-4 h-4" />
@@ -210,7 +210,7 @@ export default function BookletSection({
             <button
               onClick={() => setViewMode('interactive')}
               className={`flex-1 md:flex-initial px-3.5 py-1.5 rounded-lg transition flex items-center justify-center gap-1.5 cursor-pointer ${
-                viewMode === 'interactive' ? 'bg-amber-500 text-slate-950 font-black shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                viewMode === 'interactive' ? 'bg-slate-900 text-white font-bold shadow-xs' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
               <Eye className="w-4 h-4" />
@@ -235,13 +235,13 @@ export default function BookletSection({
       {/* VIEW MODE 1: OFFICIAL UPLOADED PDF BOOKLETS */}
       {viewMode === 'pdf' && (
         <div className="space-y-6 no-print">
-          <div className="bg-white p-6 rounded-2xl border border-slate-200 space-y-4 shadow-sm">
+          <div className="bg-white p-6 rounded-2xl border border-slate-200/90 space-y-4 shadow-xs">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-slate-200 pb-4">
               <div>
-                <h3 className="text-base font-black text-slate-900 flex items-center gap-2">
+                <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
                   <span>मुख्यालय द्वारा जारी मूल PDF बुकलेट</span>
                   {pdfList.length > 0 && (
-                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-mono font-bold">
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 font-mono font-bold">
                       {pdfList.length} उपलब्ध
                     </span>
                   )}
@@ -265,7 +265,7 @@ export default function BookletSection({
                   />
                   <label
                     htmlFor="booklet-pdf-upload"
-                    className="cursor-pointer px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-black rounded-xl flex items-center gap-1.5 shadow-xs transition active:scale-95"
+                    className="cursor-pointer px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl flex items-center gap-1.5 shadow-xs transition active:scale-95"
                   >
                     <Upload className="w-4 h-4" />
                     <span>{pdfList.length > 0 ? '+ और PDF जोड़ें' : 'PDF बुकलेट अपलोड करें'}</span>
@@ -277,8 +277,8 @@ export default function BookletSection({
             {/* Multiple PDF Selector Tabs / Badges */}
             {pdfList.length > 0 && (
               <div className="space-y-2 pt-1">
-                <div className="text-[11px] font-black text-slate-700 flex items-center gap-1.5">
-                  <Files className="w-3.5 h-3.5 text-amber-600" />
+                <div className="text-[11px] font-bold text-slate-700 flex items-center gap-1.5">
+                  <Files className="w-3.5 h-3.5 text-slate-600" />
                   <span>उपलब्ध PDF बुकलेट चुनें ({pdfList.length} फाइलें):</span>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
@@ -289,14 +289,14 @@ export default function BookletSection({
                         key={pdf.id || idx}
                         className={`group flex items-center gap-2 p-1.5 pr-2.5 rounded-xl border transition cursor-pointer text-xs ${
                           isSelected
-                            ? 'bg-amber-500 text-slate-950 border-amber-600 font-black shadow-xs'
-                            : 'bg-slate-50 text-slate-700 hover:bg-slate-100 border-slate-300 font-bold'
+                            ? 'bg-slate-900 text-white border-slate-900 font-bold shadow-xs'
+                            : 'bg-white text-slate-700 hover:bg-slate-50 border-slate-200 font-bold'
                         }`}
                         onClick={() => setSelectedPdfId(pdf.id)}
                       >
-                        <FileText className={`w-4 h-4 ${isSelected ? 'text-slate-950' : 'text-rose-600'}`} />
+                        <FileText className={`w-4 h-4 ${isSelected ? 'text-white' : 'text-slate-600'}`} />
                         <span className="truncate max-w-[200px] sm:max-w-xs">{pdf.name}</span>
-                        <span className={`text-[10px] font-mono ${isSelected ? 'text-slate-900' : 'text-slate-400'}`}>
+                        <span className={`text-[10px] font-mono ${isSelected ? 'text-slate-200' : 'text-slate-400'}`}>
                           ({Math.round((pdf.size || 0) / 1024)} KB)
                         </span>
 
@@ -309,7 +309,7 @@ export default function BookletSection({
                             }}
                             className={`p-1 rounded-md transition ${
                               isSelected
-                                ? 'hover:bg-amber-600 text-slate-950'
+                                ? 'hover:bg-slate-800 text-white'
                                 : 'hover:bg-rose-100 text-rose-600'
                             }`}
                             title="यह PDF हटाएं"
@@ -363,10 +363,10 @@ export default function BookletSection({
                           href={activePdf.url || activePdf.blobUrl}
                           target="_blank"
                           rel="noreferrer"
-                          className="inline-flex items-center gap-2 px-4 py-2 bg-amber-500 text-slate-950 font-bold rounded-xl text-xs"
+                          className="inline-flex items-center gap-2 px-4 py-2 bg-slate-900 text-white font-bold rounded-xl text-xs shadow-xs"
                         >
                           <ExternalLink className="w-4 h-4" />
-                          यहाँ क्लिक करके PDF खोलें
+                          <span>यहाँ क्लिक करके PDF खोलें</span>
                         </a>
                       </div>
                     </iframe>

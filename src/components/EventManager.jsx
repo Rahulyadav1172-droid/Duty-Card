@@ -168,24 +168,24 @@ export default function EventManager({
       />
 
       {/* Top Banner Header */}
-      <div className="bg-white p-5 sm:p-7 rounded-3xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div className="flex items-start sm:items-center gap-3.5 min-w-0">
-          <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-600 flex items-center justify-center shrink-0 shadow-xs">
-            <Calendar className="w-6 h-6 stroke-[2.5]" />
+      <div className="bg-white p-5 sm:p-6 rounded-2xl border border-slate-200/90 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="flex items-start sm:items-center gap-3 min-w-0">
+          <div className="w-10 h-10 rounded-xl bg-slate-100 border border-slate-200 text-slate-800 flex items-center justify-center shrink-0">
+            <Calendar className="w-5 h-5 stroke-[2.5]" />
           </div>
           <div className="min-w-0">
-            <h2 className="text-lg sm:text-xl font-black text-slate-900 leading-tight">
+            <h2 className="text-lg sm:text-xl font-bold text-slate-900 leading-tight">
               इवेंट्स एवं हेड प्रबंधन
             </h2>
-            <p className="text-xs text-slate-500 font-medium mt-1">
-              विभिन्न मेलों, वीआईपी दौरों व सुरक्षा व्यवस्थाओं के लिए अलग-अलग डेटाबेस बनाएं व प्रबंधित करें
+            <p className="text-xs text-slate-500 font-medium mt-0.5">
+              विभिन्न आयोजनों व व्यवस्थाओं का प्रबंधन व डेटाबेस।
             </p>
           </div>
         </div>
 
         <button
           onClick={() => handleOpenModal(null)}
-          className="px-4 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs sm:text-sm rounded-xl flex items-center gap-1.5 shadow-sm transition active:scale-95 cursor-pointer shrink-0"
+          className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs sm:text-sm rounded-xl flex items-center gap-1.5 shadow-xs transition active:scale-95 cursor-pointer shrink-0"
         >
           <Plus className="w-4 h-4 stroke-[3]" />
           <span>+ नया इवेंट / हेड बनाएं</span>
@@ -193,15 +193,15 @@ export default function EventManager({
       </div>
 
       {/* Disaster Recovery & Full Database Backup Bar */}
-      <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 text-white p-4 sm:p-5 rounded-2xl border border-slate-700 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+      <div className="bg-slate-900 text-white p-4 sm:p-5 rounded-2xl border border-slate-800 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div className="flex items-center gap-3 min-w-0">
-          <div className="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-500/30 text-amber-400 flex items-center justify-center shrink-0">
+          <div className="w-10 h-10 rounded-xl bg-slate-800 border border-slate-700 text-slate-200 flex items-center justify-center shrink-0">
             <Database className="w-5 h-5" />
           </div>
           <div className="min-w-0">
-            <h3 className="text-sm font-black text-white truncate">डेटाबेस बैकअप व सुरक्षा</h3>
+            <h3 className="text-sm font-bold text-white truncate">डेटाबेस बैकअप व सुरक्षा</h3>
             <p className="text-[11px] text-slate-300 truncate">
-              संपूर्ण पोर्टल के सभी इवेंट्स, बल आवंटन व उपस्थिति का 1-क्लिक बैकअप लें अथवा रीस्टोर करें
+              इवेंट्स, बल आवंटन व उपस्थिति का 1-क्लिक बैकअप / रीस्टोर।
             </p>
           </div>
         </div>
@@ -210,7 +210,7 @@ export default function EventManager({
           <button
             type="button"
             onClick={handleDownloadDatabaseBackup}
-            className="flex-1 sm:flex-none px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-300 hover:text-amber-200 border border-slate-600 font-bold text-xs flex items-center justify-center gap-1.5 transition active:scale-95 cursor-pointer"
+            className="flex-1 sm:flex-none px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-100 border border-slate-700 font-bold text-xs flex items-center justify-center gap-1.5 transition active:scale-95 cursor-pointer shadow-xs"
             title="संपूर्ण डेटाबेस JSON बैकअप डाउनलोड करें"
           >
             <Download className="w-3.5 h-3.5" />
@@ -220,7 +220,7 @@ export default function EventManager({
           <button
             type="button"
             onClick={() => backupInputRef.current?.click()}
-            className="flex-1 sm:flex-none px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs flex items-center justify-center gap-1.5 transition active:scale-95 cursor-pointer shadow-xs"
+            className="flex-1 sm:flex-none px-3.5 py-2 rounded-xl bg-white hover:bg-slate-100 text-slate-900 font-bold text-xs flex items-center justify-center gap-1.5 transition active:scale-95 cursor-pointer shadow-xs"
             title="बैकअप फ़ाइल से संपूर्ण डेटा रीस्टोर करें"
           >
             <Upload className="w-3.5 h-3.5" />
@@ -243,9 +243,9 @@ export default function EventManager({
           return (
             <div
               key={evt.id}
-              className={`bg-white rounded-2xl p-5 border transition shadow-sm space-y-4 relative ${
+              className={`bg-white rounded-2xl p-5 border transition shadow-xs space-y-4 relative ${
                 isActive
-                  ? 'border-amber-500 ring-2 ring-amber-500/20'
+                  ? 'border-blue-600 ring-2 ring-blue-500/20'
                   : 'border-slate-200 hover:border-slate-300'
               }`}
             >
@@ -254,10 +254,10 @@ export default function EventManager({
                 <div className="space-y-1">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span
-                      className={`text-[10px] font-mono font-black px-2.5 py-0.5 rounded-full uppercase flex items-center gap-1 ${
+                      className={`text-[10px] font-mono font-bold px-2.5 py-0.5 rounded-full uppercase flex items-center gap-1 ${
                         isArchived
-                          ? 'bg-slate-200 text-slate-700 border border-slate-300'
-                          : 'bg-emerald-100 text-emerald-950 border border-emerald-300'
+                          ? 'bg-slate-100 text-slate-700 border border-slate-200'
+                          : 'bg-emerald-50 text-emerald-800 border border-emerald-200'
                       }`}
                     >
                       <span className={`w-1.5 h-1.5 rounded-full ${isArchived ? 'bg-slate-500' : 'bg-emerald-500 animate-pulse'}`} />
@@ -265,13 +265,13 @@ export default function EventManager({
                     </span>
 
                     {isActive && (
-                      <span className="text-[10px] font-black px-2 py-0.5 rounded-md bg-amber-500 text-slate-950 shadow-xs">
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-blue-600 text-white shadow-xs">
                         वर्तमान चयनित कार्यक्षेत्र ✓
                       </span>
                     )}
                   </div>
 
-                  <h3 className={`text-base sm:text-lg font-black leading-tight ${isArchived ? 'text-slate-700' : 'text-slate-900'}`}>
+                  <h3 className={`text-base sm:text-lg font-bold leading-tight ${isArchived ? 'text-slate-700' : 'text-slate-900'}`}>
                     {evt.title}
                   </h3>
                   <p className="text-xs text-slate-500 font-medium">
@@ -303,15 +303,15 @@ export default function EventManager({
               <div className="grid grid-cols-3 gap-2 bg-slate-50 p-3 rounded-xl text-center border border-slate-100">
                 <div>
                   <div className="text-[10px] font-bold text-slate-500">कुल बल (सुरक्षित)</div>
-                  <div className="text-sm sm:text-base font-black text-slate-900 font-mono mt-0.5">{headcount}</div>
+                  <div className="text-sm sm:text-base font-bold text-slate-900 font-mono mt-0.5">{headcount}</div>
                 </div>
                 <div>
                   <div className="text-[10px] font-bold text-slate-500">उपस्थिति</div>
-                  <div className="text-sm sm:text-base font-black text-emerald-800 font-mono mt-0.5">{reportedCount}</div>
+                  <div className="text-sm sm:text-base font-bold text-emerald-800 font-mono mt-0.5">{reportedCount}</div>
                 </div>
                 <div>
                   <div className="text-[10px] font-bold text-slate-500">उपस्थिति %</div>
-                  <div className="text-sm sm:text-base font-black text-slate-900 font-mono mt-0.5">{attendancePercent}%</div>
+                  <div className="text-sm sm:text-base font-bold text-slate-900 font-mono mt-0.5">{attendancePercent}%</div>
                 </div>
               </div>
 
@@ -334,14 +334,14 @@ export default function EventManager({
                 {!isActive ? (
                   <button
                     onClick={() => onSelectActiveEvent(evt.id)}
-                    className="px-3.5 py-1.5 bg-[#0b132b] hover:bg-slate-800 text-white font-bold text-xs rounded-xl flex items-center gap-1.5 transition active:scale-95 cursor-pointer shadow-xs"
+                    className="px-3.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl flex items-center gap-1.5 transition active:scale-95 cursor-pointer shadow-xs"
                   >
                     <span>इस इवेंट पर स्विच करें</span>
-                    <ArrowRight className="w-3.5 h-3.5 text-amber-400" />
+                    <ArrowRight className="w-3.5 h-3.5 text-slate-300" />
                   </button>
                 ) : (
-                  <span className="text-xs font-bold text-amber-900 bg-amber-50 px-2.5 py-1 rounded-lg border border-amber-200 flex items-center gap-1">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-amber-600" />
+                  <span className="text-xs font-bold text-blue-900 bg-blue-50 px-2.5 py-1 rounded-lg border border-blue-200 flex items-center gap-1">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-blue-600" />
                     वर्तमान कार्यक्षेत्र
                   </span>
                 )}
@@ -378,7 +378,7 @@ export default function EventManager({
                   value={formData.title}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                   placeholder="e.g. मुख्यमंत्री वीआईपी सुरक्षा व्यवस्था 2026"
-                  className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:bg-white"
+                  className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900 focus:bg-white"
                   required
                   autoFocus
                 />
@@ -393,7 +393,7 @@ export default function EventManager({
                   value={formData.subtitle}
                   onChange={(e) => setFormData({ ...formData, subtitle: e.target.value })}
                   placeholder="e.g. ड्यूटी कार्ड जनपद अयोध्या"
-                  className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:bg-white"
+                  className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900 focus:bg-white"
                 />
               </div>
 
@@ -406,7 +406,7 @@ export default function EventManager({
                   value={formData.startDate}
                   onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
                   placeholder="e.g. 16.08.2026 से अग्रिम आदेश तक"
-                  className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:bg-white"
+                  className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900 focus:bg-white"
                   required
                 />
               </div>
@@ -420,7 +420,7 @@ export default function EventManager({
                   value={formData.signatoryText}
                   onChange={(e) => setFormData({ ...formData, signatoryText: e.target.value })}
                   placeholder="e.g. वरिष्ठ पुलिस अधीक्षक, अयोध्या"
-                  className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:bg-white"
+                  className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900 focus:bg-white"
                 />
               </div>
 
@@ -433,7 +433,7 @@ export default function EventManager({
                   value={formData.note}
                   onChange={(e) => setFormData({ ...formData, note: e.target.value })}
                   placeholder="विशेष दिशा-निर्देश यदि कोई हों..."
-                  className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:bg-white"
+                  className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900 focus:bg-white"
                 />
               </div>
 
@@ -441,13 +441,13 @@ export default function EventManager({
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold"
+                  className="px-4 py-2 bg-white hover:bg-slate-50 text-slate-700 rounded-xl font-bold border border-slate-200 transition cursor-pointer"
                 >
                   रद्द करें
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black rounded-xl shadow-xs"
+                  className="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl shadow-xs transition active:scale-95 cursor-pointer"
                 >
                   {editingEvent ? 'संशोधन सहेजें' : 'इवेंट बनाएं'}
                 </button>

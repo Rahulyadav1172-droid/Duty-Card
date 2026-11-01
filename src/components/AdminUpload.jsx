@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   Upload,
   FileSpreadsheet,
@@ -26,7 +26,10 @@ import {
   User,
   Calendar,
   Layers,
-  Phone
+  Phone,
+  HelpCircle,
+  Sparkles,
+  ShieldCheck
 } from 'lucide-react';
 import { parseDutyFile } from '../utils/fileParser';
 import * as XLSX from 'xlsx';
@@ -110,6 +113,7 @@ export default function AdminUpload({
 
   // Bulk Legal PDF Modal State
   const [isBulkPdfModalOpen, setIsBulkPdfModalOpen] = useState(false);
+  const [showTemplateGuide, setShowTemplateGuide] = useState(false);
 
   // Duty Edit/Add Modal State
   const [isDutyModalOpen, setIsDutyModalOpen] = useState(false);
@@ -342,27 +346,27 @@ export default function AdminUpload({
   };
 
   // Sync state when props change
-  React.useEffect(() => {
+  useEffect(() => {
     setNoteText(customNote || '');
     setNoteToggle(isNoteEnabled !== undefined ? isNoteEnabled : (customNote ? true : false));
   }, [customNote, isNoteEnabled]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     setBriefingText(customBriefing || '');
     setBriefingToggle(isBriefingEnabled !== undefined ? isBriefingEnabled : (customBriefing ? true : false));
   }, [customBriefing, isBriefingEnabled]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     setTitleInput(eventTitle || '');
     setSubtitleInput(eventSubtitle || '');
   }, [eventTitle, eventSubtitle]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     setSignText(signatoryText || 'वरिष्ठ पुलिस अधीक्षक, अयोध्या');
     setSignaturePreview(signatureImg || '');
   }, [signatoryText, signatureImg]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     setLabelsInput({
       duty_place: customLabels?.duty_place || '',
       shift: customLabels?.shift || '',
@@ -424,7 +428,7 @@ export default function AdminUpload({
     onUpdateBriefing(briefingText, newEnabledState);
   };
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (Array.isArray(helplineList) && helplineList.length > 0) {
       setHelplineContacts(helplineList);
     }
@@ -468,39 +472,258 @@ export default function AdminUpload({
   };
 
   const handleDownloadSampleExcel = () => {
-    const sampleData = [
+    // 1. Sheet 1: Standard Police Duty Roster
+    const sampleRoster = [
       {
-        "zone": "जोन-01 (मंदिर परिसर)",
-        "zonal": "क्षेत्राधिकारी नगर, अयोध्या - 9454402648",
-        "sector": "सेक्टर-01 (मुख्य प्रवेश द्वार)",
-        "sector incharge": "निरीक्षक कोतवाली, अयोध्या - 9454402655",
-        "duty place": "राम जन्मभूमि परिसर - मुख्य द्वार बैरियर",
-        "name": "अमित कुमार",
-        "mob": "9454400001",
-        "thana": "थाना कोतवाली",
-        "district": "अयोध्या",
-        "name thana district mob": "उ0नि0 अमित कुमार थाना कोतवाली अयोध्या 9454400001",
-        "time": "दिनांक 15.08.2026 को प्रातः 09.00 बजे से मेला समाप्ति तक"
+        "क्र० सं०": 1,
+        "पीएनओ": "162340101",
+        "पद": "निरीक्षक",
+        "नाम": "राजेश कुमार सिंह",
+        "मोबाइल": "9454402655",
+        "मूल तैनाती / थाना": "थाना कोतवाली",
+        "जनपद": "अयोध्या",
+        "जोन": "जोन-01 (मंदिर परिसर)",
+        "जोनल प्रभारी": "क्षेत्राधिकारी नगर, अयोध्या (9454402648)",
+        "सेक्टर": "सेक्टर-01 (मुख्य प्रवेश द्वार)",
+        "सेक्टर प्रभारी": "निरीक्षक कोतवाली, अयोध्या (9454402655)",
+        "ड्यूटी स्थल": "सेक्टर-01 नियंत्रण कक्ष / मुख्य द्वार",
+        "ड्यूटी समय / शिफ्ट": "प्रातः 06:00 बजे से दोपहर 02:00 बजे तक",
+        "ब्रीफिंग स्थल": "पुलिस लाइन परेड ग्राउंड, अयोध्या",
+        "शस्त्र": "पिस्टल मय 10 चक्र"
       },
       {
-        "zone": "जोन-01 (मंदिर परिसर)",
-        "zonal": "क्षेत्राधिकारी नगर, अयोध्या - 9454402648",
-        "sector": "सेक्टर-01 (मुख्य प्रवेश द्वार)",
-        "sector incharge": "निरीक्षक कोतवाली, अयोध्या - 9454402655",
-        "duty place": "कनक भवन - निकास बैरियर",
-        "name": "सुरेश सिंह",
-        "mob": "9454400002",
-        "thana": "थाना पूराकलंदर",
-        "district": "अयोध्या",
-        "name thana district mob": "का0 सुरेश सिंह थाना पूराकलंदर अयोध्या 9454400002",
-        "time": "दिनांक 15.08.2026 को प्रातः 09.00 बजे से मेला समाप्ति तक"
+        "क्र० सं०": 2,
+        "पीएनओ": "182340202",
+        "पद": "उ0नि0",
+        "नाम": "अमित कुमार वर्मा",
+        "मोबाइल": "9454400001",
+        "मूल तैनाती / थाना": "थाना कैंट",
+        "जनपद": "अयोध्या",
+        "जोन": "जोन-01 (मंदिर परिसर)",
+        "जोनल प्रभारी": "क्षेत्राधिकारी नगर, अयोध्या (9454402648)",
+        "सेक्टर": "सेक्टर-01 (मुख्य प्रवेश द्वार)",
+        "सेक्टर प्रभारी": "निरीक्षक कोतवाली, अयोध्या (9454402655)",
+        "ड्यूटी स्थल": "राम जन्मभूमि परिसर - मुख्य द्वार बैरियर-A",
+        "ड्यूटी समय / शिफ्ट": "प्रातः 06:00 बजे से दोपहर 02:00 बजे तक",
+        "ब्रीफिंग स्थल": "पुलिस लाइन परेड ग्राउंड, अयोध्या",
+        "शस्त्र": "ग्लाक पिस्टल मय 20 चक्र"
+      },
+      {
+        "क्र० सं०": 3,
+        "पीएनओ": "192340303",
+        "पद": "हे0का0",
+        "नाम": "राम प्रकाश यादव",
+        "मोबाइल": "9454400002",
+        "मूल तैनाती / थाना": "थाना पूराकलंदर",
+        "जनपद": "अयोध्या",
+        "जोन": "जोन-01 (मंदिर परिसर)",
+        "जोनल प्रभारी": "",
+        "सेक्टर": "सेक्टर-01 (मुख्य प्रवेश द्वार)",
+        "सेक्टर प्रभारी": "",
+        "ड्यूटी स्थल": "कनक भवन - मुख्य निकास द्वार बैरियर",
+        "ड्यूटी समय / शिफ्ट": "प्रातः 06:00 बजे से दोपहर 02:00 बजे तक",
+        "ब्रीफिंग स्थल": "पुलिस लाइन परेड ग्राउंड, अयोध्या",
+        "शस्त्र": "डंडा"
+      },
+      {
+        "क्र० सं०": 4,
+        "पीएनओ": "212340404",
+        "पद": "का0",
+        "नाम": "सुनील कुमार",
+        "मोबाइल": "9454400003",
+        "मूल तैनाती / थाना": "थाना इनायतनगर",
+        "जनपद": "अयोध्या",
+        "जोन": "जोन-01 (मंदिर परिसर)",
+        "जोनल प्रभारी": "",
+        "सेक्टर": "सेक्टर-01 (मुख्य प्रवेश द्वार)",
+        "सेक्टर प्रभारी": "",
+        "ड्यूटी स्थल": "हनुमान गढ़ी सीढ़ियों के पास सुरक्षा बैरियर",
+        "ड्यूटी समय / शिफ्ट": "प्रातः 06:00 बजे से दोपहर 02:00 बजे तक",
+        "ब्रीफिंग स्थल": "पुलिस लाइन परेड ग्राउंड, अयोध्या",
+        "शस्त्र": "लाठी"
+      },
+      {
+        "क्र० सं०": 5,
+        "पीएनओ": "222340505",
+        "पद": "म0का0",
+        "नाम": "पूजा देवी",
+        "मोबाइल": "9454400004",
+        "मूल तैनाती / थाना": "महिला थाना",
+        "जनपद": "अयोध्या",
+        "जोन": "जोन-01 (मंदिर परिसर)",
+        "जोनल प्रभारी": "",
+        "सेक्टर": "सेक्टर-01 (मुख्य प्रवेश द्वार)",
+        "सेक्टर प्रभारी": "",
+        "ड्यूटी स्थल": "महिला तलाशी बूथ - गेट नं० 3",
+        "ड्यूटी समय / शिफ्ट": "प्रातः 06:00 बजे से दोपहर 02:00 बजे तक",
+        "ब्रीफिंग स्थल": "पुलिस लाइन परेड ग्राउंड, अयोध्या",
+        "शस्त्र": "लाठी"
+      },
+      {
+        "क्र० सं०": 6,
+        "पीएनओ": "172340606",
+        "पद": "उ0नि0",
+        "नाम": "दिनेश कुमार सिंह",
+        "मोबाइल": "9454402688",
+        "मूल तैनाती / थाना": "थाना रुदौली",
+        "जनपद": "अयोध्या",
+        "जोन": "जोन-02 (सरयू घाट एवं मेला क्षेत्र)",
+        "जोनल प्रभारी": "क्षेत्राधिकारी रुदौली, अयोध्या (9454402650)",
+        "सेक्टर": "सेक्टर-02 (राम की पैड़ी)",
+        "सेक्टर प्रभारी": "उ0नि0 दिनेश कुमार सिंह (9454402688)",
+        "ड्यूटी स्थल": "राम की पैड़ी - कंट्रोल वॉच टावर",
+        "ड्यूटी समय / शिफ्ट": "दोपहर 02:00 बजे से रात्रि 10:00 बजे तक",
+        "ब्रीफिंग स्थल": "पुलिस लाइन परेड ग्राउंड, अयोध्या",
+        "शस्त्र": "पिस्टल मय 10 चक्र"
+      },
+      {
+        "क्र० सं०": 7,
+        "पीएनओ": "202340707",
+        "पद": "का0",
+        "नाम": "संजय कुमार",
+        "मोबाइल": "9454400005",
+        "मूल तैनाती / थाना": "थाना बीकापुर",
+        "जनपद": "अयोध्या",
+        "जोन": "जोन-02 (सरयू घाट एवं मेला क्षेत्र)",
+        "जोनल प्रभारी": "",
+        "सेक्टर": "सेक्टर-02 (राम की पैड़ी)",
+        "सेक्टर प्रभारी": "",
+        "ड्यूटी स्थल": "सरयू आरती स्थल - सुरक्षा घेरा",
+        "ड्यूटी समय / शिफ्ट": "दोपहर 02:00 बजे से रात्रि 10:00 बजे तक",
+        "ब्रीफिंग स्थल": "पुलिस लाइन परेड ग्राउंड, अयोध्या",
+        "शस्त्र": "लाठी"
       }
     ];
 
-    const ws = XLSX.utils.json_to_sheet(sampleData);
+    // 2. Sheet 2: Comprehensive Guidelines & Rules Sheet
+    const instructionsData = [
+      {
+        "कॉलम शीर्षक (Column Header)": "क्र० सं०",
+        "अनिवार्यता (Requirement)": "वैकल्पिक (Optional)",
+        "नियम व विवरण (Instructions & Guidelines)": "जवानों की क्रम संख्या (1, 2, 3...)।",
+        "मानक उदाहरण (Sample Value)": "1"
+      },
+      {
+        "कॉलम शीर्षक (Column Header)": "पीएनओ",
+        "अनिवार्यता (Requirement)": "अनुशंसित (Recommended)",
+        "नियम व विवरण (Instructions & Guidelines)": "उत्तर प्रदेश पुलिस का 9 या 10 अंकों का व्यक्तिगत PNO नंबर। इससे ड्यूटी कार्ड सर्च व डुप्लिकेट पहचान में कोई भ्रम नहीं होता।",
+        "मानक उदाहरण (Sample Value)": "162340101"
+      },
+      {
+        "कॉलम शीर्षक (Column Header)": "पद",
+        "अनिवार्यता (Requirement)": "अनुशंसित (Recommended)",
+        "नियम व विवरण (Instructions & Guidelines)": "मानक पदनाम भरें: निरीक्षक, उ0नि0, हे0का0, का0, म0का0, टीसी, चालक आदि।",
+        "मानक उदाहरण (Sample Value)": "उ0नि0"
+      },
+      {
+        "कॉलम शीर्षक (Column Header)": "नाम",
+        "अनिवार्यता (Requirement)": "अनिवार्य (MANDATORY)",
+        "नियम व विवरण (Instructions & Guidelines)": "पुलिसकर्मी का पूरा नाम। नाम के आगे पदनाम भी लिखा जा सकता है।",
+        "मानक उदाहरण (Sample Value)": "अमित कुमार वर्मा"
+      },
+      {
+        "कॉलम शीर्षक (Column Header)": "मोबाइल",
+        "अनिवार्यता (Requirement)": "अनिवार्य (MANDATORY)",
+        "नियम व विवरण (Instructions & Guidelines)": "10 अंकों का मोबाइल नंबर। जवान इसी नंबर या PNO से अपना ड्यूटी कार्ड खोजते हैं।",
+        "मानक उदाहरण (Sample Value)": "9454400001"
+      },
+      {
+        "कॉलम शीर्षक (Column Header)": "मूल तैनाती / थाना",
+        "अनिवार्यता (Requirement)": "अनुशंसित (Recommended)",
+        "नियम व विवरण (Instructions & Guidelines)": "जवान का गृह थाना, पुलिस लाइन या वर्तमान तैनाती स्थान।",
+        "मानक उदाहरण (Sample Value)": "थाना कोतवाली"
+      },
+      {
+        "कॉलम शीर्षक (Column Header)": "जनपद",
+        "अनिवार्यता (Requirement)": "अनुशंसित (Recommended)",
+        "नियम व विवरण (Instructions & Guidelines)": "जवान का गृह जनपद अथवा वर्तमान पोस्टिंग जिला।",
+        "मानक उदाहरण (Sample Value)": "अयोध्या"
+      },
+      {
+        "कॉलम शीर्षक (Column Header)": "जोन",
+        "अनिवार्यता (Requirement)": "अनुशंसित (Recommended)",
+        "नियम व विवरण (Instructions & Guidelines)": "ड्यूटी जोन का नाम या संख्या (जैसे: जोन-01 (मंदिर परिसर))।",
+        "मानक उदाहरण (Sample Value)": "जोन-01 (मंदिर परिसर)"
+      },
+      {
+        "कॉलम शीर्षक (Column Header)": "जोनल प्रभारी",
+        "अनिवार्यता (Requirement)": "अनुशंसित (Recommended)",
+        "नियम व विवरण (Instructions & Guidelines)": "जोनल अधिकारी का पद, नाम व सीयूजी नंबर। यदि जोन के किसी 1 जवान के सामने भी भर देंगे तो बाकी सभी जवानों में स्वतः जुड़ जाएगा।",
+        "मानक उदाहरण (Sample Value)": "क्षेत्राधिकारी नगर, अयोध्या (9454402648)"
+      },
+      {
+        "कॉलम शीर्षक (Column Header)": "सेक्टर",
+        "अनिवार्यता (Requirement)": "अनुशंसित (Recommended)",
+        "नियम व विवरण (Instructions & Guidelines)": "ड्यूटी सेक्टर का नाम या संख्या।",
+        "मानक उदाहरण (Sample Value)": "सेक्टर-01 (मुख्य प्रवेश द्वार)"
+      },
+      {
+        "कॉलम शीर्षक (Column Header)": "सेक्टर प्रभारी",
+        "अनिवार्यता (Requirement)": "अत्यंत महत्वपूर्ण (CRITICAL)",
+        "नियम व विवरण (Instructions & Guidelines)": "सेक्टर प्रभारी का पद, नाम व मोबाइल नंबर। यदि एक सेक्टर में केवल 1 पंक्ति में भर देंगे तो उस सेक्टर के सभी जवानों के कार्ड में सेक्टर प्रभारी स्वतः प्रिंट होगा!",
+        "मानक उदाहरण (Sample Value)": "निरीक्षक कोतवाली, अयोध्या (9454402655)"
+      },
+      {
+        "कॉलम शीर्षक (Column Header)": "ड्यूटी स्थल",
+        "अनिवार्यता (Requirement)": "अनिवार्य (MANDATORY)",
+        "नियम व विवरण (Instructions & Guidelines)": "ड्यूटी प्वाइंट का स्पष्ट नाम जहां जवान तैनात रहेगा।",
+        "मानक उदाहरण (Sample Value)": "राम जन्मभूमि परिसर - मुख्य द्वार बैरियर-A"
+      },
+      {
+        "कॉलम शीर्षक (Column Header)": "ड्यूटी समय / शिफ्ट",
+        "अनिवार्यता (Requirement)": "अनुशंसित (Recommended)",
+        "नियम व विवरण (Instructions & Guidelines)": "ड्यूटी की पाली अथवा समय (उदा० प्रातः 06:00 से दोपहर 02:00)।",
+        "मानक उदाहरण (Sample Value)": "प्रातः 06:00 बजे से दोपहर 02:00 बजे तक"
+      },
+      {
+        "कॉलम शीर्षक (Column Header)": "ब्रीफिंग स्थल",
+        "अनिवार्यता (Requirement)": "अनुशंसित (Recommended)",
+        "नियम व विवरण (Instructions & Guidelines)": "ब्रीफिंग का स्थान व समय।",
+        "मानक उदाहरण (Sample Value)": "पुलिस लाइन परेड ग्राउंड, अयोध्या"
+      },
+      {
+        "कॉलम शीर्षक (Column Header)": "शस्त्र",
+        "अनिवार्यता (Requirement)": "वैकल्पिक (Optional)",
+        "नियम व विवरण (Instructions & Guidelines)": "आवंटित शस्त्र की स्थिति (उदा० पिस्टल मय 10 चक्र, डंडा, लाठी, निहत्था)।",
+        "मानक उदाहरण (Sample Value)": "पिस्टल मय 10 चक्र"
+      }
+    ];
+
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "DutyList");
-    XLSX.writeFile(wb, "Sample_Police_Duty_List_Format.xlsx");
+
+    // Sheet 1: Duty_Roster
+    const ws = XLSX.utils.json_to_sheet(sampleRoster);
+    ws['!cols'] = [
+      { wch: 8 },  // क्र० सं०
+      { wch: 14 }, // पीएनओ
+      { wch: 10 }, // पद
+      { wch: 22 }, // नाम
+      { wch: 14 }, // मोबाइल
+      { wch: 20 }, // मूल तैनाती / थाना
+      { wch: 12 }, // जनपद
+      { wch: 24 }, // जोन
+      { wch: 34 }, // जोनल प्रभारी
+      { wch: 28 }, // सेक्टर
+      { wch: 36 }, // सेक्टर प्रभारी
+      { wch: 38 }, // ड्यूटी स्थल
+      { wch: 30 }, // ड्यूटी समय / शिफ्ट
+      { wch: 32 }, // ब्रीफिंग स्थल
+      { wch: 20 }  // शस्त्र
+    ];
+    XLSX.utils.book_append_sheet(wb, ws, "Duty_Roster");
+
+    // Sheet 2: Instructions_निर्देश
+    const wsInstructions = XLSX.utils.json_to_sheet(instructionsData);
+    wsInstructions['!cols'] = [
+      { wch: 26 }, // कॉलम शीर्षक
+      { wch: 20 }, // अनिवार्यता
+      { wch: 65 }, // नियम व विवरण
+      { wch: 36 }  // मानक उदाहरण
+    ];
+    XLSX.utils.book_append_sheet(wb, wsInstructions, "Instructions_निर्देश");
+
+    XLSX.writeFile(wb, "Police_Duty_Roster_Standard_Template.xlsx");
+    setStatusMsg({ type: 'success', text: 'मानक पुलिस ड्यूटी एक्सेल टेम्पलेट (Police_Duty_Roster_Standard_Template.xlsx) 2 शीट्स सहित सफलतापूर्वक डाउनलोड हो गया है।' });
   };
 
   const handleExportJSON = () => {
@@ -605,8 +828,8 @@ export default function AdminUpload({
                 {attendancePercent}% उपस्थित
               </span>
             </h3>
-            <p className="text-xs font-bold text-slate-600">
-              कुल {totalCount} में से <strong>{reportedCount}</strong> जवान ड्यूटी स्थल पर उपस्थित हैं।
+            <p className="text-xs text-slate-500 mt-0.5">
+              उपस्थित: <strong className="text-slate-900">{reportedCount}</strong> / {totalCount} जवान
             </p>
           </div>
         </div>
@@ -614,38 +837,38 @@ export default function AdminUpload({
         <div className="flex items-center gap-2">
           <button
             onClick={() => setIsBulkPdfModalOpen(true)}
-            className="px-5 py-2.5 bg-[#0b132b] hover:bg-slate-800 text-white rounded-xl text-xs font-black flex items-center gap-2 shadow-sm transition active:scale-95 cursor-pointer"
+            className="px-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold flex items-center gap-2 shadow-xs transition cursor-pointer"
           >
-            <FileDown className="w-4 h-4 text-amber-400" />
+            <FileDown className="w-4 h-4 text-slate-300" />
             <span>बल्क पास प्रिंट / PDF</span>
           </button>
         </div>
       </div>
 
       {/* 1. TOP EXCEL UPLOAD DROPZONE */}
-      <div className="bg-white p-6 sm:p-7 rounded-2xl border-2 border-dashed border-amber-500/50 text-center space-y-4 shadow-sm relative overflow-hidden">
-        <div className="w-14 h-14 rounded-2xl bg-amber-500/15 border border-amber-500/40 text-amber-700 flex items-center justify-center mx-auto">
-          <FileSpreadsheet className="w-8 h-8" />
+      <div className="bg-white p-6 sm:p-7 rounded-2xl border-2 border-dashed border-slate-300 hover:border-slate-400 text-center space-y-3.5 shadow-xs relative overflow-hidden transition">
+        <div className="w-12 h-12 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center mx-auto">
+          <FileSpreadsheet className="w-6 h-6" />
         </div>
 
         <div>
-          <div className="text-xs font-black text-amber-700 uppercase tracking-wide">
+          <div className="text-xs font-bold text-slate-500 uppercase tracking-wide">
             {eventTitle}
           </div>
-          <h2 className="text-lg sm:text-xl font-black text-slate-950 mt-1">
+          <h2 className="text-base sm:text-lg font-bold text-slate-900 mt-0.5">
             ड्यूटी एक्सेल शीट अपलोड करें
           </h2>
         </div>
 
         {/* Upload Mode Selector */}
-        <div className="max-w-md mx-auto bg-slate-100 p-1.5 rounded-xl border border-slate-300 flex items-center gap-1.5 text-xs font-bold">
+        <div className="max-w-md mx-auto bg-slate-100 p-1 rounded-xl border border-slate-200 flex items-center gap-1 text-xs">
           <button
             type="button"
             onClick={() => setUploadMode('append')}
-            className={`flex-1 py-2 px-3 rounded-lg flex items-center justify-center gap-1.5 transition cursor-pointer ${
+            className={`flex-1 py-1.5 px-3 rounded-lg flex items-center justify-center gap-1.5 transition cursor-pointer ${
               uploadMode === 'append'
-                ? 'bg-amber-500 text-slate-950 font-black shadow-xs'
-                : 'text-slate-700 hover:bg-slate-200'
+                ? 'bg-slate-900 text-white font-bold shadow-xs'
+                : 'text-slate-600 hover:bg-slate-200/70 font-medium'
             }`}
           >
             <span>पुराने डेटा में जोड़ें</span>
@@ -653,17 +876,17 @@ export default function AdminUpload({
           <button
             type="button"
             onClick={() => setUploadMode('replace')}
-            className={`flex-1 py-2 px-3 rounded-lg flex items-center justify-center gap-1.5 transition cursor-pointer ${
+            className={`flex-1 py-1.5 px-3 rounded-lg flex items-center justify-center gap-1.5 transition cursor-pointer ${
               uploadMode === 'replace'
-                ? 'bg-rose-600 text-white font-black shadow-xs'
-                : 'text-slate-700 hover:bg-slate-200'
+                ? 'bg-rose-600 text-white font-bold shadow-xs'
+                : 'text-slate-600 hover:bg-slate-200/70 font-medium'
             }`}
           >
             <span>नया डेटा बदलें</span>
           </button>
         </div>
 
-        <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+        <div className="flex flex-wrap items-center justify-center gap-2.5 pt-1">
           <input
             ref={fileInputRef}
             type="file"
@@ -674,20 +897,155 @@ export default function AdminUpload({
           />
           <label
             htmlFor="excel-file-input"
-            className="cursor-pointer px-6 py-3.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-sm rounded-xl flex items-center gap-2 shadow transition active:scale-95"
+            className="cursor-pointer px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs sm:text-sm rounded-xl flex items-center gap-2 shadow-xs transition cursor-pointer active:scale-98"
           >
-            {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Upload className="w-5 h-5" />}
+            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
             <span>एक्सेल फ़ाइल चुनें और अपलोड करें</span>
           </label>
 
           <button
             onClick={handleDownloadSampleExcel}
-            className="px-4 py-3.5 bg-slate-100 hover:bg-slate-200 text-slate-900 font-black text-xs sm:text-sm rounded-xl border border-slate-300 flex items-center gap-2 transition cursor-pointer"
+            className="px-4 py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs sm:text-sm rounded-xl border border-emerald-600 flex items-center gap-1.5 transition cursor-pointer shadow-xs active:scale-98"
+            title="मानक 2-शीट पुलिस ड्यूटी एक्सेल टेम्पलेट डाउनलोड करें"
           >
-            <Download className="w-4 h-4 text-amber-700" />
-            नमूना Excel डाउनलोड
+            <Download className="w-4 h-4" />
+            <span>मानक Excel टेम्पलेट डाउनलोड</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setShowTemplateGuide(!showTemplateGuide)}
+            className="px-4 py-2.5 bg-white hover:bg-slate-50 text-slate-800 font-bold text-xs sm:text-sm rounded-xl border border-slate-300 flex items-center gap-1.5 transition cursor-pointer shadow-xs"
+          >
+            <HelpCircle className="w-4 h-4 text-amber-600" />
+            <span>शीट प्रारूप गाइड {showTemplateGuide ? '▲' : '▼'}</span>
           </button>
         </div>
+
+        {/* Collapsible Excel Format Guidelines Section */}
+        {showTemplateGuide && (
+          <div className="mt-4 p-4 sm:p-5 bg-gradient-to-br from-slate-50 to-amber-50/40 rounded-2xl border border-amber-200/80 shadow-xs text-left space-y-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 border-b border-amber-200/60 pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-amber-500/20 text-amber-800 flex items-center justify-center font-black shrink-0">
+                  <FileSpreadsheet className="w-5 h-5" />
+                </div>
+                <div>
+                  <h4 className="text-sm sm:text-base font-black text-slate-900">
+                    📋 मानक पुलिस ड्यूटी एक्सेल प्रारूप गाइड (Excel Template Guidelines)
+                  </h4>
+                  <p className="text-xs text-slate-600 font-medium">
+                    इस प्रारूप का उपयोग करने से कभी भी सेक्टर प्रभारी, ड्यूटी स्थल या मोबाइल नंबर की समस्या नहीं आएगी।
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={handleDownloadSampleExcel}
+                className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg flex items-center gap-1.5 shadow-2xs shrink-0 cursor-pointer"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span>रेडी टेम्पलेट (.xlsx) लें</span>
+              </button>
+            </div>
+
+            {/* Feature Highlights Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-2xs space-y-1">
+                <div className="flex items-center gap-1.5 text-emerald-800 font-black text-xs">
+                  <Sparkles className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <span>1. ऑटो सेक्टर प्रभारी लिंक</span>
+                </div>
+                <p className="text-[11px] text-slate-600 leading-relaxed font-medium">
+                  एक सेक्टर में सिर्फ 1 जवान के आगे सेक्टर प्रभारी लिख देने से उस सेक्टर के बाकी सभी जवानों के ड्यूटी कार्ड में सेक्टर प्रभारी स्वतः जुड़ जाता है।
+                </p>
+              </div>
+
+              <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-2xs space-y-1">
+                <div className="flex items-center gap-1.5 text-blue-800 font-black text-xs">
+                  <ShieldCheck className="w-4 h-4 text-blue-600 shrink-0" />
+                  <span>2. स्लैश (/) ऑटो-स्प्लिट</span>
+                </div>
+                <p className="text-[11px] text-slate-600 leading-relaxed font-medium">
+                  यदि सेक्टर कॉलम में <code className="bg-slate-100 px-1 py-0.5 rounded text-slate-800">सेक्टर-1 / उ0नि0 राम प्रकाश (9454402655)</code> एक साथ लिखा है, तो सिस्टम सेक्टर व प्रभारी को अपने आप अलग कर लेता है।
+                </p>
+              </div>
+
+              <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-2xs space-y-1">
+                <div className="flex items-center gap-1.5 text-amber-800 font-black text-xs">
+                  <Phone className="w-4 h-4 text-amber-600 shrink-0" />
+                  <span>3. PNO व 10-अंक मोबाइल</span>
+                </div>
+                <p className="text-[11px] text-slate-600 leading-relaxed font-medium">
+                  जवान PNO या मोबाइल से कार्ड सर्च करते हैं। वैज्ञानिक संख्या प्रारूप (उदा० 9.45E+09) को सिस्टम स्वतः सामान्य नंबर में बदल देता है।
+                </p>
+              </div>
+            </div>
+
+            {/* Column Reference Table */}
+            <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-2xs">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-100/90 text-slate-800 font-black border-b border-slate-200">
+                  <tr>
+                    <th className="p-2.5">कॉलम नाम</th>
+                    <th className="p-2.5">स्थिति</th>
+                    <th className="p-2.5">विवरण व सुझाव</th>
+                    <th className="p-2.5">उदाहरण</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 text-slate-700">
+                  <tr className="hover:bg-slate-50/50">
+                    <td className="p-2.5 font-bold text-slate-900">नाम (Name)</td>
+                    <td className="p-2.5"><span className="px-2 py-0.5 rounded text-[10px] font-black bg-rose-100 text-rose-800 border border-rose-200">अनिवार्य</span></td>
+                    <td className="p-2.5">जवान/अधिकारी का नाम</td>
+                    <td className="p-2.5 font-mono text-[11px]">अमित कुमार</td>
+                  </tr>
+                  <tr className="hover:bg-slate-50/50">
+                    <td className="p-2.5 font-bold text-slate-900">मोबाइल (Mobile)</td>
+                    <td className="p-2.5"><span className="px-2 py-0.5 rounded text-[10px] font-black bg-rose-100 text-rose-800 border border-rose-200">अनिवार्य</span></td>
+                    <td className="p-2.5">10 अंकों का फोन नंबर (सर्च व व्हाट्सएप हेतु)</td>
+                    <td className="p-2.5 font-mono text-[11px]">9454400001</td>
+                  </tr>
+                  <tr className="hover:bg-slate-50/50">
+                    <td className="p-2.5 font-bold text-slate-900">ड्यूटी स्थल (Duty Point)</td>
+                    <td className="p-2.5"><span className="px-2 py-0.5 rounded text-[10px] font-black bg-rose-100 text-rose-800 border border-rose-200">अनिवार्य</span></td>
+                    <td className="p-2.5">तैनाती का सटीक प्वाइंट / बैरियर</td>
+                    <td className="p-2.5 font-mono text-[11px]">राम जन्मभूमि - मुख्य द्वार</td>
+                  </tr>
+                  <tr className="hover:bg-amber-50/60 bg-amber-50/30">
+                    <td className="p-2.5 font-bold text-slate-900">सेक्टर प्रभारी (Sector Incharge)</td>
+                    <td className="p-2.5"><span className="px-2 py-0.5 rounded text-[10px] font-black bg-amber-100 text-amber-900 border border-amber-300">अत्यंत महत्वपूर्ण</span></td>
+                    <td className="p-2.5">सेक्टर अधिकारी का पद, नाम व सीयूजी (1 सेक्टर में 1 बार भी काफी है)</td>
+                    <td className="p-2.5 font-mono text-[11px]">निरीक्षक कोतवाली (9454402655)</td>
+                  </tr>
+                  <tr className="hover:bg-slate-50/50">
+                    <td className="p-2.5 font-bold text-slate-900">सेक्टर (Sector)</td>
+                    <td className="p-2.5"><span className="px-2 py-0.5 rounded text-[10px] font-black bg-blue-100 text-blue-800 border border-blue-200">अनुशंसित</span></td>
+                    <td className="p-2.5">सेक्टर का नाम या नंबर</td>
+                    <td className="p-2.5 font-mono text-[11px]">सेक्टर-01 (मंदिर क्षेत्र)</td>
+                  </tr>
+                  <tr className="hover:bg-slate-50/50">
+                    <td className="p-2.5 font-bold text-slate-900">जोन व जोनल प्रभारी</td>
+                    <td className="p-2.5"><span className="px-2 py-0.5 rounded text-[10px] font-black bg-blue-100 text-blue-800 border border-blue-200">अनुशंसित</span></td>
+                    <td className="p-2.5">जोन व जोनल अधिकारी विवरण</td>
+                    <td className="p-2.5 font-mono text-[11px]">जोन-01 / क्षेत्राधिकारी नगर</td>
+                  </tr>
+                  <tr className="hover:bg-slate-50/50">
+                    <td className="p-2.5 font-bold text-slate-900">पीएनओ व पद (PNO & Rank)</td>
+                    <td className="p-2.5"><span className="px-2 py-0.5 rounded text-[10px] font-black bg-blue-100 text-blue-800 border border-blue-200">अनुशंसित</span></td>
+                    <td className="p-2.5">PNO संख्या व पदनाम (उ0नि0, का0 आदि)</td>
+                    <td className="p-2.5 font-mono text-[11px]">182340202 | उ0नि0</td>
+                  </tr>
+                  <tr className="hover:bg-slate-50/50">
+                    <td className="p-2.5 font-bold text-slate-900">मूल तैनाती, समय, शस्त्र, ब्रीफिंग</td>
+                    <td className="p-2.5"><span className="px-2 py-0.5 rounded text-[10px] font-black bg-slate-100 text-slate-700 border border-slate-200">वैकल्पिक</span></td>
+                    <td className="p-2.5">थाना, ड्यूटी समय/शिफ्ट, शस्त्र स्थिति व ब्रीफिंग स्थल</td>
+                    <td className="p-2.5 font-mono text-[11px]">थाना कैंट | 06:00-14:00 | लाठी</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
       </div>
 
       {statusMsg && (
@@ -755,9 +1113,9 @@ export default function AdminUpload({
                 <div className="flex justify-end pt-1">
                   <button
                     type="submit"
-                    className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs rounded-xl shadow flex items-center gap-1.5 active:scale-95 transition cursor-pointer"
+                    className="h-9 px-4 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl shadow-xs flex items-center gap-1.5 active:scale-95 transition cursor-pointer"
                   >
-                    {headingsSaved ? <Check className="w-4 h-4" /> : <Type className="w-4 h-4" />}
+                    {headingsSaved ? <Check className="w-3.5 h-3.5" /> : <Type className="w-3.5 h-3.5" />}
                     <span>{headingsSaved ? 'सहेजा गया!' : 'शीर्षक सहेजें'}</span>
                   </button>
                 </div>
@@ -795,9 +1153,9 @@ export default function AdminUpload({
                     <button
                       type="button"
                       onClick={handleSaveSignatoryText}
-                      className="px-3 py-2 bg-amber-500 text-slate-950 font-black text-xs rounded-xl shadow shrink-0 cursor-pointer"
+                      className="h-10 px-3.5 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl shadow-xs shrink-0 cursor-pointer transition active:scale-95"
                     >
-                      {signatureSaved ? '✓' : 'सहेजें'}
+                      {signatureSaved ? '✓ सहेजा गया' : 'सहेजें'}
                     </button>
                   </div>
                 </div>
@@ -903,9 +1261,9 @@ export default function AdminUpload({
 
                   <button
                     type="submit"
-                    className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs rounded-xl shadow flex items-center gap-1.5 active:scale-95 transition cursor-pointer"
+                    className="h-9 px-4 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl shadow-xs flex items-center gap-1.5 active:scale-95 transition cursor-pointer"
                   >
-                    {noteSaved ? <Check className="w-4 h-4" /> : <FileEdit className="w-4 h-4" />}
+                    {noteSaved ? <Check className="w-3.5 h-3.5" /> : <FileEdit className="w-3.5 h-3.5" />}
                     <span>{noteSaved ? 'सहेजा गया!' : 'नोट सहेजें'}</span>
                   </button>
                 </div>
@@ -965,9 +1323,9 @@ export default function AdminUpload({
 
                   <button
                     type="submit"
-                    className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs rounded-xl shadow flex items-center gap-1.5 active:scale-95 transition cursor-pointer"
+                    className="h-9 px-4 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl shadow-xs flex items-center gap-1.5 active:scale-95 transition cursor-pointer"
                   >
-                    {briefingSaved ? <Check className="w-4 h-4" /> : <MapPin className="w-4 h-4" />}
+                    {briefingSaved ? <Check className="w-3.5 h-3.5" /> : <MapPin className="w-3.5 h-3.5" />}
                     <span>{briefingSaved ? 'सहेजा गया!' : 'स्थान सहेजें'}</span>
                   </button>
                 </div>
@@ -1108,9 +1466,9 @@ export default function AdminUpload({
             <div className="flex justify-end pt-2">
               <button
                 type="submit"
-                className="px-5 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs sm:text-sm rounded-xl shadow flex items-center gap-1.5 active:scale-95 transition cursor-pointer"
+                className="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs sm:text-sm rounded-xl shadow-xs flex items-center gap-1.5 active:scale-95 transition cursor-pointer"
               >
-                {labelsSaved ? <Check className="w-4 h-4 stroke-[3]" /> : <Layers className="w-4 h-4" />}
+                {labelsSaved ? <Check className="w-4 h-4 stroke-[3] text-emerald-400" /> : <Layers className="w-4 h-4 text-amber-400" />}
                 <span>{labelsSaved ? 'हेडिंग्स सहेजी गईं!' : 'कॉलम हेडिंग्स सहेजें'}</span>
               </button>
             </div>
@@ -1201,9 +1559,9 @@ export default function AdminUpload({
 
               <button
                 type="submit"
-                className="px-5 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs sm:text-sm rounded-xl shadow flex items-center gap-1.5 active:scale-95 transition cursor-pointer"
+                className="h-9 px-4 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl shadow-xs flex items-center gap-1.5 active:scale-95 transition cursor-pointer"
               >
-                {helplineSaved ? <Check className="w-4 h-4 stroke-[3]" /> : <Phone className="w-4 h-4" />}
+                {helplineSaved ? <Check className="w-3.5 h-3.5 stroke-[3]" /> : <Phone className="w-3.5 h-3.5" />}
                 <span>{helplineSaved ? 'हेल्पलाइन सहेजी गई!' : 'हेल्पलाइन नंबर सहेजें'}</span>
               </button>
             </div>
@@ -1221,50 +1579,58 @@ export default function AdminUpload({
             </h3>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
-            <button
-              onClick={() => setIsBulkPdfModalOpen(true)}
-              className="px-3.5 py-2 bg-[#0b132b] hover:bg-slate-800 text-white font-black text-xs rounded-xl flex items-center gap-1.5 shadow transition active:scale-95 cursor-pointer"
-              title="ड्यूटी पास बल्क PDF डाउनलोड या प्रिंट करें"
-            >
-              <FileDown className="w-4 h-4 text-amber-400" />
-              बल्क पास प्रिंट / PDF
-            </button>
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 w-full">
+            <div className="flex items-center gap-2 flex-wrap">
+              <button
+                type="button"
+                onClick={() => setIsBulkPdfModalOpen(true)}
+                className="h-9 px-3.5 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl flex items-center gap-1.5 shadow-xs transition active:scale-95 cursor-pointer"
+                title="ड्यूटी पास बल्क PDF डाउनलोड या प्रिंट करें"
+              >
+                <FileDown className="w-3.5 h-3.5 text-amber-400" />
+                <span>बल्क पास प्रिंट / PDF</span>
+              </button>
 
-            <button
-              onClick={() => handleOpenDutyModal(null)}
-              className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs rounded-xl flex items-center gap-1.5 shadow transition active:scale-95 cursor-pointer"
-            >
-              <Plus className="w-4 h-4 stroke-[3]" />
-              + नया ड्यूटी पास जोड़ें
-            </button>
-
-            <div className="relative flex-1 sm:w-56">
-              <Search className="absolute left-3 top-2.5 w-4 h-4 text-slate-500" />
-              <input
-                type="text"
-                value={filterQuery}
-                onChange={(e) => setFilterQuery(e.target.value)}
-                placeholder="खोजें..."
-                className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold text-slate-950 focus:outline-none focus:ring-2 focus:ring-amber-500"
-              />
+              <button
+                type="button"
+                onClick={() => handleOpenDutyModal(null)}
+                className="h-9 px-3.5 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl flex items-center gap-1.5 shadow-xs transition active:scale-95 cursor-pointer"
+              >
+                <Plus className="w-4 h-4" />
+                <span>+ नया ड्यूटी पास जोड़ें</span>
+              </button>
             </div>
 
-            <button
-              onClick={handleClearData}
-              className="p-2 bg-rose-100 hover:bg-rose-200 text-rose-900 rounded-xl border border-rose-300 text-xs font-black shrink-0 cursor-pointer"
-              title="डेटा साफ़ करें"
-            >
-              <Trash2 className="w-4 h-4" />
-            </button>
+            <div className="flex items-center gap-2">
+              <div className="relative flex-1 sm:w-56">
+                <Search className="absolute left-3 top-2.5 w-3.5 h-3.5 text-slate-400" />
+                <input
+                  type="text"
+                  value={filterQuery}
+                  onChange={(e) => setFilterQuery(e.target.value)}
+                  placeholder="खोजें..."
+                  className="w-full h-9 pl-9 pr-3 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold text-slate-950 focus:outline-none focus:ring-2 focus:ring-slate-900"
+                />
+              </div>
 
-            <button
-              onClick={onResetToDefault}
-              className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl border border-slate-300 text-xs font-black shrink-0 cursor-pointer"
-              title="डिफ़ॉल्ट डेटा रीसेट करें"
-            >
-              <RefreshCw className="w-4 h-4" />
-            </button>
+              <button
+                type="button"
+                onClick={onResetToDefault}
+                className="h-9 w-9 p-0 bg-white hover:bg-slate-50 text-slate-700 rounded-xl border border-slate-200/90 flex items-center justify-center shrink-0 cursor-pointer shadow-2xs transition active:scale-95"
+                title="डिफ़ॉल्ट डेटा रीसेट करें"
+              >
+                <RefreshCw className="w-3.5 h-3.5 text-slate-500" />
+              </button>
+
+              <button
+                type="button"
+                onClick={handleClearData}
+                className="h-9 w-9 p-0 bg-white hover:bg-rose-50 text-rose-600 rounded-xl border border-rose-200 flex items-center justify-center shrink-0 cursor-pointer shadow-2xs transition active:scale-95"
+                title="डेटा साफ़ करें"
+              >
+                <Trash2 className="w-3.5 h-3.5 text-rose-500" />
+              </button>
+            </div>
           </div>
         </div>
 
@@ -1496,6 +1862,29 @@ export default function AdminUpload({
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
+                  <label className="block text-slate-800 mb-1">जोनल प्रभारी</label>
+                  <input
+                    type="text"
+                    value={dutyFormData.zonal_incharge}
+                    onChange={(e) => setDutyFormData({ ...dutyFormData, zonal_incharge: e.target.value })}
+                    placeholder="e.g. क्षेत्राधिकारी अयोध्या - 9454401234"
+                    className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-950"
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-800 mb-1">सेक्टर प्रभारी</label>
+                  <input
+                    type="text"
+                    value={dutyFormData.sector_incharge}
+                    onChange={(e) => setDutyFormData({ ...dutyFormData, sector_incharge: e.target.value })}
+                    placeholder="e.g. प्रभारी निरीक्षक कोतवाली - 9454402655"
+                    className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-950"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
                   <label className="block text-slate-800 mb-1">मूल तैनाती / थाना</label>
                   <input
                     type="text"
@@ -1531,13 +1920,13 @@ export default function AdminUpload({
                 <button
                   type="button"
                   onClick={() => setIsDutyModalOpen(false)}
-                  className="px-4 py-2.5 bg-slate-100 text-slate-800 rounded-xl font-black border border-slate-300 cursor-pointer"
+                  className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold cursor-pointer text-xs"
                 >
                   रद्द करें
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2.5 bg-amber-500 text-slate-950 font-black rounded-xl shadow cursor-pointer"
+                  className="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl shadow-xs cursor-pointer text-xs transition active:scale-95"
                 >
                   सहेजें
                 </button>

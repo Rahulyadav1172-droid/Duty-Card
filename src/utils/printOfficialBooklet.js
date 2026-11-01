@@ -1,5 +1,15 @@
 import { classifyRank } from '../components/ForceDeploymentMatrix';
 import { resolvePoliceRank, stripRankFromName } from './rankResolver';
+import {
+  ELECTION_SCHEDULE_AYODHYA_2024,
+  ELECTION_BOOKLET_CHAPTERS,
+  ELECTION_VEHICLES_REQUIREMENT,
+  ELECTION_OUTER_BARRIERS,
+  ELECTION_INTER_BARRIERS,
+  ELECTION_DUTY_CARD_INSTRUCTIONS,
+  ELECTION_CUG_DIRECTORY,
+  ELECTION_LAW_ORDER_MANAK
+} from '../data/electionStandardData';
 
 /**
  * Helper to clean officer name
@@ -41,8 +51,12 @@ export function printOfficialBookletDocument({
   eventStartDate = '',
   patrank = 'सुरक्षा-2026/ड्यूटी-आदेश',
   date = '',
-  manualInstructions = {}
+  manualInstructions = {},
+  isElectionBooklet = false
 }) {
+  const isElection = isElectionBooklet ||
+    (eventTitle && (eventTitle.includes('निर्वाचन') || eventTitle.includes('चुनाव') || eventTitle.includes('लोकसभा') || eventTitle.includes('विधानसभा'))) ||
+    records.some(r => r.duty_type === 'election' || r.booth_no);
   const displayDate = date || new Date().toLocaleDateString('hi-IN');
   const displayEventDate = formatDisplayDate(eventStartDate);
 
@@ -188,13 +202,38 @@ export function printOfficialBookletDocument({
 
     Object.keys(groupedData[zoneName]).forEach((sectorName) => {
       const sectorInstruction = manualInstructions.sectors?.[sectorName];
-      const sampleSectorRec = (records || []).find(r => 
-        (r.zone || '').trim() === zoneName.trim() && 
-        (r.sector || '').trim() === sectorName.trim() && 
-        (r.sector_incharge || r.sector_officer)
-      );
-      const sectorIncharge = sampleSectorRec?.sector_incharge || sampleSectorRec?.sector_officer || '';
-      const sectorSahyogarth = sampleSectorRec?.sector_sahyogarth || sampleSectorRec?.sector_assistant || '';
+      const sampleSectorRec = (records || []).find(r => {
+        if (!r) return false;
+        const sMatch = (r.sector || '').trim().toLowerCase() === sectorName.trim().toLowerCase();
+        const inc = (
+          r.sector_incharge || 
+          r.sector_officer || 
+          r.sectorOfficer || 
+          r.sectorIncharge || 
+          r.sector_magistrate || 
+          r.incharge || 
+          r['सेक्टर प्रभारी'] ||
+          r['सेक्टर अधिकारी'] ||
+          r['सेक्टर मजिस्ट्रेट'] ||
+          r['प्रभारी'] ||
+          ''
+        ).trim();
+        return sMatch && inc && inc !== '-';
+      });
+      const sectorIncharge = (
+        sampleSectorRec?.sector_incharge || 
+        sampleSectorRec?.sector_officer || 
+        sampleSectorRec?.sectorOfficer || 
+        sampleSectorRec?.sectorIncharge || 
+        sampleSectorRec?.sector_magistrate || 
+        sampleSectorRec?.incharge || 
+        sampleSectorRec?.['सेक्टर प्रभारी'] || 
+        sampleSectorRec?.['सेक्टर अधिकारी'] || 
+        sampleSectorRec?.['सेक्टर मजिस्ट्रेट'] || 
+        sampleSectorRec?.['प्रभारी'] || 
+        ''
+      ).trim();
+      const sectorSahyogarth = (sampleSectorRec?.sector_sahyogarth || sampleSectorRec?.sector_assistant || '').trim();
 
       deploymentHtml += `
         <div class="sector-block">
@@ -221,7 +260,12 @@ export function printOfficialBookletDocument({
         deploymentHtml += `
           <div class="duty-point-card">
             <div class="point-header">
-              <div class="point-name">📍 <strong>ड्यूटी स्थल:</strong> ${placeName}</div>
+              <div class="point-name">
+                📍 <strong>ड्यूटी स्थल:</strong> ${placeName}
+                ${placeRecords[0]?.booth_no ? `<span style="margin-left:6px; padding:2px 7px; background:#0f172a; color:#fff; border-radius:4px; font-size:11px; font-weight:bold;">बूथ सं० ${placeRecords[0].booth_no}</span>` : ''}
+                ${placeRecords[0]?.category ? `<span style="margin-left:6px; padding:2px 7px; background:#fef3c7; color:#78350f; border-radius:4px; font-size:11px; font-weight:bold; border:1px solid #fde68a;">${placeRecords[0].category}</span>` : ''}
+                ${placeRecords[0]?.vehicle_no ? `<span style="margin-left:6px; padding:2px 7px; background:#dbeafe; color:#1e40af; border-radius:4px; font-size:11px; font-weight:bold; font-family:monospace; border:1px solid #bfdbfe;">🚌 बस नं० ${placeRecords[0].vehicle_no}</span>` : ''}
+              </div>
               <div class="point-badge">तैनात बल: ${placeRecords.length}</div>
             </div>
             <div class="point-time">⏱️ <strong>समय / पाली:</strong> ${placeShift}</div>
@@ -267,6 +311,268 @@ export function printOfficialBookletDocument({
   });
 
   const generalEndInstruction = manualInstructions.generalEnd && manualInstructions.generalEnd.trim();
+
+
+  // Generate Election Standard Chapters HTML (Only if Election Booklet mode is active)
+  let electionChaptersHtml = '';
+  if (isElection) {
+    electionChaptersHtml = `
+      <!-- PAGE: ANUKRAMANIKA (TABLE OF CONTENTS) -->
+      <div class="matrix-page" style="page-break-after:always; break-after:page;">
+        <div class="matrix-page-header">
+          <div class="matrix-page-heading">कार्यालय वरिष्ठ पुलिस अधीक्षक, जनपद अयोध्या</div>
+          <div class="matrix-page-subheading">📋 अनुक्रमणिका (TABLE OF CONTENTS) • निर्वाचन सुरक्षा आदेश पुस्तिका</div>
+        </div>
+        <div style="border:1.5px solid #000; border-radius:6px; overflow:hidden; margin-top:8px;">
+          <table style="width:100%; border-collapse:collapse; font-size:11.5px;">
+            <thead>
+              <tr style="background:#0f172a; color:#fff;">
+                <th style="padding:6px 10px; width:50px; text-align:center;">अध्याय</th>
+                <th style="padding:6px 10px; text-align:left;">विवरण / विषय सामग्री</th>
+                <th style="padding:6px 10px; width:90px; text-align:center;">पृष्ठ संदर्भ</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${ELECTION_BOOKLET_CHAPTERS.map(ch => `
+                <tr style="border-bottom:1px solid #e2e8f0; font-weight:600;">
+                  <td style="padding:5px 8px; text-align:center; font-family:monospace; font-weight:bold; background:#f8fafc;">${ch.no}</td>
+                  <td style="padding:5px 10px; text-align:left; color:#0f172a;">${ch.title}</td>
+                  <td style="padding:5px 8px; text-align:center; font-family:monospace; color:#475569;">${ch.page}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- PAGE: ELECTION SCHEDULE & CODE OF CONDUCT (16 SOPs) -->
+      <div class="matrix-page" style="page-break-after:always; break-after:page;">
+        <div class="matrix-page-header">
+          <div class="matrix-page-heading">कार्यालय वरिष्ठ पुलिस अधीक्षक, जनपद अयोध्या</div>
+          <div class="matrix-page-subheading">🗳️ निर्वाचन कार्यक्रम (SCHEDULE) एवं पुलिस आचार संहिता निर्देश (SOP)</div>
+        </div>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-top:8px;">
+          <!-- Schedule Table -->
+          <div style="border:1.5px solid #000; border-radius:6px; overflow:hidden;">
+            <div style="background:#0f172a; color:#fff; font-weight:900; font-size:12px; padding:6px 10px;">
+              अध्याय-1: निर्वाचन कार्यक्रम (Lok Sabha 2024 Schedule)
+            </div>
+            <table style="width:100%; border-collapse:collapse; font-size:11px;">
+              <tbody>
+                ${ELECTION_SCHEDULE_AYODHYA_2024.map((s, idx) => `
+                  <tr style="border-bottom:1px solid #e2e8f0;">
+                    <td style="padding:6px 8px; font-weight:bold; width:50%; background:#f8fafc;">${s.event}</td>
+                    <td style="padding:6px 8px; font-weight:bold; color:#0f172a;">
+                      ${s.date}<br/><span style="font-size:10px; color:#475569;">${s.time}</span>
+                    </td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+
+          <!-- SOP Instructions -->
+          <div style="border:1.5px solid #000; border-radius:6px; overflow:hidden;">
+            <div style="background:#0f172a; color:#fff; font-weight:900; font-size:12px; padding:6px 10px;">
+              अध्याय-3: पुलिस कर्तव्य एवं आचरण नियमावली (16 बिंदु)
+            </div>
+            <div style="padding:8px 10px; font-size:10.5px; line-height:1.45; max-height:480px; overflow-y:auto;">
+              ${ELECTION_DUTY_CARD_INSTRUCTIONS.map(inst => `
+                <div style="margin-bottom:5px; padding-bottom:4px; border-bottom:1px dashed #cbd5e1;">
+                  <strong>${inst.slice(0, inst.indexOf('.') + 1)}</strong> ${inst.slice(inst.indexOf('.') + 1)}
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PAGE: VEHICLE REQUIREMENTS & 20 OUTER BARRIERS -->
+      <div class="matrix-page" style="page-break-after:always; break-after:page;">
+        <div class="matrix-page-header">
+          <div class="matrix-page-heading">कार्यालय वरिष्ठ पुलिस अधीक्षक, जनपद अयोध्या</div>
+          <div class="matrix-page-subheading">🚐 वाहनों की आवश्यकता चार्ट एवं 20 सीमावर्ती वाह्य बैरियर विवरण</div>
+        </div>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-top:8px;">
+          <!-- Vehicle Requirements -->
+          <div style="border:1.5px solid #000; border-radius:6px; overflow:hidden;">
+            <div style="background:#0f172a; color:#fff; font-weight:900; font-size:12px; padding:6px 10px;">
+              अध्याय-18: वाहनों की आवश्यकता विवरण चार्ट
+            </div>
+            <table style="width:100%; border-collapse:collapse; font-size:10.5px;">
+              <thead>
+                <tr style="background:#f1f5f9; font-weight:bold;">
+                  <th style="padding:4px 6px; text-align:left;">ड्यूटी मद</th>
+                  <th style="padding:4px 6px; text-align:center;">हल्के</th>
+                  <th style="padding:4px 6px; text-align:center;">मिनीबस</th>
+                  <th style="padding:4px 6px; text-align:center;">बस</th>
+                  <th style="padding:4px 6px; text-align:center;">ट्रक</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${ELECTION_VEHICLES_REQUIREMENT.map(v => `
+                  <tr style="border-bottom:1px solid #e2e8f0; font-weight:600;">
+                    <td style="padding:4px 6px; text-align:left;">${v.title}</td>
+                    <td style="padding:4px 6px; text-align:center; font-family:monospace;">${v.light || '-'}</td>
+                    <td style="padding:4px 6px; text-align:center; font-family:monospace;">${v.minibus || '-'}</td>
+                    <td style="padding:4px 6px; text-align:center; font-family:monospace;">${v.bus || '-'}</td>
+                    <td style="padding:4px 6px; text-align:center; font-family:monospace;">${v.truck || '-'}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Outer Barriers (20) -->
+          <div style="border:1.5px solid #000; border-radius:6px; overflow:hidden;">
+            <div style="background:#0f172a; color:#fff; font-weight:900; font-size:12px; padding:6px 10px;">
+              अध्याय-11: सीमावर्ती (वाह्य) 20 बैरियर विवरण
+            </div>
+            <div style="max-height:480px; overflow-y:auto;">
+              <table style="width:100%; border-collapse:collapse; font-size:10px;">
+                <thead>
+                  <tr style="background:#f1f5f9; font-weight:bold;">
+                    <th style="padding:4px 6px; text-align:center; width:28px;">क्र०</th>
+                    <th style="padding:4px 6px; text-align:left;">बैरियर का नाम</th>
+                    <th style="padding:4px 6px; text-align:left;">मार्ग / जनपद बॉर्डर</th>
+                    <th style="padding:4px 6px; text-align:left;">थाना</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${ELECTION_OUTER_BARRIERS.map(ob => `
+                    <tr style="border-bottom:1px solid #e2e8f0; font-weight:600;">
+                      <td style="padding:3px 5px; text-align:center; font-family:monospace; background:#f8fafc;">${ob.sr}</td>
+                      <td style="padding:3px 6px; font-weight:bold; color:#0f172a;">${ob.barrier_name}</td>
+                      <td style="padding:3px 6px; color:#475569;">${ob.route} (${ob.border_district})</td>
+                      <td style="padding:3px 6px; font-weight:bold;">${ob.thana}</td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PAGE: 28 INTER BARRIERS & 18 LAW & ORDER HEADS -->
+      <div class="matrix-page" style="page-break-after:always; break-after:page;">
+        <div class="matrix-page-header">
+          <div class="matrix-page-heading">कार्यालय वरिष्ठ पुलिस अधीक्षक, जनपद अयोध्या</div>
+          <div class="matrix-page-subheading">🚧 28 आन्तरिक बैरियर/पिकेट्स एवं 18 कानून-व्यवस्था मानक विवरण</div>
+        </div>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-top:8px;">
+          <!-- Inter Barriers (28) -->
+          <div style="border:1.5px solid #000; border-radius:6px; overflow:hidden;">
+            <div style="background:#0f172a; color:#fff; font-weight:900; font-size:12px; padding:6px 10px;">
+              अध्याय-12: आन्तरिक बैरियर एवं सुरक्षा पिकेट्स (28 स्थान)
+            </div>
+            <div style="max-height:480px; overflow-y:auto;">
+              <table style="width:100%; border-collapse:collapse; font-size:10px;">
+                <thead>
+                  <tr style="background:#f1f5f9; font-weight:bold;">
+                    <th style="padding:4px 6px; text-align:center; width:28px;">क्र०</th>
+                    <th style="padding:4px 6px; text-align:left;">बैरियर / पिकेट स्थल</th>
+                    <th style="padding:4px 6px; text-align:left;">थाना</th>
+                    <th style="padding:4px 6px; text-align:left;">विधानसभा</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${ELECTION_INTER_BARRIERS.map(ib => `
+                    <tr style="border-bottom:1px solid #e2e8f0; font-weight:600;">
+                      <td style="padding:3px 5px; text-align:center; font-family:monospace; background:#f8fafc;">${ib.sr}</td>
+                      <td style="padding:3px 6px; font-weight:bold; color:#0f172a;">${ib.barrier_name}</td>
+                      <td style="padding:3px 6px; font-weight:bold;">${ib.thana}</td>
+                      <td style="padding:3px 6px; color:#475569;">${ib.vidhansabha}</td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Law & Order Heads (18) -->
+          <div style="border:1.5px solid #000; border-radius:6px; overflow:hidden;">
+            <div style="background:#0f172a; color:#fff; font-weight:900; font-size:12px; padding:6px 10px;">
+              अध्याय-13, 14, 15: निर्वाचन कानून-व्यवस्था ड्यूटी मानक (18 Heads)
+            </div>
+            <div style="max-height:480px; overflow-y:auto;">
+              <table style="width:100%; border-collapse:collapse; font-size:10px;">
+                <thead>
+                  <tr style="background:#f1f5f9; font-weight:bold;">
+                    <th style="padding:4px 6px; text-align:left;">ड्यूटी पद / हेड</th>
+                    <th style="padding:4px 6px; text-align:left;">आधिकारिक बल मानक</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${ELECTION_LAW_ORDER_MANAK.map(lo => `
+                    <tr style="border-bottom:1px solid #e2e8f0; font-weight:600;">
+                      <td style="padding:4px 6px; font-weight:bold; color:#0f172a;">${lo.title}</td>
+                      <td style="padding:4px 6px; color:#475569;">${lo.desc}</td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PAGE: CUG TELEPHONE DIRECTORY -->
+      <div class="matrix-page" style="page-break-after:always; break-after:page;">
+        <div class="matrix-page-header">
+          <div class="matrix-page-heading">कार्यालय वरिष्ठ पुलिस अधीक्षक, जनपद अयोध्या</div>
+          <div class="matrix-page-subheading">📞 अध्याय-19: महत्वपूर्ण प्रशासनिक एवं पुलिस टेलीफोन निर्देशिका (CUG)</div>
+        </div>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-top:8px;">
+          <!-- Higher Officers & Control Rooms -->
+          <div style="border:1.5px solid #000; border-radius:6px; overflow:hidden;">
+            <div style="background:#0f172a; color:#fff; font-weight:900; font-size:12px; padding:6px 10px;">
+              उच्चाधिकारीगण एवं नियंत्रण कक्ष
+            </div>
+            <table style="width:100%; border-collapse:collapse; font-size:11px;">
+              <tbody>
+                ${ELECTION_CUG_DIRECTORY.higher_officers.map(ho => `
+                  <tr style="border-bottom:1px solid #e2e8f0; font-weight:600;">
+                    <td style="padding:4px 8px; font-weight:bold; color:#0f172a;">${ho.designation}</td>
+                    <td style="padding:4px 8px; font-family:monospace; font-weight:bold; color:#047857; text-align:right;">${ho.mobile}</td>
+                  </tr>
+                `).join('')}
+                ${ELECTION_CUG_DIRECTORY.control_rooms.map(cr => `
+                  <tr style="border-bottom:1px solid #e2e8f0; font-weight:bold; background:#fffbeb;">
+                    <td style="padding:4px 8px; color:#b45309;">${cr.name}</td>
+                    <td style="padding:4px 8px; font-family:monospace; color:#b45309; text-align:right;">${cr.mobile}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Thana Incharges (18) -->
+          <div style="border:1.5px solid #000; border-radius:6px; overflow:hidden;">
+            <div style="background:#0f172a; color:#fff; font-weight:900; font-size:12px; padding:6px 10px;">
+              समस्त 18 थाना प्रभारी CUG सीयूजी नंबर
+            </div>
+            <div style="max-height:480px; overflow-y:auto;">
+              <table style="width:100%; border-collapse:collapse; font-size:11px;">
+                <tbody>
+                  ${ELECTION_CUG_DIRECTORY.thanas.map(th => `
+                    <tr style="border-bottom:1px solid #e2e8f0; font-weight:600;">
+                      <td style="padding:4px 8px; font-weight:bold; color:#0f172a;">${th.thana}</td>
+                      <td style="padding:4px 8px; font-family:monospace; font-weight:bold; color:#047857; text-align:right;">${th.mobile}</td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
 
   // Full Pure HTML Document
   const fullHtml = `<!DOCTYPE html>
@@ -779,6 +1085,9 @@ export function printOfficialBookletDocument({
   <!-- PAGE 2: EXCLUSIVE FORCE SUMMARY MATRIX PAGE              -->
   <!-- ======================================================== -->
   ${matrixHtml}
+
+  <!-- OFFICIAL ELECTION STANDARD CHAPTERS (PAGES 3-7) -->
+  ${electionChaptersHtml}
 
   <!-- ======================================================== -->
   <!-- PAGE 3 ONWARDS: DEPLOYMENT DETAIL TABLES (FIELD DUTIES)  -->

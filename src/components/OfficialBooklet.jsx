@@ -1,10 +1,20 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Printer, ArrowLeft, Shield, Calendar, Clock, MapPin, Users, Edit3, Plus, Trash2, FileText, Check, X, AlertCircle, RefreshCw } from 'lucide-react';
 import ForceDeploymentMatrix from './ForceDeploymentMatrix';
 import { printOfficialBookletDocument } from '../utils/printOfficialBooklet';
 import DutyReplacementModal from './DutyReplacementModal';
 import { logReplacementToAuditTrail } from '../utils/aamadSync';
 import { resolvePoliceRank, stripRankFromName } from '../utils/rankResolver';
+import {
+  ELECTION_BOOKLET_CHAPTERS,
+  ELECTION_SCHEDULE_AYODHYA_2024,
+  ELECTION_VEHICLES_REQUIREMENT,
+  ELECTION_OUTER_BARRIERS,
+  ELECTION_INTER_BARRIERS,
+  ELECTION_DUTY_CARD_INSTRUCTIONS,
+  ELECTION_CUG_DIRECTORY,
+  ELECTION_LAW_ORDER_MANAK
+} from '../data/electionStandardData';
 
 /**
  * Helper to clean raw name string by stripping duplicate mobile numbers,
@@ -84,6 +94,12 @@ export default function OfficialBooklet({
   }, [activeEvent?.patrank]);
 
   const [dateInput, setDateInput] = useState(() => new Date().toLocaleDateString('hi-IN'));
+
+  // Election Booklet Mode Toggle
+  const [isElectionBooklet, setIsElectionBooklet] = useState(() => {
+    return (eventTitle && (eventTitle.includes('निर्वाचन') || eventTitle.includes('चुनाव') || eventTitle.includes('लोकसभा') || eventTitle.includes('विधानसभा'))) ||
+      records.some(r => r.duty_type === 'election' || r.booth_no);
+  });
 
   // Replacement Modal State & Handler
   const [replacementRecord, setReplacementRecord] = useState(null);
@@ -301,29 +317,42 @@ function stripNumbering(rawText = '') {
       eventStartDate: eventStartDate,
       patrank: patrankInput,
       date: dateInput,
-      manualInstructions: manualInstructions
+      manualInstructions: manualInstructions,
+      isElectionBooklet: isElectionBooklet
     });
   };
 
   return (
     <div className="w-full max-w-6xl mx-auto space-y-5 font-devanagari">
       {/* Top Action Bar (hidden on print) with Patrank, Date & General Instructions input */}
-      <div className="flex flex-wrap items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-slate-200 shadow-md no-print text-slate-900">
-        <div className="flex flex-wrap items-center gap-3">
-          {onBack && (
+      <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200/90 shadow-sm no-print text-slate-900 space-y-3">
+        {/* Tier 1: Primary Navigation & Print Action */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
+          {onBack ? (
             <button
               onClick={onBack}
-              className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl text-xs font-bold flex items-center gap-2 transition border border-slate-300 cursor-pointer"
+              className="h-9 px-3.5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition border border-slate-300 cursor-pointer w-full sm:w-auto"
             >
               <ArrowLeft className="w-4 h-4" />
-              वापस जाएं
+              <span>वापस जाएं</span>
             </button>
-          )}
+          ) : <div />}
 
+          <button
+            onClick={handlePrint}
+            className="h-9 px-4.5 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs sm:text-sm rounded-xl flex items-center justify-center gap-2 shadow-xs transition active:scale-95 cursor-pointer w-full sm:w-auto"
+          >
+            <Printer className="w-4 h-4 text-amber-400 stroke-[2.5]" />
+            <span>A4 लैंडस्केप बुकलेट प्रिंट करें</span>
+          </button>
+        </div>
+
+        {/* Tier 2: Metadata Inputs & Instruction Modals */}
+        <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-100">
           {/* Manual Patrank Input Field */}
-          <div className="flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-300">
-            <Edit3 className="w-4 h-4 text-amber-600 shrink-0" />
-            <label className="text-xs font-black text-slate-800 shrink-0">पत्रांक सं०:</label>
+          <div className="flex items-center gap-1.5 bg-slate-50 px-2.5 py-1 rounded-xl border border-slate-200 min-w-0">
+            <Edit3 className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+            <label className="text-xs font-bold text-slate-700 shrink-0">पत्रांक:</label>
             <input
               type="text"
               value={patrankInput}
@@ -342,49 +371,56 @@ function stripNumbering(rawText = '') {
                 }
               }}
               placeholder="पत्रांक दर्ज करें..."
-              className="px-2 py-1 bg-white border border-slate-300 rounded-lg text-xs font-black text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500 w-44 sm:w-52"
+              className="px-2 py-0.5 bg-white border border-slate-300 rounded-lg text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900 w-36 sm:w-44"
             />
           </div>
 
           {/* Manual Date Input Field */}
-          <div className="flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-300">
-            <Calendar className="w-4 h-4 text-amber-600 shrink-0" />
-            <label className="text-xs font-black text-slate-800 shrink-0">दिनांक:</label>
+          <div className="flex items-center gap-1.5 bg-slate-50 px-2.5 py-1 rounded-xl border border-slate-200 min-w-0">
+            <Calendar className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+            <label className="text-xs font-bold text-slate-700 shrink-0">दिनांक:</label>
             <input
               type="text"
               value={dateInput}
               onChange={(e) => setDateInput(e.target.value)}
               placeholder="दिनांक दर्ज करें..."
-              className="px-2 py-1 bg-white border border-slate-300 rounded-lg text-xs font-black text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500 w-28 sm:w-32 font-mono"
+              className="px-2 py-0.5 bg-white border border-slate-300 rounded-lg text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900 w-28 sm:w-32 font-mono"
             />
           </div>
 
           {/* Edit General Instructions Button */}
           <button
             onClick={() => handleOpenEditModal('general', 'generalEnd', 'अंतिम / सामान्य सुरक्षा निर्देश')}
-            className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-900 font-bold text-xs rounded-xl border border-slate-300 flex items-center gap-1.5 cursor-pointer"
+            className="h-8 px-2.5 bg-slate-50 hover:bg-slate-100 text-slate-700 font-bold text-xs rounded-xl border border-slate-200 flex items-center gap-1.5 cursor-pointer transition shadow-2xs"
           >
-            <FileText className="w-4 h-4 text-amber-600" />
+            <FileText className="w-3.5 h-3.5 text-slate-600" />
             <span>अंतिम निर्देश</span>
           </button>
 
           {/* Edit Pratilipi Button */}
           <button
             onClick={() => handleOpenEditModal('pratilipi', 'pratilipi', 'आधिकारिक प्रतिलिपि विवरण संशोधित करें')}
-            className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-900 font-bold text-xs rounded-xl border border-slate-300 flex items-center gap-1.5 cursor-pointer"
+            className="h-8 px-2.5 bg-slate-50 hover:bg-slate-100 text-slate-700 font-bold text-xs rounded-xl border border-slate-200 flex items-center gap-1.5 cursor-pointer transition shadow-2xs"
           >
-            <Edit3 className="w-4 h-4 text-blue-600" />
+            <Edit3 className="w-3.5 h-3.5 text-slate-600" />
             <span>प्रतिलिपि बदलें</span>
           </button>
-        </div>
 
-        <div className="flex items-center gap-2">
+          {/* Toggle Election Booklet Mode */}
           <button
-            onClick={handlePrint}
-            className="px-5 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-xs sm:text-sm rounded-xl flex items-center gap-2 shadow transition active:scale-95 cursor-pointer"
+            type="button"
+            onClick={() => setIsElectionBooklet(prev => !prev)}
+            className={`h-8 px-3 rounded-xl font-bold text-xs flex items-center gap-1.5 cursor-pointer transition border ${
+              isElectionBooklet
+                ? 'bg-amber-500 hover:bg-amber-600 text-slate-950 border-amber-600 shadow-sm'
+                : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200 shadow-2xs'
+            }`}
           >
-            <Printer className="w-4 h-4 stroke-[2.5]" />
-            <span>A4 लैंडस्केप बुकलेट प्रिंट करें</span>
+            <span>🗳️</span>
+            <span>{isElectionBooklet ? 'निर्वाचन बुकलेट मोड सक्रिय' : 'निर्वाचन बुकलेट मोड'}</span>
+            <span className={`text-[10px] px-1.5 py-0.5 rounded font-mono ${isElectionBooklet ? 'bg-black/20 text-slate-950 font-black' : 'bg-slate-200 text-slate-700'}`}>
+              {isElectionBooklet ? '24 अध्याय' : 'सामान्य'}
+            </span>
           </button>
         </div>
       </div>
@@ -471,6 +507,257 @@ function stripNumbering(rawText = '') {
         </div>
 
         {/* ========================================================================= */}
+        {/* ELECTION STANDARD CHAPTERS PREVIEW (PAGES 3 to 7)                         */}
+        {/* ========================================================================= */}
+        {isElectionBooklet && (
+          <div className="space-y-6">
+            {/* 1. Anukramanika (Table of Contents) */}
+            <div className="break-after-page mb-6 border-2 border-black rounded-xl p-4 bg-white">
+              <div className="border-b-2 border-black pb-2 mb-3 text-center">
+                <h3 className="text-base sm:text-lg font-black uppercase text-black">कार्यालय वरिष्ठ पुलिस अधीक्षक, जनपद अयोध्या</h3>
+                <p className="text-xs font-bold text-gray-700">📋 अनुक्रमणिका (TABLE OF CONTENTS) • निर्वाचन सुरक्षा आदेश पुस्तिका</p>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs border-collapse border border-black">
+                  <thead>
+                    <tr className="bg-slate-900 text-white font-bold">
+                      <th className="border border-black py-1.5 px-3 w-16 text-center">अध्याय</th>
+                      <th className="border border-black py-1.5 px-3 text-left">विवरण / विषय सामग्री</th>
+                      <th className="border border-black py-1.5 px-3 w-24 text-center">पृष्ठ संदर्भ</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {ELECTION_BOOKLET_CHAPTERS.map(ch => (
+                      <tr key={ch.no} className="border-b border-gray-300 hover:bg-slate-50 font-semibold">
+                        <td className="border border-gray-300 py-1.5 px-2 text-center font-mono font-bold bg-slate-50">{ch.no}</td>
+                        <td className="border border-gray-300 py-1.5 px-3 text-black">{ch.title}</td>
+                        <td className="border border-gray-300 py-1.5 px-2 text-center font-mono text-gray-600">{ch.page}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* 2. Schedule & SOP */}
+            <div className="break-after-page mb-6 border-2 border-black rounded-xl p-4 bg-white">
+              <div className="border-b-2 border-black pb-2 mb-3 text-center">
+                <h3 className="text-base sm:text-lg font-black uppercase text-black">कार्यालय वरिष्ठ पुलिस अधीक्षक, जनपद अयोध्या</h3>
+                <p className="text-xs font-bold text-gray-700">🗳️ निर्वाचन कार्यक्रम (SCHEDULE) एवं पुलिस आचार संहिता निर्देश (SOP)</p>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="border border-black rounded-lg overflow-hidden">
+                  <div className="bg-slate-900 text-white font-black text-xs py-1.5 px-3">
+                    अध्याय-1: निर्वाचन कार्यक्रम (Lok Sabha Schedule)
+                  </div>
+                  <table className="w-full text-xs border-collapse">
+                    <tbody>
+                      {ELECTION_SCHEDULE_AYODHYA_2024.map((s, idx) => (
+                        <tr key={idx} className="border-b border-gray-200">
+                          <td className="py-2 px-3 font-bold bg-slate-50 w-1/2">{s.event}</td>
+                          <td className="py-2 px-3 font-semibold text-black">
+                            {s.date}<br/><span className="text-[11px] text-gray-600 font-normal">{s.time}</span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                <div className="border border-black rounded-lg overflow-hidden flex flex-col">
+                  <div className="bg-slate-900 text-white font-black text-xs py-1.5 px-3">
+                    अध्याय-3: पुलिस कर्तव्य एवं आचरण नियमावली (16 बिंदु)
+                  </div>
+                  <div className="p-3 text-xs space-y-2 overflow-y-auto max-h-[420px] leading-relaxed">
+                    {ELECTION_DUTY_CARD_INSTRUCTIONS.map((inst, idx) => (
+                      <div key={idx} className="pb-1.5 border-b border-dashed border-gray-200">
+                        <strong className="text-slate-950">{inst.slice(0, inst.indexOf('.') + 1)}</strong>
+                        <span className="text-gray-800">{inst.slice(inst.indexOf('.') + 1)}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* 3. Vehicles & Outer Barriers */}
+            <div className="break-after-page mb-6 border-2 border-black rounded-xl p-4 bg-white">
+              <div className="border-b-2 border-black pb-2 mb-3 text-center">
+                <h3 className="text-base sm:text-lg font-black uppercase text-black">कार्यालय वरिष्ठ पुलिस अधीक्षक, जनपद अयोध्या</h3>
+                <p className="text-xs font-bold text-gray-700">🚐 वाहनों की आवश्यकता चार्ट एवं 20 सीमावर्ती वाह्य बैरियर विवरण</p>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="border border-black rounded-lg overflow-hidden">
+                  <div className="bg-slate-900 text-white font-black text-xs py-1.5 px-3">
+                    अध्याय-18: वाहनों की आवश्यकता विवरण चार्ट
+                  </div>
+                  <table className="w-full text-xs border-collapse">
+                    <thead>
+                      <tr className="bg-slate-100 font-bold border-b border-gray-300 text-center">
+                        <th className="py-1.5 px-2 text-left">ड्यूटी मद</th>
+                        <th className="py-1.5 px-2">हल्के</th>
+                        <th className="py-1.5 px-2">मिनीबस</th>
+                        <th className="py-1.5 px-2">बस</th>
+                        <th className="py-1.5 px-2">ट्रक</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {ELECTION_VEHICLES_REQUIREMENT.map((v, idx) => (
+                        <tr key={idx} className="border-b border-gray-200 font-semibold text-center">
+                          <td className="py-1 px-2 text-left text-black font-bold">{v.title}</td>
+                          <td className="py-1 px-2 font-mono">{v.light || '-'}</td>
+                          <td className="py-1 px-2 font-mono">{v.minibus || '-'}</td>
+                          <td className="py-1 px-2 font-mono">{v.bus || '-'}</td>
+                          <td className="py-1 px-2 font-mono">{v.truck || '-'}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                <div className="border border-black rounded-lg overflow-hidden">
+                  <div className="bg-slate-900 text-white font-black text-xs py-1.5 px-3">
+                    अध्याय-11: सीमावर्ती (वाह्य) 20 बैरियर विवरण
+                  </div>
+                  <div className="overflow-y-auto max-h-[420px]">
+                    <table className="w-full text-xs border-collapse">
+                      <thead>
+                        <tr className="bg-slate-100 font-bold border-b border-gray-300">
+                          <th className="py-1 px-2 text-center w-8">क्र०</th>
+                          <th className="py-1 px-2 text-left">बैरियर का नाम</th>
+                          <th className="py-1 px-2 text-left">मार्ग / बॉर्डर</th>
+                          <th className="py-1 px-2 text-left">थाना</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {ELECTION_OUTER_BARRIERS.map(ob => (
+                          <tr key={ob.sr} className="border-b border-gray-200">
+                            <td className="py-1 px-2 text-center font-mono font-bold bg-slate-50">{ob.sr}</td>
+                            <td className="py-1 px-2 font-bold text-black">{ob.barrier_name}</td>
+                            <td className="py-1 px-2 text-gray-700">{ob.route} ({ob.border_district})</td>
+                            <td className="py-1 px-2 font-semibold">{ob.thana}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* 4. Inter Barriers & Law-Order Standards */}
+            <div className="break-after-page mb-6 border-2 border-black rounded-xl p-4 bg-white">
+              <div className="border-b-2 border-black pb-2 mb-3 text-center">
+                <h3 className="text-base sm:text-lg font-black uppercase text-black">कार्यालय वरिष्ठ पुलिस अधीक्षक, जनपद अयोध्या</h3>
+                <p className="text-xs font-bold text-gray-700">🚧 28 आन्तरिक बैरियर/पिकेट्स एवं 18 कानून-व्यवस्था मानक विवरण</p>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="border border-black rounded-lg overflow-hidden">
+                  <div className="bg-slate-900 text-white font-black text-xs py-1.5 px-3">
+                    अध्याय-12: आन्तरिक बैरियर एवं सुरक्षा पिकेट्स (28 स्थान)
+                  </div>
+                  <div className="overflow-y-auto max-h-[420px]">
+                    <table className="w-full text-xs border-collapse">
+                      <thead>
+                        <tr className="bg-slate-100 font-bold border-b border-gray-300">
+                          <th className="py-1 px-2 text-center w-8">क्र०</th>
+                          <th className="py-1 px-2 text-left">स्थल</th>
+                          <th className="py-1 px-2 text-left">थाना</th>
+                          <th className="py-1 px-2 text-left">विधानसभा</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {ELECTION_INTER_BARRIERS.map(ib => (
+                          <tr key={ib.sr} className="border-b border-gray-200">
+                            <td className="py-1 px-2 text-center font-mono font-bold bg-slate-50">{ib.sr}</td>
+                            <td className="py-1 px-2 font-bold text-black">{ib.barrier_name}</td>
+                            <td className="py-1 px-2 font-semibold">{ib.thana}</td>
+                            <td className="py-1 px-2 text-gray-700">{ib.vidhansabha}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                <div className="border border-black rounded-lg overflow-hidden">
+                  <div className="bg-slate-900 text-white font-black text-xs py-1.5 px-3">
+                    अध्याय-13, 14, 15: 18 कानून-व्यवस्था मानक (Manak)
+                  </div>
+                  <div className="overflow-y-auto max-h-[420px]">
+                    <table className="w-full text-xs border-collapse">
+                      <thead>
+                        <tr className="bg-slate-100 font-bold border-b border-gray-300">
+                          <th className="py-1 px-2 text-left">ड्यूटी पद / हेड</th>
+                          <th className="py-1 px-2 text-left">आधिकारिक बल मानक</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {ELECTION_LAW_ORDER_MANAK.map((lo, idx) => (
+                          <tr key={idx} className="border-b border-gray-200 font-semibold">
+                            <td className="py-1.5 px-2 text-black font-bold">{lo.title}</td>
+                            <td className="py-1.5 px-2 text-gray-700">{lo.desc}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* 5. CUG Telephone Directory */}
+            <div className="break-after-page mb-6 border-2 border-black rounded-xl p-4 bg-white">
+              <div className="border-b-2 border-black pb-2 mb-3 text-center">
+                <h3 className="text-base sm:text-lg font-black uppercase text-black">कार्यालय वरिष्ठ पुलिस अधीक्षक, जनपद अयोध्या</h3>
+                <p className="text-xs font-bold text-gray-700">📞 अध्याय-19: महत्वपूर्ण प्रशासनिक एवं पुलिस टेलीफोन निर्देशिका (CUG)</p>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="border border-black rounded-lg overflow-hidden">
+                  <div className="bg-slate-900 text-white font-black text-xs py-1.5 px-3">
+                    उच्चाधिकारीगण एवं नियंत्रण कक्ष
+                  </div>
+                  <table className="w-full text-xs border-collapse">
+                    <tbody>
+                      {ELECTION_CUG_DIRECTORY.higher_officers.map((ho, idx) => (
+                        <tr key={idx} className="border-b border-gray-200">
+                          <td className="py-1.5 px-3 font-bold text-black">{ho.designation}</td>
+                          <td className="py-1.5 px-3 font-mono font-bold text-emerald-800 text-right">{ho.mobile}</td>
+                        </tr>
+                      ))}
+                      {ELECTION_CUG_DIRECTORY.control_rooms.map((cr, idx) => (
+                        <tr key={idx} className="border-b border-gray-200 bg-amber-50">
+                          <td className="py-1.5 px-3 font-bold text-amber-900">{cr.name}</td>
+                          <td className="py-1.5 px-3 font-mono font-bold text-amber-900 text-right">{cr.mobile}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                <div className="border border-black rounded-lg overflow-hidden">
+                  <div className="bg-slate-900 text-white font-black text-xs py-1.5 px-3">
+                    समस्त 18 थाना प्रभारी CUG सीयूजी नंबर
+                  </div>
+                  <div className="overflow-y-auto max-h-[420px]">
+                    <table className="w-full text-xs border-collapse">
+                      <tbody>
+                        {ELECTION_CUG_DIRECTORY.thanas.map((th, idx) => (
+                          <tr key={idx} className="border-b border-gray-200 font-semibold">
+                            <td className="py-1 px-3 text-black font-bold">{th.thana}</td>
+                            <td className="py-1 px-3 font-mono font-bold text-emerald-800 text-right">{th.mobile}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ========================================================================= */}
         {/* PAGE 3 ONWARDS: GROUPED FIELD DEPLOYMENT TABLES (ZONE -> SECTOR -> DUTY)   */}
         {/* ========================================================================= */}
         <div className="space-y-4">
@@ -511,9 +798,9 @@ function stripNumbering(rawText = '') {
                   <div className="flex items-center gap-2 shrink-0">
                     <button
                       onClick={() => handleOpenEditModal('zone', zoneName, `ज़ोन निर्देश: ${zoneName}`)}
-                      className="no-print text-[11px] bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-2.5 py-1 rounded-md cursor-pointer transition flex items-center gap-1 shadow-2xs"
+                      className="no-print text-[11px] bg-slate-900 hover:bg-slate-800 text-white font-bold px-2.5 py-1 rounded-md cursor-pointer transition flex items-center gap-1 shadow-2xs"
                     >
-                      <Edit3 className="w-3 h-3" />
+                      <Edit3 className="w-3 h-3 text-amber-400" />
                       <span>{zoneInstruction ? 'संशोधित करें' : '+ निर्देश जोड़ें'}</span>
                     </button>
                     <span className="text-[10px] font-mono text-slate-400 tracking-wider">OFFICIAL ZONE</span>
@@ -532,13 +819,38 @@ function stripNumbering(rawText = '') {
 
                 {Object.keys(groupedData[zoneName]).map((sectorName, sIdx) => {
                   const sectorInstruction = manualInstructions.sectors?.[sectorName];
-                  const sampleSectorRec = (records || []).find(r => 
-                    (r.zone || '').trim() === zoneName.trim() && 
-                    (r.sector || '').trim() === sectorName.trim() && 
-                    (r.sector_incharge || r.sector_officer)
-                  );
-                  const sectorIncharge = sampleSectorRec?.sector_incharge || sampleSectorRec?.sector_officer || '';
-                  const sectorSahyogarth = sampleSectorRec?.sector_sahyogarth || sampleSectorRec?.sector_assistant || '';
+                  const sampleSectorRec = (records || []).find(r => {
+                    if (!r) return false;
+                    const sMatch = (r.sector || '').trim().toLowerCase() === sectorName.trim().toLowerCase();
+                    const inc = (
+                      r.sector_incharge || 
+                      r.sector_officer || 
+                      r.sectorOfficer || 
+                      r.sectorIncharge || 
+                      r.sector_magistrate || 
+                      r.incharge || 
+                      r['सेक्टर प्रभारी'] ||
+                      r['सेक्टर अधिकारी'] ||
+                      r['सेक्टर मजिस्ट्रेट'] ||
+                      r['प्रभारी'] ||
+                      ''
+                    ).trim();
+                    return sMatch && inc && inc !== '-';
+                  });
+                  const sectorIncharge = (
+                    sampleSectorRec?.sector_incharge || 
+                    sampleSectorRec?.sector_officer || 
+                    sampleSectorRec?.sectorOfficer || 
+                    sampleSectorRec?.sectorIncharge || 
+                    sampleSectorRec?.sector_magistrate || 
+                    sampleSectorRec?.incharge || 
+                    sampleSectorRec?.['सेक्टर प्रभारी'] || 
+                    sampleSectorRec?.['सेक्टर अधिकारी'] || 
+                    sampleSectorRec?.['सेक्टर मजिस्ट्रेट'] || 
+                    sampleSectorRec?.['प्रभारी'] || 
+                    ''
+                  ).trim();
+                  const sectorSahyogarth = (sampleSectorRec?.sector_sahyogarth || sampleSectorRec?.sector_assistant || '').trim();
 
                   return (
                     <div key={sIdx} className="space-y-2.5">
@@ -599,9 +911,24 @@ function stripNumbering(rawText = '') {
                             <div className="bg-slate-100 px-3 py-1.5 border-b-2 border-black space-y-0.5">
                               {/* Row 1: Duty Place Name + Total Personnel Badge + Instruction Button */}
                               <div className="flex items-start sm:items-center justify-between gap-2">
-                                <div className="flex items-center gap-1.5 font-black text-xs sm:text-sm text-black">
+                                <div className="flex items-center gap-1.5 font-black text-xs sm:text-sm text-black flex-wrap">
                                   <MapPin className="w-3.5 h-3.5 text-black shrink-0" />
                                   <span><strong>ड्यूटी स्थल:</strong> {placeName}</span>
+                                  {placeRecords[0]?.booth_no && (
+                                    <span className="ml-1 px-2 py-0.5 bg-slate-900 text-white rounded text-[11px] font-bold">
+                                      बूथ सं० {placeRecords[0].booth_no}
+                                    </span>
+                                  )}
+                                  {placeRecords[0]?.category && (
+                                    <span className="ml-1 px-2 py-0.5 bg-amber-100 text-amber-900 border border-amber-300 rounded text-[11px] font-bold">
+                                      {placeRecords[0].category}
+                                    </span>
+                                  )}
+                                  {placeRecords[0]?.vehicle_no && (
+                                    <span className="ml-1 px-2 py-0.5 bg-blue-100 text-blue-900 border border-blue-300 rounded text-[11px] font-mono font-bold">
+                                      🚌 बस नं० {placeRecords[0].vehicle_no}
+                                    </span>
+                                  )}
                                 </div>
                                 <div className="flex items-center gap-2">
                                   <button
@@ -706,9 +1033,9 @@ function stripNumbering(rawText = '') {
               </div>
               <button
                 onClick={() => handleOpenEditModal('general', 'generalEnd', 'अंतिम सामान्य सुरक्षा निर्देश')}
-                className="no-print text-[10px] bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-2 py-0.5 rounded cursor-pointer flex items-center gap-1"
+                className="no-print text-[10px] bg-slate-900 hover:bg-slate-800 text-white font-bold px-2 py-0.5 rounded cursor-pointer flex items-center gap-1 shadow-2xs"
               >
-                <Edit3 className="w-3 h-3" />
+                <Edit3 className="w-3 h-3 text-amber-400" />
                 <span>संशोधित करें</span>
               </button>
             </div>
@@ -840,9 +1167,9 @@ function stripNumbering(rawText = '') {
                   </button>
                   <button
                     type="submit"
-                    className="px-5 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black rounded-xl shadow transition active:scale-95 cursor-pointer flex items-center gap-1.5"
+                    className="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl shadow-xs transition active:scale-95 cursor-pointer flex items-center gap-1.5"
                   >
-                    <Check className="w-4 h-4 stroke-[3]" />
+                    <Check className="w-4 h-4 stroke-[3] text-emerald-400" />
                     <span>बुकलेट में सहेजें</span>
                   </button>
                 </div>

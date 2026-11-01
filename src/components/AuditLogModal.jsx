@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { History, Shield, FileSpreadsheet, X, Clock, Download, CheckCircle2, Lock } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { fetchAamadFromSupabase, AAMAD_AUDIT_LOG_KEY } from '../utils/aamadSync';
@@ -7,7 +7,7 @@ import * as XLSX from 'xlsx';
 export default function AuditLogModal({ isOpen, onClose }) {
   const { language } = useLanguage();
 
-  const [auditLogs, setAuditLogs] = React.useState(() => {
+  const [auditLogs, setAuditLogs] = useState(() => {
     try {
       const saved = localStorage.getItem(AAMAD_AUDIT_LOG_KEY);
       if (saved) return JSON.parse(saved);
@@ -16,7 +16,7 @@ export default function AuditLogModal({ isOpen, onClose }) {
   });
 
   // Re-read from Supabase & local storage when opened
-  React.useEffect(() => {
+  useEffect(() => {
     if (isOpen) {
       async function loadLogs() {
         const cloudData = await fetchAamadFromSupabase();

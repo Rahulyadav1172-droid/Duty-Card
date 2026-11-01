@@ -86,9 +86,9 @@ export default function InstallPwaModal() {
           <div className="flex items-center gap-1.5 shrink-0">
             <button
               onClick={handleInstallClick}
-              className="px-3 py-1.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-black text-xs rounded-xl shadow transition-all active:scale-95 flex items-center gap-1 cursor-pointer"
+              className="px-3.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl shadow-xs transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer"
             >
-              <Download className="w-3.5 h-3.5" />
+              <Download className="w-3.5 h-3.5 text-amber-400" />
               <span>इंस्टॉल</span>
             </button>
             <button
@@ -178,9 +178,9 @@ export default function InstallPwaModal() {
                 {deferredPrompt && (
                   <button
                     onClick={handleInstallClick}
-                    className="w-full py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-black rounded-xl shadow active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer mt-2"
+                    className="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl shadow-xs active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer mt-2"
                   >
-                    <Download className="w-4 h-4" />
+                    <Download className="w-4 h-4 text-amber-400" />
                     <span>अभी इंस्टॉल करें</span>
                   </button>
                 )}

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { RefreshCw, UserCheck, UserPlus, Shield, MapPin, Search, Check, AlertCircle, X, Clock, ArrowRight } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 
@@ -28,7 +28,7 @@ export default function DutyReplacementModal({
   const [substituteRemark, setSubstituteRemark] = useState('');
 
   // Reset state when opened for a new record
-  React.useEffect(() => {
+  useEffect(() => {
     if (isOpen && targetRecord) {
       setSelectedNewOfficer(null);
       setReason('');
@@ -338,9 +338,9 @@ export default function DutyReplacementModal({
               <button
                 type="submit"
                 disabled={!selectedNewOfficer || !reason.trim()}
-                className={`px-5 py-2.5 font-black text-xs rounded-xl flex items-center gap-1.5 transition cursor-pointer shadow-sm ${
+                className={`px-5 py-2.5 font-bold text-xs rounded-xl flex items-center gap-1.5 transition active:scale-95 cursor-pointer shadow-xs ${
                   selectedNewOfficer && reason.trim()
-                    ? 'bg-amber-500 hover:bg-amber-400 text-slate-950'
+                    ? 'bg-slate-900 hover:bg-slate-800 text-white'
                     : 'bg-slate-200 text-slate-400 cursor-not-allowed'
                 }`}
               >
@@ -461,7 +461,7 @@ export default function DutyReplacementModal({
               </button>
               <button
                 type="submit"
-                className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-black text-xs rounded-xl flex items-center gap-1.5 transition cursor-pointer shadow-sm"
+                className="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl flex items-center gap-1.5 transition active:scale-95 cursor-pointer shadow-xs"
               >
                 <Check className="w-3.5 h-3.5" />
                 <span>गैर-जनपद प्रतिस्थानी दर्ज करें</span>

@@ -3,6 +3,7 @@ import React from 'react';
 import { renderToString } from 'react-dom/server';
 import { QRCodeSVG } from 'qrcode.react';
 import { resolvePoliceRank, stripRankFromName } from './rankResolver';
+import { ELECTION_DUTY_CARD_INSTRUCTIONS, ELECTION_CUG_DIRECTORY } from '../data/electionStandardData';
 
 export function printLegalBulk({
   records = [],
@@ -16,7 +17,8 @@ export function printLegalBulk({
   isBriefingEnabled = true,
   layoutMode = 6, // 2 (Election Special with Co-force), 4, or 6 cards per page
   includeCoForce = true,
-  paperSize = 'a4' // 'a4' | 'legal'
+  paperSize = 'a4', // 'a4' | 'legal'
+  includeBackSide = false
 }) {
   try {
     const validRecords = (records || []).filter(r => r && (r.name || r.id));
@@ -137,7 +139,17 @@ export function printLegalBulk({
 
         // Clean & Parse Zone and Zonal Incharge
         let cleanZone = (duty.zone || '').trim();
-        let cleanZonalIncharge = (duty.zonal_incharge || duty.zonal || '').trim();
+        let cleanZonalIncharge = (
+          duty.zonal_incharge || 
+          duty.zonal || 
+          duty.zonal_officer || 
+          duty.zonalOfficer || 
+          duty.zone_incharge || 
+          duty.zonal_magistrate ||
+          duty['जोनाल प्रभारी'] ||
+          duty['जोनल प्रभारी'] ||
+          ''
+        ).trim();
         if (cleanZonalIncharge === '-') cleanZonalIncharge = '';
 
         if (!cleanZonalIncharge && cleanZone.includes('/')) {
@@ -151,9 +163,42 @@ export function printLegalBulk({
           cleanZone = cleanZone.replace(cleanZonalIncharge, '').replace(/\/+\s*$/, '').trim();
         }
 
+        if (!cleanZonalIncharge && cleanZone && Array.isArray(records)) {
+          const matchedZone = records.find(r => 
+            r && 
+            (r.zone || '').trim().toLowerCase() === cleanZone.toLowerCase() && 
+            (r.zonal_incharge || r.zonal || r.zonal_officer || r.zonalOfficer || r.zone_incharge || r['जोनाल प्रभारी'] || r['जोनल प्रभारी'])
+          );
+          if (matchedZone) {
+            cleanZonalIncharge = (
+              matchedZone.zonal_incharge || 
+              matchedZone.zonal || 
+              matchedZone.zonal_officer || 
+              matchedZone.zonalOfficer || 
+              matchedZone.zone_incharge || 
+              matchedZone['जोनाल प्रभारी'] || 
+              matchedZone['जोनल प्रभारी'] || 
+              ''
+            ).trim();
+          }
+        }
+
         // Clean & Parse Sector and Sector Incharge
         let cleanSector = (duty.sector || '').trim();
-        let cleanSectorIncharge = (duty.sector_incharge || '').trim();
+        let cleanSectorIncharge = (
+          duty.sector_incharge || 
+          duty.sector_officer || 
+          duty.sectorOfficer || 
+          duty.sectorIncharge || 
+          duty.sector_magistrate || 
+          duty.sectorMagistrate || 
+          duty.incharge || 
+          duty['सेक्टर प्रभारी'] ||
+          duty['सेक्टर अधिकारी'] ||
+          duty['सेक्टर मजिस्ट्रेट'] ||
+          duty['प्रभारी'] ||
+          ''
+        ).trim();
         if (cleanSectorIncharge === '-') cleanSectorIncharge = '';
 
         if (!cleanSectorIncharge && cleanSector.includes('/')) {
@@ -165,6 +210,46 @@ export function printLegalBulk({
         }
         if (cleanSectorIncharge && cleanSector.includes(cleanSectorIncharge)) {
           cleanSector = cleanSector.replace(cleanSectorIncharge, '').replace(/\/+\s*$/, '').trim();
+        }
+
+        if (!cleanSectorIncharge && cleanSector && Array.isArray(records)) {
+          const matchedSector = records.find(r => {
+            if (!r) return false;
+            const rSec = (r.sector || '').trim().toLowerCase();
+            const currSec = cleanSector.toLowerCase();
+            const isSame = rSec === currSec || rSec.startsWith(currSec) || currSec.startsWith(rSec);
+            const inc = (
+              r.sector_incharge || 
+              r.sector_officer || 
+              r.sectorOfficer || 
+              r.sectorIncharge || 
+              r.sector_magistrate || 
+              r.sectorMagistrate || 
+              r.incharge || 
+              r['सेक्टर प्रभारी'] ||
+              r['सेक्टर अधिकारी'] ||
+              r['सेक्टर मजिस्ट्रेट'] ||
+              r['प्रभारी'] ||
+              ''
+            ).trim();
+            return isSame && inc && inc !== '-';
+          });
+          if (matchedSector) {
+            cleanSectorIncharge = (
+              matchedSector.sector_incharge || 
+              matchedSector.sector_officer || 
+              matchedSector.sectorOfficer || 
+              matchedSector.sectorIncharge || 
+              matchedSector.sector_magistrate || 
+              matchedSector.sectorMagistrate || 
+              matchedSector.incharge || 
+              matchedSector['सेक्टर प्रभारी'] || 
+              matchedSector['सेक्टर अधिकारी'] || 
+              matchedSector['सेक्टर मजिस्ट्रेट'] || 
+              matchedSector['प्रभारी'] || 
+              ''
+            ).trim();
+          }
         }
 
         // 2-Column Compact Format for Co-deployed Force (Zero scrollbars)
@@ -263,6 +348,34 @@ export function printLegalBulk({
                     <td class="td-lbl">ड्यूटी स्थल</td>
                     <td class="td-val td-duty-val">${escapeHtml(duty.duty_place || '-')}</td>
                   </tr>
+                  ${duty.booth_no ? `
+                  <tr class="row-booth">
+                    <td class="td-lbl">बूथ सं० / श्रेणी</td>
+                    <td class="td-val font-bold" style="color:#1e3a8a;">
+                      बूथ सं० <strong>${escapeHtml(duty.booth_no)}</strong> ${duty.category ? `(${escapeHtml(duty.category)})` : ''}
+                    </td>
+                  </tr>` : ''}
+                  ${(duty.vehicle_no || duty.bus_no) ? `
+                  <tr class="row-vehicle">
+                    <td class="td-lbl">वाहन / बस सं०</td>
+                    <td class="td-val font-bold" style="color:#b45309;">
+                      🚌 वाहन सं० <strong>${escapeHtml(duty.vehicle_no || duty.bus_no)}</strong>
+                    </td>
+                  </tr>` : ''}
+                  ${(duty.weapon || duty.duty_type || duty.weapon_type) ? `
+                  <tr class="row-weapon">
+                    <td class="td-lbl">शस्त्र स्थिति</td>
+                    <td class="td-val font-bold" style="color:#0f766e;">
+                      🛡️ ${escapeHtml(duty.weapon || duty.duty_type || duty.weapon_type)}
+                    </td>
+                  </tr>` : ''}
+                  ${(duty.capf || duty.pac) ? `
+                  <tr class="row-capf">
+                    <td class="td-lbl">सीएपीएफ/पीएसी</td>
+                    <td class="td-val font-bold" style="color:#6b21a8;">
+                      🎖️ ${escapeHtml(duty.capf || duty.pac)}
+                    </td>
+                  </tr>` : ''}
                   <tr>
                     <td class="td-lbl">दिनाँक व समय</td>
                     <td class="td-val font-bold">${escapeHtml(duty.shift || '-')}</td>
@@ -356,6 +469,85 @@ export function printLegalBulk({
           ${cardsHtml}
         </div>
       `;
+
+      // If Back Side printing is requested, append the paired Back Page (Duplex ready)
+      if (includeBackSide) {
+        let backCardsHtml = '';
+        for (let c = 0; c < CARDS_PER_PAGE; c++) {
+          backCardsHtml += `
+            <div class="duty-card card-back-face" style="display:flex; flex-direction:column; justify-content:space-between; padding:${is2In1 ? '8px 10px' : is4In1 ? '6px 8px' : '4px 6px'}; background:#ffffff; border:1.8px solid #0f172a; border-radius:6px; box-sizing:border-box; overflow:hidden;">
+              <div style="border-bottom:1.5px solid #0f172a; padding-bottom:3px; margin-bottom:3px; text-align:center;">
+                <div style="font-weight:900; font-size:${is2In1 ? '11.5px' : is4In1 ? '9px' : '7.5px'}; color:#0f172a; letter-spacing:0.2px;">
+                  ⚖️ पुलिस कर्मियों हेतु 16 महत्वपूर्ण निर्देश (आदर्श आचार संहिता व कर्तव्य)
+                </div>
+                <div style="font-size:${is2In1 ? '8.5px' : '6.5px'}; color:#475569; font-weight:bold;">
+                  कार्यालय वरिष्ठ पुलिस अधीक्षक, जनपद अयोध्या — निष्पक्ष, निर्भीक व पारदर्शी निर्वाचन
+                </div>
+              </div>
+
+              <div style="flex:1; display:grid; grid-template-columns:${is2In1 ? '1.2fr 1fr' : '1fr'}; gap:5px; overflow:hidden;">
+                <!-- Instructions -->
+                <div style="overflow:hidden; font-size:${is2In1 ? '8.5px' : is4In1 ? '6.8px' : '5.8px'}; line-height:1.22;">
+                  <div style="font-weight:900; color:#1e293b; border-bottom:1px solid #cbd5e1; margin-bottom:2px;">
+                    📋 अनिवार्य आचार संहिता हिदायतें:
+                  </div>
+                  <div style="space-y:1px;">
+                    ${ELECTION_DUTY_CARD_INSTRUCTIONS.map(inst => `
+                      <div style="margin-bottom:${is2In1 ? '2px' : '1px'}; text-align:justify;">
+                        ${escapeHtml(inst)}
+                      </div>
+                    `).join('')}
+                  </div>
+                </div>
+
+                <!-- CUG Directory -->
+                <div style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:4px; padding:3px; display:flex; flex-direction:column; justify-content:space-between; overflow:hidden; font-size:${is2In1 ? '8px' : is4In1 ? '6.5px' : '5.5px'}; line-height:1.15;">
+                  <div>
+                    <div style="font-weight:900; color:#0f172a; text-align:center; background:#e2e8f0; padding:1px; margin-bottom:2px; font-size:${is2In1 ? '8.5px' : '6.8px'};">
+                      📞 सीयूजी दूरभाष निर्देशिका (जनपद अयोध्या)
+                    </div>
+                    <div style="margin-bottom:2px;">
+                      <span style="font-weight:900; color:#b45309;">उच्चाधिकारी: </span>
+                      ${ELECTION_CUG_DIRECTORY.higher_officers.slice(0, 6).map(h => `${escapeHtml(h.designation)}: <strong>${escapeHtml(h.mobile)}</strong>`).join(', ')}
+                    </div>
+                    <div style="margin-bottom:2px;">
+                      <span style="font-weight:900; color:#047857;">नियंत्रण कक्ष: </span>
+                      पुलिस: <strong>9454402648</strong> / 112 | जनपद: <strong>9454417465</strong>
+                    </div>
+                    <div style="margin-bottom:2px;">
+                      <span style="font-weight:900; color:#1d4ed8;">एसडीएम/सीओ: </span>
+                      ${ELECTION_CUG_DIRECTORY.sub_divisions.slice(0, 4).map(s => `${escapeHtml(s.sdm)}: <strong>${escapeHtml(s.sdm_mobile)}</strong> | ${escapeHtml(s.co)}: <strong>${escapeHtml(s.co_mobile)}</strong>`).join(' | ')}
+                    </div>
+                    <div>
+                      <span style="font-weight:900; color:#be123c;">थाना प्रभारी (SHOs): </span>
+                      ${ELECTION_CUG_DIRECTORY.police_stations.slice(0, 10).map(t => `${escapeHtml(t.thana)}: <strong>${escapeHtml(t.mobile)}</strong>`).join(', ')}
+                    </div>
+                  </div>
+                  <div style="border-top:1px solid #94a3b8; padding-top:1px; text-align:center; font-weight:900; font-size:${is2In1 ? '8.5px' : '6.5px'}; color:#0f172a;">
+                    ( वरिष्ठ पुलिस अधीक्षक, जनपद अयोध्या )
+                  </div>
+                </div>
+              </div>
+            </div>
+          `;
+        }
+
+        pagesHtml += `
+          <div class="legal-page page-back ${is2In1 ? 'page-2in1' : ''}">
+            ${is2In1 ? `
+              <div class="cut-line-h-center"></div>
+            ` : is4In1 ? `
+              <div class="cut-line-h-center"></div>
+              <div class="cut-line-v"></div>
+            ` : `
+              <div class="cut-line-h1"></div>
+              <div class="cut-line-h2"></div>
+              <div class="cut-line-v"></div>
+            `}
+            ${backCardsHtml}
+          </div>
+        `;
+      }
     }
 
     const isA4 = paperSize === 'a4';
@@ -1006,7 +1198,8 @@ export function printIndividualPass({
   customNote = '',
   isNoteEnabled = true,
   customBriefing = '',
-  isBriefingEnabled = true
+  isBriefingEnabled = true,
+  includeBackSide = true
 }) {
   if (!duty) return;
 
@@ -1021,7 +1214,8 @@ export function printIndividualPass({
       customNote,
       isNoteEnabled,
       customBriefing,
-      isBriefingEnabled
+      isBriefingEnabled,
+      includeBackSide
     });
 
     const printWindow = window.open('', '_blank');
@@ -1052,7 +1246,8 @@ export function generateIndividualPassHtml({
   customNote = '',
   isNoteEnabled = true,
   customBriefing = '',
-  isBriefingEnabled = true
+  isBriefingEnabled = true,
+  includeBackSide = true
 }) {
   if (!duty) return '';
 
@@ -1073,6 +1268,124 @@ export function generateIndividualPassHtml({
 
   const activeNote = (isNoteEnabled !== false && customNote) ? customNote : (isNoteEnabled ? (duty.note || '') : '');
   const activeBriefing = (isBriefingEnabled !== false && customBriefing) ? customBriefing : (isBriefingEnabled ? (duty.briefing_place || '') : '');
+
+  // 1. Resolve Zone & Zonal Incharge
+  let cleanZone = (duty.zone || '').trim();
+  let cleanZonalIncharge = (
+    duty.zonal_incharge || 
+    duty.zonal || 
+    duty.zonal_officer || 
+    duty.zonalOfficer || 
+    duty.zone_incharge || 
+    duty.zonal_magistrate ||
+    duty['जोनाल प्रभारी'] ||
+    duty['जोनल प्रभारी'] ||
+    ''
+  ).trim();
+  if (cleanZonalIncharge === '-') cleanZonalIncharge = '';
+
+  if (!cleanZonalIncharge && cleanZone.includes('/')) {
+    const parts = cleanZone.split('/');
+    cleanZone = parts[0].trim();
+    cleanZonalIncharge = parts.slice(1).join('/').trim();
+  } else if (cleanZone.endsWith('/')) {
+    cleanZone = cleanZone.replace(/\/+\s*$/, '').trim();
+  }
+  if (cleanZonalIncharge && cleanZone.includes(cleanZonalIncharge)) {
+    cleanZone = cleanZone.replace(cleanZonalIncharge, '').replace(/\/+\s*$/, '').trim();
+  }
+
+  // Cross-lookup in allRecords for zonal incharge if missing
+  if (!cleanZonalIncharge && cleanZone && Array.isArray(allRecords)) {
+    const matchedZoneRec = allRecords.find(r => 
+      r && 
+      (r.zone || '').trim().toLowerCase() === cleanZone.toLowerCase() && 
+      (r.zonal_incharge || r.zonal || r.zonal_officer || r.zonalOfficer || r.zone_incharge || r['जोनाल प्रभारी'] || r['जोनल प्रभारी'])
+    );
+    if (matchedZoneRec) {
+      cleanZonalIncharge = (
+        matchedZoneRec.zonal_incharge || 
+        matchedZoneRec.zonal || 
+        matchedZoneRec.zonal_officer || 
+        matchedZoneRec.zonalOfficer || 
+        matchedZoneRec.zone_incharge || 
+        matchedZoneRec['जोनाल प्रभारी'] || 
+        matchedZoneRec['जोनल प्रभारी'] || 
+        ''
+      ).trim();
+    }
+  }
+
+  // 2. Resolve Sector & Sector Incharge
+  let cleanSector = (duty.sector || '').trim();
+  let cleanSectorIncharge = (
+    duty.sector_incharge || 
+    duty.sector_officer || 
+    duty.sectorOfficer || 
+    duty.sectorIncharge || 
+    duty.sector_magistrate || 
+    duty.sectorMagistrate || 
+    duty.incharge || 
+    duty['सेक्टर प्रभारी'] ||
+    duty['सेक्टर अधिकारी'] ||
+    duty['सेक्टर मजिस्ट्रेट'] ||
+    duty['प्रभारी'] ||
+    ''
+  ).trim();
+  if (cleanSectorIncharge === '-') cleanSectorIncharge = '';
+
+  if (!cleanSectorIncharge && cleanSector.includes('/')) {
+    const parts = cleanSector.split('/');
+    cleanSector = parts[0].trim();
+    cleanSectorIncharge = parts.slice(1).join('/').trim();
+  } else if (cleanSector.endsWith('/')) {
+    cleanSector = cleanSector.replace(/\/+\s*$/, '').trim();
+  }
+  if (cleanSectorIncharge && cleanSector.includes(cleanSectorIncharge)) {
+    cleanSector = cleanSector.replace(cleanSectorIncharge, '').replace(/\/+\s*$/, '').trim();
+  }
+
+  // Cross-lookup in allRecords for sector incharge if missing
+  if (!cleanSectorIncharge && cleanSector && Array.isArray(allRecords)) {
+    const matchedSectorRec = allRecords.find(r => {
+      if (!r) return false;
+      const rSec = (r.sector || '').trim().toLowerCase();
+      const currSec = cleanSector.toLowerCase();
+      const isSameSector = rSec === currSec || rSec.startsWith(currSec) || currSec.startsWith(rSec);
+      const inc = (
+        r.sector_incharge || 
+        r.sector_officer || 
+        r.sectorOfficer || 
+        r.sectorIncharge || 
+        r.sector_magistrate || 
+        r.sectorMagistrate || 
+        r.incharge || 
+        r['सेक्टर प्रभारी'] ||
+        r['सेक्टर अधिकारी'] ||
+        r['सेक्टर मजिस्ट्रेट'] ||
+        r['प्रभारी'] ||
+        ''
+      ).trim();
+      return isSameSector && inc && inc !== '-';
+    });
+
+    if (matchedSectorRec) {
+      cleanSectorIncharge = (
+        matchedSectorRec.sector_incharge || 
+        matchedSectorRec.sector_officer || 
+        matchedSectorRec.sectorOfficer || 
+        matchedSectorRec.sectorIncharge || 
+        matchedSectorRec.sector_magistrate || 
+        matchedSectorRec.sectorMagistrate || 
+        matchedSectorRec.incharge || 
+        matchedSectorRec['सेक्टर प्रभारी'] || 
+        matchedSectorRec['सेक्टर अधिकारी'] || 
+        matchedSectorRec['सेक्टर मजिस्ट्रेट'] || 
+        matchedSectorRec['प्रभारी'] || 
+        ''
+      ).trim();
+    }
+  }
 
   // Find co-deployed force at the exact same duty place
   const coForceList = (allRecords || []).filter(r => 
@@ -1382,17 +1695,45 @@ export function generateIndividualPassHtml({
               <td class="lbl-td">ड्यूटी का स्थान</td>
               <td class="val-td duty-place-val">${escapeHtml(duty.duty_place || '-')}</td>
             </tr>
+            ${duty.booth_no ? `
+            <tr>
+              <td class="lbl-td">बूथ सं० / श्रेणी</td>
+              <td class="val-td" style="color:#1e3a8a; font-weight:900;">
+                बूथ सं० <strong>${escapeHtml(duty.booth_no)}</strong> ${duty.category ? `(${escapeHtml(duty.category)})` : ''}
+              </td>
+            </tr>` : ''}
+            ${(duty.vehicle_no || duty.bus_no) ? `
+            <tr>
+              <td class="lbl-td">वाहन संख्या (Bus No.)</td>
+              <td class="val-td" style="color:#b45309; font-weight:900;">
+                🚌 वाहन सं० <strong>${escapeHtml(duty.vehicle_no || duty.bus_no)}</strong>
+              </td>
+            </tr>` : ''}
+            ${(duty.weapon || duty.duty_type || duty.weapon_type) ? `
+            <tr>
+              <td class="lbl-td">शस्त्र स्थिति</td>
+              <td class="val-td" style="color:#0f766e; font-weight:900;">
+                🛡️ ${escapeHtml(duty.weapon || duty.duty_type || duty.weapon_type)}
+              </td>
+            </tr>` : ''}
+            ${(duty.capf || duty.pac) ? `
+            <tr>
+              <td class="lbl-td">सीएपीएफ/पीएसी</td>
+              <td class="val-td" style="color:#6b21a8; font-weight:900;">
+                🎖️ ${escapeHtml(duty.capf || duty.pac)}
+              </td>
+            </tr>` : ''}
             <tr>
               <td class="lbl-td">दिनाँक व समय</td>
               <td class="val-td">${escapeHtml(duty.shift || '-')}</td>
             </tr>
             <tr>
               <td class="lbl-td">जोन / जोनाल प्रभारी</td>
-              <td class="val-td">${escapeHtml(duty.zone || '-')} / <strong>${escapeHtml(duty.zonal_incharge || duty.zonal || '-')}</strong></td>
+              <td class="val-td">${escapeHtml(cleanZone || '-')}${cleanZonalIncharge ? ` / <strong>${escapeHtml(cleanZonalIncharge)}</strong>` : ''}</td>
             </tr>
             <tr>
               <td class="lbl-td">सेक्टर / सेक्टर प्रभारी</td>
-              <td class="val-td">${escapeHtml(duty.sector || '-')} / <strong>${escapeHtml(duty.sector_incharge || '-')}</strong></td>
+              <td class="val-td">${escapeHtml(cleanSector || '-')}${cleanSectorIncharge ? ` / <strong>${escapeHtml(cleanSectorIncharge)}</strong>` : ''}</td>
             </tr>
             ${activeBriefing ? `
             <tr style="background:#f0fdf4;">
@@ -1428,6 +1769,78 @@ export function generateIndividualPassHtml({
           </div>
         </div>
       </div>
+
+      ${includeBackSide ? `
+      <!-- ================= PAGE 2: OFFICIAL BACK SIDE ================= -->
+      <div class="pass-container" style="page-break-before:always; break-before:page; margin-top:20px;">
+        <div style="border-bottom:2px solid #0f172a; padding-bottom:6px; margin-bottom:10px; text-align:center;">
+          <div style="font-size:18px; font-weight:900; color:#0f172a;">
+            ⚖️ पुलिस कर्मियों हेतु 16 महत्वपूर्ण निर्देश (आदर्श आचार संहिता व कर्तव्य)
+          </div>
+          <div style="font-size:12px; color:#475569; font-weight:bold; margin-top:2px;">
+            कार्यालय वरिष्ठ पुलिस अधीक्षक, जनपद अयोध्या — निष्पक्ष, निर्भीक व पारदर्शी निर्वाचन 2024
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns: 1.15fr 1fr; gap:14px; font-size:11.5px; line-height:1.35;">
+          <!-- Left: 16 Instructions -->
+          <div style="background:#ffffff; border:1px solid #cbd5e1; border-radius:8px; padding:10px;">
+            <div style="font-size:13px; font-weight:900; color:#1e293b; border-bottom:1.5px solid #cbd5e1; padding-bottom:4px; margin-bottom:6px;">
+              📋 अनिवार्य आचार संहिता हिदायतें:
+            </div>
+            <div style="space-y:4px;">
+              ${ELECTION_DUTY_CARD_INSTRUCTIONS.map(inst => `
+                <div style="margin-bottom:5px; text-align:justify; color:#0f172a;">
+                  ${escapeHtml(inst)}
+                </div>
+              `).join('')}
+            </div>
+          </div>
+
+          <!-- Right: CUG Directory -->
+          <div style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:8px; padding:10px; display:flex; flex-direction:column; justify-content:space-between;">
+            <div>
+              <div style="font-size:13px; font-weight:900; color:#0f172a; text-align:center; background:#e2e8f0; padding:4px; border-radius:4px; margin-bottom:8px;">
+                📞 महत्वपूर्ण सीयूजी दूरभाष निर्देशिका
+              </div>
+
+              <div style="margin-bottom:8px;">
+                <div style="font-weight:900; color:#b45309; font-size:12px; margin-bottom:2px;">उच्चाधिकारीगण:</div>
+                <div style="font-size:11px; line-height:1.3;">
+                  ${ELECTION_CUG_DIRECTORY.higher_officers.map(h => `<div>${escapeHtml(h.designation)}: <strong>${escapeHtml(h.mobile)}</strong></div>`).join('')}
+                </div>
+              </div>
+
+              <div style="margin-bottom:8px;">
+                <div style="font-weight:900; color:#047857; font-size:12px; margin-bottom:2px;">कंट्रोल रूम:</div>
+                <div style="font-size:11px; line-height:1.3;">
+                  <div>पुलिस नियंत्रण कक्ष: <strong>9454402648</strong> / 112</div>
+                  <div>जनपद चुनाव कंट्रोल रूम: <strong>9454417465</strong> / 05278-224218</div>
+                </div>
+              </div>
+
+              <div style="margin-bottom:8px;">
+                <div style="font-weight:900; color:#1d4ed8; font-size:12px; margin-bottom:2px;">उपजिलाधिकारी / क्षेत्राधिकारी:</div>
+                <div style="font-size:10.5px; line-height:1.3; max-height:110px; overflow-y:auto;">
+                  ${ELECTION_CUG_DIRECTORY.sub_divisions.map(s => `<div>${escapeHtml(s.sdm)}: <strong>${escapeHtml(s.sdm_mobile)}</strong> | ${escapeHtml(s.co)}: <strong>${escapeHtml(s.co_mobile)}</strong></div>`).join('')}
+                </div>
+              </div>
+
+              <div>
+                <div style="font-weight:900; color:#be123c; font-size:12px; margin-bottom:2px;">थाना प्रभारी (SHOs):</div>
+                <div style="font-size:10px; line-height:1.25; max-height:120px; overflow-y:auto;">
+                  ${ELECTION_CUG_DIRECTORY.police_stations.map(t => `<span style="display:inline-block; margin-right:6px;">${escapeHtml(t.thana)}: <strong>${escapeHtml(t.mobile)}</strong></span>`).join(' | ')}
+                </div>
+              </div>
+            </div>
+
+            <div style="border-top:1.5px solid #0f172a; padding-top:6px; margin-top:10px; text-align:center; font-weight:900; font-size:13px; color:#0f172a;">
+              ( वरिष्ठ पुलिस अधीक्षक, जनपद अयोध्या )
+            </div>
+          </div>
+        </div>
+      </div>
+      ` : ''}
 
       <script>
         window.onload = function() {

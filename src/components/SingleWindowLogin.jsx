@@ -134,12 +134,12 @@ export default function SingleWindowLogin({ isOpen, onClose, onLoginSuccess }) {
             }}
             className={`py-2.5 rounded-xl transition flex items-center justify-center gap-1.5 cursor-pointer ${
               selectedRole === 'senior'
-                ? 'bg-amber-500 text-slate-950 font-black shadow-xs'
+                ? 'bg-slate-900 text-white font-bold shadow-xs'
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
             <UserCheck className="w-4 h-4" />
-            वरिष्ठ अधिकारी
+            <span>वरिष्ठ अधिकारी</span>
           </button>
 
           <button
@@ -151,12 +151,12 @@ export default function SingleWindowLogin({ isOpen, onClose, onLoginSuccess }) {
             }}
             className={`py-2.5 rounded-xl transition flex items-center justify-center gap-1.5 cursor-pointer ${
               selectedRole === 'admin'
-                ? 'bg-amber-500 text-slate-950 font-black shadow-xs'
+                ? 'bg-slate-900 text-white font-bold shadow-xs'
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
             <Lock className="w-4 h-4" />
-            मुख्य एडमिन
+            <span>मुख्य एडमिन</span>
           </button>
         </div>
 
@@ -232,11 +232,11 @@ export default function SingleWindowLogin({ isOpen, onClose, onLoginSuccess }) {
               <button
                 type="submit"
                 disabled={lockoutTimer > 0}
-                className={`w-full py-3 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-sm rounded-xl shadow-sm transition active:scale-98 flex items-center justify-center gap-2 cursor-pointer ${
+                className={`w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm rounded-xl shadow-xs transition active:scale-98 flex items-center justify-center gap-2 cursor-pointer ${
                   lockoutTimer > 0 ? 'opacity-60 cursor-not-allowed' : ''
                 }`}
               >
-                <KeyRound className="w-4 h-4" />
+                <KeyRound className="w-4 h-4 text-amber-400" />
                 <span>{lockoutTimer > 0 ? `अवरुद्ध (${lockoutTimer}s)` : 'सुरक्षित लॉगिन करें'}</span>
               </button>
             </div>
@@ -339,9 +339,9 @@ export default function SingleWindowLogin({ isOpen, onClose, onLoginSuccess }) {
 
               <button
                 type="submit"
-                className="px-5 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs rounded-xl shadow transition active:scale-95 cursor-pointer flex items-center gap-1.5"
+                className="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl shadow-xs transition active:scale-95 cursor-pointer flex items-center gap-1.5"
               >
-                <RotateCcw className="w-3.5 h-3.5 stroke-[2.5]" />
+                <RotateCcw className="w-3.5 h-3.5 stroke-[2.5] text-amber-400" />
                 <span>पासवर्ड रीसेट करें</span>
               </button>
             </div>

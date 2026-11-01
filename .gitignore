@@ -33,3 +33,15 @@ Thumbs.db
 *.njsproj
 *.sln
 *.sw?
+
+# Scratch & Local temporary analysis files
+scratch/
+Election data/
+*.txt
+extract_*.py
+inspect_*.py
+generate_election_data.py
+print_summary.py
+test_import.py
+*_extracted.json
+scratch_analysis.json

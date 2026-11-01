@@ -125,49 +125,49 @@ export default function MasterForceManager({ forceRecords, onUpdateForce }) {
 
   return (
     <div className="w-full max-w-7xl mx-auto space-y-6 font-devanagari text-slate-900">
-      {/* Header Banner (Light Theme) */}
-      <div className="bg-white p-5 sm:p-7 rounded-3xl border border-slate-200 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+      {/* Header Banner (Executive Slate Theme) */}
+      <div className="bg-white p-5 sm:p-6 rounded-2xl border border-slate-200/90 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2.5">
-            <Users className="w-6 h-6 text-amber-600" />
-            <h2 className="text-xl font-bold text-slate-900">कर्मचारी मास्टर डेटाबेस</h2>
+            <Users className="w-5 h-5 text-slate-700" />
+            <h2 className="text-lg sm:text-xl font-bold text-slate-900">कर्मचारी मास्टर डेटाबेस</h2>
           </div>
-          <p className="text-xs text-slate-500 mt-1">
-            जनपद के समस्त पुलिसकर्मियों का मास्टर रजिस्टर
+          <p className="text-xs text-slate-500 mt-0.5">
+            समस्त पुलिसकर्मियों का मास्टर रजिस्टर व विवरण
           </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
           <button
             onClick={() => handleOpenAddModal(null)}
-            className="px-4 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs rounded-xl flex items-center gap-1.5 shadow transition active:scale-95"
+            className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl flex items-center gap-1.5 shadow-xs transition active:scale-95 cursor-pointer"
           >
             <Plus className="w-4 h-4" />
-            + नया पुलिसकर्मी जोड़ें
+            <span>+ नया पुलिसकर्मी जोड़ें</span>
           </button>
 
-          <label className="cursor-pointer px-3.5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold rounded-xl border border-slate-300 flex items-center gap-1.5 transition">
-            <Upload className="w-4 h-4 text-amber-600" />
-            मास्टर एक्सेल अपलोड
+          <label className="cursor-pointer px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-700 hover:text-slate-900 text-xs font-bold rounded-xl border border-slate-200 flex items-center gap-1.5 transition shadow-xs">
+            <Upload className="w-4 h-4 text-slate-600" />
+            <span>मास्टर एक्सेल अपलोड</span>
             <input type="file" accept=".xlsx,.xls,.docx,.json" onChange={handleFileUpload} className="hidden" />
           </label>
 
           <button
             type="button"
             onClick={handleExportExcel}
-            className="px-3.5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold rounded-xl border border-slate-300 flex items-center gap-1.5 transition cursor-pointer"
+            className="px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-700 hover:text-slate-900 text-xs font-bold rounded-xl border border-slate-200 flex items-center gap-1.5 transition cursor-pointer shadow-xs"
           >
             <Download className="w-4 h-4 text-emerald-600" />
-            एक्सेल डाउनलोड
+            <span>एक्सेल डाउनलोड</span>
           </button>
         </div>
       </div>
 
       {/* Force Table Box */}
-      <div className="bg-white p-5 rounded-3xl border border-slate-200 space-y-4 shadow-xl">
+      <div className="bg-white p-5 rounded-2xl border border-slate-200/90 space-y-4 shadow-xs">
         <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="flex items-center gap-2">
-            <UserCheck className="w-4 h-4 text-amber-600" />
+            <UserCheck className="w-4 h-4 text-slate-700" />
             <h3 className="text-sm font-bold text-slate-900">
               पंजीकृत बल ({forceRecords.length})
             </h3>
@@ -180,7 +180,7 @@ export default function MasterForceManager({ forceRecords, onUpdateForce }) {
               value={filterQuery}
               onChange={(e) => setFilterQuery(e.target.value)}
               placeholder="P.No/नाम/मोबाईल/थाना से खोजें..."
-              className="w-full pl-9 pr-3 py-1.5 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-1 focus:ring-amber-500"
+              className="w-full pl-9 pr-3 py-1.5 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900"
             />
           </div>
         </div>
@@ -234,9 +234,9 @@ export default function MasterForceManager({ forceRecords, onUpdateForce }) {
 
       {/* Add / Edit Personnel Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-white border border-slate-300 rounded-3xl max-w-md w-full p-6 space-y-4 shadow-2xl relative text-slate-900">
-            <h3 className="text-base font-bold text-slate-900 border-b border-slate-200 pb-2">
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white border border-slate-200/90 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-xl relative text-slate-900">
+            <h3 className="text-base font-bold text-slate-900 border-b border-slate-100 pb-2">
               {editingPerson ? 'पुलिसकर्मी विवरण संशोधित करें' : '+ नया मास्टर पुलिसकर्मी जोड़ें'}
             </h3>
 
@@ -247,7 +247,7 @@ export default function MasterForceManager({ forceRecords, onUpdateForce }) {
                   type="text"
                   value={formData.pno}
                   onChange={(e) => setFormData({ ...formData, pno: e.target.value })}
-                  className="w-full p-2 bg-slate-50 border border-slate-300 rounded-xl text-amber-800 font-mono font-bold"
+                  className="w-full p-2 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 font-mono font-bold focus:outline-none focus:ring-2 focus:ring-slate-900"
                   required
                 />
               </div>
@@ -259,7 +259,7 @@ export default function MasterForceManager({ forceRecords, onUpdateForce }) {
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   placeholder="e.g. अमित कुमार"
-                  className="w-full p-2 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 font-bold"
+                  className="w-full p-2 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 font-bold focus:outline-none focus:ring-2 focus:ring-slate-900"
                   required
                 />
               </div>
@@ -269,7 +269,7 @@ export default function MasterForceManager({ forceRecords, onUpdateForce }) {
                 <select
                   value={formData.rank}
                   onChange={(e) => setFormData({ ...formData, rank: e.target.value })}
-                  className="w-full p-2 bg-slate-50 border border-slate-300 rounded-xl text-amber-800 font-bold"
+                  className="w-full p-2 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 font-bold focus:outline-none focus:ring-2 focus:ring-slate-900"
                 >
                   <option value="म0उ0नि0">म0उ0नि0 (महिला उप-निरीक्षक)</option>
                   <option value="म0नि0">म0नि0 (महिला निरीक्षक)</option>
@@ -291,7 +291,7 @@ export default function MasterForceManager({ forceRecords, onUpdateForce }) {
                   value={formData.mobile}
                   onChange={(e) => setFormData({ ...formData, mobile: e.target.value })}
                   placeholder="e.g. 9876543210"
-                  className="w-full p-2 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 font-mono font-bold"
+                  className="w-full p-2 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 font-mono font-bold focus:outline-none focus:ring-2 focus:ring-slate-900"
                   required
                 />
               </div>
@@ -303,7 +303,7 @@ export default function MasterForceManager({ forceRecords, onUpdateForce }) {
                   value={formData.posting}
                   onChange={(e) => setFormData({ ...formData, posting: e.target.value })}
                   placeholder="e.g. थाना कोतवाली"
-                  className="w-full p-2 bg-slate-50 border border-slate-300 rounded-xl text-slate-900"
+                  className="w-full p-2 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900"
                   required
                 />
               </div>
@@ -314,7 +314,7 @@ export default function MasterForceManager({ forceRecords, onUpdateForce }) {
                   type="text"
                   value={formData.district}
                   onChange={(e) => setFormData({ ...formData, district: e.target.value })}
-                  className="w-full p-2 bg-slate-50 border border-slate-300 rounded-xl text-slate-900"
+                  className="w-full p-2 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900"
                   required
                 />
               </div>
@@ -323,13 +323,13 @@ export default function MasterForceManager({ forceRecords, onUpdateForce }) {
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 bg-slate-100 text-slate-700 rounded-xl font-bold border border-slate-300"
+                  className="px-4 py-2 bg-white hover:bg-slate-50 text-slate-700 rounded-xl font-bold border border-slate-200 transition cursor-pointer"
                 >
                   रद्द करें
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-amber-500 text-slate-950 font-black rounded-xl"
+                  className="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl transition cursor-pointer shadow-xs active:scale-95"
                 >
                   सहेजें
                 </button>

@@ -133,7 +133,7 @@ export default function AdminAuthModal({ isOpen, onClose, onSuccess }) {
             <div className="space-y-2 pt-1">
               <button
                 type="submit"
-                className="w-full py-3 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-sm rounded-2xl shadow-xs transition active:scale-98 flex items-center justify-center gap-2 cursor-pointer"
+                className="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs sm:text-sm rounded-xl shadow-xs transition active:scale-98 flex items-center justify-center gap-2 cursor-pointer"
               >
                 <KeyRound className="w-4 h-4" />
                 <span>सत्यापित कर आगे बढ़ें</span>
@@ -210,7 +210,7 @@ export default function AdminAuthModal({ isOpen, onClose, onSuccess }) {
               </button>
               <button
                 type="submit"
-                className="flex-1 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs rounded-xl shadow-xs cursor-pointer"
+                className="flex-1 py-2 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl shadow-xs cursor-pointer transition active:scale-95"
               >
                 पासवर्ड सहेजें
               </button>

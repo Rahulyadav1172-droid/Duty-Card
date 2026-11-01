@@ -277,24 +277,24 @@ export default function DutyPointFilterSection({
           {/* Trigger Official Checking Report Modal */}
           <button
             onClick={() => setIsCheckingReportOpen(true)}
-            className="px-4 py-2 bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-400 hover:to-amber-300 text-slate-950 font-black text-xs rounded-xl shadow-xs flex items-center gap-1.5 transition active:scale-95 cursor-pointer shrink-0"
+            className="px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl shadow-xs flex items-center gap-1.5 transition cursor-pointer shrink-0"
             title="आधिकारिक दैनिक चेकिंग रिपोर्ट A4 प्रोफ़ार्मा खोलें"
           >
-            <FileText className="w-4 h-4 stroke-[2.5]" />
+            <FileText className="w-4 h-4" />
             <span>दैनिक चेकिंग रिपोर्ट</span>
           </button>
         </div>
       </div>
 
       {/* Date-Wise Checking Bar */}
-      <div className="bg-amber-50/80 border border-amber-200 p-3.5 sm:p-4 rounded-2xl flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 shadow-xs no-print">
+      <div className="bg-white border border-slate-200 p-3.5 sm:p-4 rounded-2xl flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 shadow-xs no-print">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-amber-500 text-slate-950 flex items-center justify-center shrink-0 shadow-xs">
-            <Calendar className="w-4 h-4 stroke-[2.5]" />
+          <div className="w-9 h-9 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center shrink-0">
+            <Calendar className="w-4 h-4" />
           </div>
           <div>
-            <div className="text-xs font-black text-amber-950">
-              चेकिंग दिनांक:
+            <div className="text-xs font-bold text-slate-900">
+              चेकिंग दिनांक
             </div>
           </div>
         </div>
@@ -304,12 +304,12 @@ export default function DutyPointFilterSection({
             type="date"
             value={checkingDate}
             onChange={(e) => setCheckingDate(e.target.value)}
-            className="h-9 px-3 bg-white border border-amber-300 rounded-xl font-bold font-mono text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500 shadow-2xs"
+            className="h-9 px-3 bg-white border border-slate-200 rounded-xl font-bold font-mono text-xs text-slate-900 focus:outline-none focus:border-slate-400"
           />
 
           <button
             onClick={handleSetTodayDate}
-            className="h-9 px-3 bg-white hover:bg-amber-100 text-amber-900 border border-amber-300 font-black text-xs rounded-xl transition cursor-pointer active:scale-95"
+            className="h-9 px-3 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 font-bold text-xs rounded-xl transition cursor-pointer shadow-2xs"
             title="आज की दिनांक चुनें"
           >
             आज
@@ -581,7 +581,7 @@ export default function DutyPointFilterSection({
           <div className="space-y-0.5">
             <h3 className="text-base font-black text-slate-900 flex items-center gap-2">
               <span>तैनात बल सूची</span>
-              <span className="text-xs px-2.5 py-0.5 rounded-full bg-amber-500 text-slate-950 font-mono font-bold">
+              <span className="text-xs px-2.5 py-0.5 rounded-full bg-slate-900 text-white font-mono font-bold shadow-2xs">
                 {displayedPersonnel.length} पुलिसकर्मी
               </span>
             </h3>

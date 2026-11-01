@@ -79,13 +79,30 @@ function hasMatchingHeaders(firstRow) {
 /**
  * Robustly find key-value pair from row object regardless of extra spaces/dashes/underscores in header
  */
-function getRowValueByPattern(row, patternKeywords) {
+function getRowValueByPattern(row, patternKeywords, excludeKeywords = []) {
   const keys = Object.keys(row);
   
-  // 1. Try exact/normalized pattern match
+  // 1. Try exact/normalized pattern match first
   for (const k of keys) {
-    const cleanKey = k.trim().toLowerCase().replace(/[\s\_\-\.]+/g, ' ');
-    if (patternKeywords.some(kw => cleanKey === kw || cleanKey.includes(kw))) {
+    const rawClean = k.trim().toLowerCase();
+    const cleanKey = rawClean.replace(/[\s\_\-\.]+/g, ' ');
+    const strippedKey = rawClean.replace(/[\(\)\[\]\/\\]+/g, ' ').replace(/[\s\_\-\.]+/g, ' ').trim();
+    if (excludeKeywords.some(ex => cleanKey.includes(ex) || strippedKey.includes(ex))) continue;
+    if (patternKeywords.some(kw => cleanKey === kw || strippedKey === kw || cleanKey.replace(/\s+/g, '') === kw.replace(/\s+/g, ''))) {
+      const val = row[k];
+      if (val !== undefined && val !== null && String(val).trim() !== '') {
+        return convertKrutiToUnicode(String(val).trim());
+      }
+    }
+  }
+
+  // 2. Try substring match if exact match wasn't found
+  for (const k of keys) {
+    const rawClean = k.trim().toLowerCase();
+    const cleanKey = rawClean.replace(/[\s\_\-\.]+/g, ' ');
+    const strippedKey = rawClean.replace(/[\(\)\[\]\/\\]+/g, ' ').replace(/[\s\_\-\.]+/g, ' ').trim();
+    if (excludeKeywords.some(ex => cleanKey.includes(ex) || strippedKey.includes(ex))) continue;
+    if (patternKeywords.some(kw => cleanKey.includes(kw) || strippedKey.includes(kw))) {
       const val = row[k];
       if (val !== undefined && val !== null && String(val).trim() !== '') {
         return convertKrutiToUnicode(String(val).trim());
@@ -111,25 +128,78 @@ function processObjectRows(rows) {
       'name thana'
     ]);
 
-    // 2. Standard single name column
-    const nameCol = getRowValueByPattern(row, ['name', 'नाम']);
+    // 2. Standard single name column (exclude pad/rank/father/zone/sector so rank or zone name is never confused)
+    const nameCol = getRowValueByPattern(
+      row,
+      ['name', 'नाम', 'नाम (name)', 'name (नाम)', 'officer name', 'कर्मचारी नाम', 'अधिकारी नाम'],
+      ['pad', 'पद', 'rank', 'पिता', 'father', 'zone', 'जोन', 'sector', 'सेक्टर', 'incharge', 'प्रभारी', 'place', 'स्थल']
+    );
 
     // 3. Mobile column (for mobile search)
-    const rawMob = getRowValueByPattern(row, ['mob', 'mobile', 'मोबाइल', 'फ़ोन', 'फोन']);
+    const rawMob = getRowValueByPattern(row, [
+      'mob', 'mobile', 'मोबाइल', 'फ़ोन', 'फोन', 'मोबाइल (mobile)', 'mobile (मोबाइल)', 'phone', 'contact'
+    ]);
     const mobCol = cleanMobileNumber(rawMob);
 
     // 4. Other fields
-    const zone = getRowValueByPattern(row, ['zone', 'जोन']);
-    const zonal = getRowValueByPattern(row, ['zonal incharge', 'zonalincharge', 'zonal', 'जोनाल प्रभारी', 'जोनाल']);
-    const sector = getRowValueByPattern(row, ['sector', 'सेक्टर']);
-    const sectorIncharge = getRowValueByPattern(row, ['sector incharge', 'sectorincharge', 'सेक्टर प्रभारी']);
-    const dutyPlace = getRowValueByPattern(row, ['duty place', 'dutyplace', 'duty_place', 'स्थान', 'स्थल']);
+    const zone = getRowValueByPattern(
+      row,
+      ['zone', 'जोन', 'zone name', 'जोन नाम', 'zone no', 'जोन सं', 'जोन (zone)', 'zone (जोन)'],
+      ['incharge', 'प्रभारी', 'officer', 'अधिकारी', 'magistrate', 'मजिस्ट्रेट']
+    );
+    const zonal = getRowValueByPattern(row, [
+      'zonal incharge', 'zonalincharge', 'zonal in charge', 'zonal in-charge',
+      'zone incharge', 'zone in charge', 'zonal officer', 'zonal_officer',
+      'zonal magistrate', 'जोनाल प्रभारी', 'जोनल प्रभारी', 'जोन प्रभारी',
+      'जोनाल अधिकारी', 'जोनल अधिकारी', 'जोनाल मजिस्ट्रेट', 'जोनल मजिस्ट्रेट',
+      'zonal', 'जोनाल', 'जोनल', 'जोनल प्रभारी (zonal incharge)', 'zonal incharge (जोनल प्रभारी)'
+    ]);
 
-    const thanaCol = getRowValueByPattern(row, ['thana', 'थाना']);
-    const districtCol = getRowValueByPattern(row, ['district', 'जनपद', 'जिला']);
-    const timeCol = getRowValueByPattern(row, ['time', 'समय', 'दिनांक']);
-    const briefingCol = getRowValueByPattern(row, ['briefing place', 'briefing', 'ब्रीफिंग का स्थान', 'ब्रीफिंग']);
+    const sector = getRowValueByPattern(
+      row,
+      ['sector', 'सेक्टर', 'sector name', 'सेक्टर नाम', 'sector no', 'सेक्टर सं', 'सेक्टर संख्या', 'सेक्टर (sector)', 'sector (सेक्टर)'],
+      ['incharge', 'प्रभारी', 'officer', 'अधिकारी', 'magistrate', 'मजिस्ट्रेट']
+    );
+    const sectorIncharge = getRowValueByPattern(
+      row,
+      [
+        'sector incharge', 'sectorincharge', 'sector in charge', 'sector in-charge',
+        'sector officer', 'sector_officer', 'sector magistrate', 'sector_magistrate',
+        'सेक्टर प्रभारी', 'सेक्टर अधिकारी', 'सेक्टर मजिस्ट्रेट',
+        'सेक्टर/प्रभारी', 'सेक्टर / प्रभारी', 'sector/incharge', 'sector / incharge',
+        'प्रभारी सेक्टर', 'incharge', 'प्रभारी',
+        'सेक्टर प्रभारी (sector incharge)', 'sector incharge (सेक्टर प्रभारी)'
+      ],
+      ['zonal', 'जोनाल', 'जोनल', 'zone', 'जोन']
+    );
+
+    const dutyPlace = getRowValueByPattern(row, [
+      'duty place', 'dutyplace', 'duty_place', 'duty point', 'ड्यूटी स्थल', 'ड्यूटी स्थान', 'स्थान', 'स्थल',
+      'ड्यूटी प्वाइंट', 'ड्यूटी स्थल (duty point)', 'duty place (ड्यूटी स्थल)'
+    ]);
+
+    const thanaCol = getRowValueByPattern(row, [
+      'thana', 'थाना', 'posting', 'मूल तैनाती', 'तैनाती', 'मूल तैनाती / थाना', 'मूल तैनाती/थाना',
+      'थाना / तैनाती', 'मूल तैनाती / थाना (posting)', 'posting / thana'
+    ]);
+    const districtCol = getRowValueByPattern(row, ['district', 'जनपद', 'जिला', 'जनपद (district)', 'district (जनपद)']);
+    const timeCol = getRowValueByPattern(row, [
+      'time', 'समय', 'दिनांक', 'shift', 'पाली', 'ड्यूटी समय', 'शिफ्ट', 'ड्यूटी समय / शिफ्ट', 'ड्यूटी समय/शिफ्ट',
+      'duty time', 'shift time', 'ड्यूटी समय / शिफ्ट (shift)'
+    ]);
+    const briefingCol = getRowValueByPattern(row, [
+      'briefing place', 'briefing', 'ब्रीफिंग का स्थान', 'ब्रीफिंग', 'ब्रीफिंग स्थल', 'ब्रीफिंग स्थल (briefing point)', 'briefing point'
+    ]);
     const eventCol = getRowValueByPattern(row, ['event', 'event name', 'ड्यूटी का प्रकार']);
+
+    const pnoCol = getRowValueByPattern(row, [
+      'pno', 'पीएनओ', 'pno no', 'pno_no', 'pid', 'prno', 'pno.', 'पीएनओ (pno)', 'pno (पीएनओ)', 'badge no', 'बैज'
+    ]);
+    const weaponCol = getRowValueByPattern(row, [
+      'weapon', 'शस्त्र', 'असलहा', 'weapon type', 'duty type', 'शस्त्र स्थिति', 'शस्त्र (weapon)', 'weapon (शस्त्र)'
+    ]);
+    const boothCol = getRowValueByPattern(row, ['booth', 'booth no', 'बूथ', 'बूथ सं', 'बूथ संख्या', 'booth_no', 'मतदान केंद्र']);
+    const vehicleCol = getRowValueByPattern(row, ['vehicle', 'vehicle no', 'bus no', 'वाहन', 'गाड़ी सं', 'वाहन सं', 'vehicle_no', 'बस सं']);
 
     if (!nameCol && !compositeCol && !mobCol && !dutyPlace) return;
 
@@ -140,8 +210,39 @@ function processObjectRows(rows) {
     const rankCol = getRowValueByPattern(row, ['rank', 'पद', 'पदनाम', 'पद नाम', 'designation']);
     const rank = resolvePoliceRank(rankCol, displayName);
 
+    // Clean & Parse Sector and Sector Incharge if combined with /
+    let cleanSector = (sector || '').trim();
+    let cleanSectorIncharge = (sectorIncharge || '').trim();
+    if (!cleanSectorIncharge && cleanSector.includes('/')) {
+      const parts = cleanSector.split('/');
+      cleanSector = parts[0].trim();
+      cleanSectorIncharge = parts.slice(1).join('/').trim();
+    } else if (cleanSector.endsWith('/')) {
+      cleanSector = cleanSector.replace(/\/+\s*$/, '').trim();
+    }
+    if (cleanSectorIncharge && cleanSector.includes(cleanSectorIncharge)) {
+      cleanSector = cleanSector.replace(cleanSectorIncharge, '').replace(/\/+\s*$/, '').trim();
+    }
+
+    // Clean & Parse Zone and Zonal Incharge if combined with /
+    let cleanZone = (zone || '').trim();
+    let cleanZonalIncharge = (zonal || '').trim();
+    if (!cleanZonalIncharge && cleanZone.includes('/')) {
+      const parts = cleanZone.split('/');
+      cleanZone = parts[0].trim();
+      cleanZonalIncharge = parts.slice(1).join('/').trim();
+    } else if (cleanZone.endsWith('/')) {
+      cleanZone = cleanZone.replace(/\/+\s*$/, '').trim();
+    }
+    if (cleanZonalIncharge && cleanZone.includes(cleanZonalIncharge)) {
+      cleanZone = cleanZone.replace(cleanZonalIncharge, '').replace(/\/+\s*$/, '').trim();
+    }
+
+    const cleanPnoVal = pnoCol ? String(pnoCol).trim() : '';
+
     records.push({
-      id: `DUTY-${String(records.length + 1).padStart(4, '0')}`,
+      id: cleanPnoVal ? cleanPnoVal : `DUTY-${String(records.length + 1).padStart(4, '0')}`,
+      pno: cleanPnoVal,
       name: displayName,
       raw_name: nameCol,
       composite_details: compositeCol,
@@ -150,15 +251,46 @@ function processObjectRows(rows) {
       posting: thanaCol,
       district: districtCol,
       duty_place: dutyPlace,
-      zone: zone,
-      zonal_incharge: zonal,
-      sector: sector,
-      sector_incharge: sectorIncharge,
+      zone: cleanZone,
+      zonal_incharge: cleanZonalIncharge,
+      sector: cleanSector,
+      sector_incharge: cleanSectorIncharge,
       shift: timeCol,
       event_name: eventCol,
       briefing_place: briefingCol,
+      weapon: weaponCol ? String(weaponCol).trim() : '',
+      booth_no: boothCol ? String(boothCol).trim() : '',
+      vehicle_no: vehicleCol ? String(vehicleCol).trim() : '',
       status: "Active"
     });
+  });
+
+  // Pass 2: Propagate Sector and Zone Incharges across the same sector / zone
+  const sectorInchargeMap = new Map();
+  const zoneInchargeMap = new Map();
+
+  records.forEach(r => {
+    const s = (r.sector || '').trim().toLowerCase();
+    const sInc = (r.sector_incharge || '').trim();
+    if (s && sInc && sInc !== '-' && !sectorInchargeMap.has(s)) {
+      sectorInchargeMap.set(s, r.sector_incharge);
+    }
+    const z = (r.zone || '').trim().toLowerCase();
+    const zInc = (r.zonal_incharge || '').trim();
+    if (z && zInc && zInc !== '-' && !zoneInchargeMap.has(z)) {
+      zoneInchargeMap.set(z, r.zonal_incharge);
+    }
+  });
+
+  records.forEach(r => {
+    const s = (r.sector || '').trim().toLowerCase();
+    if (s && (!r.sector_incharge || r.sector_incharge === '-') && sectorInchargeMap.has(s)) {
+      r.sector_incharge = sectorInchargeMap.get(s);
+    }
+    const z = (r.zone || '').trim().toLowerCase();
+    if (z && (!r.zonal_incharge || r.zonal_incharge === '-') && zoneInchargeMap.has(z)) {
+      r.zonal_incharge = zoneInchargeMap.get(z);
+    }
   });
 
   return records;
@@ -191,18 +323,41 @@ function processRawRows(rawRows) {
   }
 
   let colComposite = headers.findIndex(h => h.includes('name thana district mob') || h.includes('name_thana_district_mob') || (h.includes('name') && h.includes('mob') && h.includes('thana')));
-  let colName = headers.findIndex(h => h === 'name' || h === 'नाम');
-  let colMob = headers.findIndex(h => h === 'mob' || h === 'mobile' || h === 'मोबाइल');
-  let colZone = headers.findIndex(h => h === 'zone' || h === 'जोन');
-  let colZonal = headers.findIndex(h => h.includes('zonal') || h.includes('जोनाल'));
-  let colSector = headers.findIndex(h => h === 'sector' || (h.includes('sector') && !h.includes('incharge')));
-  let colSectorIncharge = headers.findIndex(h => h.includes('sector incharge') || h.includes('sectorincharge') || h.includes('सेक्टर प्रभारी'));
-  let colDutyPlace = headers.findIndex(h => h.includes('duty place') || h.includes('duty_place') || h.includes('स्थान'));
-  let colRank = headers.findIndex(h => h === 'rank' || h === 'पद' || h === 'पदनाम' || h === 'पद नाम' || h.includes('designation'));
-  let colThana = headers.findIndex(h => h === 'thana' || h === 'थाना');
-  let colDistrict = headers.findIndex(h => h === 'district' || h === 'जनपद' || h === 'जिला');
-  let colTime = headers.findIndex(h => h.includes('time') || h.includes('समय') || h.includes('दिनांक'));
+  let colName = headers.findIndex(h => (h === 'name' || h === 'नाम' || h.includes('नाम') || h.includes('name')) && !h.includes('पद') && !h.includes('rank') && !h.includes('पिता') && !h.includes('father') && !h.includes('जोन') && !h.includes('zone') && !h.includes('सेक्टर') && !h.includes('sector') && !h.includes('स्थान') && !h.includes('place') && !h.includes('प्रभारी') && !h.includes('incharge'));
+  let colMob = headers.findIndex(h => h === 'mob' || h === 'mobile' || h === 'मोबाइल' || h.includes('mobile') || h.includes('मोबाइल') || h.includes('mob') || h.includes('phone') || h.includes('contact'));
+  let colZone = headers.findIndex(h => 
+    h === 'zone' || h === 'जोन' || 
+    ((h.includes('zone') || h.includes('जोन')) && !h.includes('incharge') && !h.includes('प्रभारी') && !h.includes('officer') && !h.includes('अधिकारी'))
+  );
+  let colZonal = headers.findIndex(h => 
+    h.includes('zonal incharge') || h.includes('zonalincharge') || h.includes('zone incharge') ||
+    h.includes('जोनाल प्रभारी') || h.includes('जोनल प्रभारी') || h.includes('जोन प्रभारी') ||
+    h.includes('zonal') || h.includes('जोनाल') || h.includes('जोनल')
+  );
+  let colSector = headers.findIndex(h => 
+    h === 'sector' || h === 'सेक्टर' || 
+    ((h.includes('sector') || h.includes('सेक्टर')) && 
+     !h.includes('incharge') && !h.includes('प्रभारी') && !h.includes('officer') && !h.includes('अधिकारी') && !h.includes('magistrate') && !h.includes('मजिस्ट्रेट'))
+  );
+  let colSectorIncharge = headers.findIndex(h => 
+    h.includes('sector incharge') || h.includes('sectorincharge') || h.includes('sector in-charge') ||
+    h.includes('sector officer') || h.includes('sector_officer') ||
+    h.includes('sector magistrate') || h.includes('sector_magistrate') ||
+    h.includes('सेक्टर प्रभारी') || h.includes('सेक्टर अधिकारी') || h.includes('सेक्टर मजिस्ट्रेट') ||
+    h.includes('प्रभारी सेक्टर') || h.includes('सेक्टर/प्रभारी') || h.includes('सेक्टर / प्रभारी') ||
+    (h.includes('incharge') && !h.includes('zone') && !h.includes('zonal')) ||
+    (h.includes('प्रभारी') && !h.includes('जोन') && !h.includes('जोनाल'))
+  );
+  let colDutyPlace = headers.findIndex(h => h.includes('duty place') || h.includes('duty_place') || h.includes('स्थान') || h.includes('duty point') || h.includes('स्थल') || h.includes('ड्यूटी स्थल'));
+  let colRank = headers.findIndex(h => h === 'rank' || h === 'पद' || h === 'पदनाम' || h === 'पद नाम' || h.includes('designation') || h.includes('पद') || h.includes('rank'));
+  let colThana = headers.findIndex(h => h === 'thana' || h === 'थाना' || h.includes('thana') || h.includes('थाना') || h.includes('तैनाती') || h.includes('posting'));
+  let colDistrict = headers.findIndex(h => h === 'district' || h === 'जनपद' || h === 'जिला' || h.includes('district') || h.includes('जनपद') || h.includes('जिला'));
+  let colTime = headers.findIndex(h => h.includes('time') || h.includes('समय') || h.includes('दिनांक') || h.includes('shift') || h.includes('पाली') || h.includes('शिफ्ट'));
   let colBriefing = headers.findIndex(h => h.includes('briefing') || h.includes('ब्रीफिंग'));
+  let colPno = headers.findIndex(h => h === 'pno' || h === 'पीएनओ' || h.includes('pno') || h.includes('पीएनओ'));
+  let colWeapon = headers.findIndex(h => h.includes('weapon') || h.includes('शस्त्र') || h.includes('असलहा'));
+  let colBooth = headers.findIndex(h => h.includes('booth') || h.includes('बूथ'));
+  let colVehicle = headers.findIndex(h => h.includes('vehicle') || h.includes('वाहन') || h.includes('बस सं'));
 
   const startRow = headerRowIndex !== -1 ? headerRowIndex + 1 : 0;
 
@@ -219,16 +374,38 @@ function processRawRows(rawRows) {
     const rawName = colName !== -1 ? convertKrutiToUnicode(cells[colName] || '') : '';
     const rawMob = colMob !== -1 ? cleanMobileNumber(cells[colMob]) : cleanMobileNumber(rowString);
 
-    const zoneVal = colZone !== -1 ? convertKrutiToUnicode(cells[colZone] || '') : '';
-    const zonalVal = colZonal !== -1 ? convertKrutiToUnicode(cells[colZonal] || '') : '';
-    const sectorVal = colSector !== -1 ? convertKrutiToUnicode(cells[colSector] || '') : '';
-    const sectorInchargeVal = colSectorIncharge !== -1 ? convertKrutiToUnicode(cells[colSectorIncharge] || '') : '';
+    let zoneVal = colZone !== -1 ? convertKrutiToUnicode(cells[colZone] || '') : '';
+    let zonalVal = colZonal !== -1 ? convertKrutiToUnicode(cells[colZonal] || '') : '';
+    let sectorVal = colSector !== -1 ? convertKrutiToUnicode(cells[colSector] || '') : '';
+    let sectorInchargeVal = colSectorIncharge !== -1 ? convertKrutiToUnicode(cells[colSectorIncharge] || '') : '';
     const dutyPlaceVal = colDutyPlace !== -1 ? convertKrutiToUnicode(cells[colDutyPlace] || '') : '';
 
     const rawThana = colThana !== -1 ? convertKrutiToUnicode(cells[colThana] || '') : '';
     const rawDistrict = colDistrict !== -1 ? convertKrutiToUnicode(cells[colDistrict] || '') : '';
     const rawTime = colTime !== -1 ? convertKrutiToUnicode(cells[colTime] || '') : '';
     const rawBriefing = colBriefing !== -1 ? convertKrutiToUnicode(cells[colBriefing] || '') : '';
+    const rawPno = colPno !== -1 ? convertKrutiToUnicode(cells[colPno] || '') : '';
+    const rawWeapon = colWeapon !== -1 ? convertKrutiToUnicode(cells[colWeapon] || '') : '';
+    const rawBooth = colBooth !== -1 ? convertKrutiToUnicode(cells[colBooth] || '') : '';
+    const rawVehicle = colVehicle !== -1 ? convertKrutiToUnicode(cells[colVehicle] || '') : '';
+
+    // Clean & Parse Sector and Sector Incharge if combined with /
+    if (!sectorInchargeVal && sectorVal.includes('/')) {
+      const parts = sectorVal.split('/');
+      sectorVal = parts[0].trim();
+      sectorInchargeVal = parts.slice(1).join('/').trim();
+    } else if (sectorVal.endsWith('/')) {
+      sectorVal = sectorVal.replace(/\/+\s*$/, '').trim();
+    }
+
+    // Clean & Parse Zone and Zonal Incharge if combined with /
+    if (!zonalVal && zoneVal.includes('/')) {
+      const parts = zoneVal.split('/');
+      zoneVal = parts[0].trim();
+      zonalVal = parts.slice(1).join('/').trim();
+    } else if (zoneVal.endsWith('/')) {
+      zoneVal = zoneVal.replace(/\/+\s*$/, '').trim();
+    }
 
     if (zoneVal) currentZone = zoneVal;
     if (zonalVal) currentZonal = zonalVal;
@@ -244,9 +421,11 @@ function processRawRows(rawRows) {
 
     const rawRank = colRank !== -1 ? convertKrutiToUnicode(cells[colRank] || '') : '';
     const rank = resolvePoliceRank(rawRank, displayName);
+    const cleanPno = rawPno ? rawPno.trim() : '';
 
     records.push({
-      id: `DUTY-${String(records.length + 1).padStart(4, '0')}`,
+      id: cleanPno ? cleanPno : `DUTY-${String(records.length + 1).padStart(4, '0')}`,
+      pno: cleanPno,
       name: displayName,
       raw_name: rawName,
       composite_details: rawComposite,
@@ -262,9 +441,40 @@ function processRawRows(rawRows) {
       shift: rawTime || currentTime,
       event_name: "",
       briefing_place: rawBriefing,
+      weapon: rawWeapon ? rawWeapon.trim() : '',
+      booth_no: rawBooth ? rawBooth.trim() : '',
+      vehicle_no: rawVehicle ? rawVehicle.trim() : '',
       status: "Active"
     });
   }
+
+  // Pass 2: Propagate Sector and Zone Incharges across the same sector / zone
+  const sectorInchargeMap = new Map();
+  const zoneInchargeMap = new Map();
+
+  records.forEach(r => {
+    const s = (r.sector || '').trim().toLowerCase();
+    const sInc = (r.sector_incharge || '').trim();
+    if (s && sInc && sInc !== '-' && !sectorInchargeMap.has(s)) {
+      sectorInchargeMap.set(s, r.sector_incharge);
+    }
+    const z = (r.zone || '').trim().toLowerCase();
+    const zInc = (r.zonal_incharge || '').trim();
+    if (z && zInc && zInc !== '-' && !zoneInchargeMap.has(z)) {
+      zoneInchargeMap.set(z, r.zonal_incharge);
+    }
+  });
+
+  records.forEach(r => {
+    const s = (r.sector || '').trim().toLowerCase();
+    if (s && (!r.sector_incharge || r.sector_incharge === '-') && sectorInchargeMap.has(s)) {
+      r.sector_incharge = sectorInchargeMap.get(s);
+    }
+    const z = (r.zone || '').trim().toLowerCase();
+    if (z && (!r.zonal_incharge || r.zonal_incharge === '-') && zoneInchargeMap.has(z)) {
+      r.zonal_incharge = zoneInchargeMap.get(z);
+    }
+  });
 
   return records;
 }

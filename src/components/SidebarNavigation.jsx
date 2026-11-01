@@ -13,7 +13,8 @@ import {
   X,
   Shield,
   Sparkles,
-  QrCode
+  QrCode,
+  Vote
 } from 'lucide-react';
 
 import { useLanguage } from '../context/LanguageContext';
@@ -64,9 +65,17 @@ function SidebarNavigation({
       icon: BookOpen
     },
     {
+      id: 'election_duty',
+      label: language === 'en' ? 'Election Booth Duty' : 'निर्वाचन बूथ ड्यूटी',
+      icon: Vote,
+      badge: language === 'en' ? 'ECI Booth' : 'बूथ मानक',
+      allowedRoles: ['admin']
+    },
+    {
       id: 'allocation',
-      label: language === 'en' ? 'Duty Allocation' : 'ड्यूटी आवंटन',
+      label: language === 'en' ? 'Law & Order Duty' : 'कानून-व्यवस्था ड्यूटी',
       icon: ShieldAlert,
+      badge: language === 'en' ? 'Points' : 'बिंदु/सेक्टर',
       allowedRoles: ['admin']
     },
     {
@@ -162,7 +171,7 @@ function SidebarNavigation({
               onClick={() => handleItemClick(item)}
               className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl text-xs font-bold transition-all duration-150 cursor-pointer relative group touch-manipulation active:scale-[0.98] ${
                 isActive
-                  ? 'bg-gradient-to-r from-amber-500 to-amber-400 text-slate-950 font-black shadow-lg shadow-amber-500/20 scale-[1.01]'
+                  ? 'bg-slate-800 text-white font-black shadow-sm border border-slate-700/80 scale-[1.01]'
                   : 'text-slate-300 hover:text-white hover:bg-slate-800/70 active:bg-slate-800'
               }`}
             >
@@ -170,17 +179,28 @@ function SidebarNavigation({
               <div
                 className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 transition-colors ${
                   isActive
-                    ? 'bg-slate-950/15 text-slate-950'
+                    ? 'bg-amber-500 text-slate-950 font-black shadow-xs'
                     : 'bg-slate-800/60 text-slate-400 group-hover:text-amber-400 group-hover:bg-slate-800'
                 }`}
               >
                 <Icon className={`w-4 h-4 ${isActive ? 'stroke-[2.5]' : ''}`} />
               </div>
 
-              <div className="flex-1 text-left min-w-0 flex items-center justify-between gap-2">
-                <span className={`truncate text-xs ${isActive ? 'text-slate-950 font-black' : 'text-slate-200 font-bold'}`}>
+              <div className="flex-1 text-left min-w-0 flex items-center justify-between gap-1.5">
+                <span className={`truncate text-xs ${isActive ? 'text-white font-black' : 'text-slate-300 font-bold'}`}>
                   {item.label}
                 </span>
+                {item.badge && (
+                  <span
+                    className={`text-[9px] font-medium px-1.5 py-0.5 rounded border shrink-0 ${
+                      isActive
+                        ? 'bg-amber-500/20 text-amber-300 border-amber-500/30'
+                        : 'bg-slate-800 text-slate-400 border-slate-700/60'
+                    }`}
+                  >
+                    {item.badge}
+                  </span>
+                )}
               </div>
             </button>
           );

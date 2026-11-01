@@ -507,9 +507,9 @@ export default function ScanDutyPassModal({
                     onSelectDuty?.(verifiedRecord);
                     handleClose();
                   }}
-                  className="w-full py-2.5 px-3 bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-400 hover:to-amber-300 active:scale-95 text-slate-950 font-black text-xs sm:text-sm rounded-xl flex items-center justify-center gap-1.5 shadow-lg shadow-amber-500/20 transition cursor-pointer touch-manipulation"
+                  className="w-full py-2.5 px-3 bg-slate-900 hover:bg-slate-800 active:scale-95 text-white font-bold text-xs sm:text-sm rounded-xl flex items-center justify-center gap-1.5 shadow-xs transition cursor-pointer touch-manipulation"
                 >
-                  <ExternalLink className="w-4 h-4 stroke-[2.5]" />
+                  <ExternalLink className="w-4 h-4 stroke-[2.5] text-amber-400" />
                   <span>पूर्ण कार्ड देखें</span>
                 </button>
 
@@ -566,7 +566,7 @@ export default function ScanDutyPassModal({
               <button
                 type="button"
                 onClick={handleScanAgain}
-                className="px-4 py-2 bg-amber-500 text-slate-950 font-black text-xs rounded-xl shadow-md cursor-pointer active:scale-95 transition"
+                className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl shadow-xs cursor-pointer active:scale-95 transition"
               >
                 पुनः स्कैन करें
               </button>
@@ -621,7 +621,7 @@ export default function ScanDutyPassModal({
                 <button
                   type="button"
                   onClick={handleScanAgain}
-                  className="px-4 py-2 bg-amber-500 text-slate-950 font-black text-xs rounded-xl shadow-md cursor-pointer active:scale-95 transition"
+                  className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl shadow-xs cursor-pointer active:scale-95 transition"
                 >
                   पुनः प्रयास करें
                 </button>

@@ -325,9 +325,9 @@ export default function DutyFormModal({ isOpen, onClose, onSave, initialData, ma
             </button>
             <button
               type="submit"
-              className="px-5 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black rounded-xl text-xs shadow-sm transition flex items-center gap-1.5 active:scale-95 cursor-pointer"
+              className="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl text-xs shadow-xs transition flex items-center gap-1.5 active:scale-95 cursor-pointer"
             >
-              <Save className="w-4 h-4" />
+              <Save className="w-4 h-4 text-emerald-400" />
               <span>{initialData ? 'अद्यतन करें' : 'ड्यूटी सहेजें'}</span>
             </button>
           </div>

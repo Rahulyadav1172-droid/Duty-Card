@@ -42,6 +42,11 @@ import * as XLSX from 'xlsx';
 import ForceDeploymentMatrix from './ForceDeploymentMatrix';
 import DutyReplacementModal from './DutyReplacementModal';
 import { logReplacementToAuditTrail } from '../utils/aamadSync';
+import {
+  ELECTION_OUTER_BARRIERS,
+  ELECTION_INTER_BARRIERS,
+  ELECTION_LAW_ORDER_MANAK
+} from '../data/electionStandardData';
 
 function DutyAllocationHub({
   masterForce = [],
@@ -108,14 +113,35 @@ function DutyAllocationHub({
     (activeEvent?.records || []).forEach((r, idx) => {
       const sName = (r.sector || '').trim();
       const zName = (r.zone || '').trim();
-      if (sName && !sectorsSet.has(sName)) {
-        sectorsSet.set(sName, {
-          id: `S-${idx + 1}`,
-          name: sName,
-          zone: zName,
-          incharge: r.sector_incharge || '',
-          mobile: r.sector_mobile || ''
-        });
+      const sIncharge = (
+        r.sector_incharge || 
+        r.sector_officer || 
+        r.sectorOfficer || 
+        r.sectorIncharge || 
+        r.sector_magistrate || 
+        r.incharge || 
+        r['सेक्टर प्रभारी'] || 
+        r['सेक्टर अधिकारी'] || 
+        r['सेक्टर मजिस्ट्रेट'] || 
+        r['प्रभारी'] || 
+        ''
+      ).trim();
+      const sMobile = (r.sector_mobile || r.sectorMobile || '').trim();
+
+      if (sName) {
+        if (!sectorsSet.has(sName)) {
+          sectorsSet.set(sName, {
+            id: `S-${idx + 1}`,
+            name: sName,
+            zone: zName,
+            incharge: sIncharge,
+            mobile: sMobile
+          });
+        } else if (sIncharge && !sectorsSet.get(sName).incharge) {
+          const item = sectorsSet.get(sName);
+          item.incharge = sIncharge;
+          if (sMobile) item.mobile = sMobile;
+        }
       }
     });
     return Array.from(sectorsSet.values());
@@ -345,6 +371,11 @@ function DutyAllocationHub({
     const selectedPersonnelList = masterForce.filter(p => selectedPnos.has(p.pno) || selectedPnos.has(p.mobile));
     if (selectedPersonnelList.length === 0) return;
 
+    const matchingSector = masterSectors.find(s => (s.name || '').trim().toLowerCase() === targetSector.trim().toLowerCase());
+    const matchingZone = masterZones.find(z => (z.name || '').trim().toLowerCase() === targetZone.trim().toLowerCase());
+    const secInchargeVal = matchingSector?.incharge ? `${matchingSector.incharge}${matchingSector.mobile ? ` (${matchingSector.mobile})` : ''}` : '';
+    const zoneInchargeVal = matchingZone?.incharge ? `${matchingZone.incharge}${matchingZone.mobile ? ` (${matchingZone.mobile})` : ''}` : '';
+
     const newAllocations = selectedPersonnelList.map((p, idx) => ({
       id: `DUTY-${String(eventRecords.length + idx + 1).padStart(4, '0')}`,
       pno: p.pno || `PN-${Date.now()}-${idx}`,
@@ -354,7 +385,9 @@ function DutyAllocationHub({
       posting: p.posting || 'थाना कोतवाली',
       district: p.district || 'अयोध्या',
       zone: targetZone.trim() || 'सामान्य जोन',
+      zonal_incharge: zoneInchargeVal,
       sector: targetSector.trim() || 'सामान्य सेक्टर',
+      sector_incharge: secInchargeVal,
       duty_place: targetPoint.trim(),
       shift: targetShift.trim(),
       photo: p.photo || ''
@@ -593,6 +626,130 @@ function DutyAllocationHub({
     XLSX.writeFile(wb, filename);
   };
 
+  // 1-Click Loaders for Authentic UP Police Election Records
+  const handleLoadElectionOuterBarriers = () => {
+    const zoneName = 'सीमावर्ती वाह्य बैरियर जोन';
+    const newZones = [...masterZones];
+    if (!newZones.some(z => z.name === zoneName)) {
+      newZones.push({ id: `Z-OUTER-${Date.now()}`, name: zoneName, incharge: 'क्षेत्राधिकारी (बॉर्डर)', mobile: '' });
+    }
+
+    const newSectors = [...masterSectors];
+    const newPoints = [...masterPoints];
+    const seenPoints = new Set(newPoints.map(p => p.name));
+
+    ELECTION_OUTER_BARRIERS.forEach((b, idx) => {
+      const ptName = `${b.barrier_name} (${b.route})`;
+      const secName = b.thana || 'बॉर्डर सेक्टर';
+      if (!newSectors.some(s => s.name === secName && s.zone === zoneName)) {
+        newSectors.push({ id: `S-OUTER-${idx + 1}`, name: secName, zone: zoneName, incharge: b.thana, mobile: '' });
+      }
+      if (!seenPoints.has(ptName)) {
+        seenPoints.add(ptName);
+        newPoints.push({
+          id: `P-OUTER-${Date.now()}-${idx + 1}`,
+          name: ptName,
+          zone: zoneName,
+          sector: secName,
+          shift: '24 घंटे (12-12 घंटे की दो पालियां)',
+          reqSI: 1,
+          reqHC: 1,
+          reqConstable: 4,
+          reqFemale: 0
+        });
+      }
+    });
+
+    saveZones(newZones);
+    saveSectors(newSectors);
+    savePoints(newPoints);
+    setMasterSubTab('points');
+    setSuccessToast(`सफलतापूर्वक ${ELECTION_OUTER_BARRIERS.length} सीमावर्ती वाह्य बैरियर पॉइंट्स लोड हो गए!`);
+    setTimeout(() => setSuccessToast(null), 4000);
+  };
+
+  const handleLoadElectionInnerBarriers = () => {
+    const zoneName = 'आन्तरिक बैरियर व सुरक्षा पिकेट्स';
+    const newZones = [...masterZones];
+    if (!newZones.some(z => z.name === zoneName)) {
+      newZones.push({ id: `Z-INTER-${Date.now()}`, name: zoneName, incharge: 'क्षेत्राधिकारी (सुरक्षा)', mobile: '' });
+    }
+
+    const newSectors = [...masterSectors];
+    const newPoints = [...masterPoints];
+    const seenPoints = new Set(newPoints.map(p => p.name));
+
+    ELECTION_INTER_BARRIERS.forEach((b, idx) => {
+      const ptName = b.barrier_name;
+      const secName = b.thana || 'आन्तरिक सेक्टर';
+      if (!newSectors.some(s => s.name === secName && s.zone === zoneName)) {
+        newSectors.push({ id: `S-INTER-${idx + 1}`, name: secName, zone: zoneName, incharge: b.thana, mobile: '' });
+      }
+      if (!seenPoints.has(ptName)) {
+        seenPoints.add(ptName);
+        newPoints.push({
+          id: `P-INTER-${Date.now()}-${idx + 1}`,
+          name: ptName,
+          zone: zoneName,
+          sector: secName,
+          shift: 'मतदान दिवस (प्रातः 06:00 से मतदान समाप्ति तक)',
+          reqSI: 1,
+          reqHC: 1,
+          reqConstable: 2,
+          reqFemale: 1
+        });
+      }
+    });
+
+    saveZones(newZones);
+    saveSectors(newSectors);
+    savePoints(newPoints);
+    setMasterSubTab('points');
+    setSuccessToast(`सफलतापूर्वक ${ELECTION_INTER_BARRIERS.length} आन्तरिक बैरियर व पिकेट्स पॉइंट्स लोड हो गए!`);
+    setTimeout(() => setSuccessToast(null), 4000);
+  };
+
+  const handleLoadElectionLawOrderPoints = () => {
+    const zoneName = 'निर्वाचन कानून एवं व्यवस्था';
+    const newZones = [...masterZones];
+    if (!newZones.some(z => z.name === zoneName)) {
+      newZones.push({ id: `Z-LO-${Date.now()}`, name: zoneName, incharge: 'अपर पुलिस अधीक्षक (नोडल अधिकारी)', mobile: '' });
+    }
+
+    const newSectors = [...masterSectors];
+    const newPoints = [...masterPoints];
+    const seenPoints = new Set(newPoints.map(p => p.name));
+
+    ELECTION_LAW_ORDER_MANAK.forEach((lo, idx) => {
+      const ptName = lo.title;
+      const secName = 'विशेष निर्वाचन सुरक्षा दल';
+      if (!newSectors.some(s => s.name === secName && s.zone === zoneName)) {
+        newSectors.push({ id: `S-LO-${idx + 1}`, name: secName, zone: zoneName, incharge: 'प्रभारी निर्वाचन सेल', mobile: '' });
+      }
+      if (!seenPoints.has(ptName)) {
+        seenPoints.add(ptName);
+        newPoints.push({
+          id: `P-LO-${Date.now()}-${idx + 1}`,
+          name: ptName,
+          zone: zoneName,
+          sector: secName,
+          shift: 'निर्वाचन ड्यूटी (24 घंटे सक्रिय)',
+          reqSI: lo.si || 0,
+          reqHC: Math.floor((lo.armed_cp || 0) / 2),
+          reqConstable: (lo.armed_cp || 0) + (lo.unarmed_cp || 0),
+          reqFemale: 0
+        });
+      }
+    });
+
+    saveZones(newZones);
+    saveSectors(newSectors);
+    savePoints(newPoints);
+    setMasterSubTab('points');
+    setSuccessToast(`सफलतापूर्वक ${ELECTION_LAW_ORDER_MANAK.length} निर्वाचन कानून-व्यवस्था मानक पॉइंट्स लोड हो गए!`);
+    setTimeout(() => setSuccessToast(null), 4000);
+  };
+
   // Relocate Handlers
   const handleOpenRelocateModal = (ptName) => {
     const pt = ptName || targetPoint;
@@ -665,10 +822,10 @@ function DutyAllocationHub({
               <button
                 type="button"
                 onClick={onOpenBooklet}
-                className="w-full sm:w-auto px-4 py-2 sm:py-2.5 bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-400 hover:to-amber-300 text-slate-950 font-black text-xs sm:text-sm rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-amber-500/20 transition active:scale-95 cursor-pointer shrink-0"
+                className="w-full sm:w-auto px-4 py-2 sm:py-2.5 bg-slate-900 hover:bg-slate-800 text-white border border-slate-700/80 font-bold text-xs sm:text-sm rounded-xl flex items-center justify-center gap-2 shadow-xs transition active:scale-95 cursor-pointer shrink-0"
                 title="आधिकारिक ड्यूटी बुकलेट देखें एवं प्रिंट करें"
               >
-                <FileSpreadsheet className="w-4 h-4 stroke-[2.5]" />
+                <FileSpreadsheet className="w-4 h-4 text-amber-400 stroke-[2.5]" />
                 <span>बुकलेट देखें</span>
               </button>
             )}
@@ -693,65 +850,70 @@ function DutyAllocationHub({
           </div>
         </div>
 
-        {/* 5-Tab Sleek Pill-Style Navigation */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-1.5 sm:gap-2 bg-slate-900 p-1.5 rounded-2xl border border-slate-800 text-xs font-black">
+        {/* 5-Tab Clean Executive Pill Navigation */}
+        <div className="p-1.5 bg-slate-900/90 rounded-2xl border border-slate-800 flex items-center gap-1.5 overflow-x-auto no-scrollbar max-w-full">
           <button
+            type="button"
             onClick={() => setAllocationMode('manual')}
-            className={`py-2.5 sm:py-3 px-2 sm:px-3 rounded-xl transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer ${
+            className={`flex-1 min-w-[130px] sm:min-w-0 py-2.5 px-3 rounded-xl transition-all duration-150 flex items-center justify-center gap-1.5 text-xs font-bold cursor-pointer whitespace-nowrap ${
               allocationMode === 'manual'
-                ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/25 font-black scale-[1.01]'
+                ? 'bg-white text-slate-950 shadow-xs font-black'
                 : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
             }`}
           >
-            <UserCheck className="w-4 h-4 shrink-0 stroke-[2.5]" />
+            <UserCheck className="w-3.5 h-3.5 shrink-0 stroke-[2.5]" />
             <span className="truncate">1. टीम आवंटन</span>
           </button>
 
           <button
+            type="button"
             onClick={() => setAllocationMode('auto')}
-            className={`py-2.5 sm:py-3 px-2 sm:px-3 rounded-xl transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer ${
+            className={`flex-1 min-w-[130px] sm:min-w-0 py-2.5 px-3 rounded-xl transition-all duration-150 flex items-center justify-center gap-1.5 text-xs font-bold cursor-pointer whitespace-nowrap ${
               allocationMode === 'auto'
-                ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/25 font-black scale-[1.01]'
+                ? 'bg-white text-slate-950 shadow-xs font-black'
                 : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
             }`}
           >
-            <Sparkles className="w-4 h-4 shrink-0 stroke-[2.5]" />
+            <Sparkles className="w-3.5 h-3.5 shrink-0 stroke-[2.5]" />
             <span className="truncate">2. ऑटो-एलोकेशन</span>
           </button>
 
           <button
+            type="button"
             onClick={() => setAllocationMode('matrix')}
-            className={`py-2.5 sm:py-3 px-2 sm:px-3 rounded-xl transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer ${
+            className={`flex-1 min-w-[130px] sm:min-w-0 py-2.5 px-3 rounded-xl transition-all duration-150 flex items-center justify-center gap-1.5 text-xs font-bold cursor-pointer whitespace-nowrap ${
               allocationMode === 'matrix'
-                ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/25 font-black scale-[1.01]'
+                ? 'bg-white text-slate-950 shadow-xs font-black'
                 : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
             }`}
           >
-            <Shield className="w-4 h-4 shrink-0 stroke-[2.5]" />
+            <Shield className="w-3.5 h-3.5 shrink-0 stroke-[2.5]" />
             <span className="truncate">3. समरी मैट्रिक्स</span>
           </button>
 
           <button
+            type="button"
             onClick={() => setAllocationMode('hierarchy_upload')}
-            className={`py-2.5 sm:py-3 px-2 sm:px-3 rounded-xl transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer ${
+            className={`flex-1 min-w-[130px] sm:min-w-0 py-2.5 px-3 rounded-xl transition-all duration-150 flex items-center justify-center gap-1.5 text-xs font-bold cursor-pointer whitespace-nowrap ${
               allocationMode === 'hierarchy_upload'
-                ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/25 font-black scale-[1.01]'
+                ? 'bg-white text-slate-950 shadow-xs font-black'
                 : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
             }`}
           >
-            <FolderTree className="w-4 h-4 shrink-0 stroke-[2.5]" />
+            <FolderTree className="w-3.5 h-3.5 shrink-0 stroke-[2.5]" />
             <span className="truncate">4. ज़ोन/पॉइंट्स</span>
           </button>
 
           <button
+            type="button"
             onClick={() => setAllocationMode('zone_manager')}
-            className={`col-span-2 sm:col-span-1 py-2.5 sm:py-3 px-2 sm:px-3 rounded-xl transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer ${
+            className={`flex-1 min-w-[130px] sm:min-w-0 py-2.5 px-3 rounded-xl transition-all duration-150 flex items-center justify-center gap-1.5 text-xs font-bold cursor-pointer whitespace-nowrap ${
               allocationMode === 'zone_manager'
-                ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/25 font-black scale-[1.01]'
+                ? 'bg-white text-slate-950 shadow-xs font-black'
                 : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
             }`}
           >
-            <ArrowLeftRight className="w-4 h-4 shrink-0 stroke-[2.5]" />
+            <ArrowLeftRight className="w-3.5 h-3.5 shrink-0 stroke-[2.5]" />
             <span className="truncate">5. बल स्थानांतरण</span>
           </button>
         </div>
@@ -842,8 +1004,8 @@ function DutyAllocationHub({
                   <h2 className="text-base sm:text-lg font-black text-slate-950">
                     ड्यूटी स्थल, ज़ोन, सेक्टर एवं समय (Shift) निर्धारित करें
                   </h2>
-                  <p className="text-xs text-slate-500 font-medium mt-0.5">
-                    स्थान चुनते ही उसके संबंधित सेक्टर, ज़ोन एवं समय स्वतः लोड हो जाते हैं
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    स्थान, सेक्टर व ज़ोन चयन
                   </p>
                 </div>
               </div>
@@ -967,7 +1129,7 @@ function DutyAllocationHub({
                   </div>
                 ) : (
                   <div className="text-xs text-slate-400 italic">
-                    इस स्थल पर वर्तमान में कोई जवान तैनात नहीं है। नीचे से चयन कर तैनात करें।
+                    वर्तमान में कोई जवान तैनात नहीं है।
                   </div>
                 )}
               </div>
@@ -988,8 +1150,8 @@ function DutyAllocationHub({
                       {filteredForce.length} उपलब्ध
                     </span>
                   </h2>
-                  <p className="text-xs text-slate-500 font-medium mt-0.5">
-                    जवानों का चयन करें और नीचे "ड्यूटी पर तैनात करें" बटन दबाएं
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    जवानों का चयन कर तैनात करें
                   </p>
                 </div>
               </div>
@@ -1126,9 +1288,9 @@ function DutyAllocationHub({
               <button
                 onClick={handleAssignSelected}
                 disabled={selectedPnos.size === 0 || !targetPoint.trim()}
-                className={`w-full sm:w-auto px-7 py-3.5 rounded-2xl font-black text-xs sm:text-sm flex items-center justify-center gap-2 shadow-sm transition active:scale-95 cursor-pointer ${
+                className={`w-full sm:w-auto px-6 py-3 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition active:scale-95 cursor-pointer ${
                   selectedPnos.size > 0 && targetPoint.trim()
-                    ? 'bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-lg shadow-amber-500/25'
+                    ? 'bg-slate-900 hover:bg-slate-800 text-white shadow-xs'
                     : 'bg-slate-200 text-slate-400 cursor-not-allowed'
                 }`}
               >
@@ -1224,6 +1386,11 @@ function DutyAllocationHub({
               alert(`मास्टर फ़ोर्स में इस पद (${targetCat.toUpperCase()}) का कोई भी जवान उपलब्ध नहीं है।`);
             } else {
               let startIdx = updatedRecords.length + 1;
+              const matchingSector = masterSectors.find(sec => (sec.name || '').trim().toLowerCase() === (targetPoint.sector || '').trim().toLowerCase());
+              const matchingZone = masterZones.find(z => (z.name || '').trim().toLowerCase() === (targetPoint.zone || '').trim().toLowerCase());
+              const secInchargeVal = matchingSector?.incharge ? `${matchingSector.incharge}${matchingSector.mobile ? ` (${matchingSector.mobile})` : ''}` : '';
+              const zoneInchargeVal = matchingZone?.incharge ? `${matchingZone.incharge}${matchingZone.mobile ? ` (${matchingZone.mobile})` : ''}` : '';
+
               const newAssigned = candidates.map(s => ({
                 id: `DUTY-${Date.now()}-${startIdx++}`,
                 pno: s.pno || `PN-${Date.now()}-${startIdx}`,
@@ -1233,7 +1400,9 @@ function DutyAllocationHub({
                 posting: s.posting || 'पुलिस लाइन',
                 district: s.district || 'अयोध्या',
                 zone: targetPoint.zone,
+                zonal_incharge: zoneInchargeVal,
                 sector: targetPoint.sector,
+                sector_incharge: secInchargeVal,
                 duty_place: targetPoint.name,
                 shift: targetPoint.shift || 'प्रातः 08:00 बजे से 20:30 बजे तक',
                 photo: s.photo || ''
@@ -1323,6 +1492,11 @@ function DutyAllocationHub({
                 if (pIdx !== -1) {
                   const person = unassignedPool.splice(pIdx, 1)[0];
                   const startNum = currentAssigned.length + 1;
+                  const matchingSector = masterSectors.find(sec => (sec.name || '').trim().toLowerCase() === (tpl.sector || '').trim().toLowerCase());
+                  const matchingZone = masterZones.find(z => (z.name || '').trim().toLowerCase() === (tpl.zone || '').trim().toLowerCase());
+                  const secInchargeVal = matchingSector?.incharge ? `${matchingSector.incharge}${matchingSector.mobile ? ` (${matchingSector.mobile})` : ''}` : '';
+                  const zoneInchargeVal = matchingZone?.incharge ? `${matchingZone.incharge}${matchingZone.mobile ? ` (${matchingZone.mobile})` : ''}` : '';
+
                   currentAssigned.push({
                     id: `DUTY-${Date.now()}-${startNum}`,
                     pno: person.pno || `PN-${Date.now()}-${startNum}`,
@@ -1332,7 +1506,9 @@ function DutyAllocationHub({
                     posting: person.posting || 'पुलिस लाइन',
                     district: person.district || 'अयोध्या',
                     zone: tpl.zone,
+                    zonal_incharge: zoneInchargeVal,
                     sector: tpl.sector,
+                    sector_incharge: secInchargeVal,
                     duty_place: tpl.name,
                     shift: tpl.shift || 'प्रातः 08:00 बजे से 20:30 बजे तक',
                     photo: person.photo || ''
@@ -1378,8 +1554,8 @@ function DutyAllocationHub({
             {/* Header with Live Booklet Sync Indicator */}
             <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 border-b border-slate-100 pb-5">
               <div className="flex items-center gap-3">
-                <div className="w-11 h-11 rounded-2xl bg-amber-500 text-slate-950 flex items-center justify-center font-black shadow-sm">
-                  <Sparkles className="w-6 h-6 stroke-[2.5]" />
+                <div className="w-11 h-11 rounded-2xl bg-slate-100 border border-slate-200 text-slate-900 flex items-center justify-center font-black shadow-2xs">
+                  <Sparkles className="w-5 h-5 text-amber-600 stroke-[2.5]" />
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
@@ -1391,8 +1567,8 @@ function DutyAllocationHub({
                       <span>बुकलेट से लाइव कनेक्टेड</span>
                     </span>
                   </div>
-                  <p className="text-xs text-slate-500 font-medium mt-0.5">
-                    कोटा बदलते ही जवान तुरंत ड्यूटी से जुड़ेंगे/हटेंगे और बुकलेट में रियल-टाइम लाइव अपडेट होंगे।
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    मास्टर फ़ोर्स से पॉइंटवार स्वतः ड्यूटी आवंटन
                   </p>
                 </div>
               </div>
@@ -1411,9 +1587,9 @@ function DutyAllocationHub({
                 <button
                   type="button"
                   onClick={handleSmartAutoDistributeAll}
-                  className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs rounded-xl flex items-center gap-1.5 shadow transition cursor-pointer"
+                  className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl flex items-center gap-1.5 shadow-xs transition cursor-pointer"
                 >
-                  <Zap className="w-3.5 h-3.5" />
+                  <Zap className="w-3.5 h-3.5 text-amber-400" />
                   <span>
                     {autoStrategy === 'vacancies_only'
                       ? 'रिक्त पदों पर बल तैनात करें'
@@ -1653,15 +1829,15 @@ function DutyAllocationHub({
                 <h2 className="text-lg font-black text-slate-900">
                   उच्चाधिकारी बल तैनाती समरी शीट
                 </h2>
-                <p className="text-xs text-slate-500 font-medium mt-0.5">
-                  ज़ोन-वार निरीक्षक, उ०नि०, हे०का०, आरक्षी, महिला पुलिस, यातायात व होमगार्ड का विस्तृत विवरण
+                <p className="text-xs text-slate-500 mt-0.5">
+                  ज़ोनवार पद अनुसार बल परिनियोजन समरी
                 </p>
               </div>
               {onOpenBooklet && (
                 <button
                   type="button"
                   onClick={onOpenBooklet}
-                  className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-xl flex items-center gap-1.5 transition cursor-pointer shrink-0"
+                  className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl flex items-center gap-1.5 transition cursor-pointer shrink-0"
                 >
                   <span>बुकलेट में प्रिंट करें</span>
                 </button>
@@ -1688,8 +1864,8 @@ function DutyAllocationHub({
                 <h2 className="text-base sm:text-lg font-black text-slate-950">
                   ज़ोन, सेक्टर एवं ड्यूटी पॉइंट मास्टर रजिस्ट्री
                 </h2>
-                <p className="text-xs text-slate-500 font-medium mt-0.5">
-                  तीनों स्तरों को अलग-अलग एक्सेल द्वारा अपलोड करें या स्वतंत्र रूप से जोड़ें
+                <p className="text-xs text-slate-500 mt-0.5">
+                  ज़ोन, सेक्टर व पॉइंट्स मास्टर प्रबंधन
                 </p>
               </div>
             </div>
@@ -1749,11 +1925,11 @@ function DutyAllocationHub({
               {masterSubTab === 'zones' && (
                 <>
                   <input ref={zoneFileInputRef} type="file" accept=".xlsx,.xls,.docx,.json" onChange={handleUploadZonesExcel} className="hidden" id="tab-zone-file" />
-                  <label htmlFor="tab-zone-file" className="h-11 px-4 bg-slate-900 hover:bg-slate-800 text-amber-400 text-xs font-black rounded-xl cursor-pointer flex items-center gap-1.5 shadow transition active:scale-95">
-                    <Upload className="w-4 h-4 stroke-[2.5]" />
+                  <label htmlFor="tab-zone-file" className="h-9 px-3.5 bg-white hover:bg-slate-50 text-slate-700 hover:text-slate-900 border border-slate-200/90 text-xs font-bold rounded-xl cursor-pointer flex items-center gap-1.5 shadow-2xs transition active:scale-95">
+                    <Upload className="w-3.5 h-3.5 text-slate-500" />
                     <span>ज़ोन Excel अपलोड</span>
                   </label>
-                  <button onClick={() => setIsZoneModalOpen(true)} className="h-11 px-4 bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-black rounded-xl cursor-pointer shadow transition active:scale-95">
+                  <button onClick={() => setIsZoneModalOpen(true)} className="h-9 px-3.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl cursor-pointer shadow-xs transition active:scale-95">
                     + नया ज़ोन
                   </button>
                 </>
@@ -1762,11 +1938,11 @@ function DutyAllocationHub({
               {masterSubTab === 'sectors' && (
                 <>
                   <input ref={sectorFileInputRef} type="file" accept=".xlsx,.xls,.docx,.json" onChange={handleUploadSectorsExcel} className="hidden" id="tab-sector-file" />
-                  <label htmlFor="tab-sector-file" className="h-11 px-4 bg-slate-900 hover:bg-slate-800 text-amber-400 text-xs font-black rounded-xl cursor-pointer flex items-center gap-1.5 shadow transition active:scale-95">
-                    <Upload className="w-4 h-4 stroke-[2.5]" />
+                  <label htmlFor="tab-sector-file" className="h-9 px-3.5 bg-white hover:bg-slate-50 text-slate-700 hover:text-slate-900 border border-slate-200/90 text-xs font-bold rounded-xl cursor-pointer flex items-center gap-1.5 shadow-2xs transition active:scale-95">
+                    <Upload className="w-3.5 h-3.5 text-slate-500" />
                     <span>सेक्टर Excel अपलोड</span>
                   </label>
-                  <button onClick={() => setIsSectorModalOpen(true)} className="h-11 px-4 bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-black rounded-xl cursor-pointer shadow transition active:scale-95">
+                  <button onClick={() => setIsSectorModalOpen(true)} className="h-9 px-3.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl cursor-pointer shadow-xs transition active:scale-95">
                     + नया सेक्टर
                   </button>
                 </>
@@ -1775,15 +1951,62 @@ function DutyAllocationHub({
               {masterSubTab === 'points' && (
                 <>
                   <input ref={pointFileInputRef} type="file" accept=".xlsx,.xls,.docx,.json" onChange={handleUploadPointsExcel} className="hidden" id="tab-point-file" />
-                  <label htmlFor="tab-point-file" className="h-11 px-4 bg-slate-900 hover:bg-slate-800 text-amber-400 text-xs font-black rounded-xl cursor-pointer flex items-center gap-1.5 shadow transition active:scale-95">
-                    <Upload className="w-4 h-4 stroke-[2.5]" />
+                  <label htmlFor="tab-point-file" className="h-9 px-3.5 bg-white hover:bg-slate-50 text-slate-700 hover:text-slate-900 border border-slate-200/90 text-xs font-bold rounded-xl cursor-pointer flex items-center gap-1.5 shadow-2xs transition active:scale-95">
+                    <Upload className="w-3.5 h-3.5 text-slate-500" />
                     <span>पॉइंट्स Excel अपलोड</span>
                   </label>
-                  <button onClick={() => setIsPointModalOpen(true)} className="h-11 px-4 bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-black rounded-xl cursor-pointer shadow transition active:scale-95">
+                  <button onClick={() => setIsPointModalOpen(true)} className="h-9 px-3.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl cursor-pointer shadow-xs transition active:scale-95">
                     + नया पॉइंट
                   </button>
                 </>
               )}
+            </div>
+          </div>
+
+          {/* Election Standard 1-Click Loaders Bar */}
+          <div className="p-3.5 bg-gradient-to-r from-amber-50 via-slate-50 to-orange-50/50 rounded-2xl border border-amber-200/80 flex flex-col md:flex-row items-start md:items-center justify-between gap-3 text-xs">
+            <div className="flex items-center gap-2">
+              <Shield className="w-4 h-4 text-amber-600 shrink-0" />
+              <div>
+                <span className="font-black text-slate-900 block sm:inline">
+                  उत्तर प्रदेश पुलिस आधिकारिक निर्वाचन प्रीसेट (1-Click Loaders):
+                </span>
+                <span className="text-[11px] text-slate-500 sm:ml-1.5">
+                  लोकसभा चुनाव मानक अनुसार बैरियर व पिकेट्स लोड करें
+                </span>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 flex-wrap w-full md:w-auto">
+              <button
+                type="button"
+                onClick={handleLoadElectionOuterBarriers}
+                className="px-3 py-1.5 bg-white hover:bg-amber-50 text-slate-800 border border-amber-300 font-bold rounded-xl flex items-center gap-1.5 transition active:scale-95 cursor-pointer shadow-2xs"
+                title="20 सीमावर्ती वाह्य बैरियर व चेकपोस्ट पॉइंट्स में लोड करें"
+              >
+                <span className="text-amber-600 font-mono font-black">20</span>
+                <span>सीमावर्ती बैरियर</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleLoadElectionInnerBarriers}
+                className="px-3 py-1.5 bg-white hover:bg-amber-50 text-slate-800 border border-amber-300 font-bold rounded-xl flex items-center gap-1.5 transition active:scale-95 cursor-pointer shadow-2xs"
+                title="28 आन्तरिक बैरियर व सुरक्षा पिकेट्स पॉइंट्स में लोड करें"
+              >
+                <span className="text-amber-600 font-mono font-black">28</span>
+                <span>आन्तरिक पिकेट्स</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleLoadElectionLawOrderPoints}
+                className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl flex items-center gap-1.5 transition active:scale-95 cursor-pointer shadow-xs"
+                title="18 आधिकारिक निर्वाचन कानून-व्यवस्था मानक ड्यूटी पॉइंट्स में लोड करें"
+              >
+                <span className="text-amber-400 font-mono font-black">18</span>
+                <span>कानून-व्यवस्था मानक</span>
+              </button>
             </div>
           </div>
 
@@ -1931,9 +2154,9 @@ function DutyAllocationHub({
                   <div className="pt-3 border-t border-slate-200 flex items-center justify-between">
                     <button
                       onClick={() => handleOpenRelocateModal(pt.name)}
-                      className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs rounded-xl shadow-xs flex items-center gap-1.5 transition cursor-pointer"
+                      className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl shadow-xs flex items-center gap-1.5 transition cursor-pointer"
                     >
-                      <ArrowLeftRight className="w-3.5 h-3.5 stroke-[2.5]" />
+                      <ArrowLeftRight className="w-3.5 h-3.5 stroke-[2.5] text-amber-400" />
                       <span>ज़ोन / सेक्टर बदलें</span>
                     </button>
 
@@ -1988,8 +2211,8 @@ function DutyAllocationHub({
                 <input type="tel" value={zoneForm.mobile} onChange={(e) => setZoneForm({ ...zoneForm, mobile: e.target.value })} placeholder="10-अंकीय नंबर" className="w-full h-11 px-3.5 bg-slate-50 border border-slate-300 rounded-xl font-mono mt-1" />
               </div>
               <div className="pt-2 flex justify-end gap-2">
-                <button type="button" onClick={() => setIsZoneModalOpen(false)} className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 rounded-xl font-bold cursor-pointer">रद्द करें</button>
-                <button type="submit" className="px-5 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black rounded-xl shadow cursor-pointer">सहेजें</button>
+                <button type="button" onClick={() => setIsZoneModalOpen(false)} className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold cursor-pointer text-xs">रद्द करें</button>
+                <button type="submit" className="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl shadow-xs cursor-pointer text-xs transition active:scale-95">सहेजें</button>
               </div>
             </form>
           </div>
@@ -2031,8 +2254,8 @@ function DutyAllocationHub({
                 <input type="tel" value={sectorForm.mobile} onChange={(e) => setSectorForm({ ...sectorForm, mobile: e.target.value })} placeholder="10-अंकीय नंबर" className="w-full h-11 px-3.5 bg-slate-50 border border-slate-300 rounded-xl font-mono mt-1" />
               </div>
               <div className="pt-2 flex justify-end gap-2">
-                <button type="button" onClick={() => setIsSectorModalOpen(false)} className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 rounded-xl font-bold cursor-pointer">रद्द करें</button>
-                <button type="submit" className="px-5 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black rounded-xl shadow cursor-pointer">सहेजें</button>
+                <button type="button" onClick={() => setIsSectorModalOpen(false)} className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold cursor-pointer text-xs">रद्द करें</button>
+                <button type="submit" className="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl shadow-xs cursor-pointer text-xs transition active:scale-95">सहेजें</button>
               </div>
             </form>
           </div>
@@ -2086,8 +2309,8 @@ function DutyAllocationHub({
                 <input type="text" value={pointForm.shift} onChange={(e) => setPointForm({ ...pointForm, shift: e.target.value })} placeholder="e.g. प्रातः 08:00 बजे से 20:30 बजे तक" className="w-full h-11 px-3.5 bg-slate-50 border border-slate-300 rounded-xl font-bold mt-1" />
               </div>
               <div className="pt-2 flex justify-end gap-2">
-                <button type="button" onClick={() => setIsPointModalOpen(false)} className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 rounded-xl font-bold cursor-pointer">रद्द करें</button>
-                <button type="submit" className="px-5 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black rounded-xl shadow cursor-pointer">सहेजें</button>
+                <button type="button" onClick={() => setIsPointModalOpen(false)} className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold cursor-pointer text-xs">रद्द करें</button>
+                <button type="submit" className="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl shadow-xs cursor-pointer text-xs transition active:scale-95">सहेजें</button>
               </div>
             </form>
           </div>
@@ -2117,8 +2340,8 @@ function DutyAllocationHub({
                 <datalist id="relocate-sectors">{availableSectorsForZone.map(s => <option key={s} value={s} />)}</datalist>
               </div>
               <div className="pt-2 flex justify-end gap-2 border-t border-slate-100">
-                <button type="button" onClick={() => setIsRelocateModalOpen(false)} className="px-4 py-2.5 bg-slate-100 rounded-xl font-bold cursor-pointer">रद्द करें</button>
-                <button type="submit" className="px-5 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black rounded-xl shadow cursor-pointer">स्थानांतरित करें</button>
+                <button type="button" onClick={() => setIsRelocateModalOpen(false)} className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold cursor-pointer text-xs">रद्द करें</button>
+                <button type="submit" className="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl shadow-xs cursor-pointer text-xs transition active:scale-95">स्थानांतरित करें</button>
               </div>
             </form>
           </div>

@@ -26,6 +26,7 @@ import VerifyModal from './VerifyModal';
 import { useLanguage } from '../context/LanguageContext';
 import { printIndividualPass, generateIndividualPassHtml } from '../utils/printLegalBulk';
 import { resolvePoliceRank, stripRankFromName } from '../utils/rankResolver';
+import { ELECTION_DUTY_CARD_INSTRUCTIONS, ELECTION_CUG_DIRECTORY } from '../data/electionStandardData';
 
 export default function DutyCard({
   duty,
@@ -50,6 +51,7 @@ export default function DutyCard({
 }) {
   const { language, t } = useLanguage();
   const [isDownloadingPDF, setIsDownloadingPDF] = useState(false);
+  const [showBackSide, setShowBackSide] = useState(false);
   const [isVerifyModalOpen, setIsVerifyModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editFormData, setEditFormData] = useState({
@@ -74,6 +76,137 @@ export default function DutyCard({
     sector_incharge: customLabels?.sector_incharge?.trim() || 'सेक्टर प्रभारी',
     briefing: customLabels?.briefing?.trim() || 'ब्रीफिंग स्थान',
     note: customLabels?.note?.trim() || 'विशेष नोट'
+  };
+
+  // 1. Resolve Zone & Zonal Incharge
+  let cleanZone = (duty.zone || '').trim();
+  let cleanZonalIncharge = (
+    duty.zonal_incharge || 
+    duty.zonal || 
+    duty.zonal_officer || 
+    duty.zonalOfficer || 
+    duty.zone_incharge || 
+    duty.zonal_magistrate ||
+    duty['जोनाल प्रभारी'] ||
+    duty['जोनल प्रभारी'] ||
+    ''
+  ).trim();
+  if (cleanZonalIncharge === '-') cleanZonalIncharge = '';
+
+  if (!cleanZonalIncharge && cleanZone.includes('/')) {
+    const parts = cleanZone.split('/');
+    cleanZone = parts[0].trim();
+    cleanZonalIncharge = parts.slice(1).join('/').trim();
+  } else if (cleanZone.endsWith('/')) {
+    cleanZone = cleanZone.replace(/\/+\s*$/, '').trim();
+  }
+  if (cleanZonalIncharge && cleanZone.includes(cleanZonalIncharge)) {
+    cleanZone = cleanZone.replace(cleanZonalIncharge, '').replace(/\/+\s*$/, '').trim();
+  }
+
+  // Cross-lookup in allRecords for zonal incharge if missing
+  if (!cleanZonalIncharge && cleanZone && Array.isArray(allRecords)) {
+    const matchedZoneRec = allRecords.find(r => 
+      r && 
+      (r.zone || '').trim().toLowerCase() === cleanZone.toLowerCase() && 
+      (r.zonal_incharge || r.zonal || r.zonal_officer || r.zonalOfficer || r.zone_incharge || r['जोनाल प्रभारी'] || r['जोनल प्रभारी'])
+    );
+    if (matchedZoneRec) {
+      cleanZonalIncharge = (
+        matchedZoneRec.zonal_incharge || 
+        matchedZoneRec.zonal || 
+        matchedZoneRec.zonal_officer || 
+        matchedZoneRec.zonalOfficer || 
+        matchedZoneRec.zone_incharge || 
+        matchedZoneRec['जोनाल प्रभारी'] || 
+        matchedZoneRec['जोनल प्रभारी'] || 
+        ''
+      ).trim();
+    }
+  }
+
+  // 2. Resolve Sector & Sector Incharge
+  let cleanSector = (duty.sector || '').trim();
+  let cleanSectorIncharge = (
+    duty.sector_incharge || 
+    duty.sector_officer || 
+    duty.sectorOfficer || 
+    duty.sectorIncharge || 
+    duty.sector_magistrate || 
+    duty.sectorMagistrate || 
+    duty.incharge || 
+    duty['सेक्टर प्रभारी'] ||
+    duty['सेक्टर अधिकारी'] ||
+    duty['सेक्टर मजिस्ट्रेट'] ||
+    duty['प्रभारी'] ||
+    ''
+  ).trim();
+  if (cleanSectorIncharge === '-') cleanSectorIncharge = '';
+
+  if (!cleanSectorIncharge && cleanSector.includes('/')) {
+    const parts = cleanSector.split('/');
+    cleanSector = parts[0].trim();
+    cleanSectorIncharge = parts.slice(1).join('/').trim();
+  } else if (cleanSector.endsWith('/')) {
+    cleanSector = cleanSector.replace(/\/+\s*$/, '').trim();
+  }
+  if (cleanSectorIncharge && cleanSector.includes(cleanSectorIncharge)) {
+    cleanSector = cleanSector.replace(cleanSectorIncharge, '').replace(/\/+\s*$/, '').trim();
+  }
+
+  // Cross-lookup in allRecords for sector incharge if missing
+  if (!cleanSectorIncharge && cleanSector && Array.isArray(allRecords)) {
+    const matchedSectorRec = allRecords.find(r => {
+      if (!r) return false;
+      const rSec = (r.sector || '').trim().toLowerCase();
+      const currSec = cleanSector.toLowerCase();
+      const isSameSector = rSec === currSec || rSec.startsWith(currSec) || currSec.startsWith(rSec);
+      const inc = (
+        r.sector_incharge || 
+        r.sector_officer || 
+        r.sectorOfficer || 
+        r.sectorIncharge || 
+        r.sector_magistrate || 
+        r.sectorMagistrate || 
+        r.incharge || 
+        r['सेक्टर प्रभारी'] ||
+        r['सेक्टर अधिकारी'] ||
+        r['सेक्टर मजिस्ट्रेट'] ||
+        r['प्रभारी'] ||
+        ''
+      ).trim();
+      return isSameSector && inc && inc !== '-';
+    });
+
+    if (matchedSectorRec) {
+      cleanSectorIncharge = (
+        matchedSectorRec.sector_incharge || 
+        matchedSectorRec.sector_officer || 
+        matchedSectorRec.sectorOfficer || 
+        matchedSectorRec.sectorIncharge || 
+        matchedSectorRec.sector_magistrate || 
+        matchedSectorRec.sectorMagistrate || 
+        matchedSectorRec.incharge || 
+        matchedSectorRec['सेक्टर प्रभारी'] || 
+        matchedSectorRec['सेक्टर अधिकारी'] || 
+        matchedSectorRec['सेक्टर मजिस्ट्रेट'] || 
+        matchedSectorRec['प्रभारी'] || 
+        ''
+      ).trim();
+    }
+  }
+
+  const effectiveZone = cleanZone;
+  const effectiveZonalIncharge = cleanZonalIncharge;
+  const effectiveSector = cleanSector;
+  const effectiveSectorIncharge = cleanSectorIncharge;
+
+  const enrichedDuty = {
+    ...duty,
+    zone: effectiveZone || duty.zone,
+    zonal_incharge: effectiveZonalIncharge || duty.zonal_incharge || duty.zonal,
+    sector: effectiveSector || duty.sector,
+    sector_incharge: effectiveSectorIncharge || duty.sector_incharge
   };
 
   // Find co-deployed personnel at the exact same duty point
@@ -108,11 +241,11 @@ export default function DutyCard({
   const openEditForm = () => {
     setEditFormData({
       duty_place: duty.duty_place || '',
-      zone: duty.zone || '',
-      sector: duty.sector || '',
+      zone: effectiveZone || duty.zone || '',
+      sector: effectiveSector || duty.sector || '',
       shift: duty.shift || 'प्रातः 08:00 बजे से मेला समाप्ति तक',
-      zonal_incharge: duty.zonal_incharge || duty.zonal || '',
-      sector_incharge: duty.sector_incharge || '',
+      zonal_incharge: effectiveZonalIncharge || duty.zonal_incharge || duty.zonal || '',
+      sector_incharge: effectiveSectorIncharge || duty.sector_incharge || '',
       event_name: duty.event_name || ''
     });
     setIsEditModalOpen(true);
@@ -163,9 +296,9 @@ export default function DutyCard({
       `*ID (PNO):* ${duty.id}\n` +
       `*ड्यूटी स्थान:* ${duty.duty_place}\n` +
       `*समय/शिफ्ट:* ${duty.shift || 'प्रातः 09:00 बजे से मेला समाप्ति तक'}\n` +
-      `*जोन/सेक्टर:* ${duty.zone || '-'} / ${duty.sector || '-'}\n` +
-      `*जोनाल प्रभारी:* ${duty.zonal_incharge || duty.zonal || '-'}\n` +
-      `*सेक्टर प्रभारी:* ${duty.sector_incharge || '-'}\n\n` +
+      `*जोन/सेक्टर:* ${effectiveZone || duty.zone || '-'} / ${effectiveSector || duty.sector || '-'}\n` +
+      `*जोनाल प्रभारी:* ${effectiveZonalIncharge || '-'}\n` +
+      `*सेक्टर प्रभारी:* ${effectiveSectorIncharge || '-'}\n\n` +
       `कार्यालय वरिष्ठ पुलिस अधीक्षक, अयोध्या`;
 
     const encoded = encodeURIComponent(text);
@@ -173,9 +306,9 @@ export default function DutyCard({
   };
 
   // Print Individual Duty Pass in Official Sahyogarth Layout
-  const handlePrintIndividualPass = () => {
+  const handlePrintIndividualPass = (forceBack = null) => {
     printIndividualPass({
-      duty,
+      duty: enrichedDuty,
       allRecords,
       eventTitle,
       eventSubtitle,
@@ -184,7 +317,8 @@ export default function DutyCard({
       customNote,
       isNoteEnabled,
       customBriefing,
-      isBriefingEnabled
+      isBriefingEnabled,
+      includeBackSide: forceBack !== null ? forceBack : showBackSide
     });
   };
 
@@ -198,7 +332,7 @@ export default function DutyCard({
       }
 
       const passHtml = generateIndividualPassHtml({
-        duty,
+        duty: enrichedDuty,
         allRecords,
         eventTitle,
         eventSubtitle,
@@ -207,7 +341,8 @@ export default function DutyCard({
         customNote,
         isNoteEnabled,
         customBriefing,
-        isBriefingEnabled
+        isBriefingEnabled,
+        includeBackSide: showBackSide
       });
 
       // Create temporary offscreen container
@@ -316,15 +451,29 @@ export default function DutyCard({
         </div>
 
         {/* Action Buttons: Responsive Grid */}
-        <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+        <div className="grid grid-cols-2 sm:flex sm:flex-wrap sm:items-center gap-2 w-full sm:w-auto">
+          {/* Toggle Back Side (Instructions & CUG Directory) */}
+          <button
+            onClick={() => setShowBackSide(!showBackSide)}
+            className={`h-9 px-3 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition active:scale-95 cursor-pointer shadow-2xs ${
+              showBackSide
+                ? 'bg-amber-600 text-white border-amber-600 hover:bg-amber-700'
+                : 'bg-white hover:bg-amber-50 text-slate-800 border-amber-300 hover:border-amber-400'
+            }`}
+            title="16 महत्वपूर्ण निर्देश व CUG डायरेक्टरी (कार्ड का पृष्ठ भाग) देखें"
+          >
+            <Layers className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+            <span>{showBackSide ? 'मुख पृष्ठ (Pass)' : 'बैक साइड (निर्देश व CUG)'}</span>
+          </button>
+
           {/* Edit Duty Details Button (Admin / Senior Officer Only - Hidden from Public View) */}
           {(userRole === 'admin' || userRole === 'senior') && (
             <button
               onClick={handleOpenEditModal}
-              className="px-2.5 sm:px-3 py-2 rounded-lg sm:rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 font-bold text-[11px] sm:text-xs flex items-center justify-center gap-1 transition active:scale-95 cursor-pointer"
+              className="h-9 px-3 rounded-xl bg-white hover:bg-slate-50 text-slate-700 hover:text-slate-900 border border-slate-200/90 font-bold text-xs flex items-center justify-center gap-1.5 transition active:scale-95 cursor-pointer shadow-2xs"
               title="ड्यूटी स्थल, ज़ोन, सेक्टर व समय बदलें"
             >
-              <Edit3 className="w-3.5 h-3.5 text-amber-700 shrink-0" />
+              <Edit3 className="w-3.5 h-3.5 text-slate-500 shrink-0" />
               <span>ड्यूटी बदलें</span>
             </button>
           )}
@@ -333,40 +482,174 @@ export default function DutyCard({
           <button
             onClick={handleDownloadDirectPDF}
             disabled={isDownloadingPDF}
-            className="px-2 sm:px-3.5 py-2 rounded-lg sm:rounded-xl bg-[#0b132b] hover:bg-slate-800 text-white font-bold text-[11px] sm:text-xs flex items-center justify-center gap-1 sm:gap-1.5 shadow-xs transition active:scale-95 cursor-pointer"
+            className="h-9 px-3.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-xs transition active:scale-95 cursor-pointer"
             title="सहयोगार्थ बल सहित आधिकारिक PDF डाउनलोड करें"
           >
-            <FileDown className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-400 shrink-0" />
+            <FileDown className="w-3.5 h-3.5 text-amber-400 shrink-0" />
             <span>{isDownloadingPDF ? 'बना रहा है...' : 'PDF डाउनलोड'}</span>
           </button>
 
           {/* Official Sahyogarth Print Trigger */}
           <button
             onClick={handlePrintIndividualPass}
-            className="px-2 sm:px-3.5 py-2 rounded-lg sm:rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-[11px] sm:text-xs flex items-center justify-center gap-1 sm:gap-1.5 shadow-xs transition active:scale-95 cursor-pointer"
+            className="h-9 px-3.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-xs transition active:scale-95 cursor-pointer"
             title="सहयोगार्थ बल सहित आधिकारिक पास प्रिंट करें"
           >
-            <Printer className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
+            <Printer className="w-3.5 h-3.5 text-amber-400 shrink-0" />
             <span>प्रिंट करें</span>
           </button>
 
           {/* WhatsApp Share */}
           <button
             onClick={handleWhatsAppShare}
-            className="px-2 sm:px-3 py-2 rounded-lg sm:rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-[11px] sm:text-xs font-black flex items-center justify-center gap-1 transition cursor-pointer"
+            className="h-9 px-3 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-xs font-bold flex items-center justify-center gap-1.5 transition cursor-pointer shadow-2xs"
             title="WhatsApp पर शेयर करें"
           >
-            <Share2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-600 shrink-0" />
+            <Share2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
             <span>शेयर</span>
           </button>
         </div>
       </div>
 
-      {/* Main Printable Duty Card Container */}
-      <div
-        id="printable-duty-card"
-        className="bg-white text-slate-900 p-4 sm:p-6 rounded-xl sm:rounded-2xl border-[2.5px] border-[#0b132b] shadow-xl ring-2 ring-amber-500/80 ring-offset-2 space-y-3.5 sm:space-y-4"
-      >
+      {/* Front / Back Side Switcher Tab (Election Standard Duplex View) */}
+      <div className="flex items-center gap-2 border-b border-slate-200 no-print pb-2">
+        <button
+          onClick={() => setShowBackSide(false)}
+          className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-1.5 cursor-pointer ${
+            !showBackSide
+              ? 'bg-slate-900 text-white shadow-xs'
+              : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+          }`}
+        >
+          <ShieldCheck className="w-4 h-4 text-amber-400" />
+          <span>मुख पृष्ठ (Duty Pass)</span>
+        </button>
+        <button
+          onClick={() => setShowBackSide(true)}
+          className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-1.5 cursor-pointer ${
+            showBackSide
+              ? 'bg-amber-600 text-white shadow-xs'
+              : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+          }`}
+        >
+          <Layers className="w-4 h-4 text-amber-300" />
+          <span>पृष्ठ भाग (16 निर्देश व CUG डायरेक्टरी)</span>
+        </button>
+      </div>
+
+      {showBackSide ? (
+        <div
+          id="printable-duty-card-back"
+          className="bg-white text-slate-900 p-4 sm:p-6 rounded-xl sm:rounded-2xl border-[2.5px] border-[#0b132b] shadow-xl ring-2 ring-amber-500/80 ring-offset-2 space-y-4"
+        >
+          {/* Header */}
+          <div className="border-b-2 border-slate-900 pb-2.5 flex items-center justify-between gap-2">
+            <img src="/badge.png" alt="Police Badge Left" className="w-10 h-10 sm:w-12 sm:h-12 object-contain shrink-0" />
+            <div className="flex-1 text-center">
+              <h2 className="text-sm sm:text-lg font-black text-slate-950 uppercase tracking-wide">
+                उत्तर प्रदेश पुलिस • निर्वाचन ड्यूटी निर्देश एवं सीयूजी डायरेक्टरी
+              </h2>
+              <div className="text-[10px] sm:text-xs font-bold text-amber-900 mt-0.5">
+                (ड्यूटी कार्ड का पृष्ठ भाग • प्रत्येक पुलिस कर्मी हेतु अनिवार्य निर्देश)
+              </div>
+            </div>
+            <img src="/badge.png" alt="Police Badge Right" className="w-10 h-10 sm:w-12 sm:h-12 object-contain shrink-0" />
+          </div>
+
+          {/* 16 Standard Police Instructions */}
+          <div className="bg-amber-50/50 border border-amber-200 rounded-xl p-3 sm:p-4 space-y-2">
+            <h3 className="text-xs sm:text-sm font-black text-slate-950 flex items-center gap-2 border-b border-amber-200 pb-1.5">
+              <span className="w-2 h-2 rounded-full bg-amber-600"></span>
+              निर्वाचन ड्यूटी सम्बन्धी महत्वपूर्ण निर्देश (16 बिंदु)
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-1.5 text-[11px] sm:text-xs text-slate-800 leading-snug">
+              {ELECTION_DUTY_CARD_INSTRUCTIONS.map((inst, idx) => (
+                <div key={idx} className="flex items-start gap-1.5 p-1 rounded hover:bg-amber-100/40 transition">
+                  <span className="font-bold text-amber-900 shrink-0">✓</span>
+                  <span>{inst.replace(/^\d+\.\s*/, '')}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* CUG Directory */}
+          <div className="space-y-3 pt-1">
+            <h3 className="text-xs sm:text-sm font-black text-slate-950 flex items-center gap-2 border-b border-slate-300 pb-1.5">
+              <Phone className="w-4 h-4 text-emerald-600" />
+              महत्वपूर्ण सी०यू०जी० दूरभाष नम्बर (CUG DIRECTORY)
+            </h3>
+
+            {/* Higher Officers & Control Room */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className="border border-slate-200 rounded-lg p-2.5 bg-slate-50/60">
+                <div className="text-[11px] font-black text-slate-900 border-b border-slate-200 pb-1 mb-1.5 text-amber-900">
+                  उच्चाधिकारीगण
+                </div>
+                <div className="space-y-1 text-[11px]">
+                  {ELECTION_CUG_DIRECTORY.higher_officers.map((off, i) => (
+                    <div key={i} className="flex justify-between items-center py-0.5 border-b border-slate-100 last:border-0">
+                      <span className="text-slate-800 font-medium">{off.designation}</span>
+                      <a href={`tel:${off.mobile}`} className="font-mono font-bold text-emerald-700 hover:underline">{off.mobile}</a>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                {/* Control Rooms */}
+                <div className="border border-slate-200 rounded-lg p-2.5 bg-slate-50/60">
+                  <div className="text-[11px] font-black text-slate-900 border-b border-slate-200 pb-1 mb-1.5 text-amber-900">
+                    कन्ट्रोल रूम
+                  </div>
+                  <div className="space-y-1 text-[11px]">
+                    {ELECTION_CUG_DIRECTORY.control_rooms.map((cr, i) => (
+                      <div key={i} className="flex justify-between items-center py-0.5 border-b border-slate-100 last:border-0">
+                        <span className="text-slate-800 font-medium">{cr.name}</span>
+                        <a href={`tel:${cr.mobile}`} className="font-mono font-bold text-emerald-700 hover:underline">{cr.mobile}</a>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* SDMs & COs */}
+                <div className="border border-slate-200 rounded-lg p-2.5 bg-slate-50/60">
+                  <div className="text-[11px] font-black text-slate-900 border-b border-slate-200 pb-1 mb-1.5 text-amber-900">
+                    उपजिलाधिकारी व क्षेत्राधिकारी
+                  </div>
+                  <div className="space-y-1 text-[11px] max-h-40 overflow-y-auto pr-1">
+                    {ELECTION_CUG_DIRECTORY.sdm_and_co.map((sc, i) => (
+                      <div key={i} className="flex justify-between items-center py-0.5 border-b border-slate-100 last:border-0">
+                        <span className="text-slate-800 font-medium">{sc.designation}</span>
+                        <a href={`tel:${sc.mobile}`} className="font-mono font-bold text-emerald-700 hover:underline">{sc.mobile}</a>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Thanas */}
+            <div className="border border-slate-200 rounded-lg p-2.5 bg-slate-50/60">
+              <div className="text-[11px] font-black text-slate-900 border-b border-slate-200 pb-1 mb-1.5 text-amber-900">
+                समस्त 18 थाना प्रभारी (CUG)
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-3 gap-y-1 text-[10px] sm:text-[11px]">
+                {ELECTION_CUG_DIRECTORY.thanas.map((th, i) => (
+                  <div key={i} className="flex justify-between items-center py-0.5 border-b border-slate-100">
+                    <span className="text-slate-800 truncate pr-1">{th.thana}</span>
+                    <a href={`tel:${th.mobile}`} className="font-mono font-bold text-emerald-700 hover:underline shrink-0">{th.mobile}</a>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : (
+        /* Main Printable Duty Card Container */
+        <div
+          id="printable-duty-card"
+          className="bg-white text-slate-900 p-4 sm:p-6 rounded-xl sm:rounded-2xl border-[2.5px] border-[#0b132b] shadow-xl ring-2 ring-amber-500/80 ring-offset-2 space-y-3.5 sm:space-y-4"
+        >
         {/* Pass Header */}
         <div className="border-b-2 border-slate-900 pb-2.5 sm:pb-3.5 flex items-center justify-between gap-2 sm:gap-3">
           <img src="/badge.png" alt="Police Badge Left" className="w-10 h-10 sm:w-14 sm:h-14 object-contain shrink-0" />
@@ -474,46 +757,91 @@ export default function DutyCard({
                 </tr>
               ) : null}
 
-              {duty.zone ? (
+              {effectiveZone ? (
                 <tr>
                   <td className="bg-slate-50 font-bold p-2 sm:p-2.5 border-r border-slate-200 text-slate-700 text-[11px] sm:text-sm leading-relaxed">
                     {labels.zone}
                   </td>
                   <td className="p-2 sm:p-2.5 font-semibold text-slate-800 bg-white text-[11px] sm:text-sm break-words leading-relaxed">
-                    {duty.zone}
+                    {effectiveZone}
                   </td>
                 </tr>
               ) : null}
 
-              {(duty.zonal_incharge || duty.zonal) ? (
+              {effectiveZonalIncharge ? (
                 <tr>
                   <td className="bg-slate-50 font-bold p-2 sm:p-2.5 border-r border-slate-200 text-slate-700 text-[11px] sm:text-sm leading-relaxed">
                     {labels.zonal_incharge}
                   </td>
                   <td className="p-2 sm:p-2.5 font-semibold text-slate-800 bg-white text-[11px] sm:text-sm break-words leading-relaxed">
-                    {duty.zonal_incharge || duty.zonal}
+                    {effectiveZonalIncharge}
                   </td>
                 </tr>
               ) : null}
 
-              {duty.sector ? (
+              {effectiveSector ? (
                 <tr>
                   <td className="bg-slate-50 font-bold p-2 sm:p-2.5 border-r border-slate-200 text-slate-700 text-[11px] sm:text-sm leading-relaxed">
                     {labels.sector}
                   </td>
                   <td className="p-2 sm:p-2.5 font-semibold text-slate-800 bg-white text-[11px] sm:text-sm break-words leading-relaxed">
-                    {duty.sector}
+                    {effectiveSector}
                   </td>
                 </tr>
               ) : null}
 
-              {duty.sector_incharge ? (
+              {effectiveSectorIncharge ? (
                 <tr>
                   <td className="bg-slate-50 font-bold p-2 sm:p-2.5 border-r border-slate-200 text-slate-700 text-[11px] sm:text-sm leading-relaxed">
                     {labels.sector_incharge}
                   </td>
                   <td className="p-2 sm:p-2.5 font-semibold text-slate-800 bg-white text-[11px] sm:text-sm break-words leading-relaxed">
-                    {duty.sector_incharge}
+                    {effectiveSectorIncharge}
+                  </td>
+                </tr>
+              ) : null}
+
+              {/* Official Election Fields (UP Police Election Format) */}
+              {duty.booth_no ? (
+                <tr>
+                  <td className="bg-slate-50 font-bold p-2 sm:p-2.5 border-r border-slate-200 text-slate-700 text-[11px] sm:text-sm leading-relaxed">
+                    मतदान केंद्र / बूथ सं०
+                  </td>
+                  <td className="p-2 sm:p-2.5 font-black text-amber-950 bg-white text-[11px] sm:text-sm break-words leading-relaxed">
+                    {duty.booth_no}
+                  </td>
+                </tr>
+              ) : null}
+
+              {duty.vehicle_no ? (
+                <tr>
+                  <td className="bg-slate-50 font-bold p-2 sm:p-2.5 border-r border-slate-200 text-slate-700 text-[11px] sm:text-sm leading-relaxed">
+                    वाहन / बस सं०
+                  </td>
+                  <td className="p-2 sm:p-2.5 font-black text-slate-900 bg-white text-[11px] sm:text-sm break-words leading-relaxed font-mono">
+                    {duty.vehicle_no}
+                  </td>
+                </tr>
+              ) : null}
+
+              {duty.weapon ? (
+                <tr>
+                  <td className="bg-slate-50 font-bold p-2 sm:p-2.5 border-r border-slate-200 text-slate-700 text-[11px] sm:text-sm leading-relaxed">
+                    शस्त्र / असलहा
+                  </td>
+                  <td className="p-2 sm:p-2.5 font-bold text-slate-900 bg-white text-[11px] sm:text-sm break-words leading-relaxed">
+                    {duty.weapon}
+                  </td>
+                </tr>
+              ) : null}
+
+              {duty.capf ? (
+                <tr>
+                  <td className="bg-slate-50 font-bold p-2 sm:p-2.5 border-r border-slate-200 text-slate-700 text-[11px] sm:text-sm leading-relaxed">
+                    सीएपीएफ / पीएसी
+                  </td>
+                  <td className="p-2 sm:p-2.5 font-bold text-slate-900 bg-white text-[11px] sm:text-sm break-words leading-relaxed">
+                    {duty.capf}
                   </td>
                 </tr>
               ) : null}
@@ -593,6 +921,7 @@ export default function DutyCard({
           </div>
         </div>
       </div>
+      )}
 
       {/* CO-DEPLOYED PERSONNEL SECTION (साथी जवान) */}
       <div className="bg-white p-3 sm:p-5 rounded-xl sm:rounded-2xl border border-slate-200 space-y-3 shadow-sm no-print">
@@ -778,15 +1107,15 @@ export default function DutyCard({
                 <button
                   type="button"
                   onClick={() => setIsEditModalOpen(false)}
-                  className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold cursor-pointer"
+                  className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold cursor-pointer text-xs"
                 >
                   रद्द करें
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black rounded-xl shadow transition active:scale-95 cursor-pointer flex items-center gap-1.5"
+                  className="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl shadow-xs transition active:scale-95 cursor-pointer flex items-center gap-1.5 text-xs"
                 >
-                  <Check className="w-4 h-4 stroke-[3]" />
+                  <Check className="w-4 h-4 stroke-[2.5]" />
                   <span>ड्यूटी कार्ड में सहेजें</span>
                 </button>
               </div>
@@ -796,11 +1125,11 @@ export default function DutyCard({
       )}
 
       {/* Mobile Sticky Bottom Action Dock (Native Mobile App Experience) */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-slate-900/95 backdrop-blur-md border-t border-slate-800 p-2.5 px-3 flex items-center justify-between gap-2 shadow-2xl safe-area-bottom no-print">
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-slate-900/95 backdrop-blur-md border-t border-slate-800 p-2 px-3 grid grid-cols-4 gap-1.5 shadow-2xl safe-area-bottom no-print">
         <button
           onClick={handleDownloadDirectPDF}
           disabled={isDownloadingPDF}
-          className="flex-1 py-2 px-1.5 bg-slate-800 hover:bg-slate-700 active:bg-slate-950 text-white rounded-xl text-xs font-bold flex flex-col items-center justify-center gap-0.5 shadow transition active:scale-95 cursor-pointer disabled:opacity-50"
+          className="py-2 px-1 bg-slate-800 hover:bg-slate-700 active:bg-slate-950 text-white rounded-xl text-xs font-bold flex flex-col items-center justify-center gap-0.5 shadow-xs transition active:scale-95 cursor-pointer disabled:opacity-50"
         >
           <FileDown className="w-4 h-4 text-amber-400" />
           <span className="text-[10px] truncate max-w-full">{isDownloadingPDF ? 'तैयार...' : 'PDF पास'}</span>
@@ -808,7 +1137,7 @@ export default function DutyCard({
 
         <button
           onClick={handleWhatsAppShare}
-          className="flex-1 py-2 px-1.5 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white rounded-xl text-xs font-bold flex flex-col items-center justify-center gap-0.5 shadow transition active:scale-95 cursor-pointer"
+          className="py-2 px-1 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white rounded-xl text-xs font-bold flex flex-col items-center justify-center gap-0.5 shadow-xs transition active:scale-95 cursor-pointer"
         >
           <Share2 className="w-4 h-4 text-white" />
           <span className="text-[10px]">WhatsApp</span>
@@ -816,18 +1145,19 @@ export default function DutyCard({
 
         <button
           onClick={() => setIsVerifyModalOpen(true)}
-          className="flex-1 py-2 px-1.5 bg-amber-500 hover:bg-amber-400 active:bg-amber-600 text-slate-950 rounded-xl text-xs font-black flex flex-col items-center justify-center gap-0.5 shadow transition active:scale-95 cursor-pointer"
+          className="py-2 px-1 bg-slate-800 hover:bg-slate-700 active:bg-slate-950 text-white border border-slate-700/80 rounded-xl text-xs font-bold flex flex-col items-center justify-center gap-0.5 shadow-xs transition active:scale-95 cursor-pointer"
         >
-          <ShieldCheck className="w-4 h-4 text-slate-950" />
+          <ShieldCheck className="w-4 h-4 text-amber-400" />
           <span className="text-[10px] truncate max-w-full">सत्यापित पास</span>
         </button>
 
         <button
           onClick={handlePrintIndividualPass}
-          className="p-2.5 bg-slate-800 hover:bg-slate-700 active:bg-slate-950 text-white rounded-xl flex items-center justify-center transition active:scale-95 cursor-pointer shrink-0"
+          className="py-2 px-1 bg-slate-800 hover:bg-slate-700 active:bg-slate-950 text-white rounded-xl text-xs font-bold flex flex-col items-center justify-center gap-0.5 shadow-xs transition active:scale-95 cursor-pointer"
           title="प्रिंट पास"
         >
           <Printer className="w-4 h-4 text-amber-400" />
+          <span className="text-[10px] truncate max-w-full">प्रिंट पास</span>
         </button>
       </div>
     </div>

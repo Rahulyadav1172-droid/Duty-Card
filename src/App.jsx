@@ -43,6 +43,7 @@ import ChangePasswordModal from './components/ChangePasswordModal';
 import AuditLogModal from './components/AuditLogModal';
 import InstallPwaModal from './components/InstallPwaModal';
 import ScanDutyPassModal from './components/ScanDutyPassModal';
+import ElectionBoothDutyHub from './components/ElectionBoothDutyHub';
 
 import initialData from './data/duty_data.json';
 import {
@@ -1037,9 +1038,9 @@ export default function App() {
                     setPendingTab('search');
                     setIsLoginModalOpen(true);
                   }}
-                  className="px-3.5 py-1.5 bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-400 hover:to-amber-300 text-slate-950 font-black rounded-xl text-xs sm:text-sm flex items-center gap-1.5 transition shadow-xs cursor-pointer active:scale-95"
+                  className="px-3.5 py-1.5 bg-white hover:bg-slate-100 text-slate-900 font-bold rounded-xl text-xs sm:text-sm flex items-center gap-1.5 transition shadow-xs cursor-pointer active:scale-95"
                 >
-                  <LogIn className="w-3.5 h-3.5" />
+                  <LogIn className="w-3.5 h-3.5 text-slate-700" />
                   <span>{t('login', 'अधिकारी लॉगिन')}</span>
                 </button>
               )}
@@ -1078,9 +1079,9 @@ export default function App() {
 
             {/* Quick 1-Click Cached Offline Pass Restore Banner */}
             {!activeDuty && cachedOfflinePass?.duty && (
-              <div className="p-3.5 bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent border border-amber-500/30 rounded-2xl flex items-center justify-between gap-3 shadow-2xs">
+              <div className="p-3.5 bg-white border border-slate-200/90 rounded-2xl flex items-center justify-between gap-3 shadow-xs">
                 <div className="min-w-0">
-                  <div className="text-xs font-black text-slate-900 flex items-center gap-1.5">
+                  <div className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
                     <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
                     <span className="truncate">
                       सहेजा गया ऑफ़लाइन पास: <strong>{cachedOfflinePass.duty.name}</strong>
@@ -1093,7 +1094,7 @@ export default function App() {
                 <button
                   type="button"
                   onClick={() => setActiveDuty(cachedOfflinePass.duty)}
-                  className="px-3 py-1.5 bg-amber-500 hover:bg-amber-400 active:scale-95 text-slate-950 text-xs font-black rounded-xl transition shadow-xs cursor-pointer shrink-0 touch-manipulation"
+                  className="px-3.5 py-1.5 bg-slate-900 hover:bg-slate-800 active:scale-95 text-white text-xs font-bold rounded-xl transition shadow-xs cursor-pointer shrink-0 touch-manipulation"
                 >
                   पास देखें
                 </button>
@@ -1129,7 +1130,7 @@ export default function App() {
                           {rec.pno ? `PNO: ${rec.pno}` : `मो०: ${rec.mobile || '-'}`}
                         </div>
                       </div>
-                      <span className="text-[11px] font-bold px-2.5 py-1 rounded-lg bg-amber-500 text-slate-950 shrink-0">
+                      <span className="text-[11px] font-bold px-2.5 py-1 rounded-xl bg-slate-900 group-hover:bg-slate-800 text-white shrink-0 shadow-2xs">
                         कार्ड देखें
                       </span>
                     </button>
@@ -1142,7 +1143,7 @@ export default function App() {
                   <button
                     type="button"
                     onClick={() => setActiveDuty(null)}
-                    className="px-3 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-800 text-xs font-bold rounded-xl flex items-center gap-1.5 transition cursor-pointer"
+                    className="px-3 py-1.5 bg-white hover:bg-slate-50 text-slate-700 font-bold border border-slate-200/90 text-xs rounded-xl flex items-center gap-1.5 transition cursor-pointer shadow-2xs"
                   >
                     <span>← अन्य {searchResults.length} परिणाम देखें</span>
                   </button>
@@ -1247,8 +1248,22 @@ export default function App() {
           </div>
         )}
 
-        {/* ADMIN ONLY: DUTY ALLOCATION HUB */}
-        {activeTab === 'allocation' && userRole === 'admin' && (
+        {/* ADMIN ONLY: ELECTION BOOTH DUTY HUB */}
+        {activeTab === 'election_duty' && userRole === 'admin' && (
+          <ElectionBoothDutyHub
+            masterForce={forceRecords}
+            activeEvent={currentEvent}
+            onUpdateEventRecords={handleUpdateActiveEventRecords}
+            onUpdateAllocationData={handleUpdateActiveEventAllocationData}
+            events={events}
+            activeEventId={activeEventId}
+            onSelectActiveEvent={handleSelectActiveEvent}
+            onOpenBooklet={handleOpenBooklet}
+          />
+        )}
+
+        {/* ADMIN ONLY: LAW & ORDER DUTY ALLOCATION HUB */}
+        {(activeTab === 'allocation' || activeTab === 'law_order') && userRole === 'admin' && (
           <DutyAllocationHub
             masterForce={forceRecords}
             activeEvent={currentEvent}
