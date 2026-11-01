@@ -12,7 +12,8 @@ import {
   Filter,
   Check,
   Grid,
-  Users
+  Users,
+  FileText
 } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import jsPDF from 'jspdf';
