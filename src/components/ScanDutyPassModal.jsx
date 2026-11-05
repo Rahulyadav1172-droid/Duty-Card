@@ -86,6 +86,9 @@ export default function ScanDutyPassModal({
     // 1. Extract search term or parsed object
     let searchTerm = '';
     let parsedJson = null;
+    let extractedMob = '';
+    let extractedPno = '';
+    let extractedId = '';
 
     try {
       if (decodedText.trim().startsWith('{') && decodedText.trim().endsWith('}')) {
@@ -94,21 +97,43 @@ export default function ScanDutyPassModal({
     } catch (e) {}
 
     if (parsedJson) {
+      extractedMob = String(parsedJson.mobile || '').replace(/\D/g, '');
+      extractedPno = String(parsedJson.pno || '').trim().toLowerCase();
+      extractedId = String(parsedJson.id || '').trim().toLowerCase();
       searchTerm = parsedJson.pno || parsedJson.mobile || parsedJson.id || parsedJson.name || '';
     } else {
-      // Check if it is a URL with search parameter
-      try {
-        if (decodedText.includes('?search=')) {
+      // 1. Check if URL with search query
+      if (decodedText.includes('?search=')) {
+        try {
           const urlObj = new URL(decodedText);
           searchTerm = urlObj.searchParams.get('search') || '';
-        } else if (decodedText.includes('/')) {
-          const urlParts = decodedText.split('/');
-          searchTerm = urlParts[urlParts.length - 1];
-        } else {
-          searchTerm = decodedText.trim();
+        } catch (e) {
+          const queryPart = decodedText.split('?search=')[1];
+          searchTerm = queryPart ? decodeURIComponent(queryPart.split('&')[0]) : '';
         }
-      } catch (e) {
-        searchTerm = decodedText.trim();
+      }
+
+      // 2. Extract structured fields from multi-line or formatted strings
+      const mobRegex = /(?:मोबाइल|mob|mobile|phone)[\s:]*([6-9]\d{9})/i;
+      const mobMatch = decodedText.match(mobRegex);
+      if (mobMatch) extractedMob = mobMatch[1];
+
+      const pnoRegex = /(?:pno|पीएनओ)[\s:]*([A-Za-z0-9\-]+)/i;
+      const pnoMatch = decodedText.match(pnoRegex);
+      if (pnoMatch) extractedPno = pnoMatch[1].trim().toLowerCase();
+
+      const idRegex = /(?:duty_pass|pass_id|id)[\s:]*([A-Za-z0-9\-]+)/i;
+      const idMatch = decodedText.match(idRegex);
+      if (idMatch) extractedId = idMatch[1].trim().toLowerCase();
+
+      // 3. Fallback: check raw 10-digit mobile number anywhere in text
+      if (!extractedMob) {
+        const rawMobMatch = decodedText.match(/\b([6-9]\d{9})\b/);
+        if (rawMobMatch) extractedMob = rawMobMatch[1];
+      }
+
+      if (!searchTerm) {
+        searchTerm = extractedMob || extractedPno || extractedId || decodedText.trim();
       }
     }
 
@@ -121,6 +146,10 @@ export default function ScanDutyPassModal({
       const recPno = String(rec.pno || '').trim().toLowerCase();
       const recId = String(rec.id || '').trim().toLowerCase();
       const recName = String(rec.name || '').trim().toLowerCase();
+
+      if (extractedMob && recMob.includes(extractedMob)) return true;
+      if (extractedPno && (recPno === extractedPno || recPno.includes(extractedPno))) return true;
+      if (extractedId && recId === extractedId) return true;
 
       if (cleanTerm && cleanTerm.length >= 6 && recMob.includes(cleanTerm)) return true;
       if (cleanTerm && cleanTerm.length >= 6 && recPno.includes(cleanTerm)) return true;
@@ -426,9 +455,6 @@ export default function ScanDutyPassModal({
 
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-1.5 flex-wrap">
-                      <span className="text-[10px] font-black px-2 py-0.5 rounded-md bg-amber-500 text-slate-950 uppercase tracking-wide">
-                        {resolvePoliceRank(verifiedRecord.rank, verifiedRecord.name)}
-                      </span>
                       <span className="text-[10px] font-bold text-slate-400 font-mono">
                         {verifiedRecord.pno ? `PNO: ${verifiedRecord.pno}` : `ID: ${verifiedRecord.id}`}
                       </span>
@@ -439,7 +465,7 @@ export default function ScanDutyPassModal({
                     </h3>
 
                     <div className="text-xs text-slate-300 font-medium truncate mt-0.5">
-                      {verifiedRecord.posting || 'थाना कोतवाली'} {verifiedRecord.district ? `(${verifiedRecord.district})` : ''}
+                      {verifiedRecord.posting || '-'} {verifiedRecord.district ? `(${verifiedRecord.district})` : ''}
                     </div>
                   </div>
                 </div>

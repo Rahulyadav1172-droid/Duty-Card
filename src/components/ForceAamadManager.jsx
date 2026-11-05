@@ -219,9 +219,9 @@ export default function ForceAamadManager({
         toAddToMaster.push({
           pno: item.pno || pno,
           name: item.name,
-          rank: item.rank || 'का0',
+          rank: item.rank || '',
           mobile: item.mobile || '',
-          posting: item.posting || 'थाना कोतवाली',
+          posting: item.posting || '',
           district: item.district || '',
           range: item.range || '',
           police_zone: item.police_zone || ''
@@ -247,7 +247,7 @@ export default function ForceAamadManager({
 
     setFormData({
       name: '',
-      rank: 'का0',
+      rank: '',
       pno: `PN-${Math.floor(100000 + Math.random() * 900000)}`,
       mobile: '',
       posting: '',
@@ -275,7 +275,7 @@ export default function ForceAamadManager({
     const cleanName = standardizeName(formData.name, cleanMob);
     const cleanPno = standardizePNO(formData.pno) || `PN-${Date.now().toString().slice(-6)}`;
     const cleanRank = standardizeRank(formData.rank);
-    const cleanPosting = (formData.posting || 'थाना कोतवाली').trim();
+    const cleanPosting = (formData.posting || '').trim();
     const cleanDistrict = (formData.district || '').trim();
 
     // Auto-resolve range and zone if not yet set
@@ -362,7 +362,7 @@ export default function ForceAamadManager({
           const cleanName = standardizeName(item.name, cleanMob);
           const cleanPno = standardizePNO(item.pno) || `PN-${Date.now().toString().slice(-6)}-${idx + 1}`;
           const cleanRank = standardizeRank(item.rank);
-          const cleanPosting = (item.posting || item.thana || 'थाना कोतवाली').trim();
+          const cleanPosting = (item.posting || item.thana || '').trim();
           const cleanDistrict = (item.district || '').trim();
 
           const auto = resolveZoneAndRangeFromDistrict(cleanDistrict);

@@ -117,8 +117,8 @@ export default function OfficialBooklet({
         name: newRecord.name,
         rank: newRecord.rank || 'का0',
         mobile: newRecord.mobile,
-        posting: newRecord.posting || oldRecord.posting || 'पुलिस लाइन',
-        district: newRecord.district || oldRecord.district || 'अयोध्या',
+        posting: newRecord.posting || oldRecord.posting || '',
+        district: newRecord.district || oldRecord.district || '',
         zone: oldRecord.zone,
         sector: oldRecord.sector,
         duty_place: oldRecord.duty_place,
@@ -975,9 +975,8 @@ function stripNumbering(rawText = '') {
                                 <tbody>
                                   {placeRecords.map((row, rIdx) => {
                                     const cleanName = cleanOfficerName(row.name, row.posting, row.district, row.mobile);
-                                    const effectiveRank = resolvePoliceRank(row.rank, row.name);
                                     const displayCleanName = stripRankFromName(cleanName);
-                                    const fullOfficerTitle = `${effectiveRank} ${displayCleanName}`;
+                                    const fullOfficerTitle = displayCleanName;
 
                                     return (
                                       <tr key={rIdx} className="border-b border-gray-300 hover:bg-gray-50 last:border-b-0 text-xs sm:text-sm">

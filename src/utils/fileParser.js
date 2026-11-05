@@ -119,8 +119,16 @@ function processObjectRows(rows) {
   const records = [];
 
   rows.forEach((row, idx) => {
-    // 1. Prioritize composite column "name thana district mob" for Officer Name & Details
+    // 1. Officer Name column (prioritize explicit NAME column)
+    const nameCol = getRowValueByPattern(
+      row,
+      ['name', 'officer name', 'नाम', 'नाम (name)', 'name (नाम)', 'कर्मचारी नाम', 'अधिकारी नाम'],
+      ['pad', 'पद', 'rank', 'पिता', 'father', 'zone', 'जोन', 'sector', 'सेक्टर', 'incharge', 'प्रभारी', 'place', 'स्थल', 'district', 'जनपद', 'posting']
+    );
+
+    // Fallback composite column if single name is absent
     const compositeCol = getRowValueByPattern(row, [
+      'name and posting place district',
       'name thana district mob',
       'name_thana_district_mob',
       'name thana district mobile',
@@ -128,24 +136,17 @@ function processObjectRows(rows) {
       'name thana'
     ]);
 
-    // 2. Standard single name column (exclude pad/rank/father/zone/sector so rank or zone name is never confused)
-    const nameCol = getRowValueByPattern(
-      row,
-      ['name', 'नाम', 'नाम (name)', 'name (नाम)', 'officer name', 'कर्मचारी नाम', 'अधिकारी नाम'],
-      ['pad', 'पद', 'rank', 'पिता', 'father', 'zone', 'जोन', 'sector', 'सेक्टर', 'incharge', 'प्रभारी', 'place', 'स्थल']
-    );
-
-    // 3. Mobile column (for mobile search)
+    // 2. Mobile column
     const rawMob = getRowValueByPattern(row, [
-      'mob', 'mobile', 'मोबाइल', 'फ़ोन', 'फोन', 'मोबाइल (mobile)', 'mobile (मोबाइल)', 'phone', 'contact'
+      'mob', 'mobile', 'मोबाइल', 'फ़ोन', 'फोन', 'mobile (मोबाइल)', 'phone', 'contact'
     ]);
     const mobCol = cleanMobileNumber(rawMob);
 
-    // 4. Other fields
+    // 3. Zone and Zonal Incharge
     const zone = getRowValueByPattern(
       row,
       ['zone', 'जोन', 'zone name', 'जोन नाम', 'zone no', 'जोन सं', 'जोन (zone)', 'zone (जोन)'],
-      ['incharge', 'प्रभारी', 'officer', 'अधिकारी', 'magistrate', 'मजिस्ट्रेट']
+      ['incharge', 'प्रभारी', 'officer', 'अधिकारी', 'magistrate', 'मजिस्ट्रेट', 'sahyogarth', 'सहयोगार्थ']
     );
     const zonal = getRowValueByPattern(row, [
       'zonal incharge', 'zonalincharge', 'zonal in charge', 'zonal in-charge',
@@ -153,12 +154,17 @@ function processObjectRows(rows) {
       'zonal magistrate', 'जोनाल प्रभारी', 'जोनल प्रभारी', 'जोन प्रभारी',
       'जोनाल अधिकारी', 'जोनल अधिकारी', 'जोनाल मजिस्ट्रेट', 'जोनल मजिस्ट्रेट',
       'zonal', 'जोनाल', 'जोनल', 'जोनल प्रभारी (zonal incharge)', 'zonal incharge (जोनल प्रभारी)'
+    ], ['sahyogarth', 'सहयोगार्थ']);
+
+    const zonalSahyogarth = getRowValueByPattern(row, [
+      'zonal in sahyogarth', 'zonal sahyogarth', 'जोनल सहयोगार्थ', 'जोनाल सहयोगार्थ', 'zonal_sahyogarth'
     ]);
 
+    // 4. Sector and Sector Incharge
     const sector = getRowValueByPattern(
       row,
       ['sector', 'सेक्टर', 'sector name', 'सेक्टर नाम', 'sector no', 'सेक्टर सं', 'सेक्टर संख्या', 'सेक्टर (sector)', 'sector (सेक्टर)'],
-      ['incharge', 'प्रभारी', 'officer', 'अधिकारी', 'magistrate', 'मजिस्ट्रेट']
+      ['incharge', 'प्रभारी', 'officer', 'अधिकारी', 'magistrate', 'मजिस्ट्रेट', 'sahyogarth', 'सहयोगार्थ']
     );
     const sectorIncharge = getRowValueByPattern(
       row,
@@ -170,23 +176,38 @@ function processObjectRows(rows) {
         'प्रभारी सेक्टर', 'incharge', 'प्रभारी',
         'सेक्टर प्रभारी (sector incharge)', 'sector incharge (सेक्टर प्रभारी)'
       ],
-      ['zonal', 'जोनाल', 'जोनल', 'zone', 'जोन']
+      ['zonal', 'जोनाल', 'जोनल', 'zone', 'जोन', 'sahyogarth', 'सहयोगार्थ']
     );
 
+    const sectorSahyogarth = getRowValueByPattern(row, [
+      'sector in sahyogarth', 'sector sahyogarth', 'सेक्टर सहयोगार्थ', 'sector_sahyogarth'
+    ]);
+
+    // 5. Duty Place
     const dutyPlace = getRowValueByPattern(row, [
       'duty place', 'dutyplace', 'duty_place', 'duty point', 'ड्यूटी स्थल', 'ड्यूटी स्थान', 'स्थान', 'स्थल',
       'ड्यूटी प्वाइंट', 'ड्यूटी स्थल (duty point)', 'duty place (ड्यूटी स्थल)'
     ]);
 
+    // 6. Posting Place / Thana
     const thanaCol = getRowValueByPattern(row, [
-      'thana', 'थाना', 'posting', 'मूल तैनाती', 'तैनाती', 'मूल तैनाती / थाना', 'मूल तैनाती/थाना',
-      'थाना / तैनाती', 'मूल तैनाती / थाना (posting)', 'posting / thana'
+      'posting place', 'posting_place', 'posting', 'मूल तैनाती', 'तैनाती', 'मूल तैनाती / थाना', 'मूल तैनाती/थाना',
+      'thana', 'थाना', 'थाना / तैनाती', 'मूल तैनाती / थाना (posting)', 'posting / thana'
     ]);
+
+    // 7. District
     const districtCol = getRowValueByPattern(row, ['district', 'जनपद', 'जिला', 'जनपद (district)', 'district (जनपद)']);
+
+    // 8. Date and Time (Shift)
     const timeCol = getRowValueByPattern(row, [
-      'time', 'समय', 'दिनांक', 'shift', 'पाली', 'ड्यूटी समय', 'शिफ्ट', 'ड्यूटी समय / शिफ्ट', 'ड्यूटी समय/शिफ्ट',
+      'date and time', 'date & time', 'date_and_time', 'time', 'समय', 'दिनांक', 'shift', 'पाली', 'ड्यूटी समय', 'शिफ्ट', 'ड्यूटी समय / शिफ्ट', 'ड्यूटी समय/शिफ्ट',
       'duty time', 'shift time', 'ड्यूटी समय / शिफ्ट (shift)'
     ]);
+
+    // 9. Rank (Optional column - do NOT guess or default if blank)
+    const rankCol = getRowValueByPattern(row, ['rank', 'पद', 'पदनाम', 'पद नाम', 'designation']);
+    const rank = rankCol ? rankCol.trim() : '';
+
     const briefingCol = getRowValueByPattern(row, [
       'briefing place', 'briefing', 'ब्रीफिंग का स्थान', 'ब्रीफिंग', 'ब्रीफिंग स्थल', 'ब्रीफिंग स्थल (briefing point)', 'briefing point'
     ]);
@@ -203,12 +224,9 @@ function processObjectRows(rows) {
 
     if (!nameCol && !compositeCol && !mobCol && !dutyPlace) return;
 
-    // Use "name thana district mob" column content as officer name/details FIRST as requested by user
-    const displayName = compositeCol || nameCol || (mobCol ? `पुलिसकर्मी (${mobCol})` : '');
-    const finalMobile = mobCol || cleanMobileNumber(compositeCol) || cleanMobileNumber(nameCol);
-
-    const rankCol = getRowValueByPattern(row, ['rank', 'पद', 'पदनाम', 'पद नाम', 'designation']);
-    const rank = resolvePoliceRank(rankCol, displayName);
+    // Use NAME column first as requested by user
+    const displayName = nameCol || compositeCol || (mobCol ? `पुलिसकर्मी (${mobCol})` : '');
+    const finalMobile = mobCol || cleanMobileNumber(nameCol) || cleanMobileNumber(compositeCol);
 
     // Clean & Parse Sector and Sector Incharge if combined with /
     let cleanSector = (sector || '').trim();
@@ -253,8 +271,10 @@ function processObjectRows(rows) {
       duty_place: dutyPlace,
       zone: cleanZone,
       zonal_incharge: cleanZonalIncharge,
+      zonal_sahyogarth: zonalSahyogarth || '',
       sector: cleanSector,
       sector_incharge: cleanSectorIncharge,
+      sector_sahyogarth: sectorSahyogarth || '',
       shift: timeCol,
       event_name: eventCol,
       briefing_place: briefingCol,
@@ -265,9 +285,11 @@ function processObjectRows(rows) {
     });
   });
 
-  // Pass 2: Propagate Sector and Zone Incharges across the same sector / zone
+  // Pass 2: Propagate Sector and Zone Incharges and Sahyogarth across the same sector / zone
   const sectorInchargeMap = new Map();
   const zoneInchargeMap = new Map();
+  const sectorSahyogarthMap = new Map();
+  const zoneSahyogarthMap = new Map();
 
   records.forEach(r => {
     const s = (r.sector || '').trim().toLowerCase();
@@ -275,10 +297,19 @@ function processObjectRows(rows) {
     if (s && sInc && sInc !== '-' && !sectorInchargeMap.has(s)) {
       sectorInchargeMap.set(s, r.sector_incharge);
     }
+    const sSah = (r.sector_sahyogarth || '').trim();
+    if (s && sSah && sSah !== '-' && !sectorSahyogarthMap.has(s)) {
+      sectorSahyogarthMap.set(s, r.sector_sahyogarth);
+    }
+
     const z = (r.zone || '').trim().toLowerCase();
     const zInc = (r.zonal_incharge || '').trim();
     if (z && zInc && zInc !== '-' && !zoneInchargeMap.has(z)) {
       zoneInchargeMap.set(z, r.zonal_incharge);
+    }
+    const zSah = (r.zonal_sahyogarth || '').trim();
+    if (z && zSah && zSah !== '-' && !zoneSahyogarthMap.has(z)) {
+      zoneSahyogarthMap.set(z, r.zonal_sahyogarth);
     }
   });
 
@@ -287,9 +318,16 @@ function processObjectRows(rows) {
     if (s && (!r.sector_incharge || r.sector_incharge === '-') && sectorInchargeMap.has(s)) {
       r.sector_incharge = sectorInchargeMap.get(s);
     }
+    if (s && (!r.sector_sahyogarth || r.sector_sahyogarth === '-') && sectorSahyogarthMap.has(s)) {
+      r.sector_sahyogarth = sectorSahyogarthMap.get(s);
+    }
+
     const z = (r.zone || '').trim().toLowerCase();
     if (z && (!r.zonal_incharge || r.zonal_incharge === '-') && zoneInchargeMap.has(z)) {
       r.zonal_incharge = zoneInchargeMap.get(z);
+    }
+    if (z && (!r.zonal_sahyogarth || r.zonal_sahyogarth === '-') && zoneSahyogarthMap.has(z)) {
+      r.zonal_sahyogarth = zoneSahyogarthMap.get(z);
     }
   });
 
@@ -305,8 +343,10 @@ function processRawRows(rawRows) {
   const records = [];
   let currentZone = "";
   let currentZonal = "";
+  let currentZonalSahyogarth = "";
   let currentSector = "";
   let currentSectorIncharge = "";
+  let currentSectorSahyogarth = "";
   let currentDutyPlace = "";
   let currentTime = "";
 
@@ -322,7 +362,13 @@ function processRawRows(rawRows) {
     }
   }
 
-  let colComposite = headers.findIndex(h => h.includes('name thana district mob') || h.includes('name_thana_district_mob') || (h.includes('name') && h.includes('mob') && h.includes('thana')));
+  let colComposite = headers.findIndex(h => 
+    h.includes('name and posting place district') || 
+    h.includes('name posting district') || 
+    h.includes('name thana district mob') || 
+    h.includes('name_thana_district_mob') || 
+    (h.includes('name') && h.includes('mob') && h.includes('thana'))
+  );
   let colName = headers.findIndex(h => (h === 'name' || h === 'नाम' || h.includes('नाम') || h.includes('name')) && !h.includes('पद') && !h.includes('rank') && !h.includes('पिता') && !h.includes('father') && !h.includes('जोन') && !h.includes('zone') && !h.includes('सेक्टर') && !h.includes('sector') && !h.includes('स्थान') && !h.includes('place') && !h.includes('प्रभारी') && !h.includes('incharge'));
   let colMob = headers.findIndex(h => h === 'mob' || h === 'mobile' || h === 'मोबाइल' || h.includes('mobile') || h.includes('मोबाइल') || h.includes('mob') || h.includes('phone') || h.includes('contact'));
   let colZone = headers.findIndex(h => 
@@ -334,10 +380,13 @@ function processRawRows(rawRows) {
     h.includes('जोनाल प्रभारी') || h.includes('जोनल प्रभारी') || h.includes('जोन प्रभारी') ||
     h.includes('zonal') || h.includes('जोनाल') || h.includes('जोनल')
   );
+  let colZonalSahyogarth = headers.findIndex(h => 
+    h.includes('zonal in sahyogarth') || h.includes('zonal sahyogarth') || h.includes('जोनल सहयोगार्थ') || h.includes('जोनाल सहयोगार्थ')
+  );
   let colSector = headers.findIndex(h => 
     h === 'sector' || h === 'सेक्टर' || 
     ((h.includes('sector') || h.includes('सेक्टर')) && 
-     !h.includes('incharge') && !h.includes('प्रभारी') && !h.includes('officer') && !h.includes('अधिकारी') && !h.includes('magistrate') && !h.includes('मजिस्ट्रेट'))
+     !h.includes('incharge') && !h.includes('प्रभारी') && !h.includes('officer') && !h.includes('अधिकारी') && !h.includes('magistrate') && !h.includes('मजिस्ट्रेट') && !h.includes('sahyogarth') && !h.includes('सहयोगार्थ'))
   );
   let colSectorIncharge = headers.findIndex(h => 
     h.includes('sector incharge') || h.includes('sectorincharge') || h.includes('sector in-charge') ||
@@ -347,6 +396,9 @@ function processRawRows(rawRows) {
     h.includes('प्रभारी सेक्टर') || h.includes('सेक्टर/प्रभारी') || h.includes('सेक्टर / प्रभारी') ||
     (h.includes('incharge') && !h.includes('zone') && !h.includes('zonal')) ||
     (h.includes('प्रभारी') && !h.includes('जोन') && !h.includes('जोनाल'))
+  );
+  let colSectorSahyogarth = headers.findIndex(h => 
+    h.includes('sector in sahyogarth') || h.includes('sector sahyogarth') || h.includes('सेक्टर सहयोगार्थ')
   );
   let colDutyPlace = headers.findIndex(h => h.includes('duty place') || h.includes('duty_place') || h.includes('स्थान') || h.includes('duty point') || h.includes('स्थल') || h.includes('ड्यूटी स्थल'));
   let colRank = headers.findIndex(h => h === 'rank' || h === 'पद' || h === 'पदनाम' || h === 'पद नाम' || h.includes('designation') || h.includes('पद') || h.includes('rank'));
@@ -376,8 +428,10 @@ function processRawRows(rawRows) {
 
     let zoneVal = colZone !== -1 ? convertKrutiToUnicode(cells[colZone] || '') : '';
     let zonalVal = colZonal !== -1 ? convertKrutiToUnicode(cells[colZonal] || '') : '';
+    let zonalSahyogarthVal = colZonalSahyogarth !== -1 ? convertKrutiToUnicode(cells[colZonalSahyogarth] || '') : '';
     let sectorVal = colSector !== -1 ? convertKrutiToUnicode(cells[colSector] || '') : '';
     let sectorInchargeVal = colSectorIncharge !== -1 ? convertKrutiToUnicode(cells[colSectorIncharge] || '') : '';
+    let sectorSahyogarthVal = colSectorSahyogarth !== -1 ? convertKrutiToUnicode(cells[colSectorSahyogarth] || '') : '';
     const dutyPlaceVal = colDutyPlace !== -1 ? convertKrutiToUnicode(cells[colDutyPlace] || '') : '';
 
     const rawThana = colThana !== -1 ? convertKrutiToUnicode(cells[colThana] || '') : '';
@@ -409,18 +463,21 @@ function processRawRows(rawRows) {
 
     if (zoneVal) currentZone = zoneVal;
     if (zonalVal) currentZonal = zonalVal;
+    if (zonalSahyogarthVal) currentZonalSahyogarth = zonalSahyogarthVal;
     if (sectorVal) currentSector = sectorVal;
     if (sectorInchargeVal) currentSectorIncharge = sectorInchargeVal;
+    if (sectorSahyogarthVal) currentSectorSahyogarth = sectorSahyogarthVal;
     if (dutyPlaceVal) currentDutyPlace = dutyPlaceVal;
     if (rawTime) currentTime = rawTime;
 
-    const displayName = rawComposite.trim() || rawName.trim() || (rawMob ? `पुलिसकर्मी (${rawMob})` : '');
-    const mobNumber = rawMob || cleanMobileNumber(rawComposite);
+    // Prioritize explicit NAME column as requested by user
+    const displayName = rawName.trim() || rawComposite.trim() || (rawMob ? `पुलिसकर्मी (${rawMob})` : '');
+    const mobNumber = rawMob || cleanMobileNumber(rawName) || cleanMobileNumber(rawComposite);
 
     if (!displayName && !mobNumber) continue;
 
     const rawRank = colRank !== -1 ? convertKrutiToUnicode(cells[colRank] || '') : '';
-    const rank = resolvePoliceRank(rawRank, displayName);
+    const rank = rawRank ? rawRank.trim() : '';
     const cleanPno = rawPno ? rawPno.trim() : '';
 
     records.push({
@@ -436,8 +493,10 @@ function processRawRows(rawRows) {
       duty_place: dutyPlaceVal || currentDutyPlace,
       zone: zoneVal || currentZone,
       zonal_incharge: zonalVal || currentZonal,
+      zonal_sahyogarth: zonalSahyogarthVal || currentZonalSahyogarth || '',
       sector: sectorVal || currentSector,
       sector_incharge: sectorInchargeVal || currentSectorIncharge,
+      sector_sahyogarth: sectorSahyogarthVal || currentSectorSahyogarth || '',
       shift: rawTime || currentTime,
       event_name: "",
       briefing_place: rawBriefing,
@@ -451,6 +510,8 @@ function processRawRows(rawRows) {
   // Pass 2: Propagate Sector and Zone Incharges across the same sector / zone
   const sectorInchargeMap = new Map();
   const zoneInchargeMap = new Map();
+  const sectorSahyogarthMap = new Map();
+  const zoneSahyogarthMap = new Map();
 
   records.forEach(r => {
     const s = (r.sector || '').trim().toLowerCase();
@@ -458,10 +519,19 @@ function processRawRows(rawRows) {
     if (s && sInc && sInc !== '-' && !sectorInchargeMap.has(s)) {
       sectorInchargeMap.set(s, r.sector_incharge);
     }
+    const sSah = (r.sector_sahyogarth || '').trim();
+    if (s && sSah && sSah !== '-' && !sectorSahyogarthMap.has(s)) {
+      sectorSahyogarthMap.set(s, r.sector_sahyogarth);
+    }
+
     const z = (r.zone || '').trim().toLowerCase();
     const zInc = (r.zonal_incharge || '').trim();
     if (z && zInc && zInc !== '-' && !zoneInchargeMap.has(z)) {
       zoneInchargeMap.set(z, r.zonal_incharge);
+    }
+    const zSah = (r.zonal_sahyogarth || '').trim();
+    if (z && zSah && zSah !== '-' && !zoneSahyogarthMap.has(z)) {
+      zoneSahyogarthMap.set(z, r.zonal_sahyogarth);
     }
   });
 
@@ -470,9 +540,16 @@ function processRawRows(rawRows) {
     if (s && (!r.sector_incharge || r.sector_incharge === '-') && sectorInchargeMap.has(s)) {
       r.sector_incharge = sectorInchargeMap.get(s);
     }
+    if (s && (!r.sector_sahyogarth || r.sector_sahyogarth === '-') && sectorSahyogarthMap.has(s)) {
+      r.sector_sahyogarth = sectorSahyogarthMap.get(s);
+    }
+
     const z = (r.zone || '').trim().toLowerCase();
     if (z && (!r.zonal_incharge || r.zonal_incharge === '-') && zoneInchargeMap.has(z)) {
       r.zonal_incharge = zoneInchargeMap.get(z);
+    }
+    if (z && (!r.zonal_sahyogarth || r.zonal_sahyogarth === '-') && zoneSahyogarthMap.has(z)) {
+      r.zonal_sahyogarth = zoneSahyogarthMap.get(z);
     }
   });
 

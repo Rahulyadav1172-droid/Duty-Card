@@ -25,8 +25,9 @@ import html2canvas from 'html2canvas';
 import VerifyModal from './VerifyModal';
 import { useLanguage } from '../context/LanguageContext';
 import { printIndividualPass, generateIndividualPassHtml } from '../utils/printLegalBulk';
-import { resolvePoliceRank, stripRankFromName } from '../utils/rankResolver';
+import { resolvePoliceRank, stripRankFromName, parseIncharge } from '../utils/rankResolver';
 import { ELECTION_DUTY_CARD_INSTRUCTIONS, ELECTION_CUG_DIRECTORY } from '../data/electionStandardData';
+import UpPoliceLogo from './UpPoliceLogo';
 
 export default function DutyCard({
   duty,
@@ -51,7 +52,9 @@ export default function DutyCard({
 }) {
   const { language, t } = useLanguage();
   const [isDownloadingPDF, setIsDownloadingPDF] = useState(false);
-  const [showBackSide, setShowBackSide] = useState(false);
+  const [viewMode, setViewMode] = useState('both'); // 'both' | 'front' | 'back'
+  const showBackSide = viewMode === 'back';
+  const setShowBackSide = (val) => setViewMode(val ? 'back' : 'both');
   const [isVerifyModalOpen, setIsVerifyModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editFormData, setEditFormData] = useState({
@@ -407,15 +410,20 @@ export default function DutyCard({
   const qrPayload = qrVerificationUrl || JSON.stringify({
     id: duty.id,
     name: duty.name,
-    rank: duty.rank || 'का0',
+    rank: duty.rank || '',
     duty_place: duty.duty_place,
     shift: duty.shift,
     zone: duty.zone,
     sector: duty.sector
   });
 
-  const effectiveRank = resolvePoliceRank(duty?.rank, duty?.name);
-  const cleanOfficerName = stripRankFromName(duty?.name);
+  const effectiveRank = duty?.rank ? resolvePoliceRank(duty.rank) : '';
+  const cleanOfficerName = stripRankFromName(duty?.name) || '-';
+
+  const zonalInfo = parseIncharge(effectiveZonalIncharge);
+  const sectorInfo = parseIncharge(effectiveSectorIncharge);
+  const zonalMobile = zonalInfo.mobile || duty.zonal_mobile || duty.zone_mobile || '';
+  const sectorMobile = sectorInfo.mobile || duty.sector_mobile || '';
 
   return (
     <div className="w-full max-w-4xl mx-auto space-y-4 font-devanagari text-slate-900 animate-in fade-in zoom-in-95 duration-300 pb-20 md:pb-0">
@@ -428,49 +436,49 @@ export default function DutyCard({
         className="hidden"
       />
       {/* Action Toolbar (Perfect for all mobile screen sizes) */}
-      <div className="bg-white p-2.5 sm:p-4 rounded-xl sm:rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 no-print">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-600 shrink-0">
-            <ShieldCheck className="w-4 h-4 sm:w-6 sm:h-6" />
+      <div className="bg-white p-2.5 sm:p-4 rounded-xl sm:rounded-2xl border border-slate-200/80 shadow-xs flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 no-print">
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-blue-50 border border-blue-200/80 flex items-center justify-center text-blue-600 shrink-0">
+            <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5" />
           </div>
           <div className="min-w-0">
             <div className="flex items-center gap-1.5 flex-wrap">
-              <span className="text-xs sm:text-sm font-black text-slate-900 leading-tight truncate">
+              <span className="text-xs sm:text-sm font-semibold text-slate-900 leading-tight truncate">
                 अयोध्या पुलिस ड्यूटी पास
               </span>
               {isOffline && (
-                <span className="px-1.5 py-0.5 rounded-full bg-amber-100 border border-amber-300 text-amber-900 font-bold text-[9px] sm:text-[10px]">
+                <span className="px-1.5 py-0.5 rounded-full bg-amber-50 border border-amber-200 text-amber-800 font-semibold text-[9px] sm:text-[10px]">
                   📶 ऑफ़लाइन सुरक्षित
                 </span>
               )}
             </div>
-            <div className="text-[10px] sm:text-xs text-slate-500 font-mono font-bold">
-              {cleanPno ? `P.No: ${cleanPno}` : `${effectiveRank} • ${duty.district || 'अयोध्या'}`}
+            <div className="text-[10px] sm:text-xs text-slate-500 font-mono font-medium tnum">
+              {cleanPno ? `P.No: ${cleanPno}` : (duty.district ? `जनपद: ${duty.district}` : 'अयोध्या')}
             </div>
           </div>
         </div>
 
         {/* Action Buttons: Responsive Grid */}
         <div className="grid grid-cols-2 sm:flex sm:flex-wrap sm:items-center gap-2 w-full sm:w-auto">
-          {/* Toggle Back Side (Instructions & CUG Directory) */}
+          {/* Toggle Pass View: Foldable Both Sides / Single Front */}
           <button
-            onClick={() => setShowBackSide(!showBackSide)}
-            className={`h-9 px-3 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition active:scale-95 cursor-pointer shadow-2xs ${
-              showBackSide
-                ? 'bg-amber-600 text-white border-amber-600 hover:bg-amber-700'
-                : 'bg-white hover:bg-amber-50 text-slate-800 border-amber-300 hover:border-amber-400'
+            onClick={() => setViewMode(viewMode === 'both' ? 'front' : 'both')}
+            className={`h-9 px-3 rounded-xl border text-xs font-semibold flex items-center justify-center gap-1.5 transition active:scale-[0.98] cursor-pointer shadow-xs ${
+              viewMode === 'both'
+                ? 'bg-slate-900 text-white border-slate-900 hover:bg-slate-800'
+                : 'bg-white hover:bg-slate-50 text-slate-700 border-slate-200'
             }`}
-            title="16 महत्वपूर्ण निर्देश व CUG डायरेक्टरी (कार्ड का पृष्ठ भाग) देखें"
+            title="फ़ोल्डेबल 2-साइड पास (मुख व पृष्ठ भाग) देखें"
           >
-            <Layers className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-            <span>{showBackSide ? 'मुख पृष्ठ (Pass)' : 'बैक साइड (निर्देश व CUG)'}</span>
+            <Layers className="w-3.5 h-3.5 text-blue-400 shrink-0" />
+            <span>{viewMode === 'both' ? 'फ़ोल्डेबल 2-इन-1 पास' : 'विस्तृत दृश्य'}</span>
           </button>
 
           {/* Edit Duty Details Button (Admin / Senior Officer Only - Hidden from Public View) */}
           {(userRole === 'admin' || userRole === 'senior') && (
             <button
               onClick={handleOpenEditModal}
-              className="h-9 px-3 rounded-xl bg-white hover:bg-slate-50 text-slate-700 hover:text-slate-900 border border-slate-200/90 font-bold text-xs flex items-center justify-center gap-1.5 transition active:scale-95 cursor-pointer shadow-2xs"
+              className="h-9 px-3 rounded-xl bg-white hover:bg-slate-50 text-slate-700 hover:text-slate-900 border border-slate-200/90 font-semibold text-xs flex items-center justify-center gap-1.5 transition active:scale-[0.98] cursor-pointer shadow-xs"
               title="ड्यूटी स्थल, ज़ोन, सेक्टर व समय बदलें"
             >
               <Edit3 className="w-3.5 h-3.5 text-slate-500 shrink-0" />
@@ -482,27 +490,27 @@ export default function DutyCard({
           <button
             onClick={handleDownloadDirectPDF}
             disabled={isDownloadingPDF}
-            className="h-9 px-3.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-xs transition active:scale-95 cursor-pointer"
+            className="h-9 px-3.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs flex items-center justify-center gap-1.5 shadow-xs transition active:scale-[0.98] cursor-pointer"
             title="सहयोगार्थ बल सहित आधिकारिक PDF डाउनलोड करें"
           >
-            <FileDown className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+            <FileDown className="w-3.5 h-3.5 text-blue-400 shrink-0" />
             <span>{isDownloadingPDF ? 'बना रहा है...' : 'PDF डाउनलोड'}</span>
           </button>
 
           {/* Official Sahyogarth Print Trigger */}
           <button
             onClick={handlePrintIndividualPass}
-            className="h-9 px-3.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-xs transition active:scale-95 cursor-pointer"
+            className="h-9 px-3.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs flex items-center justify-center gap-1.5 shadow-xs transition active:scale-[0.98] cursor-pointer"
             title="सहयोगार्थ बल सहित आधिकारिक पास प्रिंट करें"
           >
-            <Printer className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+            <Printer className="w-3.5 h-3.5 text-blue-400 shrink-0" />
             <span>प्रिंट करें</span>
           </button>
 
           {/* WhatsApp Share */}
           <button
             onClick={handleWhatsAppShare}
-            className="h-9 px-3 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-xs font-bold flex items-center justify-center gap-1.5 transition cursor-pointer shadow-2xs"
+            className="col-span-2 sm:col-span-1 h-9 px-3 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200/80 text-xs font-semibold flex items-center justify-center gap-1.5 transition cursor-pointer shadow-xs"
             title="WhatsApp पर शेयर करें"
           >
             <Share2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
@@ -511,417 +519,309 @@ export default function DutyCard({
         </div>
       </div>
 
-      {/* Front / Back Side Switcher Tab (Election Standard Duplex View) */}
-      <div className="flex items-center gap-2 border-b border-slate-200 no-print pb-2">
-        <button
-          onClick={() => setShowBackSide(false)}
-          className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-1.5 cursor-pointer ${
-            !showBackSide
-              ? 'bg-slate-900 text-white shadow-xs'
-              : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
-          }`}
-        >
-          <ShieldCheck className="w-4 h-4 text-amber-400" />
-          <span>मुख पृष्ठ (Duty Pass)</span>
-        </button>
-        <button
-          onClick={() => setShowBackSide(true)}
-          className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-1.5 cursor-pointer ${
-            showBackSide
-              ? 'bg-amber-600 text-white shadow-xs'
-              : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
-          }`}
-        >
-          <Layers className="w-4 h-4 text-amber-300" />
-          <span>पृष्ठ भाग (16 निर्देश व CUG डायरेक्टरी)</span>
-        </button>
-      </div>
-
-      {showBackSide ? (
-        <div
-          id="printable-duty-card-back"
-          className="bg-white text-slate-900 p-4 sm:p-6 rounded-xl sm:rounded-2xl border-[2.5px] border-[#0b132b] shadow-xl ring-2 ring-amber-500/80 ring-offset-2 space-y-4"
-        >
-          {/* Header */}
-          <div className="border-b-2 border-slate-900 pb-2.5 flex items-center justify-between gap-2">
-            <img src="/badge.png" alt="Police Badge Left" className="w-10 h-10 sm:w-12 sm:h-12 object-contain shrink-0" />
-            <div className="flex-1 text-center">
-              <h2 className="text-sm sm:text-lg font-black text-slate-950 uppercase tracking-wide">
-                उत्तर प्रदेश पुलिस • निर्वाचन ड्यूटी निर्देश एवं सीयूजी डायरेक्टरी
-              </h2>
-              <div className="text-[10px] sm:text-xs font-bold text-amber-900 mt-0.5">
-                (ड्यूटी कार्ड का पृष्ठ भाग • प्रत्येक पुलिस कर्मी हेतु अनिवार्य निर्देश)
-              </div>
-            </div>
-            <img src="/badge.png" alt="Police Badge Right" className="w-10 h-10 sm:w-12 sm:h-12 object-contain shrink-0" />
-          </div>
-
-          {/* 16 Standard Police Instructions */}
-          <div className="bg-amber-50/50 border border-amber-200 rounded-xl p-3 sm:p-4 space-y-2">
-            <h3 className="text-xs sm:text-sm font-black text-slate-950 flex items-center gap-2 border-b border-amber-200 pb-1.5">
-              <span className="w-2 h-2 rounded-full bg-amber-600"></span>
-              निर्वाचन ड्यूटी सम्बन्धी महत्वपूर्ण निर्देश (16 बिंदु)
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-1.5 text-[11px] sm:text-xs text-slate-800 leading-snug">
-              {ELECTION_DUTY_CARD_INSTRUCTIONS.map((inst, idx) => (
-                <div key={idx} className="flex items-start gap-1.5 p-1 rounded hover:bg-amber-100/40 transition">
-                  <span className="font-bold text-amber-900 shrink-0">✓</span>
-                  <span>{inst.replace(/^\d+\.\s*/, '')}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* CUG Directory */}
-          <div className="space-y-3 pt-1">
-            <h3 className="text-xs sm:text-sm font-black text-slate-950 flex items-center gap-2 border-b border-slate-300 pb-1.5">
-              <Phone className="w-4 h-4 text-emerald-600" />
-              महत्वपूर्ण सी०यू०जी० दूरभाष नम्बर (CUG DIRECTORY)
-            </h3>
-
-            {/* Higher Officers & Control Room */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <div className="border border-slate-200 rounded-lg p-2.5 bg-slate-50/60">
-                <div className="text-[11px] font-black text-slate-900 border-b border-slate-200 pb-1 mb-1.5 text-amber-900">
-                  उच्चाधिकारीगण
-                </div>
-                <div className="space-y-1 text-[11px]">
-                  {ELECTION_CUG_DIRECTORY.higher_officers.map((off, i) => (
-                    <div key={i} className="flex justify-between items-center py-0.5 border-b border-slate-100 last:border-0">
-                      <span className="text-slate-800 font-medium">{off.designation}</span>
-                      <a href={`tel:${off.mobile}`} className="font-mono font-bold text-emerald-700 hover:underline">{off.mobile}</a>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                {/* Control Rooms */}
-                <div className="border border-slate-200 rounded-lg p-2.5 bg-slate-50/60">
-                  <div className="text-[11px] font-black text-slate-900 border-b border-slate-200 pb-1 mb-1.5 text-amber-900">
-                    कन्ट्रोल रूम
-                  </div>
-                  <div className="space-y-1 text-[11px]">
-                    {ELECTION_CUG_DIRECTORY.control_rooms.map((cr, i) => (
-                      <div key={i} className="flex justify-between items-center py-0.5 border-b border-slate-100 last:border-0">
-                        <span className="text-slate-800 font-medium">{cr.name}</span>
-                        <a href={`tel:${cr.mobile}`} className="font-mono font-bold text-emerald-700 hover:underline">{cr.mobile}</a>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* SDMs & COs */}
-                <div className="border border-slate-200 rounded-lg p-2.5 bg-slate-50/60">
-                  <div className="text-[11px] font-black text-slate-900 border-b border-slate-200 pb-1 mb-1.5 text-amber-900">
-                    उपजिलाधिकारी व क्षेत्राधिकारी
-                  </div>
-                  <div className="space-y-1 text-[11px] max-h-40 overflow-y-auto pr-1">
-                    {ELECTION_CUG_DIRECTORY.sdm_and_co.map((sc, i) => (
-                      <div key={i} className="flex justify-between items-center py-0.5 border-b border-slate-100 last:border-0">
-                        <span className="text-slate-800 font-medium">{sc.designation}</span>
-                        <a href={`tel:${sc.mobile}`} className="font-mono font-bold text-emerald-700 hover:underline">{sc.mobile}</a>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Thanas */}
-            <div className="border border-slate-200 rounded-lg p-2.5 bg-slate-50/60">
-              <div className="text-[11px] font-black text-slate-900 border-b border-slate-200 pb-1 mb-1.5 text-amber-900">
-                समस्त 18 थाना प्रभारी (CUG)
-              </div>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-3 gap-y-1 text-[10px] sm:text-[11px]">
-                {ELECTION_CUG_DIRECTORY.thanas.map((th, i) => (
-                  <div key={i} className="flex justify-between items-center py-0.5 border-b border-slate-100">
-                    <span className="text-slate-800 truncate pr-1">{th.thana}</span>
-                    <a href={`tel:${th.mobile}`} className="font-mono font-bold text-emerald-700 hover:underline shrink-0">{th.mobile}</a>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
+      {/* View Switcher / Badge Info (Lanyard Foldable Standard) */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 border-b border-slate-200/80 no-print pb-2">
+        <div className="flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl">
+          <button
+            onClick={() => setViewMode('both')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
+              viewMode === 'both'
+                ? 'bg-slate-900 text-white shadow-xs'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            <ShieldCheck className="w-3.5 h-3.5 text-blue-400" />
+            <span>फ़ोल्डेबल पास (दोनों पृष्ठ)</span>
+          </button>
+          <button
+            onClick={() => setViewMode('front')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
+              viewMode === 'front'
+                ? 'bg-slate-900 text-white shadow-xs'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            <span>केवल मुख पृष्ठ</span>
+          </button>
+          <button
+            onClick={() => setViewMode('back')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
+              viewMode === 'back'
+                ? 'bg-blue-600 text-white shadow-xs'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            <Layers className="w-3.5 h-3.5 text-blue-200" />
+            <span>केवल पृष्ठ भाग (जोन/सेक्टर)</span>
+          </button>
         </div>
-      ) : (
-        /* Main Printable Duty Card Container */
+
+        <div className="text-[11px] font-semibold text-slate-500 flex items-center gap-1">
+          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+          <span>लैनयार्ड पाउच साइज: 90×128mm (सिंगल-साइड प्रिंट व सेंटर-फोल्ड)</span>
+        </div>
+      </div>
+      {/* Main Card */}
+      <div className="w-full overflow-x-auto pb-2 flex justify-center">
         <div
           id="printable-duty-card"
-          className="bg-white text-slate-900 p-4 sm:p-6 rounded-xl sm:rounded-2xl border-[2.5px] border-[#0b132b] shadow-xl ring-2 ring-amber-500/80 ring-offset-2 space-y-3.5 sm:space-y-4"
+          className={`foldable-pass-unit bg-white text-slate-950 rounded-2xl border-2 border-slate-900 shadow-2xl overflow-hidden w-full select-none font-devanagari relative grid transition-all duration-200 ${
+            viewMode === 'both' ? 'max-w-[820px] grid-cols-1 md:grid-cols-2' : 'max-w-[420px] grid-cols-1'
+          }`}
+          style={{ boxSizing: 'border-box' }}
         >
-        {/* Pass Header */}
-        <div className="border-b-2 border-slate-900 pb-2.5 sm:pb-3.5 flex items-center justify-between gap-2 sm:gap-3">
-          <img src="/badge.png" alt="Police Badge Left" className="w-10 h-10 sm:w-14 sm:h-14 object-contain shrink-0" />
-          
-          <div className="flex-1 text-center min-w-0 px-1">
-            <h1 className="text-base sm:text-2xl font-black text-slate-950 leading-normal">
-              {eventTitle}
-            </h1>
-            <h2 className="text-xs sm:text-base font-bold text-slate-700 mt-1 leading-normal">
-              {eventSubtitle}
-            </h2>
-          </div>
-
-          <img src="/badge.png" alt="Police Badge Right" className="w-10 h-10 sm:w-14 sm:h-14 object-contain shrink-0" />
-        </div>
-
-        {/* Officer Identity & Passport Photo Block */}
-        <div className="flex items-stretch gap-2.5 sm:gap-3 border border-slate-300 p-2.5 sm:p-3 rounded-lg sm:rounded-xl bg-slate-50/80">
-          {/* Photo Frame */}
+          {/* ================= FRONT SIDE (LEFT PANEL) ================= */}
           <div
-            onClick={() => photoInputRef.current?.click()}
-            className="w-18 h-24 sm:w-24 sm:h-28 border-2 border-dashed border-slate-400 hover:border-amber-500 rounded-lg bg-white overflow-hidden flex flex-col items-center justify-center text-center shrink-0 relative group cursor-pointer transition shadow-inner"
-            title="फोटो अपलोड/बदलने के लिए क्लिक करें"
+            className={`pass-panel-front bg-white p-2 flex flex-col justify-between relative ${
+              viewMode === 'both' ? 'md:border-r-[1.5px] md:border-dashed md:border-slate-300 flex' : (viewMode === 'front' ? 'flex' : 'hidden')
+            }`}
           >
-            {duty.photo ? (
-              <img
-                src={duty.photo}
-                alt={duty.name}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <div className="p-1 space-y-0.5 text-slate-400">
-                <User className="w-5 h-5 sm:w-6 sm:h-6 mx-auto text-slate-400" />
-                <div className="text-[9px] sm:text-[10px] font-bold text-slate-700 leading-tight">
-                  पासपोर्ट फोटो
+            {/* 1. Lanyard Punch Slot Indicator */}
+            <div className="pt-0.5 pb-0.5 text-center shrink-0">
+              <div
+                className="w-10 h-1.5 rounded-full border border-slate-300 bg-slate-100 mx-auto flex items-center justify-center shadow-inner"
+                title="लैनयार्ड पंच स्लॉट"
+              >
+                <span className="w-1 h-0.5 bg-slate-400 rounded-full" />
+              </div>
+            </div>
+
+            {/* 2. Official UP Police Header Banner (Dark Navy #0f172a with 2.5px Crimson Red #dc2626 border) */}
+            <div className="bg-[#0f172a] text-white px-2 py-1.5 border-b-[2.5px] border-[#dc2626] flex items-center justify-between gap-1.5 shrink-0 rounded-t-md">
+              <UpPoliceLogo size={30} />
+
+              <div className="flex-1 text-center min-w-0 px-1">
+                <div className="text-amber-400 font-bold text-[9.5px] tracking-wider uppercase truncate leading-tight">
+                  उत्तर प्रदेश पुलिस • अयोध्या
                 </div>
-                <div className="text-[8px] sm:text-[9px] text-slate-400">चस्पा करें</div>
+                <h1 className="text-white font-extrabold text-[12.5px] leading-tight break-words my-0.5">
+                  {eventTitle || 'मा० मुख्यमंत्री उ०प्र० अयोध्या आगमन'}
+                </h1>
+                <div className="flex items-center justify-center gap-1.5">
+                  <span className="bg-[#dc2626] text-white text-[8px] px-2 py-0.2 rounded-full font-bold shadow-2xs">
+                    {eventSubtitle || 'ड्यूटी पास - 2026'}
+                  </span>
+                </div>
               </div>
-            )}
 
-            {/* Hover overlay */}
-            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center text-white text-[9px] font-bold transition no-print">
-              <Camera className="w-4 h-4 mb-0.5" />
-              <span>बदलें</span>
-            </div>
-          </div>
-
-          {/* Officer Details Info */}
-          <div className="flex-1 flex flex-col justify-between text-slate-900 py-0.5 min-w-0">
-            <div>
-              <span className="text-[10px] sm:text-[11px] font-bold text-slate-500">अधिकारी / कर्मचारी:</span>
-              <div className="text-sm sm:text-lg font-black text-slate-950 mt-0.5 break-words flex items-center gap-2">
-                <span>{cleanOfficerName}</span>
-                <span className="text-[11px] px-2 py-0.5 rounded-md bg-amber-100 text-amber-950 font-black border border-amber-300 shrink-0">
-                  {effectiveRank}
-                </span>
-              </div>
-              <div className="text-xs font-mono font-bold text-slate-800 mt-1 flex items-center gap-1.5">
-                <Phone className="w-3.5 h-3.5 text-slate-500" />
-                <span>{duty.mobile || 'मोबाइल अनुपलब्ध'}</span>
-              </div>
+              <UpPoliceLogo size={30} />
             </div>
 
-            <div className="text-[10px] sm:text-xs text-slate-600 border-t border-slate-200 pt-1.5 flex flex-wrap items-center justify-between gap-1">
-              {cleanPno && (
-                <div>P.No: <strong className="font-mono text-slate-950">{cleanPno}</strong></div>
-              )}
-              <div>मूल तैनाती: <strong className="text-slate-950">{duty.posting || '-'}</strong> {duty.district ? `(${duty.district})` : ''}</div>
+            {/* 3. Officer Identity Row */}
+            <div className="px-1 pt-1 pb-0.5 flex items-center gap-2 shrink-0 bg-white">
+              {/* Passport Photo Box */}
+              <div
+                onClick={() => photoInputRef.current?.click()}
+                className="w-[62px] min-w-[62px] h-[78px] border-2 border-slate-300 rounded-lg bg-slate-50 flex flex-col items-center justify-center text-center shrink-0 relative group cursor-pointer overflow-hidden shadow-2xs hover:border-blue-500 transition"
+                style={{ width: '62px', minWidth: '62px', height: '78px' }}
+                title="फोटो अपलोड/बदलने के लिए क्लिक करें"
+              >
+                {duty.photo ? (
+                  <img src={duty.photo} alt={cleanOfficerName} className="w-full h-full object-cover" />
+                ) : (
+                  <div className="p-1 space-y-0.5 text-slate-400 flex flex-col items-center justify-center">
+                    <User className="w-6 h-6 mx-auto text-slate-400 mb-0.5" />
+                    <div className="text-[8.5px] font-bold text-slate-700 leading-tight">पासपोर्ट फोटो</div>
+                    <div className="text-[7.5px] font-semibold text-slate-400 leading-none">चस्पा करें</div>
+                  </div>
+                )}
+                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center text-white text-[7.5px] font-bold transition no-print">
+                  <Camera className="w-3.5 h-3.5 mb-0.5" />
+                  <span>बदलें</span>
+                </div>
+              </div>
+
+              {/* Officer Details Info */}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span className="text-[16px] font-extrabold text-slate-950 leading-tight break-words">
+                    {cleanOfficerName}
+                  </span>
+                </div>
+
+                <div className="mt-0.5 flex items-center gap-2">
+                  <span className="text-[14.5px] font-extrabold text-emerald-800 bg-emerald-50 border border-emerald-300 px-2 py-0.2 rounded tabular-nums inline-flex items-center gap-1 shadow-2xs">
+                    <Phone className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                    <span>{duty.mobile || 'अनुपलब्ध'}</span>
+                  </span>
+                </div>
+
+                <div className="text-[11.5px] font-medium text-slate-700 mt-0.5 whitespace-normal break-words leading-tight">
+                  मूल तैनाती: <strong className="text-slate-900 font-bold">{duty.posting || '-'}</strong> {duty.district ? `(${duty.district})` : ''}
+                  {cleanPno && <span className="ml-1.5 font-mono text-slate-900">| P.No: <strong>{cleanPno}</strong></span>}
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
 
-        {/* Clean Alternating Rows Table */}
-        <div className="overflow-hidden border border-slate-300 rounded-lg sm:rounded-xl text-xs sm:text-sm">
-          <table className="w-full border-collapse">
-            <tbody className="divide-y divide-slate-200">
-              {duty.event_name ? (
-                <tr>
-                  <td className="w-[38%] sm:w-1/3 bg-slate-50 font-bold p-2 sm:p-2.5 border-r border-slate-200 text-slate-700 text-[11px] sm:text-sm leading-relaxed">
-                    ड्यूटी का प्रकार
-                  </td>
-                  <td className="p-2 sm:p-2.5 font-bold text-slate-900 bg-white text-[11px] sm:text-sm break-words leading-relaxed">
-                    {duty.event_name}
-                  </td>
-                </tr>
-              ) : null}
-
-              <tr>
-                <td className="w-[38%] sm:w-1/3 bg-slate-50 font-bold p-2 sm:p-2.5 border-r border-slate-200 text-slate-700 text-[11px] sm:text-sm leading-relaxed">
-                  {labels.duty_place}
-                </td>
-                <td className="p-2 sm:p-2.5 font-black text-xs sm:text-base text-amber-950 bg-amber-50/50 break-words leading-relaxed">
+            {/* 4. Primary Duty Point Spotlight (High-contrast Amber Box) */}
+            <div className="px-0.5 py-1 shrink-0">
+              <div className="bg-amber-50 border-2 border-amber-500 border-l-4 border-l-amber-600 rounded-lg p-2 shadow-2xs">
+                <div className="text-[10px] font-bold text-amber-950 uppercase tracking-wide flex items-center gap-1.5">
+                  <MapPin className="w-3.5 h-3.5 text-amber-700 shrink-0" />
+                  <span>ड्यूटी स्थल</span>
+                </div>
+                <div className="text-[14.5px] font-black text-slate-950 leading-snug break-words whitespace-normal mt-0.5">
                   {duty.duty_place || '-'}
-                </td>
-              </tr>
-
-              {duty.shift ? (
-                <tr>
-                  <td className="bg-slate-50 font-bold p-2 sm:p-2.5 border-r border-slate-200 text-slate-700 text-[11px] sm:text-sm leading-relaxed">
-                    {labels.shift}
-                  </td>
-                  <td className="p-2 sm:p-2.5 font-bold text-slate-900 bg-white text-[11px] sm:text-sm break-words leading-relaxed">
-                    {duty.shift}
-                  </td>
-                </tr>
-              ) : null}
-
-              {effectiveZone ? (
-                <tr>
-                  <td className="bg-slate-50 font-bold p-2 sm:p-2.5 border-r border-slate-200 text-slate-700 text-[11px] sm:text-sm leading-relaxed">
-                    {labels.zone}
-                  </td>
-                  <td className="p-2 sm:p-2.5 font-semibold text-slate-800 bg-white text-[11px] sm:text-sm break-words leading-relaxed">
-                    {effectiveZone}
-                  </td>
-                </tr>
-              ) : null}
-
-              {effectiveZonalIncharge ? (
-                <tr>
-                  <td className="bg-slate-50 font-bold p-2 sm:p-2.5 border-r border-slate-200 text-slate-700 text-[11px] sm:text-sm leading-relaxed">
-                    {labels.zonal_incharge}
-                  </td>
-                  <td className="p-2 sm:p-2.5 font-semibold text-slate-800 bg-white text-[11px] sm:text-sm break-words leading-relaxed">
-                    {effectiveZonalIncharge}
-                  </td>
-                </tr>
-              ) : null}
-
-              {effectiveSector ? (
-                <tr>
-                  <td className="bg-slate-50 font-bold p-2 sm:p-2.5 border-r border-slate-200 text-slate-700 text-[11px] sm:text-sm leading-relaxed">
-                    {labels.sector}
-                  </td>
-                  <td className="p-2 sm:p-2.5 font-semibold text-slate-800 bg-white text-[11px] sm:text-sm break-words leading-relaxed">
-                    {effectiveSector}
-                  </td>
-                </tr>
-              ) : null}
-
-              {effectiveSectorIncharge ? (
-                <tr>
-                  <td className="bg-slate-50 font-bold p-2 sm:p-2.5 border-r border-slate-200 text-slate-700 text-[11px] sm:text-sm leading-relaxed">
-                    {labels.sector_incharge}
-                  </td>
-                  <td className="p-2 sm:p-2.5 font-semibold text-slate-800 bg-white text-[11px] sm:text-sm break-words leading-relaxed">
-                    {effectiveSectorIncharge}
-                  </td>
-                </tr>
-              ) : null}
-
-              {/* Official Election Fields (UP Police Election Format) */}
-              {duty.booth_no ? (
-                <tr>
-                  <td className="bg-slate-50 font-bold p-2 sm:p-2.5 border-r border-slate-200 text-slate-700 text-[11px] sm:text-sm leading-relaxed">
-                    मतदान केंद्र / बूथ सं०
-                  </td>
-                  <td className="p-2 sm:p-2.5 font-black text-amber-950 bg-white text-[11px] sm:text-sm break-words leading-relaxed">
-                    {duty.booth_no}
-                  </td>
-                </tr>
-              ) : null}
-
-              {duty.vehicle_no ? (
-                <tr>
-                  <td className="bg-slate-50 font-bold p-2 sm:p-2.5 border-r border-slate-200 text-slate-700 text-[11px] sm:text-sm leading-relaxed">
-                    वाहन / बस सं०
-                  </td>
-                  <td className="p-2 sm:p-2.5 font-black text-slate-900 bg-white text-[11px] sm:text-sm break-words leading-relaxed font-mono">
-                    {duty.vehicle_no}
-                  </td>
-                </tr>
-              ) : null}
-
-              {duty.weapon ? (
-                <tr>
-                  <td className="bg-slate-50 font-bold p-2 sm:p-2.5 border-r border-slate-200 text-slate-700 text-[11px] sm:text-sm leading-relaxed">
-                    शस्त्र / असलहा
-                  </td>
-                  <td className="p-2 sm:p-2.5 font-bold text-slate-900 bg-white text-[11px] sm:text-sm break-words leading-relaxed">
-                    {duty.weapon}
-                  </td>
-                </tr>
-              ) : null}
-
-              {duty.capf ? (
-                <tr>
-                  <td className="bg-slate-50 font-bold p-2 sm:p-2.5 border-r border-slate-200 text-slate-700 text-[11px] sm:text-sm leading-relaxed">
-                    सीएपीएफ / पीएसी
-                  </td>
-                  <td className="p-2 sm:p-2.5 font-bold text-slate-900 bg-white text-[11px] sm:text-sm break-words leading-relaxed">
-                    {duty.capf}
-                  </td>
-                </tr>
-              ) : null}
-
-              {/* Briefing Location Row */}
-              {activeBriefingPlace && (
-                <tr className="bg-amber-50/70 border-t-2 border-amber-200">
-                  <td className="bg-amber-100/60 font-black p-2 sm:p-2.5 border-r border-amber-200 text-amber-950 text-[11px] sm:text-sm leading-relaxed">
-                    {labels.briefing}
-                  </td>
-                  <td className="p-2 sm:p-2.5 font-bold text-amber-950 bg-amber-50/70 text-[11px] sm:text-sm break-words leading-relaxed">
-                    {activeBriefingPlace}
-                  </td>
-                </tr>
-              )}
-
-              {/* Special Note Row */}
-              {activeNote && (
-                <tr className="bg-amber-50/70 border-t-2 border-amber-200">
-                  <td className="bg-amber-100/60 font-black p-2 sm:p-2.5 border-r border-amber-200 text-amber-950 text-[11px] sm:text-sm leading-relaxed">
-                    {labels.note}
-                  </td>
-                  <td className="p-2 sm:p-2.5 font-bold text-amber-950 bg-amber-50/70 text-[11px] sm:text-sm leading-relaxed break-words">
-                    {activeNote}
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Footer Authority & QR Block */}
-        <div className="pt-2.5 border-t-2 border-slate-900 flex flex-row items-center justify-between gap-2">
-          {/* QR Code with Verification Trigger */}
-          <div
-            onClick={() => setIsVerifyModalOpen(true)}
-            className="flex items-center gap-1.5 sm:gap-2 cursor-pointer p-1 rounded-lg hover:bg-slate-100 transition group"
-            title="सत्यापन देखने हेतु क्लिक करें"
-          >
-            <div className="p-1 bg-white border border-slate-400 rounded-lg shadow-2xs group-hover:border-emerald-500 transition shrink-0">
-              <QRCodeSVG
-                value={qrPayload}
-                size={48}
-                level="M"
-                includeMargin={false}
-              />
-            </div>
-            <div className="text-left space-y-0.5">
-              <div className="text-[9px] sm:text-[10px] font-black text-emerald-800 uppercase flex items-center gap-0.5">
-                <CheckCircle2 className="w-3 h-3 text-emerald-600 shrink-0" />
-                <span>डिजिटल सत्यापित</span>
+                </div>
               </div>
-              <div className="text-[8px] sm:text-[9px] text-slate-500 font-mono">
-                PASS: {duty.id}
+            </div>
+
+            {/* 5. Duty Date & Time Bar */}
+            <div className="px-0.5 py-1 shrink-0">
+              <div className="bg-slate-100 border border-slate-300 p-1.5 rounded-lg flex items-center justify-between gap-1 flex-wrap">
+                <div className="text-[12px] font-bold text-slate-900 flex items-center gap-1.5 flex-wrap">
+                  <Clock className="w-3.5 h-3.5 text-slate-600 shrink-0" />
+                  <span className="text-slate-600 font-medium">दिनाँक व समय:</span>
+                  <span className="font-mono">{duty.shift || 'प्रातः 08:00 बजे से कार्यक्रम समाप्ति तक'}</span>
+                </div>
+                {(duty.booth_no || duty.vehicle_no || duty.weapon || duty.capf) && (
+                  <div className="flex items-center gap-1 shrink-0 text-[8.5px]">
+                    {duty.booth_no && <span className="bg-blue-100 text-blue-900 px-1 py-0.2 rounded font-bold">बूथ: {duty.booth_no}</span>}
+                    {duty.vehicle_no && <span className="bg-amber-100 text-amber-900 px-1 py-0.2 rounded font-bold">वाहन: {duty.vehicle_no}</span>}
+                    {duty.weapon && <span className="bg-red-100 text-red-900 px-1 py-0.2 rounded font-bold">🛡️ {duty.weapon}</span>}
+                    {duty.capf && <span className="bg-emerald-100 text-emerald-900 px-1 py-0.2 rounded font-bold">🎖️ {duty.capf}</span>}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* 6. Bottom Security Footer */}
+            <div className="px-2 py-1.5 border-t-2 border-slate-900 bg-slate-50 flex justify-between items-end w-full mt-auto rounded-b-md">
+              {/* Left: QR Code + Digital Verification */}
+              <div
+                onClick={() => setIsVerifyModalOpen(true)}
+                className="flex gap-2 items-center cursor-pointer group text-left"
+                title="सत्यापन देखने हेतु क्लिक करें"
+              >
+                <div className="p-0.5 bg-white border border-slate-300 rounded shadow-2xs group-hover:border-emerald-500 shrink-0">
+                  <QRCodeSVG value={qrPayload} size={42} level="M" />
+                </div>
+                <div className="text-left space-y-0.5">
+                  <div className="text-[9px] font-extrabold text-emerald-800 uppercase flex items-center gap-1">
+                    <CheckCircle2 className="w-3 h-3 text-emerald-600 shrink-0" />
+                    <span>डिजिटल सत्यापित पास</span>
+                  </div>
+                  <div className="text-[12px] font-extrabold font-mono text-slate-800">
+                    ID: {cleanPno || duty.id || 'DUTY-0001'}
+                  </div>
+                </div>
+              </div>
+
+              {/* Right: Signature & Authority */}
+              <div className="text-right flex flex-col items-end">
+                {signatureImg ? (
+                  <img
+                    src={signatureImg}
+                    alt="Official Signature"
+                    className="h-5 max-w-[80px] object-contain mb-0.5"
+                  />
+                ) : (
+                  <div className="font-serif italic text-[10px] text-slate-600 leading-none mb-0.5">
+                    (हस्ताक्षरित)
+                  </div>
+                )}
+                <div className="text-[11.5px] font-extrabold text-slate-950 leading-tight">
+                  वरिष्ठ पुलिस अधीक्षक,
+                </div>
+                <div className="text-[11.5px] font-extrabold text-slate-950 leading-tight">
+                  अयोध्या
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Official Signatory Authority */}
-          <div className="text-right space-y-0.5 sm:space-y-1">
-            {signatureImg ? (
-              <div className="flex justify-end">
-                <img
-                  src={signatureImg}
-                  alt="Official Signature"
-                  className="h-8 sm:h-11 max-w-[100px] sm:max-w-[120px] object-contain"
-                />
+          {/* ================= BACK SIDE (RIGHT PANEL) ================= */}
+          <div
+            className={`pass-panel-back bg-white p-2 flex flex-col justify-between relative ${
+              viewMode === 'both' ? 'flex' : (viewMode === 'back' ? 'flex' : 'hidden')
+            }`}
+          >
+            {/* 1. Matching Lanyard Punch Slot Indicator */}
+            <div className="pt-0.5 pb-0.5 text-center shrink-0">
+              <div
+                className="w-10 h-1.5 rounded-full border border-slate-300 bg-slate-100 mx-auto flex items-center justify-center shadow-inner"
+                title="लैनयार्ड पंच स्लॉट"
+              >
+                <span className="w-1 h-0.5 bg-slate-400 rounded-full" />
               </div>
-            ) : (
-              <div className="h-5 sm:h-8 flex items-center justify-end font-serif italic text-[11px] sm:text-xs text-slate-600">
-                (हस्ताक्षरित)
+            </div>
+
+            {/* 2. Slate Header (Clean UP Police Navy, no neon blue strip) */}
+            <div className="bg-[#0f172a] text-white py-1.5 px-3 text-center font-extrabold text-[12.5px] rounded-t-md shrink-0">
+              जोन, सेक्टर एवं ब्रीफिंग विवरण
+            </div>
+
+            {/* 3. Zone Card (NO Ellipsis, Full Text Wrap, NO floating watermark badge) */}
+            <div className="bg-blue-50/80 border-2 border-blue-200 p-2.5 rounded-lg mb-1.5 shadow-2xs flex-1 flex flex-col justify-between">
+              <div>
+                <div className="text-[10px] font-bold text-blue-900 uppercase">
+                  <span>जोन विवरण</span>
+                </div>
+                <div className="text-[14px] font-black text-blue-950 leading-snug break-words whitespace-normal mt-0.5">
+                  {effectiveZone || 'जोन-01'}
+                </div>
               </div>
-            )}
-            <div className="text-[11px] sm:text-sm font-black text-slate-950 leading-tight">
-              {signatoryText}
+              <div className="border-b border-blue-200 my-1" />
+              <div className="text-[12.5px] font-medium text-slate-800 leading-snug break-words whitespace-normal">
+                जोनल प्रभारी: <strong className="font-extrabold text-slate-950">{zonalInfo.name || 'नियुक्त अधिकारी'}</strong>
+              </div>
+              {duty.zonal_sahyogarth && (
+                <div className="text-[11.5px] font-medium text-blue-900 mt-0.5 leading-snug break-words">
+                  सहयोगार्थ: <strong className="font-bold">{duty.zonal_sahyogarth}</strong>
+                </div>
+              )}
+              {zonalMobile && (
+                <div className="mt-1">
+                  <span className="text-[14.5px] font-extrabold text-blue-900 bg-white border border-blue-300 px-2 py-0.2 rounded tabular-nums inline-flex items-center gap-1 shadow-2xs">
+                    <Phone className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                    <span>{zonalMobile}</span>
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {/* 4. Sector Card (NO Ellipsis, Full Text Wrap, NO floating watermark badge) */}
+            <div className="bg-indigo-50/80 border-2 border-indigo-200 p-2.5 rounded-lg mb-1.5 shadow-2xs flex-1 flex flex-col justify-between">
+              <div>
+                <div className="text-[10px] font-bold text-indigo-900 uppercase">
+                  <span>सेक्टर विवरण</span>
+                </div>
+                <div className="text-[14px] font-black text-indigo-950 leading-snug break-words whitespace-normal mt-0.5">
+                  {effectiveSector || 'सेक्टर-01'}
+                </div>
+              </div>
+              <div className="border-b border-indigo-200 my-1" />
+              <div className="text-[12.5px] font-medium text-slate-800 leading-snug break-words whitespace-normal">
+                सेक्टर प्रभारी: <strong className="font-extrabold text-slate-950">{sectorInfo.name || 'नियुक्त अधिकारी'}</strong>
+              </div>
+              {duty.sector_sahyogarth && (
+                <div className="text-[11.5px] font-medium text-indigo-900 mt-0.5 leading-snug break-words">
+                  सहयोगार्थ: <strong className="font-bold">{duty.sector_sahyogarth}</strong>
+                </div>
+              )}
+              {sectorMobile && (
+                <div className="mt-1">
+                  <span className="text-[14.5px] font-extrabold text-indigo-900 bg-white border border-indigo-300 px-2 py-0.2 rounded tabular-nums inline-flex items-center gap-1 shadow-2xs">
+                    <Phone className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
+                    <span>{sectorMobile}</span>
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {/* 5. Briefing Box (Full Text Wrap) */}
+            <div className="bg-emerald-50 border-2 border-emerald-300 p-2 rounded-lg shadow-2xs shrink-0 mt-auto">
+              <div className="text-[10px] font-bold text-emerald-900 uppercase flex items-center gap-1.5">
+                <MapPin className="w-3.5 h-3.5 text-emerald-700 shrink-0" />
+                <span>ब्रीफिंग स्थल व समय</span>
+              </div>
+              <div className="text-[12.5px] font-bold text-emerald-950 leading-snug break-words whitespace-normal mt-0.5">
+                {activeBriefingPlace || 'दिनाँक- 01.11.2026 को पूर्वान्ह 13.00 बजे श्रीराम कथा पार्क नया घाट, अयोध्या'}
+              </div>
             </div>
           </div>
         </div>
       </div>
-      )}
 
       {/* CO-DEPLOYED PERSONNEL SECTION (साथी जवान) */}
       <div className="bg-white p-3 sm:p-5 rounded-xl sm:rounded-2xl border border-slate-200 space-y-3 shadow-sm no-print">
@@ -952,7 +852,7 @@ export default function DutyCard({
                     </span>
                   </div>
                   <div className="text-[10px] sm:text-[11px] text-slate-500 truncate">
-                    {peer.posting || 'थाना कोतवाली'} {peer.district ? `(${peer.district})` : ''}
+                    {peer.posting || '-'} {peer.district ? `(${peer.district})` : ''}
                   </div>
                   <div className="text-[10px] sm:text-[11px] font-mono font-bold text-slate-700">
                     मो० {peer.mobile || '-'}

@@ -25,25 +25,25 @@ export default function SearchSection({
   const selectedEvent = activeEventsList.find(e => e.id === activeEventId) || activeEventsList[0];
 
   return (
-    <div className="w-full max-w-xl mx-auto font-devanagari space-y-3 px-2 sm:px-0">
+    <div className="w-full max-w-xl mx-auto space-y-3 px-2 sm:px-0">
       {/* Duty Type Interactive Dropdown Bar (Mobile Responsive) */}
       {activeEventsList.length > 0 ? (
-        <div className="bg-white border border-slate-200/90 rounded-2xl p-3 sm:p-3.5 shadow-sm flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 sm:gap-3 transition">
+        <div className="bg-white border border-slate-200/80 rounded-xl p-3 sm:p-3.5 shadow-xs flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 sm:gap-3 transition-all">
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-amber-50 border border-amber-200 text-amber-700 flex items-center justify-center shrink-0 shadow-2xs">
-              <Calendar className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.5]" />
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-blue-50 border border-blue-200/60 text-blue-600 flex items-center justify-center shrink-0">
+              <Calendar className="w-4 h-4 sm:w-5 sm:h-5 stroke-[1.8]" />
             </div>
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-1.5">
-                <span className="text-[10px] sm:text-[11px] font-bold text-slate-500 uppercase tracking-wider block">
+                <span className="card-subhead">
                   {language === 'en' ? 'Active Event / Mela:' : 'सक्रिय ड्यूटी मेला:'}
                 </span>
-                <span className="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[9px] font-black">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span className="inline-flex items-center gap-1 px-2 py-0.2 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200/80 text-[10px] font-medium">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                   {language === 'en' ? 'Active' : 'सक्रिय'}
                 </span>
               </div>
-              <span className="text-xs sm:text-sm font-black text-slate-900 truncate block mt-0.5">
+              <span className="text-xs sm:text-sm font-semibold text-slate-900 truncate block mt-0.5">
                 {selectedEvent?.title || (language === 'en' ? 'Select Event' : 'इवेंट चुनें')}
               </span>
             </div>
@@ -55,21 +55,21 @@ export default function SearchSection({
               <select
                 value={selectedEvent?.id || activeEventId}
                 onChange={(e) => onSelectActiveEvent?.(e.target.value)}
-                className="w-full sm:w-auto appearance-none bg-slate-50 hover:bg-slate-100 border border-slate-300 text-slate-900 text-xs font-black rounded-xl pl-3 pr-8 py-2 sm:py-2.5 focus:outline-none focus:ring-2 focus:ring-amber-500 cursor-pointer shadow-2xs transition"
+                className="w-full sm:w-auto appearance-none bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-900 text-xs font-semibold rounded-lg pl-3 pr-8 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 cursor-pointer shadow-2xs transition"
               >
                 {activeEventsList.map((evt) => (
-                  <option key={evt.id} value={evt.id} className="font-bold text-slate-900">
+                  <option key={evt.id} value={evt.id} className="font-semibold text-slate-900">
                     {evt.title}
                   </option>
                 ))}
               </select>
-              <ChevronDown className="absolute right-2.5 top-2.5 sm:top-3 w-4 h-4 text-slate-500 pointer-events-none" />
+              <ChevronDown className="absolute right-2.5 top-2.5 w-4 h-4 text-slate-400 pointer-events-none" />
             </div>
           )}
         </div>
       ) : (
-        <div className="bg-amber-50 border border-amber-200/90 rounded-2xl p-4 text-center space-y-1 shadow-2xs">
-          <p className="text-xs font-black text-amber-950">
+        <div className="bg-amber-50 border border-amber-200/90 rounded-xl p-4 text-center space-y-1 shadow-2xs">
+          <p className="text-xs font-bold text-amber-950">
             {language === 'en' ? '⚠️ No active duty event available at present.' : '⚠️ वर्तमान में कोई सक्रिय ड्यूटी मेला उपलब्ध नहीं है।'}
           </p>
           <p className="text-[11px] font-medium text-amber-800">
@@ -79,19 +79,22 @@ export default function SearchSection({
       )}
 
       {/* Main Search Card (Optimized for Mobile Touch) */}
-      <div className="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-6 shadow-sm space-y-3.5 sm:space-y-4 text-center select-none">
+      <div className="bg-white border border-slate-200/80 rounded-xl p-5 sm:p-6 shadow-xs space-y-3.5 sm:space-y-4 text-center select-none">
         {/* Title */}
         <div className="space-y-1">
-          <h2 className="text-lg sm:text-2xl font-black text-slate-900 tracking-tight">
+          <h2 className="text-lg sm:text-xl font-semibold text-slate-900 tracking-tight">
             {t('searchHeading', 'अपना ड्यूटी कार्ड खोजें')}
           </h2>
+          <p className="text-xs text-slate-500 font-normal">
+            PNO, मोबाइल नंबर या नाम लिखकर अपना डिजिटल ड्यूटी पास प्राप्त करें
+          </p>
         </div>
 
         {/* Centered Search Box with Mobile-friendly Touch Sizing */}
         <div className="relative flex items-center">
           {/* Left Search/Phone Icon */}
           <div className="absolute left-3.5 sm:left-4 flex items-center justify-center pointer-events-none text-slate-400">
-            <Smartphone className="w-4 h-4 sm:w-5 sm:h-5" />
+            <Smartphone className="w-4 h-4 sm:w-5 sm:h-5 stroke-[1.8]" />
           </div>
 
           {/* Clean Input with pl-11 / pl-12 Padding */}
@@ -102,7 +105,7 @@ export default function SearchSection({
             onChange={(e) => setSearchQuery(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && onSearchSubmit?.()}
             placeholder={language === 'en' ? 'Enter PNO, Mobile Number or Name...' : 'PNO, मोबाइल नंबर या नाम लिखें...'}
-            className="w-full pl-11 sm:pl-12 pr-10 py-3 sm:py-3.5 bg-slate-50 border border-slate-300 rounded-xl text-xs sm:text-sm font-bold text-slate-900 placeholder:text-slate-400 placeholder:font-normal focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 focus:bg-white transition shadow-inner select-text cursor-text"
+            className="w-full pl-11 sm:pl-12 pr-10 py-3 bg-slate-50/60 hover:bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-semibold text-slate-900 placeholder:text-slate-400 placeholder:font-normal focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition shadow-2xs select-text cursor-text"
             autoFocus
           />
 
@@ -110,7 +113,7 @@ export default function SearchSection({
           {searchQuery && (
             <button
               onClick={handleClear}
-              className="absolute right-3 p-1.5 text-slate-400 hover:text-slate-700 bg-slate-200/60 hover:bg-slate-200 rounded-lg transition cursor-pointer"
+              className="absolute right-3 p-1 text-slate-400 hover:text-slate-700 bg-slate-200/60 hover:bg-slate-200 rounded-md transition cursor-pointer"
               title={language === 'en' ? 'Clear search' : 'खोज साफ़ करें'}
             >
               <X className="w-3.5 h-3.5" />

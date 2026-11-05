@@ -8,11 +8,7 @@ import {
   Calendar,
   Layers,
   UploadCloud,
-  ChevronLeft,
-  ChevronRight,
   X,
-  Shield,
-  Sparkles,
   QrCode,
   Vote
 } from 'lucide-react';
@@ -117,15 +113,15 @@ function SidebarNavigation({
   };
 
   const renderSidebarContent = (isMobile = false) => (
-    <div className="flex flex-col h-full bg-[#0b1329] text-slate-200 border-r border-slate-800/70 select-none font-devanagari">
+    <div className="flex flex-col h-full bg-[#090d16] text-slate-200 border-r border-slate-800/80 select-none font-sans">
       {/* Brand Header */}
-      <div className="p-4 border-b border-slate-800/80 flex items-center justify-between transition-all duration-200">
+      <div className="h-16 px-4 border-b border-slate-800/80 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-3 min-w-0">
-          <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-amber-400 via-amber-500 to-amber-600 p-0.5 shadow-lg shadow-amber-500/20 shrink-0 flex items-center justify-center">
+          <div className="w-9 h-9 rounded-xl bg-slate-800/90 border border-slate-700/80 p-1 shadow-xs shrink-0 flex items-center justify-center">
             <img
               src="/badge.png"
               alt="Police Emblem"
-              className="w-7 h-7 object-contain filter drop-shadow"
+              className="w-6 h-6 object-contain filter drop-shadow"
               onError={(e) => {
                 e.target.style.display = 'none';
               }}
@@ -134,13 +130,13 @@ function SidebarNavigation({
 
           <div className="min-w-0">
             <div className="flex items-center gap-1.5">
-              <h1 className="text-sm font-black tracking-wide text-white truncate leading-tight">
+              <h1 className="text-xs font-bold tracking-wide text-white truncate leading-tight font-devanagari">
                 अयोध्या पुलिस
               </h1>
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
             </div>
-            <p className="text-[11px] text-amber-400 font-bold truncate tracking-wide">
-              सुरक्षा व ड्यूटी पास
+            <p className="text-[10px] text-slate-400 font-medium truncate tracking-normal font-devanagari">
+              सुरक्षा व ड्यूटी प्रबंधन
             </p>
           </div>
         </div>
@@ -150,16 +146,16 @@ function SidebarNavigation({
           <button
             type="button"
             onClick={onCloseMobile}
-            className="p-1.5 rounded-xl text-slate-400 hover:text-white active:scale-90 active:bg-slate-700 bg-slate-800 transition md:hidden cursor-pointer touch-manipulation"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition md:hidden cursor-pointer touch-manipulation"
             title="बंद करें"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4" />
           </button>
         )}
       </div>
 
-      {/* Clean Nav List (Single Unified Rail - No Section Dividers) */}
-      <div className="flex-1 overflow-y-auto px-3 py-4 space-y-1.5 scrollbar-thin scrollbar-thumb-slate-800">
+      {/* Nav List */}
+      <div className="flex-1 overflow-y-auto px-2.5 py-3 space-y-1 scrollbar-thin scrollbar-thumb-slate-800">
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = activeTab === item.id;
@@ -169,34 +165,35 @@ function SidebarNavigation({
               key={item.id}
               type="button"
               onClick={() => handleItemClick(item)}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl text-xs font-bold transition-all duration-150 cursor-pointer relative group touch-manipulation active:scale-[0.98] ${
+              className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs transition-all duration-150 cursor-pointer relative group touch-manipulation active:scale-[0.98] ${
                 isActive
-                  ? 'bg-slate-800 text-white font-black shadow-sm border border-slate-700/80 scale-[1.01]'
-                  : 'text-slate-300 hover:text-white hover:bg-slate-800/70 active:bg-slate-800'
+                  ? 'bg-blue-600/10 text-blue-400 border border-blue-500/20 font-semibold shadow-xs'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 border border-transparent font-medium'
               }`}
             >
-              {/* Icon Container */}
+              {/* Glowing 2px accent indicator */}
+              {isActive && (
+                <span className="absolute left-0 top-1.5 bottom-1.5 w-0.5 bg-blue-500 rounded-r shadow-[0_0_8px_rgba(59,130,246,0.6)]" />
+              )}
+
+              {/* Icon Container with Uniform 18px stroke icons */}
               <div
-                className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 transition-colors ${
+                className={`w-[18px] h-[18px] flex items-center justify-center shrink-0 transition-colors ${
                   isActive
-                    ? 'bg-amber-500 text-slate-950 font-black shadow-xs'
-                    : 'bg-slate-800/60 text-slate-400 group-hover:text-amber-400 group-hover:bg-slate-800'
+                    ? 'text-blue-400'
+                    : 'text-slate-500 group-hover:text-slate-300'
                 }`}
               >
-                <Icon className={`w-4 h-4 ${isActive ? 'stroke-[2.5]' : ''}`} />
+                <Icon className="w-[18px] h-[18px] stroke-[1.8]" />
               </div>
 
               <div className="flex-1 text-left min-w-0 flex items-center justify-between gap-1.5">
-                <span className={`truncate text-xs ${isActive ? 'text-white font-black' : 'text-slate-300 font-bold'}`}>
+                <span className={`truncate text-xs ${isActive ? 'text-white font-semibold' : 'text-slate-300'}`}>
                   {item.label}
                 </span>
                 {item.badge && (
                   <span
-                    className={`text-[9px] font-medium px-1.5 py-0.5 rounded border shrink-0 ${
-                      isActive
-                        ? 'bg-amber-500/20 text-amber-300 border-amber-500/30'
-                        : 'bg-slate-800 text-slate-400 border-slate-700/60'
-                    }`}
+                    className="text-[9px] font-medium px-1.5 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700/80 shrink-0"
                   >
                     {item.badge}
                   </span>
@@ -205,6 +202,12 @@ function SidebarNavigation({
             </button>
           );
         })}
+      </div>
+
+      {/* Sidebar Footer info */}
+      <div className="p-3 border-t border-slate-800/80 text-[10px] text-slate-500 flex items-center justify-between">
+        <span className="font-mono">v2.6 Enterprise</span>
+        <span className="font-medium">स्मार्ट सेल अयोध्या</span>
       </div>
     </div>
   );
@@ -216,16 +219,16 @@ function SidebarNavigation({
         {renderSidebarContent(false)}
       </aside>
 
-      {/* 2. Mobile Backdrop (Pure CSS fade, 0ms lag, no CPU blur) */}
+      {/* 2. Mobile Backdrop */}
       <div
         onClick={onCloseMobile}
-        className={`fixed inset-0 bg-black/75 z-40 md:hidden transition-opacity duration-200 ${
+        className={`fixed inset-0 bg-slate-950/70 backdrop-blur-xs z-40 md:hidden transition-opacity duration-200 ${
           isMobileOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
         }`}
         aria-hidden={!isMobileOpen}
       />
 
-      {/* 3. Mobile Slide-over Drawer (GPU-accelerated transform, instant slide) */}
+      {/* 3. Mobile Slide-over Drawer */}
       <div
         className={`fixed inset-y-0 left-0 z-50 w-72 max-w-[85vw] h-full shadow-2xl md:hidden transition-transform duration-200 ease-out transform ${
           isMobileOpen ? 'translate-x-0' : '-translate-x-full pointer-events-none'

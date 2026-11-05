@@ -241,178 +241,169 @@ export default function DutyPointFilterSection({
 
   return (
     <div className="w-full max-w-7xl mx-auto space-y-6 font-devanagari text-slate-900">
-      {/* Top Action & Daily Checking Report Bar */}
-      <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/90 shadow-xs flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3.5 no-print">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-700 shrink-0">
-            <Layers className="w-5 h-5" />
-          </div>
-          <div>
-            <div className="text-xs text-slate-500 font-bold">ड्यूटी का प्रकार:</div>
-            <div className="text-base font-black text-slate-950">{eventTitle || 'सक्रिय सुरक्षा व्यवस्था'}</div>
-          </div>
-        </div>
+      {/* 1. COHESIVE BENTO GRID ROW: EVENT, CHECKING DATE & REAL-TIME ATTENDANCE */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 no-print">
+        {/* Left Bento Card (7 cols): Event & Checking Date Control */}
+        <div className="lg:col-span-7 bg-white p-5 rounded-xl border border-slate-200/80 shadow-xs flex flex-col justify-between gap-4">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-10 h-10 rounded-lg bg-blue-50 border border-blue-200/60 flex items-center justify-center text-blue-600 shrink-0">
+                <Layers className="w-5 h-5 stroke-[1.8]" />
+              </div>
+              <div className="min-w-0">
+                <span className="card-subhead">ड्यूटी का प्रकार</span>
+                <h2 className="text-base sm:text-lg font-semibold text-slate-900 truncate leading-tight mt-0.5">
+                  {eventTitle || 'सक्रिय सुरक्षा व्यवस्था'}
+                </h2>
+              </div>
+            </div>
 
-        <div className="flex flex-wrap items-center gap-2">
-          {events.length > 0 && (
+            <button
+              onClick={() => setIsCheckingReportOpen(true)}
+              className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-medium flex items-center gap-1.5 shadow-xs transition active:scale-[0.98] cursor-pointer shrink-0"
+              title="आधिकारिक दैनिक चेकिंग रिपोर्ट A4 प्रोफ़ार्मा खोलें"
+            >
+              <FileText className="w-3.5 h-3.5" />
+              <span>दैनिक चेकिंग रिपोर्ट</span>
+            </button>
+          </div>
+
+          <div className="pt-3 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="flex items-center gap-2">
-              <label className="text-xs font-bold text-slate-600 shrink-0">इवेंट:</label>
-              <select
-                value={activeEventId}
-                onChange={(e) => {
-                  onSelectActiveEvent?.(e.target.value);
-                  setSelectedPoint('ALL');
-                }}
-                className="bg-slate-50 text-slate-900 border border-slate-300 text-xs font-bold rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-500 cursor-pointer"
+              <label className="text-xs text-slate-500 font-medium shrink-0 flex items-center gap-1">
+                <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                <span>चेकिंग दिनांक:</span>
+              </label>
+              <input
+                type="date"
+                value={checkingDate}
+                onChange={(e) => setCheckingDate(e.target.value)}
+                className="h-8 px-2.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg font-mono text-xs font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 cursor-pointer"
+              />
+              <button
+                onClick={handleSetTodayDate}
+                className="h-8 px-2.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs font-medium rounded-lg transition cursor-pointer shadow-2xs"
+                title="आज की दिनांक चुनें"
               >
-                {events.map((evt) => (
-                  <option key={evt.id} value={evt.id}>
-                    {evt.title} ({evt.records?.length || 0} बल)
-                  </option>
-                ))}
-              </select>
+                आज
+              </button>
             </div>
-          )}
 
-          {/* Trigger Official Checking Report Modal */}
-          <button
-            onClick={() => setIsCheckingReportOpen(true)}
-            className="px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl shadow-xs flex items-center gap-1.5 transition cursor-pointer shrink-0"
-            title="आधिकारिक दैनिक चेकिंग रिपोर्ट A4 प्रोफ़ार्मा खोलें"
-          >
-            <FileText className="w-4 h-4" />
-            <span>दैनिक चेकिंग रिपोर्ट</span>
-          </button>
-        </div>
-      </div>
-
-      {/* Date-Wise Checking Bar */}
-      <div className="bg-white border border-slate-200 p-3.5 sm:p-4 rounded-2xl flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 shadow-xs no-print">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center shrink-0">
-            <Calendar className="w-4 h-4" />
-          </div>
-          <div>
-            <div className="text-xs font-bold text-slate-900">
-              चेकिंग दिनांक
-            </div>
+            {events.length > 1 && (
+              <div className="flex items-center gap-1.5">
+                <label className="text-xs text-slate-500 font-medium shrink-0">इवेंट:</label>
+                <select
+                  value={activeEventId}
+                  onChange={(e) => {
+                    onSelectActiveEvent?.(e.target.value);
+                    setSelectedPoint('ALL');
+                  }}
+                  className="h-8 bg-slate-50 hover:bg-slate-100 text-slate-900 border border-slate-200 text-xs font-semibold rounded-lg px-2 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 cursor-pointer"
+                >
+                  {events.map((evt) => (
+                    <option key={evt.id} value={evt.id}>
+                      {evt.title} ({evt.records?.length || 0})
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          <input
-            type="date"
-            value={checkingDate}
-            onChange={(e) => setCheckingDate(e.target.value)}
-            className="h-9 px-3 bg-white border border-slate-200 rounded-xl font-bold font-mono text-xs text-slate-900 focus:outline-none focus:border-slate-400"
-          />
+        {/* Right Bento Card (5 cols): Live Force Attendance Meter Bar with 4px rounded-full progress bar */}
+        <div className="lg:col-span-5 bg-white p-5 rounded-xl border border-slate-200/80 shadow-xs flex flex-col justify-between gap-4">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-10 h-10 rounded-lg bg-emerald-50 border border-emerald-200/60 text-emerald-600 flex items-center justify-center shrink-0">
+                <UserCheck className="w-5 h-5 stroke-[1.8]" />
+              </div>
+              <div>
+                <span className="card-subhead">दैनिक बल उपस्थिति</span>
+                <div className="flex items-baseline gap-2 mt-0.5">
+                  <span className="text-xl font-bold text-slate-900 font-mono tracking-tight">
+                    {grandPresentPercent}%
+                  </span>
+                  <span className="text-xs text-slate-500 font-medium">
+                    (कुल बल: <strong className="font-mono text-slate-800">{totalRecordsCount}</strong>)
+                  </span>
+                </div>
+              </div>
+            </div>
 
-          <button
-            onClick={handleSetTodayDate}
-            className="h-9 px-3 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 font-bold text-xs rounded-xl transition cursor-pointer shadow-2xs"
-            title="आज की दिनांक चुनें"
-          >
-            आज
-          </button>
+            <div className="flex items-center gap-1.5 text-xs font-medium shrink-0">
+              <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11px] font-mono">
+                उपस्थित: <strong>{grandPresentCount}</strong>
+              </span>
+              <span className="px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200 text-[11px] font-mono">
+                गैरहाजिर: <strong>{grandAbsentCount}</strong>
+              </span>
+            </div>
+          </div>
+
+          {/* Visual 4px Rounded-Full Deployment Progress Bar */}
+          <div className="space-y-1.5 pt-2">
+            <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden flex">
+              <div
+                style={{ width: `${totalRecordsCount > 0 ? (grandPresentCount / totalRecordsCount) * 100 : 0}%` }}
+                className="bg-emerald-500 h-full transition-all duration-300"
+                title={`उपस्थित: ${grandPresentCount}`}
+              />
+              <div
+                style={{ width: `${totalRecordsCount > 0 ? (grandAbsentCount / totalRecordsCount) * 100 : 0}%` }}
+                className="bg-rose-500 h-full transition-all duration-300"
+                title={`गैरहाजिर: ${grandAbsentCount}`}
+              />
+            </div>
+            <div className="flex justify-between items-center text-[10px] text-slate-400 font-medium">
+              <span>लंबित उपस्थिति: {grandPendingCount}</span>
+              <span className="text-emerald-700 font-semibold font-mono">{grandPresentPercent}% रिपोर्टेड</span>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Live Force Attendance Meter Bar */}
-      <div className="bg-white border border-slate-200 p-4 sm:p-5 rounded-2xl shadow-sm space-y-3.5 no-print">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
+      {/* Top Filter Panel with Unified Height (h-9) & Subtle Focus Rings */}
+      <div className="bg-white p-5 rounded-xl border border-slate-200/80 space-y-4 shadow-xs">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-slate-100 pb-3.5">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 flex items-center justify-center shrink-0">
-              <UserCheck className="w-5 h-5" />
+            <div className="w-10 h-10 rounded-lg bg-slate-50 border border-slate-200 flex items-center justify-center text-slate-700 shrink-0">
+              <MapPin className="w-5 h-5 stroke-[1.8]" />
             </div>
             <div>
-              <h3 className="text-sm sm:text-base font-black text-slate-900 flex items-center gap-2">
-                <span>दैनिक बल उपस्थिति</span>
-                <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-950 font-mono font-black border border-emerald-300">
-                  {grandPresentPercent}% उपस्थित
-                </span>
-              </h3>
-              <p className="text-xs text-slate-500 font-medium">
-                दिनांक: <strong className="font-mono text-slate-800">{checkingDate}</strong> | कुल बल: <strong className="font-mono text-slate-900">{totalRecordsCount}</strong>
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2 text-xs font-bold self-start sm:self-auto">
-            <span className="px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-800 border border-emerald-200">
-              उपस्थित: <strong className="font-mono">{grandPresentCount}</strong>
-            </span>
-            <span className="px-2.5 py-1 rounded-lg bg-rose-50 text-rose-800 border border-rose-200">
-              गैरहाजिर: <strong className="font-mono">{grandAbsentCount}</strong>
-            </span>
-            <span className="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 border border-slate-200">
-              लंबित: <strong className="font-mono">{grandPendingCount}</strong>
-            </span>
-          </div>
-        </div>
-
-        {/* Visual Dual/Tri-Color Progress Bar */}
-        <div className="space-y-1.5">
-          <div className="h-3 w-full bg-slate-100 rounded-full overflow-hidden flex border border-slate-200">
-            <div
-              style={{ width: `${totalRecordsCount > 0 ? (grandPresentCount / totalRecordsCount) * 100 : 0}%` }}
-              className="bg-emerald-500 h-full transition-all duration-300"
-              title={`उपस्थित: ${grandPresentCount}`}
-            />
-            <div
-              style={{ width: `${totalRecordsCount > 0 ? (grandAbsentCount / totalRecordsCount) * 100 : 0}%` }}
-              className="bg-rose-500 h-full transition-all duration-300"
-              title={`गैरहाजिर: ${grandAbsentCount}`}
-            />
-          </div>
-          <div className="flex justify-between text-[10px] text-slate-500 font-bold px-0.5">
-            <span>0%</span>
-            <span className="text-emerald-700 font-black">{grandPresentPercent}% रिपोर्टेड उपस्थित</span>
-            <span>100% ({totalRecordsCount} जवान)</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Top Filter Panel with Dropdown */}
-      <div className="bg-white p-5 sm:p-6 rounded-2xl border border-slate-200 space-y-5 shadow-sm">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-slate-200 pb-4">
-          <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl bg-amber-50 border border-amber-200 text-amber-700 flex items-center justify-center shrink-0">
-              <MapPin className="w-6 h-6" />
-            </div>
-            <div>
-              <h2 className="text-lg font-black text-slate-900">
-                ड्यूटी पॉइंट आधारित बल फ़िल्टर एवं लाइव उपस्थिति
+              <h2 className="text-base font-semibold text-slate-900 tracking-tight">
+                ड्यूटी पॉइंट आधारित बल फ़िल्टर एवं उपस्थिति
               </h2>
-              <p className="text-xs text-slate-500 font-medium">
-                ड्यूटी स्थल का चयन करें और तैनात पुलिसकर्मियों की उपस्थिति/गैरहाजिरी लाइव मार्क करें
+              <p className="text-xs text-slate-500 font-normal">
+                ड्यूटी स्थल का चयन करें और तैनात पुलिसकर्मियों की उपस्थिति लाइव मार्क करें
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2 text-xs font-bold bg-slate-100 px-3 py-1.5 rounded-xl border border-slate-200">
-            <Users className="w-4 h-4 text-amber-600" />
+          <div className="flex items-center gap-2 text-xs font-medium text-slate-600 bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-200/80">
+            <Users className="w-3.5 h-3.5 text-slate-500" />
             <span>कुल ड्यूटी पॉइंट्स: <strong className="font-mono text-slate-900">{uniqueDutyPoints.length}</strong></span>
           </div>
         </div>
 
-        {/* CASCADING FILTER CONTROLS: ZONE, SECTOR, DUTY POINT, AND SEARCH */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+        {/* CASCADING FILTER CONTROLS: UNIFORM HEIGHT (h-9) & SUBTLE FOCUS RINGS */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           {/* 1. ZONE SELECTOR */}
-          <div className="space-y-1.5">
-            <label className="text-xs font-black text-slate-800 flex items-center justify-between">
+          <div className="space-y-1">
+            <label className="text-xs font-semibold text-slate-700 flex items-center justify-between">
               <span>1. ज़ोन:</span>
               {selectedZone !== 'ALL' && (
-                <span className="text-[10px] text-amber-700 bg-amber-50 px-1.5 py-0.2 rounded font-mono font-bold">
+                <span className="text-[10px] text-blue-700 bg-blue-50 px-1.5 py-0.2 rounded font-mono font-medium">
                   सक्रिय
                 </span>
               )}
             </label>
             <div className="relative">
-              <ShieldCheck className="absolute left-3.5 top-3.5 w-4 h-4 text-amber-600 pointer-events-none" />
+              <ShieldCheck className="absolute left-2.5 top-2.5 w-4 h-4 text-slate-400 pointer-events-none" />
               <select
                 value={selectedZone}
                 onChange={(e) => handleZoneChange(e.target.value)}
-                className="w-full appearance-none pl-10 pr-9 py-2.5 bg-slate-50 hover:bg-slate-100/80 border border-slate-300 rounded-xl text-xs font-black text-slate-950 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:bg-white transition cursor-pointer shadow-2xs truncate"
+                className="w-full h-9 appearance-none pl-8 pr-7 bg-white hover:bg-slate-50/70 border border-slate-200 rounded-lg text-xs font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition cursor-pointer shadow-2xs truncate"
               >
                 <option value="ALL">
                   समस्त ज़ोन ({uniqueZones.length})
@@ -423,26 +414,26 @@ export default function DutyPointFilterSection({
                   </option>
                 ))}
               </select>
-              <ChevronDown className="absolute right-3 top-3.5 w-4 h-4 text-slate-400 pointer-events-none" />
+              <ChevronDown className="absolute right-2.5 top-2.5 w-4 h-4 text-slate-400 pointer-events-none" />
             </div>
           </div>
 
           {/* 2. SECTOR SELECTOR */}
-          <div className="space-y-1.5">
-            <label className="text-xs font-black text-slate-800 flex items-center justify-between">
+          <div className="space-y-1">
+            <label className="text-xs font-semibold text-slate-700 flex items-center justify-between">
               <span>2. सेक्टर:</span>
               {selectedSector !== 'ALL' && (
-                <span className="text-[10px] text-amber-700 bg-amber-50 px-1.5 py-0.2 rounded font-mono font-bold">
+                <span className="text-[10px] text-blue-700 bg-blue-50 px-1.5 py-0.2 rounded font-mono font-medium">
                   सक्रिय
                 </span>
               )}
             </label>
             <div className="relative">
-              <Layers className="absolute left-3.5 top-3.5 w-4 h-4 text-amber-600 pointer-events-none" />
+              <Layers className="absolute left-2.5 top-2.5 w-4 h-4 text-slate-400 pointer-events-none" />
               <select
                 value={selectedSector}
                 onChange={(e) => handleSectorChange(e.target.value)}
-                className="w-full appearance-none pl-10 pr-9 py-2.5 bg-slate-50 hover:bg-slate-100/80 border border-slate-300 rounded-xl text-xs font-black text-slate-950 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:bg-white transition cursor-pointer shadow-2xs truncate"
+                className="w-full h-9 appearance-none pl-8 pr-7 bg-white hover:bg-slate-50/70 border border-slate-200 rounded-lg text-xs font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition cursor-pointer shadow-2xs truncate"
               >
                 <option value="ALL">
                   समस्त सेक्टर ({uniqueSectors.length})
@@ -453,26 +444,26 @@ export default function DutyPointFilterSection({
                   </option>
                 ))}
               </select>
-              <ChevronDown className="absolute right-3 top-3.5 w-4 h-4 text-slate-400 pointer-events-none" />
+              <ChevronDown className="absolute right-2.5 top-2.5 w-4 h-4 text-slate-400 pointer-events-none" />
             </div>
           </div>
 
           {/* 3. DUTY POINT SELECTOR */}
-          <div className="space-y-1.5">
-            <label className="text-xs font-black text-slate-800 flex items-center justify-between">
+          <div className="space-y-1">
+            <label className="text-xs font-semibold text-slate-700 flex items-center justify-between">
               <span>3. ड्यूटी पॉइंट:</span>
               {selectedPoint !== 'ALL' && (
-                <span className="text-[10px] text-amber-700 bg-amber-50 px-1.5 py-0.2 rounded font-mono font-bold">
+                <span className="text-[10px] text-blue-700 bg-blue-50 px-1.5 py-0.2 rounded font-mono font-medium">
                   सक्रिय
                 </span>
               )}
             </label>
             <div className="relative">
-              <MapPin className="absolute left-3.5 top-3.5 w-4 h-4 text-amber-600 pointer-events-none" />
+              <MapPin className="absolute left-2.5 top-2.5 w-4 h-4 text-slate-400 pointer-events-none" />
               <select
                 value={selectedPoint}
                 onChange={(e) => setSelectedPoint(e.target.value)}
-                className="w-full appearance-none pl-10 pr-9 py-2.5 bg-slate-50 hover:bg-slate-100/80 border border-slate-300 rounded-xl text-xs font-black text-slate-950 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:bg-white transition cursor-pointer shadow-2xs truncate"
+                className="w-full h-9 appearance-none pl-8 pr-7 bg-white hover:bg-slate-50/70 border border-slate-200 rounded-lg text-xs font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition cursor-pointer shadow-2xs truncate"
               >
                 <option value="ALL">
                   समस्त पॉइंट ({uniqueDutyPoints.length})
@@ -486,33 +477,33 @@ export default function DutyPointFilterSection({
                   );
                 })}
               </select>
-              <ChevronDown className="absolute right-3 top-3.5 w-4 h-4 text-slate-400 pointer-events-none" />
+              <ChevronDown className="absolute right-2.5 top-2.5 w-4 h-4 text-slate-400 pointer-events-none" />
             </div>
           </div>
 
           {/* 4. TEXT SEARCH FILTER */}
-          <div className="space-y-1.5">
+          <div className="space-y-1">
             <div className="flex items-center justify-between">
-              <label className="text-xs font-bold text-slate-700 block">
+              <label className="text-xs font-semibold text-slate-700 block">
                 4. खोजें:
               </label>
               {(selectedZone !== 'ALL' || selectedSector !== 'ALL' || selectedPoint !== 'ALL' || pointSearchQuery) && (
                 <button
                   onClick={handleResetFilters}
-                  className="text-[10px] text-rose-600 hover:text-rose-800 font-black underline cursor-pointer"
+                  className="text-[10px] text-rose-600 hover:text-rose-800 font-medium underline cursor-pointer"
                 >
                   रीसेट ✕
                 </button>
               )}
             </div>
             <div className="relative">
-              <Search className="absolute left-3.5 top-3.5 w-4 h-4 text-slate-400" />
+              <Search className="absolute left-2.5 top-2.5 w-4 h-4 text-slate-400" />
               <input
                 type="text"
                 value={pointSearchQuery}
                 onChange={(e) => setPointSearchQuery(e.target.value)}
                 placeholder="नाम, मोबाइल, PNO या थाना..."
-                className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:bg-white"
+                className="w-full h-9 pl-8 pr-3 bg-white border border-slate-200 rounded-lg text-xs font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
               />
             </div>
           </div>
@@ -604,7 +595,7 @@ export default function DutyPointFilterSection({
               const stableSerialNo = rosterIndex >= 0 ? rosterIndex + 1 : (idx + 1);
               const cleanName = cleanOfficerName(p.name, p.posting, p.district, p.mobile);
               const displayCleanName = stripRankFromName(cleanName);
-              const effectiveRank = resolvePoliceRank(p.rank, p.name);
+              const effectiveRank = p.rank ? resolvePoliceRank(p.rank) : '';
 
               return (
                 <div
@@ -628,10 +619,6 @@ export default function DutyPointFilterSection({
                           ID: <strong className="text-slate-800">{p.id}</strong>
                         </span>
                       </div>
-
-                      <span className="text-[11px] px-2 py-0.5 rounded-md bg-amber-100 text-amber-950 font-black shrink-0 border border-amber-300">
-                        {effectiveRank}
-                      </span>
                     </div>
 
                     {/* Officer Name & Posting */}
@@ -640,7 +627,7 @@ export default function DutyPointFilterSection({
                         {displayCleanName}
                       </h4>
                       <p className="text-xs text-slate-600 font-medium mt-0.5">
-                        थाना: <strong className="text-slate-900">{p.posting || 'थाना कोतवाली'}</strong> {p.district ? `(${p.district})` : ''}
+                        मूल तैनाती: <strong className="text-slate-900">{p.posting || '-'}</strong> {p.district ? `(${p.district})` : ''}
                       </p>
                     </div>
 

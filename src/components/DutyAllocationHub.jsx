@@ -380,10 +380,10 @@ function DutyAllocationHub({
       id: `DUTY-${String(eventRecords.length + idx + 1).padStart(4, '0')}`,
       pno: p.pno || `PN-${Date.now()}-${idx}`,
       name: p.name,
-      rank: p.rank || 'का0',
+      rank: p.rank || '',
       mobile: p.mobile,
-      posting: p.posting || 'थाना कोतवाली',
-      district: p.district || 'अयोध्या',
+      posting: p.posting || '',
+      district: p.district || '',
       zone: targetZone.trim() || 'सामान्य जोन',
       zonal_incharge: zoneInchargeVal,
       sector: targetSector.trim() || 'सामान्य सेक्टर',
@@ -798,20 +798,20 @@ function DutyAllocationHub({
       <div className="bg-slate-950 text-white rounded-2xl sm:rounded-3xl p-4 sm:p-7 shadow-2xl border border-slate-800 space-y-4 sm:space-y-5 overflow-hidden">
         <div className="flex flex-col xl:flex-row items-start xl:items-center justify-between gap-3 sm:gap-4">
           <div className="flex items-start sm:items-center gap-3 sm:gap-4 min-w-0 w-full xl:w-auto">
-            <div className="w-10 h-10 sm:w-13 sm:h-13 rounded-xl sm:rounded-2xl bg-gradient-to-br from-amber-400 via-amber-500 to-amber-600 text-slate-950 flex items-center justify-center font-black shadow-lg shadow-amber-500/20 shrink-0">
-              <Shield className="w-5 h-5 sm:w-7 sm:h-7 stroke-[2.5]" />
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-blue-600/20 border border-blue-500/30 text-blue-400 flex items-center justify-center font-bold shadow-sm shrink-0">
+              <Shield className="w-5 h-5 sm:w-6 sm:h-6 stroke-[2]" />
             </div>
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2 flex-wrap">
-                <h1 className="text-base sm:text-xl md:text-2xl font-black tracking-tight text-white leading-tight">
+                <h1 className="text-base sm:text-xl md:text-2xl font-semibold tracking-tight text-white leading-tight">
                   पुलिस ड्यूटी आवंटन एवं ज़ोन-सेक्टर कमान केंद्र
                 </h1>
-                <span className="inline-flex px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-bold text-[10px] sm:text-xs border border-amber-500/30 shrink-0">
+                <span className="inline-flex px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 font-medium text-[10px] sm:text-xs border border-blue-500/20 shrink-0">
                   लाइव कमान
                 </span>
               </div>
-              <p className="text-xs sm:text-sm text-slate-400 font-medium mt-1 leading-snug">
-                इवेंट: <strong className="text-amber-400 font-black">{activeEvent?.title || 'सक्रिय सुरक्षा व्यवस्था'}</strong> | बल प्रबंधन, ज़ोन पदानुक्रम व ड्यूटी पास आवंटन
+              <p className="text-xs sm:text-sm text-slate-400 font-normal mt-1 leading-snug">
+                इवेंट: <strong className="text-blue-300 font-semibold">{activeEvent?.title || 'सक्रिय सुरक्षा व्यवस्था'}</strong> | बल प्रबंधन, ज़ोन पदानुक्रम व ड्यूटी पास आवंटन
               </p>
             </div>
           </div>
@@ -822,10 +822,10 @@ function DutyAllocationHub({
               <button
                 type="button"
                 onClick={onOpenBooklet}
-                className="w-full sm:w-auto px-4 py-2 sm:py-2.5 bg-slate-900 hover:bg-slate-800 text-white border border-slate-700/80 font-bold text-xs sm:text-sm rounded-xl flex items-center justify-center gap-2 shadow-xs transition active:scale-95 cursor-pointer shrink-0"
+                className="w-full sm:w-auto px-4 py-2 sm:py-2.5 bg-slate-900 hover:bg-slate-800 text-white border border-slate-700/80 font-medium text-xs sm:text-sm rounded-xl flex items-center justify-center gap-2 shadow-xs transition active:scale-[0.98] cursor-pointer shrink-0"
                 title="आधिकारिक ड्यूटी बुकलेट देखें एवं प्रिंट करें"
               >
-                <FileSpreadsheet className="w-4 h-4 text-amber-400 stroke-[2.5]" />
+                <FileSpreadsheet className="w-4 h-4 text-blue-400 stroke-[2]" />
                 <span>बुकलेट देखें</span>
               </button>
             )}
@@ -833,14 +833,14 @@ function DutyAllocationHub({
             {/* Event Selector Dropdown - Clean Responsive Container */}
             {events.length > 0 && (
               <div className="flex items-center gap-2 bg-slate-900 px-3 py-2 sm:px-3.5 sm:py-2.5 rounded-xl border border-slate-800 shadow-inner w-full sm:w-auto min-w-0 max-w-full">
-                <span className="text-xs font-bold text-slate-400 shrink-0">इवेंट:</span>
+                <span className="text-xs font-medium text-slate-400 shrink-0">इवेंट:</span>
                 <select
                   value={activeEventId}
                   onChange={(e) => onSelectActiveEvent?.(e.target.value)}
-                  className="bg-transparent text-amber-400 text-xs sm:text-sm font-black focus:outline-none cursor-pointer flex-1 min-w-0 truncate pr-1"
+                  className="bg-transparent text-blue-400 text-xs sm:text-sm font-semibold focus:outline-none cursor-pointer flex-1 min-w-0 truncate pr-1"
                 >
                   {events.map((evt) => (
-                    <option key={evt.id} value={evt.id} className="bg-slate-900 text-white font-bold">
+                    <option key={evt.id} value={evt.id} className="bg-slate-900 text-white font-medium">
                       {evt.title} ({evt.records?.length || 0} जवान)
                     </option>
                   ))}
@@ -924,55 +924,55 @@ function DutyAllocationHub({
       {/* ========================================================================= */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4 text-slate-900">
         {/* Card 1: Master Force Pool */}
-        <div className="bg-white p-3 sm:p-5 rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 min-w-0">
-          <div className="w-9 h-9 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-amber-50 border border-amber-200/80 text-amber-700 flex items-center justify-center shrink-0">
-            <Users className="w-4 h-4 sm:w-6 sm:h-6 stroke-[2.5]" />
+        <div className="bg-white p-3.5 sm:p-5 rounded-2xl border border-slate-200/80 shadow-xs hover:shadow-sm transition flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 min-w-0">
+          <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-blue-50 border border-blue-200/80 text-blue-700 flex items-center justify-center shrink-0">
+            <Users className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2]" />
           </div>
           <div className="min-w-0 flex-1">
-            <div className="text-[11px] sm:text-xs font-bold text-slate-500 truncate">मास्टर फ़ोर्स पूल</div>
-            <div className="text-lg sm:text-2xl font-black text-slate-950 font-mono tracking-tight mt-0.5 flex items-baseline gap-1">
-              <span>{masterForce.length}</span> <span className="text-[10px] sm:text-xs font-bold text-slate-500 font-sans">जवान</span>
+            <div className="text-[11px] sm:text-xs font-medium uppercase tracking-wider text-slate-400 truncate">मास्टर फ़ोर्स पूल</div>
+            <div className="text-lg sm:text-2xl font-bold text-slate-900 font-mono tracking-tight mt-0.5 flex items-baseline gap-1 tnum">
+              <span>{masterForce.length}</span> <span className="text-[10px] sm:text-xs font-medium text-slate-500 font-sans">जवान</span>
             </div>
           </div>
         </div>
 
         {/* Card 2: Deployed Force */}
-        <div className="bg-white p-3 sm:p-5 rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 min-w-0">
-          <div className="w-9 h-9 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-emerald-50 border border-emerald-200/80 text-emerald-700 flex items-center justify-center shrink-0">
-            <CheckCircle2 className="w-4 h-4 sm:w-6 sm:h-6 stroke-[2.5]" />
+        <div className="bg-white p-3.5 sm:p-5 rounded-2xl border border-slate-200/80 shadow-xs hover:shadow-sm transition flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 min-w-0">
+          <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-emerald-50 border border-emerald-200/80 text-emerald-700 flex items-center justify-center shrink-0">
+            <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2]" />
           </div>
           <div className="min-w-0 flex-1">
-            <div className="text-[11px] sm:text-xs font-bold text-slate-500 truncate">वर्तमान में तैनात बल</div>
-            <div className="text-lg sm:text-2xl font-black text-emerald-950 font-mono tracking-tight mt-0.5 flex items-baseline gap-1">
-              <span>{eventRecords.length}</span> <span className="text-[10px] sm:text-xs font-bold text-emerald-700 font-sans">जवान</span>
+            <div className="text-[11px] sm:text-xs font-medium uppercase tracking-wider text-slate-400 truncate">वर्तमान में तैनात बल</div>
+            <div className="text-lg sm:text-2xl font-bold text-emerald-950 font-mono tracking-tight mt-0.5 flex items-baseline gap-1 tnum">
+              <span>{eventRecords.length}</span> <span className="text-[10px] sm:text-xs font-medium text-emerald-700 font-sans">जवान</span>
             </div>
           </div>
         </div>
 
         {/* Card 3: Zones & Sectors Master */}
-        <div className="bg-white p-3 sm:p-5 rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 min-w-0">
-          <div className="w-9 h-9 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-indigo-50 border border-indigo-200/80 text-indigo-700 flex items-center justify-center shrink-0">
-            <Building className="w-4 h-4 sm:w-6 sm:h-6 stroke-[2.5]" />
+        <div className="bg-white p-3.5 sm:p-5 rounded-2xl border border-slate-200/80 shadow-xs hover:shadow-sm transition flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 min-w-0">
+          <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-indigo-50 border border-indigo-200/80 text-indigo-700 flex items-center justify-center shrink-0">
+            <Building className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2]" />
           </div>
           <div className="min-w-0 flex-1">
-            <div className="text-[11px] sm:text-xs font-bold text-slate-500 truncate">ज़ोन एवं सेक्टर मास्टर</div>
-            <div className="text-lg sm:text-2xl font-black text-indigo-950 font-mono tracking-tight mt-0.5 flex flex-wrap items-baseline gap-1">
-              <span>{masterZones.length}</span> <span className="text-[10px] sm:text-xs font-bold text-indigo-600 font-sans">ज़ोन</span>
+            <div className="text-[11px] sm:text-xs font-medium uppercase tracking-wider text-slate-400 truncate">ज़ोन एवं सेक्टर मास्टर</div>
+            <div className="text-lg sm:text-2xl font-bold text-indigo-950 font-mono tracking-tight mt-0.5 flex flex-wrap items-baseline gap-1 tnum">
+              <span>{masterZones.length}</span> <span className="text-[10px] sm:text-xs font-medium text-indigo-600 font-sans">ज़ोन</span>
               <span className="text-slate-300">/</span>
-              <span>{masterSectors.length}</span> <span className="text-[10px] sm:text-xs font-bold text-indigo-600 font-sans">सेक्टर</span>
+              <span>{masterSectors.length}</span> <span className="text-[10px] sm:text-xs font-medium text-indigo-600 font-sans">सेक्टर</span>
             </div>
           </div>
         </div>
 
         {/* Card 4: Duty Points */}
-        <div className="bg-white p-3 sm:p-5 rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 min-w-0">
-          <div className="w-9 h-9 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-violet-50 border border-violet-200/80 text-violet-700 flex items-center justify-center shrink-0">
-            <MapPin className="w-4 h-4 sm:w-6 sm:h-6 stroke-[2.5]" />
+        <div className="bg-white p-3.5 sm:p-5 rounded-2xl border border-slate-200/80 shadow-xs hover:shadow-sm transition flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 min-w-0">
+          <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-violet-50 border border-violet-200/80 text-violet-700 flex items-center justify-center shrink-0">
+            <MapPin className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2]" />
           </div>
           <div className="min-w-0 flex-1">
-            <div className="text-[11px] sm:text-xs font-bold text-slate-500 truncate">सक्रिय ड्यूटी स्थल</div>
-            <div className="text-lg sm:text-2xl font-black text-violet-950 font-mono tracking-tight mt-0.5 flex items-baseline gap-1">
-              <span>{masterPoints.length}</span> <span className="text-[10px] sm:text-xs font-bold text-violet-600 font-sans">पॉइंट्स</span>
+            <div className="text-[11px] sm:text-xs font-medium uppercase tracking-wider text-slate-400 truncate">सक्रिय ड्यूटी स्थल</div>
+            <div className="text-lg sm:text-2xl font-bold text-violet-950 font-mono tracking-tight mt-0.5 flex items-baseline gap-1 tnum">
+              <span>{masterPoints.length}</span> <span className="text-[10px] sm:text-xs font-medium text-violet-600 font-sans">पॉइंट्स</span>
             </div>
           </div>
         </div>

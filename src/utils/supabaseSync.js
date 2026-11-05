@@ -349,8 +349,9 @@ export async function saveAuthConfigToSupabase(authConfig) {
  */
 export function subscribeToEventsRealtime(onUpdateCallback) {
   try {
+    const channelId = `events_sub_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
     const channel = supabase
-      .channel('public:police_events')
+      .channel(channelId)
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: EVENTS_TABLE },
@@ -374,7 +375,9 @@ export function subscribeToEventsRealtime(onUpdateCallback) {
       .subscribe();
 
     return () => {
-      supabase.removeChannel(channel);
+      try {
+        supabase.removeChannel(channel);
+      } catch (e) {}
     };
   } catch (err) {
     console.warn('Realtime subscription error:', err);
@@ -387,8 +390,9 @@ export function subscribeToEventsRealtime(onUpdateCallback) {
  */
 export function subscribeToMasterForceRealtime(onUpdateCallback) {
   try {
+    const channelId = `force_sub_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
     const channel = supabase
-      .channel('public:master_force_realtime')
+      .channel(channelId)
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: EVENTS_TABLE, filter: `id=eq.${CLOUD_MASTER_FORCE_ID}` },
@@ -402,7 +406,9 @@ export function subscribeToMasterForceRealtime(onUpdateCallback) {
       .subscribe();
 
     return () => {
-      supabase.removeChannel(channel);
+      try {
+        supabase.removeChannel(channel);
+      } catch (e) {}
     };
   } catch (err) {
     console.warn('Master Force Realtime subscription error:', err);
@@ -472,8 +478,9 @@ export async function saveGlobalActiveEventId(eventId) {
  */
 export function subscribeToActiveEventIdRealtime(onUpdateCallback) {
   try {
+    const channelId = `active_event_sub_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
     const channel = supabase
-      .channel('public:active_event_id_realtime')
+      .channel(channelId)
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: EVENTS_TABLE, filter: `id=eq.${CLOUD_ACTIVE_EVENT_STATE_ID}` },
@@ -487,7 +494,9 @@ export function subscribeToActiveEventIdRealtime(onUpdateCallback) {
       .subscribe();
 
     return () => {
-      supabase.removeChannel(channel);
+      try {
+        supabase.removeChannel(channel);
+      } catch (e) {}
     };
   } catch (err) {
     console.warn('Active Event ID Realtime subscription error:', err);

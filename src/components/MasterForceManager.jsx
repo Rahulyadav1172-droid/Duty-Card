@@ -11,10 +11,10 @@ export default function MasterForceManager({ forceRecords, onUpdateForce }) {
   const [formData, setFormData] = useState({
     pno: '',
     name: '',
-    rank: 'उ0नि0',
+    rank: '',
     mobile: '',
-    posting: 'थाना कोतवाली',
-    district: 'अयोध्या'
+    posting: '',
+    district: ''
   });
 
   const handleOpenAddModal = (person = null) => {
@@ -26,10 +26,10 @@ export default function MasterForceManager({ forceRecords, onUpdateForce }) {
       setFormData({
         pno: `PN-${Math.floor(100000 + Math.random() * 900000)}`,
         name: '',
-        rank: 'उ0नि0',
+        rank: '',
         mobile: '',
-        posting: 'थाना कोतवाली',
-        district: 'अयोध्या'
+        posting: '',
+        district: ''
       });
     }
     setIsModalOpen(true);
@@ -70,10 +70,10 @@ export default function MasterForceManager({ forceRecords, onUpdateForce }) {
         const newForce = parsed.map((item, idx) => ({
           pno: `PN-${Math.floor(100000 + idx * 17) % 900000 + 100000}`,
           name: item.name,
-          rank: item.rank || 'का0',
+          rank: item.rank || '',
           mobile: item.mobile,
-          posting: item.posting || 'थाना कोतवाली',
-          district: item.district || 'अयोध्या'
+          posting: item.posting || '',
+          district: item.district || ''
         }));
         onUpdateForce([...newForce, ...forceRecords]);
         alert(`सफलतापूर्वक ${newForce.length} पुलिसकर्मियों का मास्टर डेटाबेस अपलोड किया गया!`);

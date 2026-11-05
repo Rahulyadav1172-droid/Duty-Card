@@ -762,7 +762,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-100/70 text-slate-900 flex font-sans selection:bg-amber-500 selection:text-slate-950 font-devanagari overflow-x-hidden">
+    <div className="min-h-screen bg-slate-50 text-slate-900 flex font-sans selection:bg-blue-600 selection:text-white overflow-x-hidden">
       {/* 0. PWA 1-Click Mobile Install Banner & Modal */}
       <InstallPwaModal />
 
@@ -785,29 +785,29 @@ export default function App() {
           userRole !== 'guest' ? 'md:pl-64' : 'pl-0'
         }`}
       >
-        {/* Modern Clean Top Header */}
-        <header className="sticky top-0 z-20 bg-slate-900 text-white border-b border-slate-800 shadow-sm no-print">
-          <div className="px-3 sm:px-6 py-2.5 sm:py-3 flex items-center justify-between gap-3 max-w-7xl mx-auto w-full">
+        {/* Modern International SaaS Standard Top Header (64px / h-16, Glassmorphism) */}
+        <header className="sticky top-0 z-20 h-16 bg-white/95 backdrop-blur-md border-b border-slate-200/80 text-slate-900 shadow-xs no-print">
+          <div className="h-full px-4 sm:px-6 flex items-center justify-between gap-3 max-w-7xl mx-auto w-full">
             {/* Left: Police Emblem & Title / Mobile Hamburger */}
-            <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+            <div className="flex items-center gap-2.5 sm:gap-3.5 min-w-0 flex-1">
               {userRole !== 'guest' ? (
                 /* Mobile Hamburger for Logged In Officer */
                 <button
                   type="button"
                   onClick={handleOpenMobileSidebar}
-                  className="p-1.5 sm:p-2 -ml-1 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800 active:bg-amber-500 active:text-slate-950 active:scale-90 transition-all duration-75 md:hidden cursor-pointer shrink-0 touch-manipulation select-none"
+                  className="p-2 -ml-1.5 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 active:scale-95 transition-all md:hidden cursor-pointer shrink-0 touch-manipulation select-none"
                   title="मेनू खोलें"
                   aria-label="मेनू खोलें"
                 >
-                  <Menu className="w-5 h-5 stroke-[2.5]" />
+                  <Menu className="w-5 h-5 stroke-[2]" />
                 </button>
               ) : (
                 /* Police Emblem for Public / Guest */
-                <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 p-0.5 shadow-md shrink-0 flex items-center justify-center">
+                <div className="w-9 h-9 rounded-xl bg-slate-100/80 border border-slate-200/80 p-1 shadow-xs shrink-0 flex items-center justify-center">
                   <img
                     src="/badge.png"
                     alt="Police Emblem"
-                    className="w-6 h-6 sm:w-7 sm:h-7 object-contain filter drop-shadow"
+                    className="w-6 h-6 object-contain filter drop-shadow"
                     onError={(e) => {
                       e.target.style.display = 'none';
                     }}
@@ -817,48 +817,51 @@ export default function App() {
 
               {/* Event Title */}
               <div className="min-w-0 flex-1">
-                <h1 className="text-xs sm:text-sm font-black text-white truncate leading-tight">
+                <h1 className="text-sm font-semibold text-slate-900 truncate leading-tight tracking-tight font-devanagari">
                   {userRole === 'guest' ? 'अयोध्या पुलिस ड्यूटी पास पोर्टल' : currentEvent.title}
                 </h1>
-                <p className="text-[10px] text-slate-400 font-medium truncate">
+                <p className="text-xs text-slate-500 font-normal truncate mt-0.5 font-devanagari">
                   {userRole === 'guest' ? 'उत्तर प्रदेश पुलिस सुरक्षा व्यवस्था' : (currentEvent.subtitle || 'उत्तर प्रदेश पुलिस')}
                 </p>
               </div>
             </div>
 
             {/* Right: Language Toggle & User Profile Dropdown */}
-            <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-              {/* Subtle Live Sync Indicator (Clean, non-intrusive) */}
+            <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
+              {/* Elegant Status Pill: Pinging Emerald Dot + Live Sync */}
               <div
-                className="hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-800/80 border border-slate-700/60 text-[11px] font-bold text-slate-300 select-none"
+                className="hidden md:flex items-center gap-2 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200/80 text-xs font-medium text-emerald-700 select-none shadow-2xs"
                 title="सुरक्षित क्लाउड नेटवर्क से कनेक्टेड"
               >
-                <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
+                <span className="relative flex h-2 w-2 items-center justify-center">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
+                </span>
                 <span>लाइव सिंक</span>
               </div>
 
-              {/* Quick 1-Tap QR Duty Pass Scanner Button for Senior Officers & Admins */}
+              {/* Quick QR Duty Pass Scanner Button */}
               {(userRole === 'admin' || userRole === 'senior') && (
                 <button
                   type="button"
                   onClick={() => setIsScanModalOpen(true)}
-                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-500/20 to-amber-600/20 hover:from-amber-500/30 hover:to-amber-600/30 border border-amber-500/40 text-amber-300 hover:text-white transition cursor-pointer shadow-xs active:scale-95 text-xs font-bold touch-manipulation"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 hover:text-slate-900 transition-all cursor-pointer shadow-xs active:scale-[0.98] text-xs font-medium touch-manipulation"
                   title="ड्यूटी पास QR स्कैन करें"
                 >
-                  <QrCode className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                  <QrCode className="w-3.5 h-3.5 text-slate-600 shrink-0" />
                   <span className="hidden sm:inline">स्कैन पास</span>
                 </button>
               )}
 
-              {/* Quick 1-Click Language Switcher (Always visible in Header) */}
+              {/* Quick 1-Click Language Switcher */}
               <button
                 type="button"
                 onClick={toggleLanguage}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-slate-800/90 hover:bg-slate-700/90 border border-slate-700/80 text-white transition cursor-pointer shadow-xs active:scale-95 text-xs font-bold"
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 transition-all cursor-pointer shadow-xs active:scale-[0.98] text-xs font-medium"
                 title={language === 'hi' ? 'Switch to English' : 'हिन्दी में बदलें'}
               >
-                <Globe className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                <span className="font-mono text-amber-300 font-extrabold uppercase">
+                <Globe className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+                <span className="font-mono text-slate-800 font-bold uppercase">
                   {language === 'hi' ? 'EN' : 'हिन्दी'}
                 </span>
               </button>
@@ -869,74 +872,74 @@ export default function App() {
                   <button
                     type="button"
                     onClick={() => setIsUserMenuOpen((prev) => !prev)}
-                    className="flex items-center gap-2 px-2.5 sm:px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700/90 border border-slate-700/80 text-white transition cursor-pointer shadow-xs active:scale-95"
+                    className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-800 transition-all cursor-pointer shadow-xs active:scale-[0.98]"
                     title="यूज़र मेनू खोलें"
                   >
                     <div
-                      className={`w-6 h-6 sm:w-7 sm:h-7 rounded-lg flex items-center justify-center text-xs font-black shrink-0 ${
+                      className={`w-6 h-6 rounded-md flex items-center justify-center text-xs font-bold shrink-0 ${
                         userRole === 'admin'
-                          ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
-                          : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                          ? 'bg-rose-50 text-rose-700 border border-rose-200'
+                          : 'bg-blue-50 text-blue-700 border border-blue-200'
                       }`}
                     >
                       {userRole === 'admin' ? (
-                        <ShieldCheck className="w-4 h-4" />
+                        <ShieldCheck className="w-3.5 h-3.5" />
                       ) : (
-                        <UserCheck className="w-4 h-4" />
+                        <UserCheck className="w-3.5 h-3.5" />
                       )}
                     </div>
 
                     <div className="text-left hidden sm:block">
-                      <div className="text-xs font-black text-white leading-tight">
+                      <div className="text-xs font-semibold text-slate-900 leading-tight">
                         {userRole === 'admin' ? t('superAdmin', 'सुपर एडमिन') : t('seniorOfficer', 'वरिष्ठ अधिकारी')}
                       </div>
                     </div>
 
                     <ChevronDown
                       className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${
-                        isUserMenuOpen ? 'rotate-180 text-amber-400' : ''
+                        isUserMenuOpen ? 'rotate-180 text-slate-700' : ''
                       }`}
                     />
                   </button>
 
                   {/* Dropdown Menu Modal / Card */}
                   {isUserMenuOpen && (
-                    <div className="absolute right-0 mt-2 w-64 bg-slate-900 border border-slate-700/90 rounded-2xl shadow-2xl z-50 overflow-hidden animate-in fade-in zoom-in-95 font-devanagari text-slate-200 p-2 space-y-2">
+                    <div className="absolute right-0 mt-2 w-64 bg-white border border-slate-200/90 rounded-xl shadow-lg z-50 overflow-hidden animate-in fade-in zoom-in-95 text-slate-800 p-2 space-y-2">
                       {/* User Info Card */}
-                      <div className="p-3 bg-slate-800/90 rounded-xl border border-slate-700/60 space-y-1">
+                      <div className="p-3 bg-slate-50 rounded-lg border border-slate-200/80 space-y-1">
                         <div className="flex items-center justify-between">
-                          <span className="text-[10px] uppercase tracking-wider font-bold text-slate-400">
+                          <span className="text-[10px] uppercase tracking-wider font-semibold text-slate-500">
                             {t('activeSession', 'सक्रिय सत्र')}
                           </span>
-                          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                         </div>
-                        <div className="font-black text-sm text-white flex items-center gap-1.5">
+                        <div className="font-bold text-sm text-slate-900 flex items-center gap-1.5">
                           <span>
                             {userRole === 'admin' ? t('superAdminTitle', 'सुपर एडमिनिस्ट्रेटर') : t('seniorOfficerTitle', 'वरिष्ठ पुलिस अधिकारी')}
                           </span>
                         </div>
-                        <div className="text-[11px] text-amber-400 font-semibold truncate">
+                        <div className="text-xs text-slate-600 font-medium truncate">
                           {currentEvent.title}
                         </div>
                       </div>
 
                       {/* Language Switcher Inside Profile Menu */}
-                      <div className="p-2.5 bg-slate-800/60 rounded-xl border border-slate-700/50 space-y-1.5">
-                        <div className="flex items-center justify-between text-[11px] font-bold text-slate-300">
+                      <div className="p-2.5 bg-slate-50 rounded-lg border border-slate-200/60 space-y-1.5">
+                        <div className="flex items-center justify-between text-xs font-semibold text-slate-700">
                           <div className="flex items-center gap-1.5">
-                            <Globe className="w-3.5 h-3.5 text-amber-400" />
+                            <Globe className="w-3.5 h-3.5 text-slate-500" />
                             <span>{t('switchLanguage', 'भाषा')}</span>
                           </div>
-                          <span className="text-[10px] text-amber-400 font-mono font-bold uppercase">{language}</span>
+                          <span className="text-[10px] text-slate-500 font-mono font-bold uppercase">{language}</span>
                         </div>
                         <div className="grid grid-cols-2 gap-1.5">
                           <button
                             type="button"
                             onClick={() => setLanguage('hi')}
-                            className={`py-1.5 px-2 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1 cursor-pointer ${
+                            className={`py-1.5 px-2 rounded-md text-xs font-medium transition flex items-center justify-center gap-1 cursor-pointer ${
                               language === 'hi'
-                                ? 'bg-amber-500 text-slate-950 shadow-xs'
-                                : 'bg-slate-700/70 text-slate-300 hover:bg-slate-700'
+                                ? 'bg-slate-900 text-white shadow-xs font-semibold'
+                                : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-100'
                             }`}
                           >
                             <span>🇮🇳 हिन्दी</span>
@@ -944,10 +947,10 @@ export default function App() {
                           <button
                             type="button"
                             onClick={() => setLanguage('en')}
-                            className={`py-1.5 px-2 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1 cursor-pointer ${
+                            className={`py-1.5 px-2 rounded-md text-xs font-medium transition flex items-center justify-center gap-1 cursor-pointer ${
                               language === 'en'
-                                ? 'bg-amber-500 text-slate-950 shadow-xs'
-                                : 'bg-slate-700/70 text-slate-300 hover:bg-slate-700'
+                                ? 'bg-slate-900 text-white shadow-xs font-semibold'
+                                : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-100'
                             }`}
                           >
                             <span>🇬🇧 English</span>
@@ -956,7 +959,7 @@ export default function App() {
                       </div>
 
                       {/* Menu Options */}
-                      <div className="space-y-1 text-xs font-bold">
+                      <div className="space-y-0.5 text-xs font-medium">
                         {/* 1. Change Password */}
                         <button
                           type="button"
@@ -964,14 +967,14 @@ export default function App() {
                             setIsUserMenuOpen(false);
                             setIsChangePasswordOpen(true);
                           }}
-                          className="w-full px-3 py-2.5 rounded-xl hover:bg-slate-800 text-slate-200 hover:text-amber-400 transition flex items-center gap-2.5 cursor-pointer text-left"
+                          className="w-full px-2.5 py-2 rounded-lg hover:bg-slate-100 text-slate-700 hover:text-slate-900 transition flex items-center gap-2.5 cursor-pointer text-left"
                         >
-                          <div className="w-7 h-7 rounded-lg bg-amber-500/10 text-amber-400 flex items-center justify-center shrink-0 border border-amber-500/20">
-                            <KeyRound className="w-4 h-4" />
+                          <div className="w-7 h-7 rounded-md bg-slate-100 text-slate-600 flex items-center justify-center shrink-0 border border-slate-200">
+                            <KeyRound className="w-3.5 h-3.5" />
                           </div>
                           <div>
-                            <div>{language === 'en' ? 'Change Password' : 'पासवर्ड बदलें'}</div>
-                            <div className="text-[10px] text-slate-400 font-medium">{language === 'en' ? 'Update account security' : 'खाता सुरक्षा अपडेट करें'}</div>
+                            <div className="font-semibold text-slate-900">{language === 'en' ? 'Change Password' : 'पासवर्ड बदलें'}</div>
+                            <div className="text-[10px] text-slate-500">{language === 'en' ? 'Update account security' : 'खाता सुरक्षा अपडेट करें'}</div>
                           </div>
                         </button>
 
@@ -982,14 +985,14 @@ export default function App() {
                             setIsUserMenuOpen(false);
                             setIsAuditLogModalOpen(true);
                           }}
-                          className="w-full px-3 py-2.5 rounded-xl hover:bg-slate-800 text-slate-200 hover:text-amber-400 transition flex items-center gap-2.5 cursor-pointer text-left"
+                          className="w-full px-2.5 py-2 rounded-lg hover:bg-slate-100 text-slate-700 hover:text-slate-900 transition flex items-center gap-2.5 cursor-pointer text-left"
                         >
-                          <div className="w-7 h-7 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-500/20">
-                            <History className="w-4 h-4" />
+                          <div className="w-7 h-7 rounded-md bg-slate-100 text-slate-600 flex items-center justify-center shrink-0 border border-slate-200">
+                            <History className="w-3.5 h-3.5" />
                           </div>
                           <div>
-                            <div>{language === 'en' ? 'Audit Log & History' : 'ऑडिट लॉग'}</div>
-                            <div className="text-[10px] text-slate-400 font-medium">{language === 'en' ? 'View deletion & security logs' : 'विलोपन व सुरक्षा रिकॉर्ड्स देखें'}</div>
+                            <div className="font-semibold text-slate-900">{language === 'en' ? 'Audit Log & History' : 'ऑडिट लॉग'}</div>
+                            <div className="text-[10px] text-slate-500">{language === 'en' ? 'View deletion & security logs' : 'विलोपन व सुरक्षा रिकॉर्ड्स देखें'}</div>
                           </div>
                         </button>
 
@@ -1001,21 +1004,21 @@ export default function App() {
                               setIsUserMenuOpen(false);
                               handleTabClick('upload');
                             }}
-                            className="w-full px-3 py-2.5 rounded-xl hover:bg-slate-800 text-slate-200 hover:text-amber-400 transition flex items-center gap-2.5 cursor-pointer text-left"
+                            className="w-full px-2.5 py-2 rounded-lg hover:bg-slate-100 text-slate-700 hover:text-slate-900 transition flex items-center gap-2.5 cursor-pointer text-left"
                           >
-                            <div className="w-7 h-7 rounded-lg bg-indigo-500/10 text-indigo-400 flex items-center justify-center shrink-0 border border-indigo-500/20">
-                              <ShieldCheck className="w-4 h-4" />
+                            <div className="w-7 h-7 rounded-md bg-slate-100 text-slate-600 flex items-center justify-center shrink-0 border border-slate-200">
+                              <ShieldCheck className="w-3.5 h-3.5" />
                             </div>
                             <div>
-                              <div>{language === 'en' ? 'Portal Settings' : 'पोर्टल सेटिंग्स'}</div>
-                              <div className="text-[10px] text-slate-400 font-medium">{language === 'en' ? 'Headings, Excel & Signatures' : 'हेडिंग्स, एक्सेल व हस्ताक्षर'}</div>
+                              <div className="font-semibold text-slate-900">{language === 'en' ? 'Portal Settings' : 'पोर्टल सेटिंग्स'}</div>
+                              <div className="text-[10px] text-slate-500">{language === 'en' ? 'Headings, Excel & Signatures' : 'हेडिंग्स, एक्सेल व हस्ताक्षर'}</div>
                             </div>
                           </button>
                         )}
                       </div>
 
                       {/* Divider */}
-                      <div className="h-px bg-slate-800 my-1" />
+                      <div className="h-px bg-slate-200 my-1" />
 
                       {/* Logout Action */}
                       <button
@@ -1024,9 +1027,9 @@ export default function App() {
                           setIsUserMenuOpen(false);
                           handleLogout();
                         }}
-                        className="w-full px-3 py-2.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 hover:text-rose-200 border border-rose-500/30 transition flex items-center justify-center gap-2 text-xs font-black cursor-pointer active:scale-95"
+                        className="w-full px-3 py-2 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 transition flex items-center justify-center gap-2 text-xs font-semibold cursor-pointer active:scale-95"
                       >
-                        <LogOut className="w-4 h-4" />
+                        <LogOut className="w-3.5 h-3.5" />
                         <span>{t('logout', 'लॉग आउट करें')}</span>
                       </button>
                     </div>
@@ -1038,9 +1041,9 @@ export default function App() {
                     setPendingTab('search');
                     setIsLoginModalOpen(true);
                   }}
-                  className="px-3.5 py-1.5 bg-white hover:bg-slate-100 text-slate-900 font-bold rounded-xl text-xs sm:text-sm flex items-center gap-1.5 transition shadow-xs cursor-pointer active:scale-95"
+                  className="px-3.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-white font-medium rounded-lg text-xs flex items-center gap-1.5 transition shadow-xs cursor-pointer active:scale-95"
                 >
-                  <LogIn className="w-3.5 h-3.5 text-slate-700" />
+                  <LogIn className="w-3.5 h-3.5 text-slate-300" />
                   <span>{t('login', 'अधिकारी लॉगिन')}</span>
                 </button>
               )}
@@ -1088,7 +1091,7 @@ export default function App() {
                     </span>
                   </div>
                   <div className="text-[10px] text-slate-500 font-medium truncate mt-0.5">
-                    {cachedOfflinePass.duty.rank || 'जवान'} • {cachedOfflinePass.duty.duty_place} (बिना इंटरनेट भी उपलब्ध)
+                    {cachedOfflinePass.duty.duty_place} (बिना इंटरनेट भी उपलब्ध)
                   </div>
                 </div>
                 <button
@@ -1124,7 +1127,7 @@ export default function App() {
                           {rec.name}
                         </div>
                         <div className="text-[10px] text-slate-500 truncate mt-0.5">
-                          {rec.rank || 'जवान'} • {rec.posting || 'थाना कोतवाली'} {rec.district ? `(${rec.district})` : ''}
+                          मूल तैनाती: {rec.posting || '-'} {rec.district ? `(${rec.district})` : ''}
                         </div>
                         <div className="text-[10px] font-mono font-bold text-slate-700 mt-0.5">
                           {rec.pno ? `PNO: ${rec.pno}` : `मो०: ${rec.mobile || '-'}`}

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'police-duty-app-v2';
+const CACHE_NAME = 'police-duty-app-v3';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -34,6 +34,11 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
+
+  // 0. NEVER intercept localhost/dev requests
+  if (url.hostname === 'localhost' || url.hostname === '127.0.0.1') {
+    return;
+  }
 
   // 1. NEVER cache Supabase API, realtime WebSockets, or dynamic backend calls
   if (

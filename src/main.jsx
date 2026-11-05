@@ -2,6 +2,25 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App.jsx';
 import './index.css';
+import { LanguageProvider } from './context/LanguageContext.jsx';
+
+// Purge any stale development Service Workers and CacheStorage
+if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.port)) {
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.getRegistrations().then((registrations) => {
+      for (const registration of registrations) {
+        registration.unregister();
+      }
+    }).catch(() => {});
+  }
+  if ('caches' in window) {
+    caches.keys().then((keys) => {
+      for (const key of keys) {
+        caches.delete(key);
+      }
+    }).catch(() => {});
+  }
+}
 
 class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -74,7 +93,6 @@ class ErrorBoundary extends React.Component {
   }
 }
 
-import { LanguageProvider } from './context/LanguageContext.jsx';
 
 // Ensure dark class is removed if leftover
 try {

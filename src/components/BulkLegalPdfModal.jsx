@@ -13,15 +13,20 @@ import {
   Check,
   Grid,
   Users,
-  FileText
+  FileText,
+  Phone,
+  MapPin,
+  Clock,
+  User
 } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
-import { printLegalBulk } from '../utils/printLegalBulk';
+import { printLegalBulk, getZoneTheme } from '../utils/printLegalBulk';
 import { useLanguage } from '../context/LanguageContext';
 import ToggleSwitch from './ToggleSwitch';
-import { resolvePoliceRank, stripRankFromName } from '../utils/rankResolver';
+import { resolvePoliceRank, stripRankFromName, parseIncharge } from '../utils/rankResolver';
+import UpPoliceLogo from './UpPoliceLogo';
 
 export default function BulkLegalPdfModal({
   isOpen,
@@ -41,8 +46,8 @@ export default function BulkLegalPdfModal({
   const [progress, setProgress] = useState({ current: 0, total: 0, page: 0, totalPages: 0 });
   const [selectedPointFilter, setSelectedPointFilter] = useState('ALL');
   const [rangeMode, setRangeMode] = useState('all'); // 'all' | 'custom'
-  const [paperSize, setPaperSize] = useState('a4'); // 'a4' | 'legal'
-  const [layoutMode, setLayoutMode] = useState(4); // 4 or 2 for A4, 6 or 4 or 2 for Legal
+  const [paperSize, setPaperSize] = useState('legal'); // 'a4' | 'legal'
+  const [layoutMode, setLayoutMode] = useState(6); // 6 = 3 Pass (Legal Standard 3-in-1 Foldable), 4 = 2 Pass, 2 = 1 Pass
   const [includeCoForce, setIncludeCoForce] = useState(true);
   const [includeBackSide, setIncludeBackSide] = useState(false);
   const [startPage, setStartPage] = useState(1);
@@ -59,7 +64,8 @@ export default function BulkLegalPdfModal({
     ? validRecords
     : validRecords.filter(r => (r.duty_place || '').trim() === selectedPointFilter);
 
-  const totalPossiblePages = Math.max(1, Math.ceil(targetRecords.length / layoutMode));
+  const passesPerPage = layoutMode === 6 ? 3 : (layoutMode === 4 ? 2 : 1);
+  const totalPossiblePages = Math.max(1, Math.ceil(targetRecords.length / passesPerPage));
 
   // Determine active slice for JS PDF generator
   const actualStart = rangeMode === 'custom' ? Math.max(1, parseInt(startPage) || 1) : 1;
@@ -109,7 +115,6 @@ export default function BulkLegalPdfModal({
       }
 
       const isA4 = paperSize === 'a4';
-      // Dynamic Paper dimensions in mm: A4 (210x297mm) vs Legal (215.9x355.6mm)
       const pdf = new jsPDF({
         orientation: 'portrait',
         unit: 'mm',
@@ -120,16 +125,16 @@ export default function BulkLegalPdfModal({
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = pdf.internal.pageSize.getHeight();
 
-      const pageStartIdx = (actualStart - 1) * layoutMode;
-      const pageEndIdx = actualEnd * layoutMode;
+      const pageStartIdx = (actualStart - 1) * passesPerPage;
+      const pageEndIdx = actualEnd * passesPerPage;
       const recordsToProcess = targetRecords.slice(pageStartIdx, pageEndIdx);
-      const totalBatchPages = Math.ceil(recordsToProcess.length / layoutMode);
+      const totalBatchPages = Math.ceil(recordsToProcess.length / passesPerPage);
 
       for (let p = 0; p < totalBatchPages; p++) {
-        const batch = recordsToProcess.slice(p * layoutMode, (p + 1) * layoutMode);
+        const batch = recordsToProcess.slice(p * passesPerPage, (p + 1) * passesPerPage);
         setActiveBatch(batch);
         setProgress({
-          current: Math.min((p + 1) * layoutMode, recordsToProcess.length),
+          current: Math.min((p + 1) * passesPerPage, recordsToProcess.length),
           total: recordsToProcess.length,
           page: p + 1,
           totalPages: totalBatchPages
@@ -142,13 +147,13 @@ export default function BulkLegalPdfModal({
         if (!element) continue;
 
         const canvas = await html2canvas(element, {
-          scale: 1.4,
+          scale: 2.0,
           useCORS: true,
           backgroundColor: '#ffffff',
           logging: false
         });
 
-        const imgData = canvas.toDataURL('image/jpeg', 0.85);
+        const imgData = canvas.toDataURL('image/jpeg', 0.92);
 
         if (p > 0) {
           pdf.addPage(isA4 ? 'a4' : 'legal', 'portrait');
@@ -217,8 +222,8 @@ export default function BulkLegalPdfModal({
       .replace(/,\s*$/, '')
       .trim() || duty.name;
 
-    const effectiveRank = resolvePoliceRank(duty.rank, cleanOfficerName);
-    const displayCleanName = stripRankFromName(cleanOfficerName);
+    const effectiveRank = duty.rank ? resolvePoliceRank(duty.rank) : '';
+    const displayCleanName = stripRankFromName(cleanOfficerName) || duty.name;
 
     // Clean & Parse Zone and Zonal Incharge
     let cleanZone = (duty.zone || '').trim();
@@ -335,192 +340,239 @@ export default function BulkLegalPdfModal({
       }
     }
 
+    const zonalInfo = parseIncharge(cleanZonalIncharge);
+    const sectorInfo = parseIncharge(cleanSectorIncharge);
+    const zonalMobile = zonalInfo.mobile || duty.zonal_mobile || duty.zone_mobile || '';
+    const sectorMobile = sectorInfo.mobile || duty.sector_mobile || '';
+    const zoneCode = cleanZone ? cleanZone.split(/[(/]/)[0].trim() : '01';
+
+    // -------------------------------------------------------------------------
+    // UNIFIED 2-SIDED FOLDABLE WEARABLE LANYARD PASS (180mm x 112mm)
+    // Left Panel = FRONT SIDE (90mm x 112mm) | Right Panel = BACK SIDE (90mm x 112mm)
+    // -------------------------------------------------------------------------
     return (
       <div
         key={idx}
+        className="foldable-pass-unit"
         style={{
-          border: '2px solid #0b132b',
-          boxShadow: 'inset 0 0 0 1.5px #d97706',
+          width: '180mm',
+          height: '112mm',
+          maxHeight: '112mm',
+          border: '1.5px solid #0f172a',
           borderRadius: '8px',
-          padding: layoutMode === 2 ? '12px 14px' : '6px 8px',
           backgroundColor: '#ffffff',
-          color: '#000000',
           display: 'flex',
-          flexDirection: 'column',
-          justifyContent: hasCoForce ? 'space-between' : 'flex-start',
+          flexDirection: 'row',
+          overflow: 'hidden',
           boxSizing: 'border-box',
-          fontSize: layoutMode === 2 ? '10px' : '9.5px',
-          lineHeight: '1.25'
+          position: 'relative',
+          fontFamily: "'Noto Sans Devanagari', 'Plus Jakarta Sans', sans-serif"
         }}
       >
-        {/* Card Top Header */}
-        <div style={{ borderBottom: '2px solid #0b132b', paddingBottom: '3px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <img src="/badge.png" alt="Badge" style={{ width: layoutMode === 2 ? '36px' : '30px', height: layoutMode === 2 ? '36px' : '30px', objectFit: 'contain' }} />
-          <div style={{ textAlign: 'center', flex: 1, padding: '0 4px' }}>
-            <div style={{ fontSize: layoutMode === 2 ? '13px' : '11.5px', fontWeight: '900', color: '#000000', lineHeight: '1.2' }}>
-              {eventTitle}
-            </div>
-            <div style={{ fontSize: layoutMode === 2 ? '9.5px' : '8.5px', fontWeight: 'bold', color: '#333333' }}>
-              {eventSubtitle}
-            </div>
-          </div>
-          <img src="/badge.png" alt="Badge" style={{ width: layoutMode === 2 ? '36px' : '30px', height: layoutMode === 2 ? '36px' : '30px', objectFit: 'contain' }} />
-        </div>
-
-        {/* Officer Photo & Info Row */}
-        <div style={{ display: 'flex', gap: '6px', border: '1px solid #94a3b8', padding: layoutMode === 2 && !hasCoForce ? '6px 8px' : '4px', borderRadius: '6px', backgroundColor: '#f8fafc', margin: layoutMode === 2 && !hasCoForce ? '8px 0 6px' : '3px 0' }}>
-          <div style={{ width: layoutMode === 2 ? (hasCoForce ? '48px' : '56px') : '44px', height: layoutMode === 2 ? (hasCoForce ? '60px' : '70px') : '56px', border: '1px dashed #64748b', borderRadius: '4px', backgroundColor: '#ffffff', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', flexShrink: 0, overflow: 'hidden' }}>
-            {duty.photo ? (
-              <img src={duty.photo} alt={duty.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-            ) : (
-              <div style={{ fontSize: '7px', fontWeight: 'bold', color: '#64748b', lineHeight: '1.1' }}>
-                फोटो<br />चस्पा करें
-              </div>
-            )}
+        {/* ================= LEFT PANEL = FRONT SIDE (90mm x 112mm) ================= */}
+        <div
+          className="pass-panel-front"
+          style={{
+            width: '90mm',
+            height: '112mm',
+            maxHeight: '112mm',
+            padding: '2mm 2.5mm',
+            borderRight: '1.5px dashed #cbd5e1',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between',
+            boxSizing: 'border-box',
+            backgroundColor: '#ffffff'
+          }}
+        >
+          {/* Lanyard punch slot */}
+          <div style={{ textAlign: 'center', marginBottom: '2px' }}>
+            <div style={{ width: '40px', height: '6px', borderRadius: '9999px', border: '1px solid #cbd5e1', backgroundColor: '#f1f5f9', margin: '0 auto' }} />
           </div>
 
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-            <div>
-              <div style={{ fontSize: layoutMode === 2 ? '8.5px' : '7.5px', fontWeight: 'bold', color: '#64748b' }}>अधिकारी / कर्मचारी:</div>
-              <div style={{ fontSize: layoutMode === 2 ? (hasCoForce ? '11.5px' : '13px') : '10px', fontWeight: '900', color: '#000000', lineHeight: '1.2', display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '4px', wordBreak: 'break-word' }}>
-                <span>{displayCleanName || '-'}</span>
-                <span style={{ fontSize: '9px', background: '#fef3c7', color: '#78350f', padding: '1px 5px', borderRadius: '4px', border: '1px solid #fde68a', fontWeight: 'bold' }}>{effectiveRank}</span>
+          {/* Header Banner */}
+          <div style={{ backgroundColor: '#0f172a', color: '#ffffff', padding: '3px 5px', borderBottom: '2.5px solid #dc2626', borderRadius: '4px 4px 0 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '4px' }}>
+            <UpPoliceLogo size={28} />
+            <div style={{ flex: 1, textAlign: 'center', minWidth: 0, padding: '0 2px' }}>
+              <div style={{ color: '#fbbf24', fontSize: '8.5px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.3px', lineHeight: '1.1' }}>
+                उत्तर प्रदेश पुलिस • अयोध्या
               </div>
-              <div style={{ fontSize: layoutMode === 2 ? (hasCoForce ? '9.5px' : '11px') : '8.5px', fontFamily: 'monospace', fontWeight: 'bold', color: '#1e293b' }}>
-                {duty.mobile || '-'}
+              <div style={{ color: '#ffffff', fontSize: '11.5px', fontWeight: '900', lineHeight: '1.15', whiteSpace: 'normal', wordBreak: 'break-word' }}>
+                {eventTitle || 'मा० मुख्यमंत्री उ०प्र० अयोध्या आगमन'}
+              </div>
+              <div>
+                <span style={{ backgroundColor: '#dc2626', color: '#ffffff', fontSize: '7.5px', padding: '0.5px 5px', borderRadius: '9999px', fontWeight: '700' }}>
+                  {eventSubtitle || 'ड्यूटी पास - 2026'}
+                </span>
               </div>
             </div>
-            <div style={{ fontSize: layoutMode === 2 ? '8.5px' : '7.5px', color: '#334155', borderTop: '1px solid #cbd5e1', paddingTop: '2px', display: 'flex', justifyContent: 'space-between' }}>
-              {cleanPno ? (
-                <span>P.No: <strong>{cleanPno}</strong></span>
-              ) : null}
-              <span>मूल तैनाती: <strong>{duty.posting || '-'}</strong> {duty.district ? `(${duty.district})` : ''}</span>
-            </div>
+            <UpPoliceLogo size={28} />
           </div>
-        </div>
 
-        {/* Duty Details Table */}
-        <table style={{ width: '100%', flex: hasCoForce ? 'none' : 1, borderCollapse: 'collapse', fontSize: layoutMode === 2 ? (hasCoForce ? '11px' : '12.5px') : '8.5px', border: '1.5px solid #0f172a', margin: layoutMode === 2 ? (hasCoForce ? '6px 0 4px' : '10px 0') : '2px 0', lineHeight: '1.4' }}>
-          <tbody>
-            <tr style={{ borderBottom: '1px solid #cbd5e1' }}>
-              <td style={{ width: '28%', backgroundColor: '#f1f5f9', fontWeight: '800', color: '#0f172a', padding: layoutMode === 2 ? (hasCoForce ? '5px 8px' : '7px 10px') : '2.5px 4px', borderRight: '1.5px solid #cbd5e1', whiteSpace: 'nowrap' }}>ड्यूटी स्थल</td>
-              <td style={{ padding: layoutMode === 2 ? (hasCoForce ? '5px 8px' : '7px 10px') : '2.5px 4px', fontWeight: '900', color: '#78350f', backgroundColor: '#fef3c7', fontSize: layoutMode === 2 ? (hasCoForce ? '12.5px' : '14.5px') : '9.5px' }}>{duty.duty_place || '-'}</td>
-            </tr>
-            <tr style={{ borderBottom: '1px solid #cbd5e1' }}>
-              <td style={{ backgroundColor: '#f1f5f9', fontWeight: '800', color: '#0f172a', padding: layoutMode === 2 ? (hasCoForce ? '5px 8px' : '7px 10px') : '2.5px 4px', borderRight: '1.5px solid #cbd5e1', whiteSpace: 'nowrap' }}>दिनाँक व समय</td>
-              <td style={{ padding: layoutMode === 2 ? (hasCoForce ? '5px 8px' : '7px 10px') : '2.5px 4px', fontWeight: 'bold' }}>{duty.shift || '-'}</td>
-            </tr>
-            {!hasCoForce ? (
-              <>
-                <tr style={{ borderBottom: '1px solid #cbd5e1' }}>
-                  <td style={{ backgroundColor: '#f1f5f9', fontWeight: '800', color: '#0f172a', padding: layoutMode === 2 ? '7px 10px' : '2.5px 4px', borderRight: '1.5px solid #cbd5e1', whiteSpace: 'nowrap' }}>जोन</td>
-                  <td style={{ padding: layoutMode === 2 ? '7px 10px' : '2.5px 4px', fontWeight: '600' }}>{cleanZone || '-'}</td>
-                </tr>
-                {cleanZonalIncharge && (
-                  <tr style={{ borderBottom: '1px solid #cbd5e1' }}>
-                    <td style={{ backgroundColor: '#f8fafc', fontWeight: '800', color: '#0369a1', padding: layoutMode === 2 ? '7px 10px' : '2.5px 4px', borderRight: '1.5px solid #cbd5e1', whiteSpace: 'nowrap' }}>जोनल प्रभारी</td>
-                    <td style={{ padding: layoutMode === 2 ? '7px 10px' : '2.5px 4px', fontWeight: '900', color: '#0369a1' }}>{cleanZonalIncharge}</td>
-                  </tr>
-                )}
-                <tr style={{ borderBottom: '1px solid #cbd5e1' }}>
-                  <td style={{ backgroundColor: '#f1f5f9', fontWeight: '800', color: '#0f172a', padding: layoutMode === 2 ? '7px 10px' : '2.5px 4px', borderRight: '1.5px solid #cbd5e1', whiteSpace: 'nowrap' }}>सेक्टर</td>
-                  <td style={{ padding: layoutMode === 2 ? '7px 10px' : '2.5px 4px', fontWeight: '600' }}>{cleanSector || '-'}</td>
-                </tr>
-                {cleanSectorIncharge && (
-                  <tr style={{ borderBottom: '1px solid #cbd5e1' }}>
-                    <td style={{ backgroundColor: '#f8fafc', fontWeight: '800', color: '#0369a1', padding: layoutMode === 2 ? '7px 10px' : '2.5px 4px', borderRight: '1.5px solid #cbd5e1', whiteSpace: 'nowrap' }}>सेक्टर प्रभारी</td>
-                    <td style={{ padding: layoutMode === 2 ? '7px 10px' : '2.5px 4px', fontWeight: '900', color: '#0369a1' }}>{cleanSectorIncharge}</td>
-                  </tr>
-                )}
-              </>
-            ) : (
-              <>
-                <tr style={{ borderBottom: '1px solid #cbd5e1' }}>
-                  <td style={{ backgroundColor: '#f1f5f9', fontWeight: '800', color: '#0f172a', padding: layoutMode === 2 ? '5px 8px' : '2.5px 4px', borderRight: '1.5px solid #cbd5e1', whiteSpace: 'nowrap' }}>जोन / प्रभारी</td>
-                  <td style={{ padding: layoutMode === 2 ? '5px 8px' : '2.5px 4px' }}>{cleanZone || '-'} {cleanZonalIncharge ? ` / ${cleanZonalIncharge}` : ''}</td>
-                </tr>
-                <tr style={{ borderBottom: '1px solid #cbd5e1' }}>
-                  <td style={{ backgroundColor: '#f1f5f9', fontWeight: '800', color: '#0f172a', padding: layoutMode === 2 ? '5px 8px' : '2.5px 4px', borderRight: '1.5px solid #cbd5e1', whiteSpace: 'nowrap' }}>सेक्टर / प्रभारी</td>
-                  <td style={{ padding: layoutMode === 2 ? '5px 8px' : '2.5px 4px' }}>{cleanSector || '-'} {cleanSectorIncharge ? ` / ${cleanSectorIncharge}` : ''}</td>
-                </tr>
-              </>
-            )}
-            {activeBriefingText && (
-              <tr style={{ borderBottom: '1px solid #cbd5e1', backgroundColor: '#f0f9ff' }}>
-                <td style={{ backgroundColor: '#e0f2fe', fontWeight: '900', color: '#075985', padding: layoutMode === 2 ? (hasCoForce ? '5px 8px' : '7px 10px') : '2.5px 4px', borderRight: '1.5px solid #cbd5e1', whiteSpace: 'nowrap' }}>ब्रीफिंग स्थल</td>
-                <td style={{ padding: layoutMode === 2 ? (hasCoForce ? '5px 8px' : '7px 10px') : '2.5px 4px', fontWeight: 'bold', color: '#0369a1' }}>{activeBriefingText}</td>
-              </tr>
-            )}
-            {activeNoteText && (
-              <tr style={{ backgroundColor: '#fffbeb' }}>
-                <td style={{ backgroundColor: '#fef3c7', fontWeight: '900', color: '#92400e', padding: layoutMode === 2 ? (hasCoForce ? '5px 8px' : '7px 10px') : '2.5px 4px', borderRight: '1.5px solid #cbd5e1', whiteSpace: 'nowrap' }}>विशेष निर्देश</td>
-                <td style={{ padding: layoutMode === 2 ? (hasCoForce ? '5px 8px' : '7px 10px') : '2.5px 4px', fontWeight: 'bold', fontSize: layoutMode === 2 ? (hasCoForce ? '10.5px' : '12px') : '7.5px', color: '#92400e' }}>{activeNoteText}</td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-
-        {/* Co-deployed Force (Gated by includeCoForce) */}
-        {includeCoForce && coForceList.length > 0 && (() => {
-          const maxVisible = layoutMode === 2 ? 36 : 28;
-          const displayedList = coForceList.slice(0, maxVisible);
-          const remainingCount = coForceList.length - displayedList.length;
-
-          return (
-            <div style={{ border: '1.5px solid #0b132b', borderRadius: '6px', overflow: 'hidden', margin: layoutMode === 2 ? '5px 0 4px' : '3px 0', fontSize: layoutMode === 2 ? '8.5px' : '7.5px' }}>
-              <div style={{ backgroundColor: '#f1f5f9', fontWeight: '900', padding: layoutMode === 2 ? '3px 8px' : '2px 5px', borderBottom: '1.5px solid #cbd5e1', display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ fontSize: layoutMode === 2 ? '10px' : '8.5px', color: '#0f172a' }}>सहयोगार्थ पुलिस बल:</span>
-                <span style={{ color: '#0369a1', fontFamily: 'monospace', fontWeight: 'bold' }}>कुल: {coForceList.length} जवान</span>
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', columnGap: layoutMode === 2 ? '8px' : '5px', rowGap: layoutMode === 2 ? '2.5px' : '1.5px', padding: layoutMode === 2 ? '4px 6px' : '2.5px 4px', overflow: 'hidden' }}>
-                {displayedList.map((colleague, cIdx) => {
-                  let cleanName = (colleague.name || '').trim()
-                    .replace(/,\s*\d{10}\b/g, '')
-                    .replace(/\b\d{10}\b/g, '')
-                    .replace(/।\s*नं\s*\(?.*$/g, '')
-                    .replace(/,\s*$/, '')
-                    .trim();
-
-                  if (cleanName.includes(',')) {
-                    cleanName = cleanName.split(',')[0].trim();
-                  }
-
-                  return (
-                    <div key={cIdx} style={{ display: 'flex', alignItems: 'center', gap: '3px', padding: layoutMode === 2 ? '2px 4px' : '1px 3px', border: '1px solid #e2e8f0', borderRadius: '3px', backgroundColor: '#f8fafc', whiteSpace: 'nowrap', overflow: 'hidden' }}>
-                      <span style={{ fontWeight: 'bold', color: '#64748b', fontFamily: 'monospace', fontSize: layoutMode === 2 ? '8px' : '6.5px' }}>{cIdx + 1}.</span>
-                      <span style={{ fontWeight: '900', color: '#0f172a', overflow: 'hidden', textOverflow: 'ellipsis', flex: 1 }}>{cleanName}</span>
-                      <span style={{ fontFamily: 'monospace', fontWeight: 'bold', color: '#0369a1', marginLeft: 'auto' }}>{colleague.mobile || '-'}</span>
-                    </div>
-                  );
-                })}
-              </div>
-              {remainingCount > 0 && (
-                <div style={{ backgroundColor: '#f1f5f9', borderTop: '1px solid #e2e8f0', padding: '2px 4px', textAlign: 'center', fontSize: layoutMode === 2 ? '8px' : '7px', fontWeight: 'bold', color: '#475569' }}>
-                  + {remainingCount} अन्य पुलिस बल (देखें संपूर्ण ड्यूटी बुकलेट)
+          {/* Officer Profile Row */}
+          <div style={{ padding: '3px 1px 1px 1px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <div style={{ width: '60px', minWidth: '60px', height: '76px', border: '1.5px solid #cbd5e1', borderRadius: '6px', backgroundColor: '#f8fafc', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', flexShrink: 0, boxSizing: 'border-box' }}>
+              {duty.photo ? (
+                <img src={duty.photo} alt={duty.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              ) : (
+                <div style={{ textAlign: 'center', color: '#94a3b8', padding: '2px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                  <User style={{ width: '22px', height: '22px', margin: '0 auto', stroke: '#94a3b8' }} />
+                  <div style={{ fontSize: '8.5px', fontWeight: '800', color: '#334155', marginTop: '2px', lineHeight: '1.1' }}>पासपोर्ट फोटो</div>
+                  <div style={{ fontSize: '7.5px', fontWeight: '600', color: '#94a3b8', lineHeight: '1' }}>चस्पा करें</div>
                 </div>
               )}
             </div>
-          );
-        })()}
-
-        {/* Footer Authority & QR Code */}
-        <div style={{ borderTop: '1.5px solid #000000', paddingTop: '3px', marginTop: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-            <QRCodeSVG value={qrData} size={layoutMode === 2 ? 34 : 28} level="M" />
-            <div>
-              <div style={{ fontSize: layoutMode === 2 ? '7.5px' : '6.5px', fontWeight: '900', color: '#065f46' }}>✓ सत्यापित पास</div>
-              <div style={{ fontSize: layoutMode === 2 ? '7.5px' : '6.5px', fontFamily: 'monospace' }}>ID: {duty.id || '-'}</div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexWrap: 'wrap' }}>
+                <span style={{ fontSize: '15px', fontWeight: '900', color: '#020617', lineHeight: '1.15', wordBreak: 'break-word', whiteSpace: 'normal' }}>
+                  {displayCleanName || duty.name || '-'}
+                </span>
+              </div>
+              <div style={{ marginTop: '2px' }}>
+                <span style={{ fontSize: '13px', fontWeight: '800', color: '#065f46', backgroundColor: '#ecfdf5', border: '1px solid #6ee7b7', padding: '1px 6px', borderRadius: '4px', display: 'inline-flex', alignItems: 'center', gap: '3px', fontFamily: 'monospace' }}>
+                  <Phone style={{ width: '11px', height: '11px', stroke: '#047857' }} />
+                  <span>{duty.mobile || 'अनुपलब्ध'}</span>
+                </span>
+              </div>
+              <div style={{ fontSize: '9.5px', fontWeight: '700', color: '#334155', marginTop: '1px', wordBreak: 'break-word', whiteSpace: 'normal', lineHeight: '1.2' }}>
+                मूल तैनाती: <strong>{duty.posting || '-'}</strong> {duty.district ? `(${duty.district})` : ''}
+                {cleanPno && <span> | P.No: <strong>{cleanPno}</strong></span>}
+              </div>
             </div>
           </div>
 
-          <div style={{ textAlign: 'right' }}>
-            {signatureImg ? (
-              <img src={signatureImg} alt="Sign" style={{ height: layoutMode === 2 ? '22px' : '17px', maxWidth: '75px', objectFit: 'contain', marginLeft: 'auto' }} />
-            ) : (
-              <div style={{ fontSize: layoutMode === 2 ? '8.5px' : '7.5px', fontStyle: 'italic' }}>(हस्ताक्षरित)</div>
+          {/* Spotlight Duty Box */}
+          <div style={{ margin: '2px 0', backgroundColor: '#fffbeb', border: '1.5px solid #f59e0b', borderLeft: '4px solid #d97706', borderRadius: '5px', padding: '3px 6px' }}>
+            <div style={{ fontSize: '9px', fontWeight: '800', color: '#78350f', textTransform: 'uppercase' }}>
+              ड्यूटी स्थल
+            </div>
+            <div style={{ fontSize: '13.5px', fontWeight: '900', color: '#020617', lineHeight: '1.2', marginTop: '1px', wordBreak: 'break-word', whiteSpace: 'normal' }}>
+              {duty.duty_place || '-'}
+            </div>
+          </div>
+
+          {/* Time Bar */}
+          <div style={{ margin: '1.5px 0', backgroundColor: '#f1f5f9', border: '1px solid #cbd5e1', padding: '2.5px 6px', borderRadius: '4px', fontSize: '10px', fontWeight: '800', color: '#0f172a', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '2px' }}>
+            <div>दिनाँक व समय: <strong>{duty.shift || 'प्रातः 08:00 बजे से कार्यक्रम समाप्ति तक'}</strong></div>
+            {(duty.booth_no || duty.vehicle_no) && (
+              <div>
+                {duty.booth_no && <span style={{ backgroundColor: '#dbeafe', color: '#1e40af', padding: '0.5px 4px', borderRadius: '3px', fontWeight: 'bold', marginRight: '2px' }}>बूथ: {duty.booth_no}</span>}
+                {duty.vehicle_no && <span style={{ backgroundColor: '#fef3c7', color: '#92400e', padding: '0.5px 4px', borderRadius: '3px', fontWeight: 'bold' }}>वाहन: {duty.vehicle_no}</span>}
+              </div>
             )}
-            <div style={{ fontSize: layoutMode === 2 ? '8.5px' : '7.5px', fontWeight: '900', lineHeight: '1.1' }}>
-              {signatoryText}
+          </div>
+
+          {/* Security Footer */}
+          <div style={{ backgroundColor: '#f8fafc', borderTop: '1.5px solid #0f172a', padding: '2.5px 4px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', width: '100%', marginTop: 'auto', borderRadius: '0 0 4px 4px', boxSizing: 'border-box' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+              <div style={{ backgroundColor: '#ffffff', border: '1px solid #cbd5e1', borderRadius: '3px', padding: '1px', lineHeight: 0 }}>
+                <QRCodeSVG value={qrData} size={36} level="M" />
+              </div>
+              <div style={{ textAlign: 'left' }}>
+                <div style={{ fontSize: '8px', fontWeight: '800', color: '#065f46' }}>● डिजिटल सत्यापित पास</div>
+                <div style={{ fontFamily: 'monospace', fontSize: '10px', fontWeight: '800', color: '#1e293b' }}>ID: {cleanPno || duty.id || 'DUTY-0001'}</div>
+              </div>
+            </div>
+            <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+              {signatureImg ? (
+                <img src={signatureImg} alt="Sign" style={{ height: '18px', maxWidth: '75px', objectFit: 'contain', marginBottom: '2px' }} />
+              ) : (
+                <div style={{ fontFamily: 'serif', fontStyle: 'italic', fontSize: '9.5px', color: '#475569', lineHeight: 1, marginBottom: '2px' }}>(हस्ताक्षरित)</div>
+              )}
+              <div style={{ fontSize: '9.5px', fontWeight: '800', color: '#020617', lineHeight: '1.15' }}>वरिष्ठ पुलिस अधीक्षक,</div>
+              <div style={{ fontSize: '9.5px', fontWeight: '800', color: '#020617', lineHeight: '1.15' }}>अयोध्या</div>
+            </div>
+          </div>
+        </div>
+
+        {/* ================= RIGHT PANEL = BACK SIDE ================= */}
+        <div
+          className="pass-panel-back"
+          style={{
+            width: '90mm',
+            height: '112mm',
+            maxHeight: '112mm',
+            padding: '2mm 2.5mm',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between',
+            boxSizing: 'border-box',
+            backgroundColor: '#ffffff'
+          }}
+        >
+          {/* Lanyard punch slot */}
+          <div style={{ textAlign: 'center', marginBottom: '2px' }}>
+            <div style={{ width: '40px', height: '6px', borderRadius: '9999px', border: '1px solid #cbd5e1', backgroundColor: '#f1f5f9', margin: '0 auto' }} />
+          </div>
+
+          {/* Back Header (Clean Slate Navy with Crimson Red Accent - Zero Blue Strip) */}
+          <div style={{ backgroundColor: '#0f172a', color: '#ffffff', padding: '3px 6px', textAlign: 'center', fontSize: '11px', fontWeight: '800', borderRadius: '4px 4px 0 0', borderBottom: '2.5px solid #dc2626' }}>
+            जोन, सेक्टर एवं ब्रीफिंग विवरण
+          </div>
+
+          {/* Zone Card (Full Text Wrap, NO Ellipsis, NO floating watermark badge) */}
+          <div style={{ backgroundColor: '#eff6ff', border: '1.5px solid #bfdbfe', borderRadius: '6px', padding: '4px 6px', margin: '2px 0', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+            <div>
+              <div style={{ fontSize: '9px', fontWeight: '700', color: '#1e40af' }}>
+                <span>जोन विवरण</span>
+              </div>
+              <div style={{ fontSize: '12.5px', fontWeight: '900', color: '#172554', margin: '1px 0', wordBreak: 'break-word', whiteSpace: 'normal', lineHeight: '1.2' }}>
+                {cleanZone || 'जोन-01'}
+              </div>
+            </div>
+            <div style={{ borderBottom: '1px solid #bfdbfe', margin: '2px 0' }} />
+            <div style={{ fontSize: '10.5px', fontWeight: '700', color: '#0f172a', wordBreak: 'break-word', whiteSpace: 'normal', lineHeight: '1.2' }}>
+              जोनल प्रभारी: <strong>{zonalInfo.name || 'नियुक्त अधिकारी'}</strong>
+            </div>
+            {duty.zonal_sahyogarth && (
+              <div style={{ fontSize: '9.5px', fontWeight: '700', color: '#1e40af', marginTop: '1px', wordBreak: 'break-word' }}>
+                सहयोगार्थ: <strong>{duty.zonal_sahyogarth}</strong>
+              </div>
+            )}
+            {zonalMobile && (
+              <div style={{ marginTop: '2px' }}>
+                <span style={{ fontSize: '11.5px', fontWeight: '800', color: '#1e3a8a', backgroundColor: '#ffffff', border: '1px solid #93c5fd', padding: '1px 5px', borderRadius: '3px', fontFamily: 'monospace', display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                  <Phone style={{ width: '10px', height: '10px' }} />
+                  <span>{zonalMobile}</span>
+                </span>
+              </div>
+            )}
+          </div>
+
+          {/* Sector Card (Full Text Wrap, NO Ellipsis, NO floating watermark badge) */}
+          <div style={{ backgroundColor: '#eef2ff', border: '1.5px solid #c7d2fe', borderRadius: '6px', padding: '4px 6px', margin: '2px 0', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+            <div>
+              <div style={{ fontSize: '9px', fontWeight: '700', color: '#3730a3' }}>
+                <span>सेक्टर विवरण</span>
+              </div>
+              <div style={{ fontSize: '12.5px', fontWeight: '900', color: '#1e1b4b', margin: '1px 0', wordBreak: 'break-word', whiteSpace: 'normal', lineHeight: '1.2' }}>
+                {cleanSector || 'सेक्टर-01'}
+              </div>
+            </div>
+            <div style={{ borderBottom: '1px solid #c7d2fe', margin: '2px 0' }} />
+            <div style={{ fontSize: '10.5px', fontWeight: '700', color: '#0f172a', wordBreak: 'break-word', whiteSpace: 'normal', lineHeight: '1.2' }}>
+              सेक्टर प्रभारी: <strong>{sectorInfo.name || 'नियुक्त अधिकारी'}</strong>
+            </div>
+            {duty.sector_sahyogarth && (
+              <div style={{ fontSize: '9.5px', fontWeight: '700', color: '#312e81', marginTop: '1px', wordBreak: 'break-word' }}>
+                सहयोगार्थ: <strong>{duty.sector_sahyogarth}</strong>
+              </div>
+            )}
+            {sectorMobile && (
+              <div style={{ marginTop: '2px' }}>
+                <span style={{ fontSize: '11.5px', fontWeight: '800', color: '#312e81', backgroundColor: '#ffffff', border: '1px solid #a5b4fc', padding: '1px 5px', borderRadius: '3px', fontFamily: 'monospace', display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                  <Phone style={{ width: '10px', height: '10px' }} />
+                  <span>{sectorMobile}</span>
+                </span>
+              </div>
+            )}
+          </div>
+
+          {/* Briefing Box (Full Text Wrap, NO Ellipsis) */}
+          <div style={{ backgroundColor: '#ecfdf5', border: '1.5px solid #6ee7b7', padding: '4px 6px', borderRadius: '6px', marginTop: 'auto' }}>
+            <div style={{ fontSize: '8.5px', fontWeight: '700', color: '#065f46', textTransform: 'uppercase' }}>📍 ब्रीफिंग स्थल व समय</div>
+            <div style={{ fontSize: '11px', fontWeight: '800', color: '#022c22', lineHeight: '1.2', marginTop: '1px', wordBreak: 'break-word', whiteSpace: 'normal' }}>
+              {activeBriefingText || 'दिनाँक- 01.11.2026 को पूर्वान्ह 13.00 बजे श्रीराम कथा पार्क नया घाट, अयोध्या'}
             </div>
           </div>
         </div>
@@ -592,32 +644,37 @@ export default function BulkLegalPdfModal({
             </div>
 
             {/* LAYOUT TOGGLE */}
-            <div className="space-y-1">
-              <div className="text-[11px] font-bold text-slate-600">प्रति पृष्ठ कार्ड:</div>
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-bold text-slate-700">प्रति पृष्ठ पास लेआउट (2-साइडेड फोल्डेबल):</span>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">
+                  {layoutMode === 2 ? '⭐ 1 पास / पेज (2-इन-1 फ्रंट+बैक)' : layoutMode === 4 ? '2 पास / पेज (4-इन-1 फ्रंट+बैक)' : '3 पास / पेज (6-इन-1 लीगल)'}
+                </span>
+              </div>
               <div className="bg-slate-100 p-1.5 rounded-xl border border-slate-300 flex flex-wrap sm:flex-nowrap items-center gap-1.5">
                 <button
                   type="button"
                   onClick={() => setLayoutMode(2)}
-                  className={`flex-1 py-2 px-2 rounded-lg text-[11px] sm:text-xs font-bold flex items-center justify-center gap-1 transition cursor-pointer ${
+                  className={`flex-1 py-2 px-2.5 rounded-lg text-[11px] sm:text-xs font-bold flex items-center justify-center gap-1 transition cursor-pointer ${
                     layoutMode === 2
                       ? 'bg-slate-900 text-white shadow-xs'
-                      : 'bg-transparent text-slate-700 hover:bg-slate-200'
+                      : 'bg-white/80 text-slate-700 hover:bg-white border border-slate-200'
                   }`}
                 >
-                  <span>2 कार्ड / पेज</span>
+                  <span>1 पास (2-in-1) ⭐</span>
                   {layoutMode === 2 && <Check className="w-3.5 h-3.5 stroke-[2.5]" />}
                 </button>
 
                 <button
                   type="button"
                   onClick={() => setLayoutMode(4)}
-                  className={`flex-1 py-2 px-2 rounded-lg text-[11px] sm:text-xs font-bold flex items-center justify-center gap-1 transition cursor-pointer ${
+                  className={`flex-1 py-2 px-2.5 rounded-lg text-[11px] sm:text-xs font-bold flex items-center justify-center gap-1 transition cursor-pointer ${
                     layoutMode === 4
                       ? 'bg-slate-900 text-white shadow-xs'
-                      : 'bg-transparent text-slate-700 hover:bg-slate-200'
+                      : 'bg-white/80 text-slate-700 hover:bg-white border border-slate-200'
                   }`}
                 >
-                  <span>4 कार्ड / पेज</span>
+                  <span>2 पास (4-in-1)</span>
                   {layoutMode === 4 && <Check className="w-3.5 h-3.5 stroke-[2.5]" />}
                 </button>
 
@@ -625,16 +682,20 @@ export default function BulkLegalPdfModal({
                   <button
                     type="button"
                     onClick={() => setLayoutMode(6)}
-                    className={`flex-1 py-2 px-2 rounded-lg text-[11px] sm:text-xs font-bold flex items-center justify-center gap-1 transition cursor-pointer ${
+                    className={`flex-1 py-2 px-2.5 rounded-lg text-[11px] sm:text-xs font-bold flex items-center justify-center gap-1 transition cursor-pointer ${
                       layoutMode === 6
                         ? 'bg-slate-900 text-white shadow-xs'
-                        : 'bg-transparent text-slate-700 hover:bg-slate-200'
+                        : 'bg-white/80 text-slate-700 hover:bg-white border border-slate-200'
                     }`}
                   >
-                    <span>6 कार्ड / पेज</span>
+                    <span>3 पास (6-in-1)</span>
                     {layoutMode === 6 && <Check className="w-3.5 h-3.5 stroke-[3]" />}
                   </button>
                 )}
+              </div>
+              <div className="p-2 rounded-lg bg-blue-50 border border-blue-200/90 text-blue-900 text-[11px] flex items-center gap-1.5 leading-snug">
+                <span className="shrink-0">💡</span>
+                <span><strong>2-साइडेड लैनयार्ड पास:</strong> प्रत्येक पास 180×128mm फोल्डेबल यूनिट (बाएं फ्रंट, दाएं बैक) में प्रिंट होगा, जिसे बीच से मोड़कर सीधे लैनयार्ड पाउच में लगाया जा सकता है।</span>
               </div>
             </div>
 
@@ -844,19 +905,22 @@ export default function BulkLegalPdfModal({
           zIndex: -999,
           opacity: 0,
           pointerEvents: 'none',
-          width: '780px',
-          minHeight: '1280px',
+          width: '180mm',
           backgroundColor: '#ffffff',
-          display: 'grid',
-          gridTemplateColumns: '1fr 1fr',
-          gridTemplateRows: layoutMode === 4 ? '1fr 1fr' : '1fr 1fr 1fr',
-          gap: '8px',
-          padding: '8px',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: '2mm',
+          padding: '2mm 0',
           boxSizing: 'border-box',
-          fontFamily: "'Noto Sans Devanagari', sans-serif"
+          fontFamily: "'Noto Sans Devanagari', 'Plus Jakarta Sans', sans-serif"
         }}
       >
-        {activeBatch.map((duty, idx) => renderSingleCard(duty, idx))}
+        {activeBatch.map((duty, idx) => (
+          <React.Fragment key={idx}>
+            {renderSingleCard(duty, idx)}
+          </React.Fragment>
+        ))}
       </div>
     </>
   );
