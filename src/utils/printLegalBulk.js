@@ -187,21 +187,20 @@ function getSharedFoldablePassStyles(isA4 = true) {
     .front-header-sub {
       color: #fbbf24;
       font-weight: 700;
-      font-size: 10px;
+      font-size: 9.5px;
       letter-spacing: 0.5px;
       text-transform: uppercase;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      line-height: 1.35;
+      white-space: normal;
+      word-break: break-word;
     }
     .front-header-title {
       color: #ffffff;
       font-weight: 900;
-      font-size: 13px;
-      line-height: 1.15;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      font-size: 12.5px;
+      line-height: 1.35;
+      white-space: normal;
+      word-break: break-word;
       margin: 1px 0;
     }
     .front-header-badge {
@@ -427,9 +426,9 @@ function getSharedFoldablePassStyles(isA4 = true) {
     .back-zone-lbl { color: #1e40af; }
     .back-sector-lbl { color: #3730a3; }
     .back-card-name {
-      font-size: 14.5px;
+      font-size: 14px;
       font-weight: 900;
-      line-height: 1.2;
+      line-height: 1.35;
       margin-top: 1px;
       word-break: break-word;
       white-space: normal;
@@ -442,10 +441,10 @@ function getSharedFoldablePassStyles(isA4 = true) {
       margin: 2.5px 0;
     }
     .back-incharge-name {
-      font-size: 13px;
+      font-size: 12.5px;
       font-weight: 700;
       color: #0f172a;
-      line-height: 1.2;
+      line-height: 1.35;
       word-break: break-word;
       white-space: normal;
     }

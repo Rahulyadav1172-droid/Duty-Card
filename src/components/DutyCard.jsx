@@ -28,6 +28,7 @@ import { printIndividualPass, generateIndividualPassHtml } from '../utils/printL
 import { resolvePoliceRank, stripRankFromName, parseIncharge } from '../utils/rankResolver';
 import { ELECTION_DUTY_CARD_INSTRUCTIONS, ELECTION_CUG_DIRECTORY } from '../data/electionStandardData';
 import UpPoliceLogo from './UpPoliceLogo';
+import PrintTemplate from './PrintTemplate';
 
 export default function DutyCard({
   duty,
@@ -67,6 +68,7 @@ export default function DutyCard({
     event_name: ''
   });
   const photoInputRef = useRef(null);
+  const pdfPrintRef = useRef(null);
 
   if (!duty) return null;
 
@@ -333,61 +335,54 @@ export default function DutyCard({
       if (document.fonts) {
         await document.fonts.ready;
       }
+      // Brief pause to ensure all web fonts and layout nodes are settled
+      await new Promise((res) => setTimeout(res, 80));
 
-      const passHtml = generateIndividualPassHtml({
-        duty: enrichedDuty,
-        allRecords,
-        eventTitle,
-        eventSubtitle,
-        signatureImg,
-        signatoryText,
-        customNote,
-        isNoteEnabled,
-        customBriefing,
-        isBriefingEnabled,
-        includeBackSide: showBackSide
-      });
+      const isSingle = viewMode === 'front' || viewMode === 'back';
+      const container = pdfPrintRef.current;
+      if (!container) throw new Error('प्रिंट कंटेनर प्राप्त नहीं हुआ।');
 
-      // Create temporary offscreen container
-      const container = document.createElement('div');
-      container.style.position = 'fixed';
-      container.style.top = '-9999px';
-      container.style.left = '-9999px';
-      container.style.width = '740px';
-      container.style.backgroundColor = '#ffffff';
-      container.style.padding = '16px';
-      container.style.fontFamily = "'Noto Sans Devanagari', -apple-system, BlinkMacSystemFont, sans-serif";
-      container.innerHTML = passHtml;
+      let targetEl = container.querySelector('.foldable-pass-unit');
+      let passW = 180;
+      let passH = 112;
 
-      const passBox = container.querySelector('.pass-container') || container;
-      document.body.appendChild(container);
+      if (viewMode === 'front') {
+        const frontEl = container.querySelector('.pass-panel-front');
+        if (frontEl) {
+          targetEl = frontEl;
+          passW = 90;
+        }
+      } else if (viewMode === 'back') {
+        const backEl = container.querySelector('.pass-panel-back');
+        if (backEl) {
+          targetEl = backEl;
+          passW = 90;
+        }
+      }
+      if (!targetEl) throw new Error('पास कार्ड एलिमेंट प्राप्त नहीं हुआ।');
 
-      const canvas = await html2canvas(passBox, {
-        scale: 2.5,
+      const canvas = await html2canvas(targetEl, {
+        scale: 3.0,
         useCORS: true,
         backgroundColor: '#ffffff',
         logging: false
       });
 
-      document.body.removeChild(container);
+      const imgData = canvas.toDataURL('image/jpeg', 0.98);
 
-      const imgData = canvas.toDataURL('image/jpeg', 0.95);
       const pdf = new jsPDF({
-        orientation: 'portrait',
+        orientation: isSingle ? 'portrait' : 'landscape',
         unit: 'mm',
-        format: 'a4',
+        format: isSingle ? [passW, passH] : [passW, passH],
         compress: true
       });
 
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = pdf.internal.pageSize.getHeight();
-      const margin = 8;
-      const printWidth = pdfWidth - (margin * 2);
-      const printHeight = (canvas.height * printWidth) / canvas.width;
+      const pdfW = pdf.internal.pageSize.getWidth();
+      const pdfH = pdf.internal.pageSize.getHeight();
 
-      pdf.addImage(imgData, 'JPEG', margin, margin, printWidth, Math.min(printHeight, pdfHeight - (margin * 2)));
+      pdf.addImage(imgData, 'JPEG', 0, 0, pdfW, pdfH, undefined, 'FAST');
       const safeName = (duty.name || 'DutyPass').replace(/\s+/g, '_');
-      pdf.save(`Duty_Card_${duty.id || 'Pass'}_${safeName}_सहयोगार्थ.pdf`);
+      pdf.save(`Duty_Card_${duty.id || 'Pass'}_${safeName}_अयोध्या.pdf`);
     } catch (err) {
       console.error('PDF Download Error:', err);
       alert('PDF डाउनलोड करने में त्रुटि: ' + err.message);
@@ -1059,6 +1054,37 @@ export default function DutyCard({
           <Printer className="w-4 h-4 text-amber-400" />
           <span className="text-[10px] truncate max-w-full">प्रिंट पास</span>
         </button>
+      </div>
+
+      {/* Dedicated In-Viewport Hidden Container for 100% Fidelity Zero-Dead-Space PDF Generation */}
+      <div
+        ref={pdfPrintRef}
+        aria-hidden="true"
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          zIndex: -999,
+          opacity: 0,
+          pointerEvents: 'none',
+          width: '190mm',
+          backgroundColor: '#ffffff',
+          boxSizing: 'border-box'
+        }}
+      >
+        <PrintTemplate
+          duty={enrichedDuty}
+          allRecords={allRecords}
+          eventTitle={eventTitle}
+          eventSubtitle={eventSubtitle}
+          signatureImg={signatureImg}
+          signatoryText={signatoryText}
+          customNote={customNote}
+          isNoteEnabled={isNoteEnabled}
+          customBriefing={customBriefing}
+          isBriefingEnabled={isBriefingEnabled}
+          includeBackSide={true}
+        />
       </div>
     </div>
   );

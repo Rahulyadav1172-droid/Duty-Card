@@ -34,13 +34,26 @@ export default function PrintTemplate({
       : null;
 
   // Incharge & Mobile extraction
-  const zonalInfo = parseIncharge(duty.zonal_incharge || duty.zonal || duty.zonal_officer || duty['जोनाल प्रभारी'] || duty['जोनल प्रभारी'] || '');
-  const sectorInfo = parseIncharge(duty.sector_incharge || duty.sector_officer || duty['सेक्टर प्रभारी'] || duty['सेक्टर अधिकारी'] || '');
-  const zonalMobile = zonalInfo.mobile || duty.zonal_mobile || duty.zone_mobile || '';
-  const sectorMobile = sectorInfo.mobile || duty.sector_mobile || '';
+  let rawZonal = duty.zonal_incharge || duty.zonal || duty.zonal_officer || duty['जोनाल प्रभारी'] || duty['जोनल प्रभारी'] || '';
+  let rawSector = duty.sector_incharge || duty.sector_officer || duty['सेक्टर प्रभारी'] || duty['सेक्टर अधिकारी'] || '';
 
   const effectiveZone = duty.zone ? String(duty.zone).replace(/\/+$/, '').trim() : '';
   const effectiveSector = duty.sector ? String(duty.sector).replace(/\/+$/, '').trim() : '';
+
+  if (!rawZonal && effectiveZone && Array.isArray(allRecords)) {
+    const matched = allRecords.find(r => r && (r.zone || '').trim().toLowerCase() === effectiveZone.toLowerCase() && (r.zonal_incharge || r.zonal || r.zonal_officer));
+    if (matched) rawZonal = matched.zonal_incharge || matched.zonal || matched.zonal_officer || '';
+  }
+
+  if (!rawSector && effectiveSector && Array.isArray(allRecords)) {
+    const matched = allRecords.find(r => r && (r.sector || '').trim().toLowerCase() === effectiveSector.toLowerCase() && (r.sector_incharge || r.sector_officer));
+    if (matched) rawSector = matched.sector_incharge || matched.sector_officer || '';
+  }
+
+  const zonalInfo = parseIncharge(rawZonal);
+  const sectorInfo = parseIncharge(rawSector);
+  const zonalMobile = zonalInfo.mobile || duty.zonal_mobile || duty.zone_mobile || '';
+  const sectorMobile = sectorInfo.mobile || duty.sector_mobile || '';
 
   const searchParam = (duty.mobile || duty.pno || duty.id || '').trim();
   const qrDirectUrl = typeof window !== 'undefined' && window.location?.origin
@@ -92,11 +105,11 @@ export default function PrintTemplate({
             <UpPoliceLogo size={30} />
 
             <div className="flex-1 text-center min-w-0 px-1">
-              <div className="text-amber-400 font-bold text-[9.5px] tracking-wider uppercase truncate leading-tight">
+              <div className="text-amber-400 font-bold text-[9.5px] tracking-wider uppercase whitespace-nowrap leading-normal">
                 उत्तर प्रदेश पुलिस • अयोध्या
               </div>
-              <h1 className="text-white font-extrabold text-[12.5px] leading-tight break-words my-0.5">
-                {eventTitle || 'मा० मुख्यमंत्री उ०प्र० अयोध्या आगमन'}
+              <h1 className="text-white font-extrabold text-[12.5px] leading-snug break-words my-0.5">
+                {eventTitle || duty?.event_name || 'मा० मुख्यमंत्री उ०प्र० अयोध्या आगमन'}
               </h1>
               <div className="flex items-center justify-center gap-1.5">
                 <span className="bg-[#dc2626] text-white text-[8px] px-2 py-0.2 rounded-full font-bold">
@@ -211,10 +224,10 @@ export default function PrintTemplate({
                 </div>
               )}
               <div className="text-[12.5px] font-extrabold text-slate-950 leading-tight">
-                वरिष्ठ पुलिस अधीक्षक,
+                {signatoryText ? (signatoryText.includes(',') ? signatoryText.split(',')[0] + ',' : signatoryText) : 'वरिष्ठ पुलिस अधीक्षक,'}
               </div>
               <div className="text-[12.5px] font-extrabold text-slate-950 leading-tight">
-                अयोध्या
+                {signatoryText && signatoryText.includes(',') ? signatoryText.split(',').slice(1).join(',').trim() : 'अयोध्या'}
               </div>
             </div>
           </div>
@@ -241,7 +254,7 @@ export default function PrintTemplate({
           </div>
 
           {/* 2. Slate Header (Clean UP Police Navy, no neon blue strip) */}
-          <div className="bg-[#0f172a] text-white py-1.5 px-3 text-center font-extrabold text-[12.5px] rounded-t-md shrink-0">
+          <div className="bg-[#0f172a] text-white py-1.5 px-3 text-center font-extrabold text-[12.5px] rounded-t-md shrink-0 leading-normal">
             जोन, सेक्टर एवं ब्रीफिंग विवरण
           </div>
 
