@@ -678,48 +678,54 @@ export function renderBwIdBadgeHorizontalBackHtml({
 
   return `
     <div class="bw-badge-card bw-badge-back">
-      <!-- (User Specification: No top header on Back Side) -->
+      <!-- Top Header Bar: Solid black background with crisp white text -->
+      <div class="bw-header-banner bw-back-header">
+        <div class="bw-header-text">
+          <div class="bw-header-top">कार्यालय वरिष्ठ पुलिस अधीक्षक, जनपद अयोध्या</div>
+          <div class="bw-header-main" style="font-size: 9.5px; font-weight: 800;">ड्यूटी नियंत्रण एवं महत्वपूर्ण निर्देश</div>
+        </div>
+      </div>
 
       <!-- Main Sequential Fields Container -->
       <div class="bw-body-container bw-back-body">
-        <!-- Sequential Field 1: Zone (जोन) -->
+        <!-- 1. जोन -->
         <div class="bw-field-row">
-          <div class="bw-field-label">1. जोन (Zone):</div>
+          <div class="bw-field-label">1. जोन:</div>
           <div class="bw-field-value">${escapeHtml(cleanZone || '-')}</div>
         </div>
 
-        <!-- Sequential Field 2: Zonal Command (जोनल कमान) -->
+        <!-- 2. जोनल कमान -->
         <div class="bw-field-row">
-          <div class="bw-field-label">2. जोनल कमान / प्रभारी:</div>
+          <div class="bw-field-label">2. जोनल कमान:</div>
           <div class="bw-field-value bold">${escapeHtml(cleanZonalIncharge || '-')}</div>
         </div>
 
-        <!-- Sequential Field 3: Sector (सेक्टर) -->
+        <!-- 3. सेक्टर -->
         <div class="bw-field-row">
-          <div class="bw-field-label">3. सेक्टर (Sector):</div>
+          <div class="bw-field-label">3. सेक्टर:</div>
           <div class="bw-field-value">${escapeHtml(cleanSector || '-')}</div>
         </div>
 
-        <!-- Sequential Field 4: Sector Incharge with mobile (सेक्टर प्रभारी) -->
+        <!-- 4. सेक्टर प्रभारी -->
         <div class="bw-field-row">
-          <div class="bw-field-label">4. सेक्टर प्रभारी व मो०:</div>
+          <div class="bw-field-label">4. सेक्टर प्रभारी:</div>
           <div class="bw-field-value bold">${escapeHtml(cleanSectorIncharge || '-')}</div>
         </div>
 
-        <!-- Sequential Field 5: Duty Time (ड्यूटी समय) -->
+        <!-- 5. ड्यूटी समय -->
         <div class="bw-field-row highlight-time">
-          <div class="bw-field-label">5. ड्यूटी समय (Duty Time):</div>
+          <div class="bw-field-label">5. ड्यूटी समय:</div>
           <div class="bw-field-value">${escapeHtml(shiftTime)}</div>
         </div>
 
-        <!-- Sequential Field 6: Special Note (विशेष नोट) -->
+        <!-- 6. विशेष नोट -->
         <div class="bw-note-box">
           <div class="bw-note-header">
-            <span>6. 📌 विशेष नोट (Special Note):</span>
+            <span>6. विशेष नोट:</span>
             <span class="bw-compliance-tag">अनिवार्य अनुपालन</span>
           </div>
           <div class="bw-note-content">
-            ${escapeHtml(activeNote) || '14 कोसी परिक्रमा में ड्यूटीरत कर्मी 14 कोसी परिक्रमा समाप्ति के बाद दिनांक 19.11.2026 को अपना अगला ड्यूटी कार्ड मेला कार्यालय सिंचाई डाक बंगला नया घाट अयोध्या से प्राप्त करना सुनिश्चित करेंगे।'}
+            ${escapeHtml(activeNote) || 'कृपया आवंटित ड्यूटी पॉइंट पर समय से रिपोर्ट करें एवं सतर्कतापूर्वक कर्तव्यों का निर्वहन करें।'}
           </div>
         </div>
       </div>
