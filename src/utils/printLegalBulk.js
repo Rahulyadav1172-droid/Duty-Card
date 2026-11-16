@@ -44,21 +44,27 @@ export function renderIdBadgeFrontHtml({
   const effectiveRank = resolvePoliceRank(duty.rank, cleanOfficerName);
   const displayCleanName = stripRankFromName(cleanOfficerName);
 
+  // Clean Zone & Sector for Front summary
+  let cleanZone = (duty.zone || '').trim();
+  if (cleanZone.includes('/')) cleanZone = cleanZone.split('/')[0].trim();
+  let cleanSector = (duty.sector || '').trim();
+  if (cleanSector.includes('/')) cleanSector = cleanSector.split('/')[0].trim();
+
   const photoHtml = duty.photo
     ? `<img src="${duty.photo}" class="officer-photo" style="width:100%;height:100%;object-fit:cover;" />`
     : `
       <div class="photo-placeholder" style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:#64748b;text-align:center;">
-        <svg style="width:20px;height:20px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+        <svg style="width:24px;height:24px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
           <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
           <circle cx="12" cy="7" r="4"></circle>
         </svg>
-        <span style="font-size:6.5px;font-weight:bold;margin-top:2px;">पासपोर्ट फोटो</span>
+        <span style="font-size:7px;font-weight:bold;margin-top:2px;">पासपोर्ट फोटो</span>
       </div>
     `;
 
   const signHtml = signatureImg
-    ? `<img src="${signatureImg}" style="height:22px;max-width:85px;object-fit:contain;margin-left:auto;" />`
-    : `<div style="font-style:italic;font-size:7.5px;color:#475569;">(हस्ताक्षरित)</div>`;
+    ? `<img src="${signatureImg}" style="height:24px;max-width:90px;object-fit:contain;margin-left:auto;" />`
+    : `<div style="font-style:italic;font-size:8px;color:#475569;">(हस्ताक्षरित)</div>`;
 
   let qrSvgHtml = '';
   try {
@@ -75,7 +81,7 @@ export function renderIdBadgeFrontHtml({
     qrSvgHtml = renderToString(
       React.createElement(QRCodeSVG, {
         value: qrPayload,
-        size: 32,
+        size: 34,
         level: 'L',
         includeMargin: false
       })
@@ -87,38 +93,38 @@ export function renderIdBadgeFrontHtml({
   return `
     <div class="id-badge-card id-badge-front">
       <!-- 1. Top Header -->
-      <div class="card-header" style="border-bottom:2px solid #0b132b;padding-bottom:3px;display:flex;align-items:center;justify-content:space-between;gap:4px;">
-        <img src="/badge.png" class="badge-icon" alt="UP Police" style="width:34px;height:34px;object-fit:contain;" />
+      <div class="card-header" style="border-bottom:2px solid #0b132b;padding-bottom:3.5px;display:flex;align-items:center;justify-content:space-between;gap:5px;">
+        <img src="/badge.png" class="badge-icon" alt="UP Police" style="width:36px;height:36px;object-fit:contain;" />
         <div class="header-titles" style="text-align:center;flex:1;min-width:0;">
-          <div style="font-size:7.5px;font-weight:800;color:#475569;letter-spacing:0.5px;">उत्तर प्रदेश पुलिस • अयोध्या</div>
-          <div style="font-size:13px;font-weight:900;color:#0b132b;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+          <div style="font-size:8px;font-weight:800;color:#475569;letter-spacing:0.5px;">उत्तर प्रदेश पुलिस • जनपद अयोध्या</div>
+          <div style="font-size:13.5px;font-weight:900;color:#0b132b;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
             ${escapeHtml(eventTitle || 'उत्तर प्रदेश पुलिस')}
           </div>
-          <div style="font-size:8.5px;font-weight:700;color:#b45309;margin-top:1px;">
+          <div style="font-size:9px;font-weight:800;color:#b45309;margin-top:1px;">
             ${escapeHtml(eventSubtitle || 'ड्यूटी पहचान पत्र / पास अयोध्या - 2026')}
           </div>
         </div>
-        <img src="/badge.png" class="badge-icon" alt="UP Police" style="width:34px;height:34px;object-fit:contain;" />
+        <img src="/badge.png" class="badge-icon" alt="UP Police" style="width:36px;height:36px;object-fit:contain;" />
       </div>
 
       <!-- 2. Officer Details Section -->
-      <div style="display:flex;align-items:center;gap:7px;border:1.2px solid #0b132b;border-radius:6px;padding:4px 6px;background:#f8fafc;margin:4px 0;">
-        <div style="width:44px;height:56px;border:1px solid #64748b;border-radius:4px;background:#ffffff;overflow:hidden;flex-shrink:0;">
+      <div style="display:flex;align-items:center;gap:8px;border:1.5px solid #0b132b;border-radius:6px;padding:5px 7px;background:#f8fafc;margin:4px 0;">
+        <div style="width:48px;height:62px;border:1.2px solid #475569;border-radius:4px;background:#ffffff;overflow:hidden;flex-shrink:0;">
           ${photoHtml}
         </div>
-        <div style="flex:1;min-width:0;display:flex;flex-direction:column;justify-content:space-between;">
+        <div style="flex:1;min-width:0;display:flex;flex-direction:column;justify-content:space-between;gap:2px;">
           <div>
             <div style="font-size:7.5px;font-weight:bold;color:#64748b;">अधिकारी / कर्मचारी विवरण:</div>
-            <div style="font-size:12.5px;font-weight:900;color:#020617;display:flex;align-items:center;gap:4px;flex-wrap:wrap;line-height:1.2;">
+            <div style="font-size:13px;font-weight:900;color:#020617;display:flex;align-items:center;gap:4px;flex-wrap:wrap;line-height:1.2;">
               <span>${escapeHtml(displayCleanName || duty.name)}</span>
               ${effectiveRank ? `<span style="background:#fef3c7;color:#92400e;border:1px solid #fde68a;padding:0.5px 5px;border-radius:3px;font-size:9.5px;font-weight:800;">${escapeHtml(effectiveRank)}</span>` : ''}
             </div>
-            <div style="font-size:10.5px;font-weight:900;color:#1e3a8a;display:flex;align-items:center;gap:3px;margin-top:2px;font-family:monospace;">
+            <div style="font-size:11px;font-weight:900;color:#1e3a8a;display:flex;align-items:center;gap:3px;margin-top:2px;font-family:monospace;">
               ${phoneSvg}
               <span>${escapeHtml(duty.mobile || '-')}</span>
             </div>
           </div>
-          <div style="font-size:7.5px;color:#334155;border-top:1px solid #cbd5e1;padding-top:2px;margin-top:2px;display:flex;justify-content:space-between;flex-wrap:wrap;">
+          <div style="font-size:8px;color:#334155;border-top:1px solid #cbd5e1;padding-top:2px;display:flex;justify-content:space-between;flex-wrap:wrap;">
             ${cleanPno ? `<span>PNO: <strong>${escapeHtml(cleanPno)}</strong></span>` : ''}
             <span>मूल: <strong>${escapeHtml(duty.posting || duty.district || '-')}</strong> ${duty.posting && duty.district && !String(duty.posting).includes(duty.district) ? `(${escapeHtml(duty.district)})` : ''}</span>
           </div>
@@ -133,23 +139,50 @@ export function renderIdBadgeFrontHtml({
 
       <!-- 4. DUTY DATE & TIME BOX -->
       <div class="id-badge-time-box">
-        <span style="font-size:8px;font-weight:800;color:#475569;white-space:nowrap;">दिनाँक व समय:</span>
-        <span style="font-size:9px;font-weight:900;color:#0f172a;text-align:right;line-height:1.2;">
+        <span style="font-size:8.5px;font-weight:800;color:#475569;white-space:nowrap;">दिनाँक व समय:</span>
+        <span style="font-size:9.5px;font-weight:900;color:#0f172a;text-align:right;line-height:1.25;">
           ${escapeHtml(duty.shift || 'प्रातः 09:00 बजे से मेला समाप्ति तक')}
         </span>
       </div>
 
-      <!-- 5. CARD FOOTER (QR CODE & SSP SIGNATURE) -->
+      <!-- 5. ZONE & SECTOR SUMMARY TAG -->
+      ${(cleanZone || cleanSector) ? `
+      <div style="background:#eff6ff;border:1.2px solid #bfdbfe;border-radius:5px;padding:3.5px 7px;margin-bottom:4px;display:flex;align-items:center;justify-content:space-between;gap:4px;font-size:8.5px;">
+        <span>जोन: <strong style="color:#1e40af;">${escapeHtml(cleanZone || '-')}</strong></span>
+        <span>सेक्टर: <strong style="color:#1e40af;">${escapeHtml(cleanSector || '-')}</strong></span>
+      </div>` : ''}
+
+      <!-- 6. ESSENTIAL DUTY GUIDELINES (ELIMINATES EMPTY VOID WITH VITAL POLICE INSTRUCTIONS) -->
+      <div style="background:#f8fafc;border:1.2px solid #cbd5e1;border-radius:5px;padding:5px 7px;margin-bottom:4px;font-size:8px;line-height:1.35;">
+        <div style="font-weight:900;color:#1e293b;border-bottom:1px solid #e2e8f0;padding-bottom:1.5px;margin-bottom:2px;display:flex;justify-content:space-between;">
+          <span>📋 आवश्यक कर्तव्य हिदायतें:</span>
+          <span style="color:#0369a1;font-weight:800;">अनुशासन व सतर्कता</span>
+        </div>
+        <div style="color:#334155;">
+          <div>• निर्धारित वर्दी में समय से पूर्व ड्यूटी स्थल पर उपस्थिति सुनिश्चित करें।</div>
+          <div>• श्रद्धालुओं/आमजन के साथ शालीन, संयमित व संवेदनशील व्यवहार रखें।</div>
+          <div>• ड्यूटी पास को प्लास्टिक पाउच में रखकर गले में सदैव दृश्य रूप से धारण करें।</div>
+        </div>
+      </div>
+
+      <!-- 7. QUICK EMERGENCY HELPLINE STRIP -->
+      <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:4px;padding:3px 6px;margin-bottom:4px;font-size:7.5px;display:flex;justify-content:space-between;align-items:center;color:#991b1b;">
+        <span>🚨 आपातकाल: <strong>112</strong></span>
+        <span>पुलिस नियंत्रण: <strong>9454402648</strong></span>
+        <span>मेला कन्ट्रोल: <strong>9454402655</strong></span>
+      </div>
+
+      <!-- 8. CARD FOOTER (QR CODE & SSP SIGNATURE) -->
       <div class="card-footer" style="display:flex;align-items:center;justify-content:space-between;border-top:1.5px solid #0b132b;padding-top:3px;margin-top:auto;">
-        <div style="display:flex;align-items:center;gap:4px;">
+        <div style="display:flex;align-items:center;gap:5px;">
           <div style="background:#ffffff;border:1px solid #cbd5e1;border-radius:4px;padding:1px;display:flex;align-items:center;justify-content:center;">
             ${qrSvgHtml}
           </div>
           <div>
-            <div style="font-size:6.5px;font-weight:900;color:#166534;background:#dcfce7;border:1px solid #86efac;padding:1px 4px;border-radius:3px;white-space:nowrap;">
+            <div style="font-size:7px;font-weight:900;color:#166534;background:#dcfce7;border:1px solid #86efac;padding:1px 4px;border-radius:3px;white-space:nowrap;">
               ✓ सत्यापित ड्यूटी पास
             </div>
-            <div style="font-size:6.5px;font-family:monospace;color:#475569;font-weight:bold;margin-top:1px;">
+            <div style="font-size:7px;font-family:monospace;color:#475569;font-weight:bold;margin-top:1px;">
               ID: ${escapeHtml(cleanPno || duty.id || '-')}
             </div>
           </div>
@@ -157,7 +190,7 @@ export function renderIdBadgeFrontHtml({
 
         <div style="text-align:right;display:flex;flex-direction:column;align-items:flex-end;">
           ${signHtml}
-          <div style="font-size:7.5px;font-weight:900;color:#020617;margin-top:1px;">
+          <div style="font-size:8px;font-weight:900;color:#020617;margin-top:1px;">
             ${escapeHtml(signatoryText)}
           </div>
         </div>
@@ -328,13 +361,13 @@ export function renderIdBadgeBackHtml({
   return `
     <div class="id-badge-card id-badge-back">
       <!-- 1. Header -->
-      <div style="border-bottom:1.5px solid #0b132b;padding-bottom:3px;text-align:center;">
-        <div style="font-size:7.5px;font-weight:800;color:#475569;">कार्यालय वरिष्ठ पुलिस अधीक्षक, जनपद अयोध्या</div>
-        <div style="font-size:10.5px;font-weight:900;color:#0f172a;margin-top:1px;">ड्यूटी विवरण एवं आवश्यक निर्देश (पृष्ठ भाग)</div>
+      <div style="border-bottom:1.5px solid #0b132b;padding-bottom:3.5px;text-align:center;">
+        <div style="font-size:8px;font-weight:800;color:#475569;">कार्यालय वरिष्ठ पुलिस अधीक्षक, जनपद अयोध्या</div>
+        <div style="font-size:11.5px;font-weight:900;color:#0f172a;margin-top:1px;">ड्यूटी विवरण एवं आवश्यक निर्देश (पृष्ठ भाग)</div>
       </div>
 
       <!-- 2. Mini Officer Strip -->
-      <div style="background:#f1f5f9;border:1px solid #cbd5e1;border-radius:4px;padding:2px 5px;margin:3px 0;font-size:7.5px;font-weight:800;color:#1e293b;display:flex;justify-content:space-between;align-items:center;">
+      <div style="background:#f1f5f9;border:1.2px solid #cbd5e1;border-radius:5px;padding:3px 6px;margin:3.5px 0;font-size:8px;font-weight:800;color:#1e293b;display:flex;justify-content:space-between;align-items:center;">
         <span>अधिकारी: <strong>${escapeHtml(displayCleanName || duty.name)}</strong> ${effectiveRank ? `(${escapeHtml(effectiveRank)})` : ''}</span>
         <span>मो०: <strong>${escapeHtml(duty.mobile || '-')}</strong></span>
         ${cleanPno ? `<span>PNO: <strong>${escapeHtml(cleanPno)}</strong></span>` : ''}
@@ -347,7 +380,7 @@ export function renderIdBadgeBackHtml({
         </div>
         <div class="badge-back-sec-body">
           <div><span style="color:#64748b;font-weight:700;">जोन:</span> <strong>${escapeHtml(cleanZone || '-')}</strong></div>
-          ${cleanZonalIncharge ? `<div style="margin-top:1px;"><span style="color:#64748b;font-weight:700;">प्रभारी:</span> <strong style="color:#0369a1;">${escapeHtml(cleanZonalIncharge)}</strong></div>` : ''}
+          ${cleanZonalIncharge ? `<div style="margin-top:1.5px;"><span style="color:#64748b;font-weight:700;">प्रभारी:</span> <strong style="color:#0369a1;">${escapeHtml(cleanZonalIncharge)}</strong></div>` : ''}
         </div>
       </div>
 
@@ -358,39 +391,51 @@ export function renderIdBadgeBackHtml({
         </div>
         <div class="badge-back-sec-body">
           <div><span style="color:#64748b;font-weight:700;">सेक्टर:</span> <strong>${escapeHtml(cleanSector || '-')}</strong></div>
-          ${cleanSectorIncharge ? `<div style="margin-top:1px;"><span style="color:#64748b;font-weight:700;">प्रभारी:</span> <strong style="color:#0369a1;">${escapeHtml(cleanSectorIncharge)}</strong></div>` : ''}
+          ${cleanSectorIncharge ? `<div style="margin-top:1.5px;"><span style="color:#64748b;font-weight:700;">प्रभारी:</span> <strong style="color:#0369a1;">${escapeHtml(cleanSectorIncharge)}</strong></div>` : ''}
         </div>
       </div>
 
       <!-- 5. Briefing Place & Time -->
       <div class="badge-back-briefing">
         <div style="font-weight:900;color:#075985;">ब्रीफिंग स्थल व समय:</div>
-        <div style="color:#0c4a6e;font-weight:700;margin-top:1px;">${escapeHtml(activeBriefing || 'यथास्थान पुलिस लाइन्स आर०टी०सी० सभागार जनपद अयोध्या')}</div>
+        <div style="color:#0c4a6e;font-weight:700;margin-top:1.5px;">${escapeHtml(activeBriefing || 'यथास्थान पुलिस लाइन्स आर०टी०सी० सभागार जनपद अयोध्या')}</div>
       </div>
 
-      <!-- 6. Special Instructions / Note -->
+      <!-- 6. Special Instructions / Note (Rich & Detailed, Eliminates Empty Voids) -->
       <div class="badge-back-note">
-        <div style="font-weight:900;color:#92400e;margin-bottom:1px;">विशेष निर्देश / कर्तव्य हिदायतें:</div>
-        <div style="color:#78350f;font-weight:600;text-align:justify;">
-          ${escapeHtml(activeNote || '1. समस्त पुलिस कर्मी निर्धारित वर्दी में समय से उपस्थित होंगे। 2. श्रद्धालुओं/नागरिकों से शालीन व सौम्य व्यवहार करेंगे। 3. किसी भी आपात स्थिति में तत्काल प्रभारी अधिकारी को सूचित करेंगे।')}
+        <div style="font-weight:900;color:#92400e;margin-bottom:2px;display:flex;justify-content:space-between;">
+          <span>विशेष निर्देश / मेला आचार संहिता:</span>
+          <span style="font-size:7.5px;color:#b45309;">सख्ती से अनुपालनीय</span>
+        </div>
+        <div style="color:#78350f;font-weight:600;line-height:1.35;font-size:7.5px;">
+          ${escapeHtml(activeNote) ? escapeHtml(activeNote) : `
+            <div>1. समस्त पुलिस कर्मी निर्धारित वर्दी में समय से पूर्व ड्यूटी स्थल पर अनिवार्य उपस्थिति सुनिश्चित करेंगे।</div>
+            <div>2. ड्यूटी के दौरान अनावश्यक मोबाइल फोन का प्रयोग व लापरवाही पूर्णतः वर्जित रहेगी।</div>
+            <div>3. श्रद्धालुओं एवं आमजन के साथ शालीन, मर्यादित, विनम्र एवं संवेदनशील व्यवहार रखें।</div>
+            <div>4. किसी भी संदिग्ध व्यक्ति/वस्तु की सूचना तत्काल अपने प्रभारी अधिकारी व कण्ट्रोल रूम को दें।</div>
+            <div>5. मेला समाप्ति अथवा प्रतिस्थानी (रिलीवर) आने के उपरांत ही ड्यूटी स्थल छोड़ें।</div>
+          `}
         </div>
       </div>
 
-      <!-- 7. Emergency CUG & Control Rooms -->
+      <!-- 7. Emergency CUG Directory (2-Column Grid) -->
       <div class="badge-back-cug">
-        <div style="font-weight:900;color:#0f172a;display:flex;justify-content:space-between;border-bottom:1px solid #cbd5e1;padding-bottom:1.5px;margin-bottom:2px;">
+        <div style="font-weight:900;color:#0f172a;display:flex;justify-content:space-between;border-bottom:1px solid #cbd5e1;padding-bottom:1.5px;margin-bottom:3px;">
           <span>📞 आपातकालीन दूरभाष / कण्ट्रोल रूम:</span>
           <span style="color:#b91c1c;font-weight:900;">आपातकाल: 112</span>
         </div>
-        <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:2px;color:#1e293b;">
-          <span>पुलिस नियंत्रण: <strong>9454402648</strong></span>
-          <span>मेला नियंत्रण: <strong>9454402655</strong></span>
-          <span>जनपद: <strong>9454417465</strong></span>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:2px 8px;font-size:7.5px;color:#1e293b;">
+          <div>पुलिस नियंत्रण: <strong>9454402648</strong></div>
+          <div>मेला नियंत्रण: <strong>9454402655</strong></div>
+          <div>जनपद नियंत्रण: <strong>9454417465</strong></div>
+          <div>यातायात हेल्पलाइन: <strong>9454404766</strong></div>
+          <div>महिला हेल्पलाइन: <strong>1090</strong></div>
+          <div>एम्बुलेंस सेवा: <strong>108 / 102</strong></div>
         </div>
       </div>
 
       <!-- 8. Bottom Authority Sign-off -->
-      <div style="text-align:center;font-size:7.5px;font-weight:900;color:#0f172a;border-top:1px solid #94a3b8;padding-top:2px;margin-top:2px;">
+      <div style="text-align:center;font-size:8px;font-weight:900;color:#0f172a;border-top:1.5px solid #0b132b;padding-top:2.5px;margin-top:auto;">
         ( वरिष्ठ पुलिस अधीक्षक, जनपद अयोध्या )
       </div>
     </div>
@@ -411,7 +456,8 @@ export function printLegalBulk({
   includeCoForce = true,
   paperSize = 'a4', // 'a4' | 'legal'
   includeBackSide = false,
-  cardFormat = 'standard' // 'id_badge' (4-in-1 Legal Lanyard Polybag ID Badge) | 'standard'
+  cardFormat = 'standard', // 'id_badge' (4-in-1 Legal Lanyard Polybag ID Badge) | 'standard'
+  badgeLayoutMode = 'side_by_side' // 'side_by_side' (2 Officers / 4 Cards per Legal page: Front & Back side-by-side) | 'duplex'
 }) {
   try {
     const validRecords = (records || []).filter(r => r && (r.name || r.id));
@@ -446,18 +492,23 @@ export function printLegalBulk({
     let pagesHtml = '';
 
     // =========================================================================
-    // BRANCH A: DEDICATED 4-IN-1 LANYARD POUCH ID CARD (LEGAL DUPLEX)
+    // BRANCH A: DEDICATED 4-IN-1 LANYARD POUCH ID CARD (LEGAL)
     // =========================================================================
     if (isIdBadge) {
-      for (let p = 0; p < totalPages; p++) {
-        const pageRecords = validRecords.slice(p * CARDS_PER_PAGE, (p + 1) * CARDS_PER_PAGE);
+      if (badgeLayoutMode === 'side_by_side') {
+        // SIDE-BY-SIDE MODE: 2 OFFICERS PER LEGAL SHEET (Col 0 = Front, Col 1 = Back)
+        // Row 1: [ Officer 1 FRONT ]  [ Officer 1 BACK ]
+        // Row 2: [ Officer 2 FRONT ]  [ Officer 2 BACK ]
+        // Users can easily cut horizontally across center, and fold vertically down center!
+        const OFFICERS_PER_PAGE = 2;
+        const totalSheets = Math.ceil(validRecords.length / OFFICERS_PER_PAGE);
 
-        // 1. FRONT PAGE (4 Front ID Badges: [0, 1, 2, 3])
-        let frontCardsHtml = '';
-        for (let c = 0; c < CARDS_PER_PAGE; c++) {
-          const duty = pageRecords[c];
-          frontCardsHtml += renderIdBadgeFrontHtml({
-            duty,
+        for (let p = 0; p < totalSheets; p++) {
+          const officerA = validRecords[p * 2];
+          const officerB = validRecords[p * 2 + 1];
+
+          const offAFront = renderIdBadgeFrontHtml({
+            duty: officerA,
             eventTitle,
             eventSubtitle,
             signatureImg,
@@ -465,24 +516,9 @@ export function printLegalBulk({
             phoneSvg,
             records: validRecords
           });
-        }
 
-        pagesHtml += `
-          <div class="legal-page page-id-badge">
-            <div class="cut-line-h-center"></div>
-            <div class="cut-line-v"></div>
-            ${frontCardsHtml}
-          </div>
-        `;
-
-        // 2. BACK PAGE (4 Back ID Badges, Mirrored Horizontally [1, 0, 3, 2] for Long-edge Duplex)
-        const mirroredIndices = [1, 0, 3, 2];
-        let backCardsHtml = '';
-        for (let m = 0; m < CARDS_PER_PAGE; m++) {
-          const c = mirroredIndices[m];
-          const duty = pageRecords[c];
-          backCardsHtml += renderIdBadgeBackHtml({
-            duty,
+          const offABack = renderIdBadgeBackHtml({
+            duty: officerA,
             eventTitle,
             eventSubtitle,
             isNoteEnabled,
@@ -492,15 +528,104 @@ export function printLegalBulk({
             phoneSvg,
             records: validRecords
           });
-        }
 
-        pagesHtml += `
-          <div class="legal-page page-id-badge page-id-badge-back">
-            <div class="cut-line-h-center"></div>
-            <div class="cut-line-v"></div>
-            ${backCardsHtml}
-          </div>
-        `;
+          const offBFront = officerB
+            ? renderIdBadgeFrontHtml({
+                duty: officerB,
+                eventTitle,
+                eventSubtitle,
+                signatureImg,
+                signatoryText,
+                phoneSvg,
+                records: validRecords
+              })
+            : `<div class="id-badge-card id-badge-front empty-slot"><div class="empty-text">स्थान रिक्त</div></div>`;
+
+          const offBBack = officerB
+            ? renderIdBadgeBackHtml({
+                duty: officerB,
+                eventTitle,
+                eventSubtitle,
+                isNoteEnabled,
+                customNote,
+                isBriefingEnabled,
+                customBriefing,
+                phoneSvg,
+                records: validRecords
+              })
+            : `<div class="id-badge-card id-badge-back empty-slot"><div class="empty-text">स्थान रिक्त</div></div>`;
+
+          pagesHtml += `
+            <div class="legal-page page-id-badge page-id-badge-side-by-side">
+              <div class="cut-line-h-center">
+                <span class="cut-line-badge-h">✂️ यहां से काटें (Cut across to separate officers)</span>
+              </div>
+              <div class="cut-line-v">
+                <span class="cut-line-badge-v cut-line-badge-v-top">✂️ या 📄 बीच से मोड़ें (Fold along line)</span>
+                <span class="cut-line-badge-v cut-line-badge-v-bottom">✂️ या 📄 बीच से मोड़ें (Fold along line)</span>
+              </div>
+              ${offAFront}
+              ${offABack}
+              ${offBFront}
+              ${offBBack}
+            </div>
+          `;
+        }
+      } else {
+        // DUPLEX MODE (4 FRONT CARDS ON PAGE 1, 4 BACK CARDS ON PAGE 2)
+        for (let p = 0; p < totalPages; p++) {
+          const pageRecords = validRecords.slice(p * CARDS_PER_PAGE, (p + 1) * CARDS_PER_PAGE);
+
+          // 1. FRONT PAGE (4 Front ID Badges: [0, 1, 2, 3])
+          let frontCardsHtml = '';
+          for (let c = 0; c < CARDS_PER_PAGE; c++) {
+            const duty = pageRecords[c];
+            frontCardsHtml += renderIdBadgeFrontHtml({
+              duty,
+              eventTitle,
+              eventSubtitle,
+              signatureImg,
+              signatoryText,
+              phoneSvg,
+              records: validRecords
+            });
+          }
+
+          pagesHtml += `
+            <div class="legal-page page-id-badge">
+              <div class="cut-line-h-center"></div>
+              <div class="cut-line-v"></div>
+              ${frontCardsHtml}
+            </div>
+          `;
+
+          // 2. BACK PAGE (4 Back ID Badges, Mirrored Horizontally [1, 0, 3, 2] for Long-edge Duplex)
+          const mirroredIndices = [1, 0, 3, 2];
+          let backCardsHtml = '';
+          for (let m = 0; m < CARDS_PER_PAGE; m++) {
+            const c = mirroredIndices[m];
+            const duty = pageRecords[c];
+            backCardsHtml += renderIdBadgeBackHtml({
+              duty,
+              eventTitle,
+              eventSubtitle,
+              isNoteEnabled,
+              customNote,
+              isBriefingEnabled,
+              customBriefing,
+              phoneSvg,
+              records: validRecords
+            });
+          }
+
+          pagesHtml += `
+            <div class="legal-page page-id-badge page-id-badge-back">
+              <div class="cut-line-h-center"></div>
+              <div class="cut-line-v"></div>
+              ${backCardsHtml}
+            </div>
+          `;
+        }
       }
     } else {
       // =========================================================================
@@ -1197,7 +1322,7 @@ export function printLegalBulk({
             left: 50%;
             top: 0;
             bottom: 0;
-            border-left: 1px dashed #cbd5e1;
+            border-left: 1.5px dashed #94a3b8;
             pointer-events: none;
             z-index: 10;
           }
@@ -1206,9 +1331,51 @@ export function printLegalBulk({
             top: 50%;
             left: 0;
             right: 0;
-            border-top: 1px dashed #cbd5e1;
+            border-top: 1.5px dashed #94a3b8;
             pointer-events: none;
             z-index: 10;
+          }
+          .cut-line-badge-h {
+            position: absolute;
+            left: 50%;
+            top: 0;
+            transform: translate(-50%, -50%);
+            background: #ffffff;
+            padding: 1.5px 8px;
+            border: 1px dashed #64748b;
+            border-radius: 4px;
+            font-size: 7.5px;
+            font-weight: 800;
+            color: #475569;
+            white-space: nowrap;
+          }
+          .cut-line-badge-v-top {
+            position: absolute;
+            top: 25%;
+            left: 0;
+            transform: translate(-50%, -50%);
+            background: #ffffff;
+            padding: 1.5px 6px;
+            border: 1px dashed #64748b;
+            border-radius: 4px;
+            font-size: 7px;
+            font-weight: 800;
+            color: #475569;
+            white-space: nowrap;
+          }
+          .cut-line-badge-v-bottom {
+            position: absolute;
+            top: 75%;
+            left: 0;
+            transform: translate(-50%, -50%);
+            background: #ffffff;
+            padding: 1.5px 6px;
+            border: 1px dashed #64748b;
+            border-radius: 4px;
+            font-size: 7px;
+            font-weight: 800;
+            color: #475569;
+            white-space: nowrap;
           }
           .cut-line-h1 {
             position: absolute;
