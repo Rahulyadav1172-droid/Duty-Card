@@ -31,7 +31,6 @@ import { useLanguage } from './context/LanguageContext';
 import SidebarNavigation from './components/SidebarNavigation';
 import SearchSection from './components/SearchSection';
 import DutyCard from './components/DutyCard';
-import PrintTemplate from './components/PrintTemplate';
 import AdminUpload from './components/AdminUpload';
 import BookletSection from './components/BookletSection';
 import SingleWindowLogin from './components/SingleWindowLogin';
@@ -216,21 +215,18 @@ export default function App() {
   const [searchResults, setSearchResults] = useState([]);
   const [activeTab, setActiveTab] = useState('search');
   const [searchAttempted, setSearchAttempted] = useState(false);
-  const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isScanModalOpen, setIsScanModalOpen] = useState(false);
   const [isOffline, setIsOffline] = useState(typeof navigator !== 'undefined' ? !navigator.onLine : false);
-  const [cachedOfflinePass, setCachedOfflinePass] = useState(() => {
-    try {
-      const saved = localStorage.getItem('OFFLINE_DUTY_PASS_CACHE');
-      return saved ? JSON.parse(saved) : null;
-    } catch (e) {
-      return null;
-    }
-  });
   const userMenuRef = useRef(null);
+
+  // Clear any stale offline duty pass cache from old events so it never gets stuck on mobile
+  useEffect(() => {
+    try {
+      localStorage.removeItem('OFFLINE_DUTY_PASS_CACHE');
+    } catch (e) {}
+  }, []);
 
   // Network Online / Offline Detection
   useEffect(() => {
@@ -290,26 +286,6 @@ export default function App() {
     // 4. Fallback to matched event or first event
     return events.find(e => e.id === activeEventId) || events[0];
   }, [events, activeEventId]);
-
-  // Cache duty pass locally for offline viewing in the field (Defined after currentEvent)
-  useEffect(() => {
-    if (activeDuty && currentEvent) {
-      try {
-        const payload = {
-          duty: activeDuty,
-          eventTitle: currentEvent.title || '',
-          eventSubtitle: currentEvent.subtitle || '',
-          signatoryText: currentEvent.signatoryText || '',
-          signatureImg: currentEvent.signatureImg || '',
-          note: currentEvent.note || '',
-          briefing: currentEvent.briefing || '',
-          timestamp: Date.now()
-        };
-        localStorage.setItem('OFFLINE_DUTY_PASS_CACHE', JSON.stringify(payload));
-        setCachedOfflinePass(payload);
-      } catch (e) {}
-    }
-  }, [activeDuty, currentEvent]);
 
   const eventsRef = useRef(events);
   useEffect(() => {
@@ -861,9 +837,10 @@ export default function App() {
     const isRecordMatch = (record) => {
       if (!record) return false;
       const recordMob = (record.mobile || '').replace(/\D/g, '');
-      const recordName = (record.name || '').toLowerCase();
+      const recordName = ((record.name || '') + ' ' + (record.composite_details || '')).toLowerCase();
       const recordId = (record.id || '').toLowerCase();
       const recordPno = (record.pno || '').toLowerCase();
+      const recordCleanPno = (record.pno || '').replace(/\D/g, '');
 
       // 1. Mobile number matching (+91, leading 0, 10-digit exact or 4+ partial)
       if (cleanQuery.length >= 4) {
@@ -872,11 +849,12 @@ export default function App() {
         if (phoneQuery.length === 10 && recordMob.endsWith(phoneQuery)) return true;
       }
 
-      // 2. Name search (2+ characters)
+      // 2. Name search (2+ characters - matches official name or merged cell text)
       if (textQuery.length >= 2 && recordName.includes(textQuery)) return true;
 
-      // 3. PNO or Duty ID search (3+ characters)
+      // 3. PNO or Duty ID search (3+ characters - text or numeric)
       if (textQuery.length >= 3 && (recordId.includes(textQuery) || recordPno.includes(textQuery))) return true;
+      if (cleanQuery.length >= 3 && recordCleanPno.length >= 3 && recordCleanPno.includes(cleanQuery)) return true;
 
       return false;
     };
@@ -909,10 +887,6 @@ export default function App() {
     }
     setSearchAttempted(true);
   }, [searchQuery, currentEvent, events]);
-
-  const handlePrintTrigger = () => {
-    window.print();
-  };
 
   return (
     <div className="min-h-screen bg-slate-100/70 text-slate-900 flex font-sans selection:bg-amber-500 selection:text-slate-950 font-devanagari overflow-x-hidden">
@@ -1230,30 +1204,6 @@ export default function App() {
               />
             </div>
 
-            {/* Quick 1-Click Cached Offline Pass Restore Banner */}
-            {!activeDuty && cachedOfflinePass?.duty && (
-              <div className="p-3.5 bg-white border border-slate-200/90 rounded-2xl flex items-center justify-between gap-3 shadow-xs">
-                <div className="min-w-0">
-                  <div className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
-                    <span className="truncate">
-                      सहेजा गया ऑफ़लाइन पास: <strong>{cachedOfflinePass.duty.name}</strong>
-                    </span>
-                  </div>
-                  <div className="text-[10px] text-slate-500 font-medium truncate mt-0.5">
-                    {cachedOfflinePass.duty.rank || 'जवान'} • {cachedOfflinePass.duty.duty_place} (बिना इंटरनेट भी उपलब्ध)
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setActiveDuty(cachedOfflinePass.duty)}
-                  className="px-3.5 py-1.5 bg-slate-900 hover:bg-slate-800 active:scale-95 text-white text-xs font-bold rounded-xl transition shadow-xs cursor-pointer shrink-0 touch-manipulation"
-                >
-                  पास देखें
-                </button>
-              </div>
-            )}
-
             {searchResults.length > 1 && !activeDuty ? (
               <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3">
                 <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
@@ -1304,7 +1254,6 @@ export default function App() {
                 <DutyCard
                   duty={activeDuty}
                   allRecords={currentEvent.records || []}
-                  onPrintClick={handlePrintTrigger}
                   customNote={currentEvent.note || ''}
                   isNoteEnabled={currentEvent.isNoteEnabled}
                   customBriefing={currentEvent.briefing || ''}
@@ -1566,20 +1515,13 @@ export default function App() {
       )}
 
       {/* Footer */}
-      <footer className="bg-slate-900 border-t border-slate-800 py-4 px-4 text-center text-xs text-slate-400 space-y-2.5 mt-auto no-print">
+      <footer className="bg-slate-900 border-t border-slate-800 py-4 px-4 text-center text-xs text-slate-400 space-y-2 mt-auto no-print">
         <p className="font-bold text-slate-300 tracking-wide text-xs">अयोध्या पुलिस ड्यूटी व पास प्रबंधन प्रणाली © 2026</p>
         <div className="flex justify-center items-center">
-          <div className="flashy-smart-cell-badge inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-slate-950/90 border border-amber-500/80 shadow-xl cursor-default">
-            <span className="relative flex h-2.5 w-2.5">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-80"></span>
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500"></span>
-            </span>
-            <Sparkles className="w-3.5 h-3.5 text-amber-400 animate-spin-slow shrink-0" />
-            <span className="text-[12px] font-black tracking-wider uppercase font-sans flashy-text-shimmer">
-              Designed & Developed by Smart Cell Ayodhya
-            </span>
-            <span className="text-[10px] bg-amber-500/20 text-amber-300 font-bold px-2 py-0.5 rounded-full border border-amber-500/40 shrink-0">
-              तकनीक एवं नवाचार
+          <div className="simple-glowing-badge inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-950/80 border border-amber-500/50 shadow-xs cursor-default">
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+            <span className="text-[11px] font-bold text-amber-200 tracking-wide font-sans">
+              Designed & Developed by Smart Cell, Ayodhya Police
             </span>
           </div>
         </div>

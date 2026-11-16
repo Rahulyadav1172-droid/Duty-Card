@@ -135,7 +135,6 @@ export default function AdminUpload({
   });
 
   const fileInputRef = useRef(null);
-  const jsonImportRef = useRef(null);
   const signatureInputRef = useRef(null);
   const officerPhotoInputRef = useRef(null);
 
@@ -670,48 +669,6 @@ export default function AdminUpload({
     setStatusMsg({ type: 'success', text: 'मानक पुलिस ड्यूटी एक्सेल टेम्पलेट (Police_Duty_Roster_Standard_Template.xlsx) 2 शीट्स सहित सफलतापूर्वक डाउनलोड हो गया है।' });
   };
 
-  const handleExportJSON = () => {
-    const dataStr = JSON.stringify(records, null, 2);
-    const blob = new Blob([dataStr], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `Police_Duty_${(eventTitle || 'Database').replace(/\s+/g, '_')}_Backup_${new Date().toISOString().slice(0, 10)}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    setStatusMsg({ type: 'success', text: 'पूर्ण डेटाबेस JSON बैकअप सफलतापूर्वक डाउनलोड हो गया है।' });
-  };
-
-  const handleImportJSON = (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      try {
-        const imported = JSON.parse(event.target?.result);
-        if (Array.isArray(imported) && imported.length > 0) {
-          if (uploadMode === 'append' && records && records.length > 0) {
-            const merged = [...records, ...imported];
-            onUpdateRecords(merged);
-            setStatusMsg({ type: 'success', text: `सफलतापूर्वक ${imported.length} ड्यूटी रिकॉर्ड्स जोड़े गए! अब कुल: ${merged.length} जवान।` });
-          } else {
-            onUpdateRecords(imported);
-            setStatusMsg({ type: 'success', text: `सफलतापूर्वक ${imported.length} ड्यूटी रिकॉर्ड्स JSON बैकअप से लोड किए गए!` });
-          }
-        } else {
-          alert('अमान्य JSON बैकअप फ़ाइल।');
-        }
-      } catch (err) {
-        alert('JSON पढ़ने में त्रुटि: ' + err.message);
-      }
-    };
-    reader.readAsText(file);
-    if (jsonImportRef.current) jsonImportRef.current.value = '';
-  };
-
   const handleClearData = () => {
     if (window.confirm(`⚠️ क्या आप "${eventTitle}" का संपूर्ण ड्यूटी डेटा हटाकर रीसेट करना चाहते हैं?`)) {
       onUpdateRecords([]);
@@ -883,13 +840,6 @@ export default function AdminUpload({
                   </p>
                 </div>
               </div>
-              <button
-                onClick={handleDownloadSampleExcel}
-                className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg flex items-center gap-1.5 shadow-2xs shrink-0 cursor-pointer"
-              >
-                <Download className="w-3.5 h-3.5" />
-                <span>रेडी टेम्पलेट (.xlsx) लें</span>
-              </button>
             </div>
 
             {/* Feature Highlights Grid */}

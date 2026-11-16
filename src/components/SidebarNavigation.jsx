@@ -209,13 +209,11 @@ function SidebarNavigation({
 
       {/* Sidebar Footer: Smart Cell Badge */}
       <div className="p-3 border-t border-slate-800/80 bg-slate-950/60 text-center">
-        <div className="flashy-smart-cell-badge inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-900 border border-amber-500/70 shadow-md">
-          <span className="relative flex h-2 w-2">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+        <div className="simple-glowing-badge inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-900 border border-amber-500/50 shadow-xs cursor-default">
+          <span className="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+          <span className="text-[10px] font-bold text-amber-200 tracking-wide font-sans">
+            Smart Cell, Ayodhya Police
           </span>
-          <Sparkles className="w-3 h-3 text-amber-400 animate-spin-slow shrink-0" />
-          <span className="text-[10px] font-black uppercase flashy-text-shimmer">Smart Cell Ayodhya</span>
         </div>
       </div>
     </div>

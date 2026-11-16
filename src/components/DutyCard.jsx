@@ -31,7 +31,6 @@ import { ELECTION_DUTY_CARD_INSTRUCTIONS, ELECTION_CUG_DIRECTORY } from '../data
 export default function DutyCard({
   duty,
   allRecords = [],
-  onPrintClick,
   customNote = '',
   isNoteEnabled = true,
   customBriefing = '',
@@ -492,22 +491,8 @@ export default function DutyCard({
           </div>
         </div>
 
-        {/* Action Buttons: Responsive Grid */}
-        <div className="grid grid-cols-2 sm:flex sm:flex-wrap sm:items-center gap-2 w-full sm:w-auto">
-          {/* Toggle Back Side (Instructions & CUG Directory) */}
-          <button
-            onClick={() => setShowBackSide(!showBackSide)}
-            className={`h-9 px-3 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition active:scale-95 cursor-pointer shadow-2xs ${
-              showBackSide
-                ? 'bg-amber-600 text-white border-amber-600 hover:bg-amber-700'
-                : 'bg-white hover:bg-amber-50 text-slate-800 border-amber-300 hover:border-amber-400'
-            }`}
-            title="16 महत्वपूर्ण निर्देश व CUG डायरेक्टरी (कार्ड का पृष्ठ भाग) देखें"
-          >
-            <Layers className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-            <span>{showBackSide ? 'मुख पृष्ठ (Pass)' : 'बैक साइड (निर्देश व CUG)'}</span>
-          </button>
-
+        {/* Desktop Action Buttons: Streamlined Bar */}
+        <div className="hidden sm:flex sm:flex-wrap sm:items-center gap-2 w-full sm:w-auto">
           {/* Edit Duty Details Button (Admin / Senior Officer Only - Hidden from Public View) */}
           {(userRole === 'admin' || userRole === 'senior') && (
             <button
@@ -1259,12 +1244,16 @@ export default function DutyCard({
         </button>
 
         <button
-          onClick={handlePrintIndividualPass}
-          className="py-2 px-1 bg-slate-800 hover:bg-slate-700 active:bg-slate-950 text-white rounded-xl text-xs font-bold flex flex-col items-center justify-center gap-0.5 shadow-xs transition active:scale-95 cursor-pointer"
-          title="प्रिंट पास"
+          onClick={() => setShowBackSide(!showBackSide)}
+          className={`py-2 px-1 rounded-xl text-xs font-bold flex flex-col items-center justify-center gap-0.5 shadow-xs transition active:scale-95 cursor-pointer ${
+            showBackSide
+              ? 'bg-amber-600 text-white'
+              : 'bg-slate-800 hover:bg-slate-700 text-white border border-slate-700/80'
+          }`}
+          title={showBackSide ? 'मुख पृष्ठ देखें' : 'महत्वपूर्ण निर्देश व CUG देखें'}
         >
-          <Printer className="w-4 h-4 text-amber-400" />
-          <span className="text-[10px] truncate max-w-full">प्रिंट पास</span>
+          <Layers className="w-4 h-4 text-amber-400" />
+          <span className="text-[10px] truncate max-w-full">{showBackSide ? 'मुख पृष्ठ' : 'निर्देश/CUG'}</span>
         </button>
       </div>
     </div>
