@@ -1,4 +1,4 @@
-const CACHE_NAME = 'police-duty-app-v2';
+const CACHE_NAME = 'police-duty-app-v4';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -11,10 +11,11 @@ const STATIC_ASSETS = [
 ];
 
 self.addEventListener('install', (event) => {
+  self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       return cache.addAll(STATIC_ASSETS);
-    }).then(() => self.skipWaiting())
+    })
   );
 });
 
@@ -24,6 +25,7 @@ self.addEventListener('activate', (event) => {
       return Promise.all(
         keys.map((key) => {
           if (key !== CACHE_NAME) {
+            console.log('[SW] Deleting old cache:', key);
             return caches.delete(key);
           }
         })
@@ -35,7 +37,7 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
-  // 1. NEVER cache Supabase API, realtime WebSockets, or dynamic backend calls
+  // 1. NEVER cache Supabase API, realtime WebSockets, or non-GET calls
   if (
     url.hostname.includes('supabase.co') ||
     url.pathname.includes('/rest/') ||
@@ -45,27 +47,36 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // 2. Stale-While-Revalidate for local app shell assets
-  event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
-      const fetchPromise = fetch(event.request)
+  // 2. Navigation requests (HTML pages): ALWAYS Network-First
+  // Guarantees mobile phones immediately get new deployments when online!
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request)
         .then((networkResponse) => {
-          if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
-            const responseToCache = networkResponse.clone();
-            caches.open(CACHE_NAME).then((cache) => {
-              cache.put(event.request, responseToCache);
-            });
+          if (networkResponse && networkResponse.status === 200) {
+            const copy = networkResponse.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
           }
           return networkResponse;
         })
         .catch(() => {
-          if (event.request.mode === 'navigate') {
-            return caches.match('/index.html');
-          }
-          return cachedResponse;
-        });
+          // Fall back to offline cached HTML only when network is completely offline
+          return caches.match('/index.html');
+        })
+    );
+    return;
+  }
 
-      return cachedResponse || fetchPromise;
-    })
+  // 3. Static assets: Network-First with cache fallback
+  event.respondWith(
+    fetch(event.request)
+      .then((networkResponse) => {
+        if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
+          const copy = networkResponse.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
+        }
+        return networkResponse;
+      })
+      .catch(() => caches.match(event.request))
   );
 });

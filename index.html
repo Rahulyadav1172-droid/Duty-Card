@@ -25,10 +25,23 @@
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
     <script>
-      // Production PWA Service Worker Registration
+      // Production PWA Service Worker Registration with Auto-Update
       if ('serviceWorker' in navigator && window.location.protocol.startsWith('http')) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js').catch(err => {
+          navigator.serviceWorker.register('/sw.js').then(reg => {
+            reg.update();
+            reg.onupdatefound = () => {
+              const installingWorker = reg.installing;
+              if (installingWorker) {
+                installingWorker.onstatechange = () => {
+                  if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                    console.log('[SW] New version available, reloading...');
+                    window.location.reload();
+                  }
+                };
+              }
+            };
+          }).catch(err => {
             console.warn('SW registration notice:', err);
           });
         });

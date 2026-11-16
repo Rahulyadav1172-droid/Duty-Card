@@ -75,41 +75,68 @@ const ACTIVE_EVENT_ID_KEY = 'police_portal_active_event_id';
 const FORCE_STORAGE_KEY = 'police_master_force_records';
 const ROLE_SESSION_KEY = 'police_portal_user_role';
 
+const KNOWN_ARCHIVED_EVENT_IDS = new Set([
+  'event-1788754418075', // मा० मुख्यमंत्री उ०प्र० शासन अयोध्या आगमन
+  'event-1793522361408', // मा० मुख्यमंत्री उ०प्र० अयोध्या आगमन
+  'event-1791049539747', // मा० रक्षामंत्री भारत सरकार अयोध्या आगमन
+  'event-1793874965559', // मा० उप-राष्ट्रपति महोदय
+  'event-1793854693166', // दीपोत्सव - 2026
+  'event-1794828464383', // empty duplicate
+]);
+
+const PRIMARY_ACTIVE_EVENT_ID = 'event-1794807177472';
+
 // Helper to seed initial default event
 function getInitialEvents() {
+  const defaultEvent = {
+    id: PRIMARY_ACTIVE_EVENT_ID,
+    title: 'मेला चौदह कोसी परिक्रमा',
+    subtitle: 'ड्यूटी कार्ड अयोध्या-2026',
+    startDate: '16.11.2026 से 19.11.2026 तक',
+    status: 'active',
+    created_at: '2026-11-16T05:32:57.713609+00:00',
+    signatoryText: 'वरिष्ठ पुलिस अधीक्षक, अयोध्या',
+    signatureImg: '',
+    note: '14 कोसी परिक्रमा में ड्यूटीरत कर्मी 14 कोसी परिक्रमा समाप्ति के बाद दिनांक 19.11.2026 को अपना अगला ड्यूटी कार्ड मेला कार्यालय सिंचाई डाक बंगला नया घाट अयोध्या से प्राप्त करना सुनिश्चित करेंगे । व 14 कोसी परिक्रमा के अतिरिक्त अन्य प्रकार की ड्यूटियों के कार्ड यथावत अग्रिम आदेश तक प्रभावी रहेंगे ।',
+    isNoteEnabled: true,
+    briefing: 'दिनांक 16.11.2026 को समय 14.00 बजे पुलिस लाइन्स आर0टी0सी0 सभागार जनपद अयोध्या',
+    isBriefingEnabled: true,
+    helplineList: [
+      { id: '1', title: 'पुलिस कंट्रोल रूम (अयोध्या)', number: '9454417465' },
+      { id: '2', title: 'पुलिस सिटी कन्ट्रोल रुम (अयोध्या)', number: '9454402648' },
+      { id: '3', title: 'मेला नियंत्रण कक्ष / ड्यूटी हेल्पडेस्क', number: '9454402655' }
+    ],
+    isHelplineEnabled: true,
+    records: Array.isArray(initialData) ? initialData : [],
+    attendanceMap: {}
+  };
+
   try {
     const saved = localStorage.getItem(EVENTS_STORAGE_KEY);
     if (saved) {
       const parsed = JSON.parse(saved);
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        // Enforce archive status on past completed events to prevent stale cache lock on mobile phones
+        const sanitized = parsed.map(ev => {
+          if (KNOWN_ARCHIVED_EVENT_IDS.has(ev.id)) {
+            return { ...ev, status: 'archived' };
+          }
+          if (ev.id === PRIMARY_ACTIVE_EVENT_ID && (!Array.isArray(ev.records) || ev.records.length === 0)) {
+            return { ...ev, records: Array.isArray(initialData) ? initialData : [] };
+          }
+          return ev;
+        });
+
+        // Ensure primary active event exists
+        if (!sanitized.some(e => e.id === PRIMARY_ACTIVE_EVENT_ID)) {
+          sanitized.unshift(defaultEvent);
+        }
+        return sanitized;
+      }
     }
   } catch (e) {}
 
-  // Initial Real Event Default: चौदह कोसी परिक्रमा with bundled duty records
-  return [
-    {
-      id: 'event-1794807177472',
-      title: 'मेला चौदह कोसी परिक्रमा',
-      subtitle: 'ड्यूटी कार्ड अयोध्या-2026',
-      startDate: '16.11.2026 से 19.11.2026 तक',
-      status: 'active',
-      created_at: '2026-11-16T05:32:57.713609+00:00',
-      signatoryText: 'वरिष्ठ पुलिस अधीक्षक, अयोध्या',
-      signatureImg: '',
-      note: '14 कोसी परिक्रमा में ड्यूटीरत कर्मी 14 कोसी परिक्रमा समाप्ति के बाद दिनांक 19.11.2026 को अपना अगला ड्यूटी कार्ड मेला कार्यालय सिंचाई डाक बंगला नया घाट अयोध्या से प्राप्त करना सुनिश्चित करेंगे । व 14 कोसी परिक्रमा के अतिरिक्त अन्य प्रकार की ड्यूटियों के कार्ड यथावत अग्रिम आदेश तक प्रभावी रहेंगे ।',
-      isNoteEnabled: true,
-      briefing: 'दिनांक 16.11.2026 को समय 14.00 बजे पुलिस लाइन्स आर0टी0सी0 सभागार जनपद अयोध्या',
-      isBriefingEnabled: true,
-      helplineList: [
-        { id: '1', title: 'पुलिस कंट्रोल रूम (अयोध्या)', number: '9454417465' },
-        { id: '2', title: 'पुलिस सिटी कन्ट्रोल रुम (अयोध्या)', number: '9454402648' },
-        { id: '3', title: 'मेला नियंत्रण कक्ष / ड्यूटी हेल्पडेस्क', number: '9454402655' }
-      ],
-      isHelplineEnabled: true,
-      records: Array.isArray(initialData) ? initialData : [],
-      attendanceMap: {}
-    }
-  ];
+  return [defaultEvent];
 }
 
 export default function App() {
@@ -121,9 +148,15 @@ export default function App() {
   const [activeEventId, setActiveEventId] = useState(() => {
     try {
       const savedId = localStorage.getItem(ACTIVE_EVENT_ID_KEY);
-      if (savedId) return savedId;
+      // If cached ID on phone was from a past completed event, automatically switch to active 14 Kosi Mela
+      if (savedId && !KNOWN_ARCHIVED_EVENT_IDS.has(savedId)) {
+        return savedId;
+      }
     } catch (e) {}
-    return 'event-1794807177472';
+    try {
+      localStorage.setItem(ACTIVE_EVENT_ID_KEY, PRIMARY_ACTIVE_EVENT_ID);
+    } catch (e) {}
+    return PRIMARY_ACTIVE_EVENT_ID;
   });
 
   // Role Authentication State: 'guest' | 'senior' | 'admin' with cryptographic session signature validation
