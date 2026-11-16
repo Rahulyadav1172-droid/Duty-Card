@@ -48,6 +48,8 @@ import ElectionBoothDutyHub from './components/ElectionBoothDutyHub';
 import initialData from './data/duty_data.json';
 import {
   fetchEventsFromSupabase,
+  fetchSingleEventRecords,
+  fetchEventsMetadataFromSupabase,
   upsertEventToSupabase,
   deleteEventFromSupabase,
   subscribeToEventsRealtime,
@@ -83,27 +85,28 @@ function getInitialEvents() {
     }
   } catch (e) {}
 
-  // Initial Real Event Default
+  // Initial Real Event Default: चौदह कोसी परिक्रमा with bundled duty records
   return [
     {
-      id: 'event-shravan-2026',
-      title: 'श्रावण झूला मेला',
+      id: 'event-1794807177472',
+      title: 'मेला चौदह कोसी परिक्रमा',
       subtitle: 'ड्यूटी कार्ड अयोध्या-2026',
+      startDate: '16.11.2026 से 19.11.2026 तक',
       status: 'active',
-      created_at: '16.08.2026 से अग्रिम आदेश तक',
+      created_at: '2026-11-16T05:32:57.713609+00:00',
       signatoryText: 'वरिष्ठ पुलिस अधीक्षक, अयोध्या',
       signatureImg: '',
-      note: '',
-      isNoteEnabled: false,
-      briefing: '',
-      isBriefingEnabled: false,
+      note: '14 कोसी परिक्रमा में ड्यूटीरत कर्मी 14 कोसी परिक्रमा समाप्ति के बाद दिनांक 19.11.2026 को अपना अगला ड्यूटी कार्ड मेला कार्यालय सिंचाई डाक बंगला नया घाट अयोध्या से प्राप्त करना सुनिश्चित करेंगे । व 14 कोसी परिक्रमा के अतिरिक्त अन्य प्रकार की ड्यूटियों के कार्ड यथावत अग्रिम आदेश तक प्रभावी रहेंगे ।',
+      isNoteEnabled: true,
+      briefing: 'दिनांक 16.11.2026 को समय 14.00 बजे पुलिस लाइन्स आर0टी0सी0 सभागार जनपद अयोध्या',
+      isBriefingEnabled: true,
       helplineList: [
         { id: '1', title: 'पुलिस कंट्रोल रूम (अयोध्या)', number: '9454417465' },
         { id: '2', title: 'पुलिस सिटी कन्ट्रोल रुम (अयोध्या)', number: '9454402648' },
         { id: '3', title: 'मेला नियंत्रण कक्ष / ड्यूटी हेल्पडेस्क', number: '9454402655' }
       ],
       isHelplineEnabled: true,
-      records: [],
+      records: Array.isArray(initialData) ? initialData : [],
       attendanceMap: {}
     }
   ];
@@ -120,7 +123,7 @@ export default function App() {
       const savedId = localStorage.getItem(ACTIVE_EVENT_ID_KEY);
       if (savedId) return savedId;
     } catch (e) {}
-    return 'event-shravan-2026';
+    return 'event-1794807177472';
   });
 
   // Role Authentication State: 'guest' | 'senior' | 'admin' with cryptographic session signature validation
@@ -206,8 +209,8 @@ export default function App() {
   const currentEvent = useMemo(() => {
     if (!Array.isArray(events) || events.length === 0) {
       return {
-        id: 'event-shravan-2026',
-        title: 'श्रावण झूला मेला',
+        id: 'event-1794807177472',
+        title: 'मेला चौदह कोसी परिक्रमा',
         subtitle: 'ड्यूटी कार्ड अयोध्या-2026',
         status: 'active',
         signatoryText: 'वरिष्ठ पुलिस अधीक्षक, अयोध्या',
@@ -216,20 +219,32 @@ export default function App() {
         isNoteEnabled: false,
         briefing: '',
         isBriefingEnabled: false,
-        records: initialData || [],
+        records: Array.isArray(initialData) ? initialData : [],
         attendanceMap: {}
       };
     }
 
-    // 1. If currently selected event exists and is not archived, use it
+    // 1. If currently selected event exists, is active, and has records, use it
     const matched = events.find(e => e.id === activeEventId && e.status !== 'archived');
-    if (matched) return matched;
+    if (matched && Array.isArray(matched.records) && matched.records.length > 0) {
+      return matched;
+    }
 
-    // 2. Otherwise default to first active non-archived event
+    // 2. If matched exists but its records are empty, check if another active event has records
+    if (matched && (!matched.records || matched.records.length === 0)) {
+      const activeWithRecords = events.find(e => e.status !== 'archived' && Array.isArray(e.records) && e.records.length > 0);
+      if (activeWithRecords) return activeWithRecords;
+      return matched;
+    }
+
+    // 3. Otherwise default to first active non-archived event with records
+    const firstActiveWithRecords = events.find(e => e.status !== 'archived' && Array.isArray(e.records) && e.records.length > 0);
+    if (firstActiveWithRecords) return firstActiveWithRecords;
+
     const firstActive = events.find(e => e.status !== 'archived');
     if (firstActive) return firstActive;
 
-    // 3. Fallback to matched event or first event
+    // 4. Fallback to matched event or first event
     return events.find(e => e.id === activeEventId) || events[0];
   }, [events, activeEventId]);
 
@@ -265,21 +280,25 @@ export default function App() {
     let unsubscribeActiveEventId = () => {};
 
     async function initSupabase() {
-      // 0. Verify Supabase Cloud connection status
-      const health = await checkSupabaseHealth();
-      if (health.ok) {
-        setCloudStatus('connected');
-        setCloudErrorDetail(null);
-      } else {
-        setCloudStatus('error');
-        setCloudErrorDetail(health);
-      }
+      // 0. Verify Supabase Cloud connection status & Auth Config
+      checkSupabaseHealth().then(health => {
+        if (health.ok) {
+          setCloudStatus('connected');
+          setCloudErrorDetail(null);
+        } else {
+          setCloudStatus('error');
+          setCloudErrorDetail(health);
+        }
+      });
 
-      // 1. Initialize Auth Config from Cloud
       initCloudAuthConfig();
 
-      // 2. Fetch Master Force Pool from Cloud
-      const cloudForce = await fetchMasterForceFromSupabase();
+      // 1. Parallel fetch: Global Active Event ID & Master Force Pool
+      const [cloudActiveId, cloudForce] = await Promise.all([
+        fetchGlobalActiveEventId().catch(() => null),
+        fetchMasterForceFromSupabase().catch(() => null)
+      ]);
+
       if (cloudForce && Array.isArray(cloudForce) && cloudForce.length > 0) {
         setForceRecords(cloudForce);
         try {
@@ -287,29 +306,6 @@ export default function App() {
         } catch (e) {}
       }
 
-      // 3. Fetch Events from Cloud
-      const cloudEvents = await fetchEventsFromSupabase();
-      if (cloudEvents && cloudEvents.length > 0) {
-        const { enrichedEvents, hasChanges } = enrichEventsWithMasterForce(cloudEvents, cloudForce || forceRecords);
-        setEvents(enrichedEvents);
-        try {
-          localStorage.setItem(EVENTS_STORAGE_KEY, JSON.stringify(enrichedEvents));
-        } catch (e) {}
-
-        if (hasChanges) {
-          for (const ev of enrichedEvents) {
-            upsertEventToSupabase(ev);
-          }
-        }
-      } else if (cloudEvents && cloudEvents.length === 0) {
-        // Table exists but empty -> seed initial events to Supabase
-        for (const evt of events) {
-          upsertEventToSupabase(evt);
-        }
-      }
-
-      // 4. Fetch Global Active Event ID from Cloud
-      const cloudActiveId = await fetchGlobalActiveEventId();
       if (cloudActiveId) {
         setActiveEventId(cloudActiveId);
         try {
@@ -317,14 +313,55 @@ export default function App() {
         } catch (e) {}
       }
 
+      // 2. 2-Tier Event Fetch from Cloud using determined active event ID
+      const targetId = cloudActiveId || activeEventId || 'event-1794807177472';
+      const cloudEvents = await fetchEventsFromSupabase(targetId);
+
+      if (cloudEvents && cloudEvents.length > 0) {
+        // Safely merge cloud metadata with local/bundled records so no records are lost
+        const mergedEvents = cloudEvents.map(cloudEv => {
+          const localMatch = (eventsRef.current || []).find(e => e.id === cloudEv.id);
+          const cloudRecs = Array.isArray(cloudEv.records) && cloudEv.records.length > 0 ? cloudEv.records : null;
+          const localRecs = localMatch && Array.isArray(localMatch.records) && localMatch.records.length > 0 ? localMatch.records : null;
+          const bundledRecs = (cloudEv.id === 'event-1794807177472' && Array.isArray(initialData) && initialData.length > 0) ? initialData : [];
+          return {
+            ...cloudEv,
+            records: cloudRecs || localRecs || bundledRecs
+          };
+        });
+
+        const { enrichedEvents } = enrichEventsWithMasterForce(mergedEvents, cloudForce || forceRecords);
+        setEvents(enrichedEvents);
+        try {
+          localStorage.setItem(EVENTS_STORAGE_KEY, JSON.stringify(enrichedEvents));
+        } catch (e) {}
+      } else if (cloudEvents && cloudEvents.length === 0) {
+        // Table exists but empty -> seed initial events to Supabase
+        for (const evt of events) {
+          upsertEventToSupabase(evt);
+        }
+      }
+
       // Realtime Events Listener
       unsubscribeEvents = subscribeToEventsRealtime((freshEvents) => {
         if (freshEvents && freshEvents.length > 0) {
-          const { enrichedEvents } = enrichEventsWithMasterForce(freshEvents, forceRecords);
-          setEvents(enrichedEvents);
-          try {
-            localStorage.setItem(EVENTS_STORAGE_KEY, JSON.stringify(enrichedEvents));
-          } catch (e) {}
+          setEvents(prev => {
+            const merged = freshEvents.map(fe => {
+              const localMatch = prev.find(p => p.id === fe.id);
+              const cloudRecs = Array.isArray(fe.records) && fe.records.length > 0 ? fe.records : null;
+              const localRecs = localMatch && Array.isArray(localMatch.records) && localMatch.records.length > 0 ? localMatch.records : null;
+              const bundledRecs = (fe.id === 'event-1794807177472' && Array.isArray(initialData) && initialData.length > 0) ? initialData : [];
+              return {
+                ...fe,
+                records: cloudRecs || localRecs || bundledRecs
+              };
+            });
+            const { enrichedEvents } = enrichEventsWithMasterForce(merged, forceRecords);
+            try {
+              localStorage.setItem(EVENTS_STORAGE_KEY, JSON.stringify(enrichedEvents));
+            } catch (e) {}
+            return enrichedEvents;
+          });
         }
       });
 
@@ -365,12 +402,23 @@ export default function App() {
         // 1. Quota Guard: Only fetch full events if timestamps or event counts actually changed
         const hasEventUpdates = force ? true : await checkIfEventsUpdated(eventsRef.current || []);
         if (hasEventUpdates) {
-          const cloudEvents = await fetchEventsFromSupabase();
+          const cloudEvents = await fetchEventsFromSupabase(activeEventId);
           if (cloudEvents && cloudEvents.length > 0) {
-            setEvents(cloudEvents);
-            try {
-              localStorage.setItem(EVENTS_STORAGE_KEY, JSON.stringify(cloudEvents));
-            } catch (e) {}
+            setEvents(prev => {
+              const merged = cloudEvents.map(ce => {
+                const existing = prev.find(p => p.id === ce.id);
+                const cloudRecs = Array.isArray(ce.records) && ce.records.length > 0 ? ce.records : null;
+                const existingRecs = existing && Array.isArray(existing.records) && existing.records.length > 0 ? existing.records : null;
+                return {
+                  ...ce,
+                  records: cloudRecs || existingRecs || (ce.id === 'event-1794807177472' ? initialData : [])
+                };
+              });
+              try {
+                localStorage.setItem(EVENTS_STORAGE_KEY, JSON.stringify(merged));
+              } catch (e) {}
+              return merged;
+            });
           }
         }
 
@@ -419,9 +467,19 @@ export default function App() {
     if (health.ok) {
       setCloudStatus('connected');
       setCloudErrorDetail(null);
-      const cloudEvents = await fetchEventsFromSupabase();
+      const cloudEvents = await fetchEventsFromSupabase(activeEventId);
       if (cloudEvents && cloudEvents.length > 0) {
-        setEvents(cloudEvents);
+        setEvents(prev => {
+          return cloudEvents.map(ce => {
+            const existing = prev.find(p => p.id === ce.id);
+            const cloudRecs = Array.isArray(ce.records) && ce.records.length > 0 ? ce.records : null;
+            const existingRecs = existing && Array.isArray(existing.records) && existing.records.length > 0 ? existing.records : null;
+            return {
+              ...ce,
+              records: cloudRecs || existingRecs || (ce.id === 'event-1794807177472' ? initialData : [])
+            };
+          });
+        });
       }
     } else {
       setCloudStatus('error');
@@ -445,7 +503,7 @@ export default function App() {
   };
 
   // Event Management Handlers
-  const handleSelectActiveEvent = useCallback((id) => {
+  const handleSelectActiveEvent = useCallback(async (id) => {
     setActiveEventId(id);
     try {
       localStorage.setItem(ACTIVE_EVENT_ID_KEY, id);
@@ -453,6 +511,21 @@ export default function App() {
     saveGlobalActiveEventId(id);
     setActiveDuty(null);
     setSearchQuery('');
+
+    // Lazy load records for this event if not loaded yet
+    const target = (eventsRef.current || []).find(e => e.id === id);
+    if (target && (!Array.isArray(target.records) || target.records.length === 0)) {
+      const records = await fetchSingleEventRecords(id);
+      if (Array.isArray(records) && records.length > 0) {
+        setEvents(prev => {
+          const updated = prev.map(e => e.id === id ? { ...e, records } : e);
+          try {
+            localStorage.setItem(EVENTS_STORAGE_KEY, JSON.stringify(updated));
+          } catch (err) {}
+          return updated;
+        });
+      }
+    }
   }, []);
 
   const handleCreateEvent = (newEvent) => {
@@ -741,8 +814,8 @@ export default function App() {
     const cleanQuery = searchQuery.replace(/\D/g, '');
     const textQuery = searchQuery.trim().toLowerCase();
 
-    const activeRecords = currentEvent.records || [];
-    const matches = activeRecords.filter(record => {
+    let activeRecords = currentEvent.records || [];
+    let matches = activeRecords.filter(record => {
       const recordMob = (record.mobile || '').replace(/\D/g, '');
       const recordName = (record.name || '').toLowerCase();
       const recordId = (record.id || '').toLowerCase();
@@ -754,6 +827,30 @@ export default function App() {
       return false;
     });
 
+    // Cross-event fallback: If no matches in current event, check other active events that have records
+    if (matches.length === 0 && Array.isArray(events)) {
+      for (const ev of events) {
+        if (ev.id !== currentEvent.id && ev.status !== 'archived' && Array.isArray(ev.records) && ev.records.length > 0) {
+          const crossMatches = ev.records.filter(record => {
+            const recordMob = (record.mobile || '').replace(/\D/g, '');
+            const recordName = (record.name || '').toLowerCase();
+            const recordId = (record.id || '').toLowerCase();
+            const recordPno = (record.pno || '').toLowerCase();
+
+            if (cleanQuery.length >= 4 && recordMob.includes(cleanQuery)) return true;
+            if (textQuery.length >= 2 && recordName.includes(textQuery)) return true;
+            if (textQuery.length >= 3 && (recordId.includes(textQuery) || recordPno.includes(textQuery))) return true;
+            return false;
+          });
+          if (crossMatches.length > 0) {
+            setActiveEventId(ev.id);
+            matches = crossMatches;
+            break;
+          }
+        }
+      }
+    }
+
     setSearchResults(matches);
     if (matches.length === 1) {
       setActiveDuty(matches[0]);
@@ -764,7 +861,7 @@ export default function App() {
       setActiveDuty(null);
     }
     setSearchAttempted(true);
-  }, [searchQuery, currentEvent]);
+  }, [searchQuery, currentEvent, events]);
 
   const handlePrintTrigger = () => {
     window.print();

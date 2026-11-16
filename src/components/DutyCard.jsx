@@ -230,10 +230,47 @@ export default function DutyCard({
 
     const reader = new FileReader();
     reader.onload = (event) => {
-      const base64 = event.target?.result;
-      if (onUpdateDutyPhoto) {
-        onUpdateDutyPhoto(duty.id, base64);
-      }
+      const rawBase64 = event.target?.result;
+      if (!rawBase64) return;
+
+      // Automatically downscale passport photo to max 280x360 with JPEG compression (~15KB)
+      // to prevent bloating cloud database and causing timeouts.
+      const img = new Image();
+      img.onload = () => {
+        try {
+          const maxDim = 320;
+          let width = img.width;
+          let height = img.height;
+          if (width > maxDim || height > maxDim) {
+            if (width > height) {
+              height = Math.round((height * maxDim) / width);
+              width = maxDim;
+            } else {
+              width = Math.round((width * maxDim) / height);
+              height = maxDim;
+            }
+          }
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+          const compressed = canvas.toDataURL('image/jpeg', 0.8);
+          if (onUpdateDutyPhoto) {
+            onUpdateDutyPhoto(duty.id, compressed);
+          }
+        } catch (err) {
+          if (onUpdateDutyPhoto) {
+            onUpdateDutyPhoto(duty.id, rawBase64);
+          }
+        }
+      };
+      img.onerror = () => {
+        if (onUpdateDutyPhoto) {
+          onUpdateDutyPhoto(duty.id, rawBase64);
+        }
+      };
+      img.src = rawBase64;
     };
     reader.readAsDataURL(file);
   };

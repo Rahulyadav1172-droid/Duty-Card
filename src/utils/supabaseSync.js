@@ -67,16 +67,20 @@ export async function checkSupabaseHealth() {
   }
 }
 
-export async function fetchEventsFromSupabase() {
+/**
+ * Fetch lightweight metadata for all events (excludes the multi-megabyte records column).
+ * This executes in <1 second and prevents PostgreSQL statement timeouts (error 57014).
+ */
+export async function fetchEventsMetadataFromSupabase() {
   try {
     const { data, error } = await supabase
       .from(EVENTS_TABLE)
-      .select('*')
+      .select('id, title, subtitle, status, start_date, created_at, updated_at, signatory_text, signature_img, note, is_note_enabled, briefing, is_briefing_enabled, attendance_map')
       .not('id', 'like', 'global-%')
       .order('created_at', { ascending: false });
 
     if (error) {
-      console.warn('Supabase fetch error (will use local cache):', error.message);
+      console.warn('Supabase metadata fetch error (will use local cache):', error.message);
       return null;
     }
 
@@ -103,7 +107,7 @@ export async function fetchEventsFromSupabase() {
             isNoteEnabled: row.is_note_enabled ?? false,
             briefing: row.briefing || '',
             isBriefingEnabled: row.is_briefing_enabled ?? false,
-            records: ensureUniqueRecordIds(row.records || []),
+            records: [], // Loaded on demand via fetchSingleEventRecords
             attendanceMap: (typeof row.attendance_map === 'object' && row.attendance_map !== null)
               ? Object.fromEntries(Object.entries(row.attendance_map).filter(([k]) => k !== '_extra'))
               : {},
@@ -120,9 +124,61 @@ export async function fetchEventsFromSupabase() {
     }
     return [];
   } catch (err) {
-    console.warn('Supabase network error:', err);
+    console.warn('Supabase network error on metadata fetch:', err);
     return null;
   }
+}
+
+/**
+ * Fetch records for a single event on demand.
+ */
+export async function fetchSingleEventRecords(eventId) {
+  if (!eventId) return null;
+  try {
+    const { data, error } = await supabase
+      .from(EVENTS_TABLE)
+      .select('records')
+      .eq('id', eventId)
+      .maybeSingle();
+
+    if (error) {
+      console.warn(`Supabase fetch records error for event ${eventId}:`, error.message);
+      return null;
+    }
+
+    if (data && Array.isArray(data.records)) {
+      return ensureUniqueRecordIds(data.records);
+    }
+    return [];
+  } catch (err) {
+    console.warn(`Network error fetching records for event ${eventId}:`, err);
+    return null;
+  }
+}
+
+/**
+ * 2-Tier Event Fetcher:
+ * Tier 1: Fetches lightweight metadata for all events (never times out).
+ * Tier 2: Fetches records for the active event (or targetActiveEventId).
+ */
+export async function fetchEventsFromSupabase(targetActiveEventId = null) {
+  const metadataEvents = await fetchEventsMetadataFromSupabase();
+  if (!metadataEvents) return null;
+  if (metadataEvents.length === 0) return [];
+
+  // Determine active event to fetch records for
+  const activeEvent = (targetActiveEventId && metadataEvents.find(e => e.id === targetActiveEventId))
+    || metadataEvents.find(e => e.status !== 'archived')
+    || metadataEvents[0];
+
+  if (activeEvent) {
+    const records = await fetchSingleEventRecords(activeEvent.id);
+    if (Array.isArray(records) && records.length > 0) {
+      activeEvent.records = records;
+    }
+  }
+
+  return metadataEvents;
 }
 
 /**
