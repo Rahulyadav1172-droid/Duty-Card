@@ -71,7 +71,7 @@ export default function DutyCard({
     duty_place: customLabels?.duty_place?.trim() || 'ड्यूटी का स्थान',
     shift: customLabels?.shift?.trim() || 'दिनाँक व समय',
     zone: customLabels?.zone?.trim() || 'जोन / व्यवस्था',
-    zonal_incharge: customLabels?.zonal_incharge?.trim() || 'जोनाल प्रभारी',
+    zonal_incharge: customLabels?.zonal_incharge?.trim() || 'जोनल प्रभारी',
     sector: customLabels?.sector?.trim() || 'सेक्टर',
     sector_incharge: customLabels?.sector_incharge?.trim() || 'सेक्टर प्रभारी',
     briefing: customLabels?.briefing?.trim() || 'ब्रीफिंग स्थान',
@@ -334,7 +334,7 @@ export default function DutyCard({
       `*ड्यूटी स्थान:* ${duty.duty_place}\n` +
       `*समय/शिफ्ट:* ${duty.shift || 'प्रातः 09:00 बजे से मेला समाप्ति तक'}\n` +
       `*जोन/सेक्टर:* ${effectiveZone || duty.zone || '-'} / ${effectiveSector || duty.sector || '-'}\n` +
-      `*जोनाल प्रभारी:* ${effectiveZonalIncharge || '-'}\n` +
+      `*जोनल प्रभारी:* ${effectiveZonalIncharge || '-'}\n` +
       `*सेक्टर प्रभारी:* ${effectiveSectorIncharge || '-'}\n\n` +
       `कार्यालय वरिष्ठ पुलिस अधीक्षक, अयोध्या`;
 
@@ -1111,7 +1111,7 @@ export default function DutyCard({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="text-slate-800">
-                    जोनाल प्रभारी अधिकारी
+                    जोनल प्रभारी अधिकारी
                   </label>
                   <input
                     type="text"

@@ -1356,13 +1356,13 @@ export default function AdminUpload({
 
               <div>
                 <label className="text-slate-800 font-black">
-                  4. 'जोनाल प्रभारी' हेडिंग:
+                  4. 'जोनल प्रभारी' हेडिंग:
                 </label>
                 <input
                   type="text"
                   value={labelsInput.zonal_incharge}
                   onChange={(e) => setLabelsInput({ ...labelsInput, zonal_incharge: e.target.value })}
-                  placeholder="डिफ़ॉल्ट: जोनाल प्रभारी (या क्षेत्राधिकारी/नोडल)"
+                  placeholder="डिफ़ॉल्ट: जोनल प्रभारी (या क्षेत्राधिकारी/नोडल)"
                   className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold text-slate-950 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:bg-white mt-1"
                 />
               </div>

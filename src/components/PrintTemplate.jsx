@@ -122,7 +122,7 @@ export default function PrintTemplate({
                 <td className="p-1.5">{duty.zone || ''}</td>
               </tr>
               <tr>
-                <td className="bg-gray-100 font-bold p-1.5 border-r border-black">जोनाल प्रभारी का नाम</td>
+                <td className="bg-gray-100 font-bold p-1.5 border-r border-black">जोनल प्रभारी का नाम</td>
                 <td className="p-1.5">{duty.zonal_incharge || duty.zonal || ''}</td>
               </tr>
               <tr>

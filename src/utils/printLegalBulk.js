@@ -1788,11 +1788,11 @@ export function generateIndividualPassHtml({
               <td class="val-td">${escapeHtml(duty.shift || '-')}</td>
             </tr>
             <tr>
-              <td class="lbl-td">जोन / जोनाल प्रभारी</td>
+              <td class="lbl-td">जोन / जोनल प्रभारी</td>
               <td class="val-td">
                 ${(cleanZone && cleanZonalIncharge) ? `
                   <div style="font-weight:800;color:#0f172a;"><span style="color:#64748b;font-weight:700;">जोन:</span> ${escapeHtml(cleanZone)}</div>
-                  <div style="margin-top:3px;font-weight:800;color:#1e3a8a;"><span style="color:#64748b;font-weight:700;">जोनाल प्रभारी:</span> ${escapeHtml(cleanZonalIncharge)}</div>
+                  <div style="margin-top:3px;font-weight:800;color:#1e3a8a;"><span style="color:#64748b;font-weight:700;">जोनल प्रभारी:</span> ${escapeHtml(cleanZonalIncharge)}</div>
                 ` : `
                   ${escapeHtml(cleanZone || '-')}${cleanZonalIncharge ? ` / <strong>${escapeHtml(cleanZonalIncharge)}</strong>` : ''}
                 `}
