@@ -42,6 +42,105 @@ export function extractDistrictFromText(text = '') {
 }
 
 /**
+ * Unmerges all merged cell ranges in an XLSX worksheet and replicates the primary cell's
+ * value to all cells across the merged span (both rows and columns).
+ * This ensures no downstream row or column receives blank/undefined data due to merged headers or merged rows.
+ */
+export function unmergeAndFillWorksheet(worksheet) {
+  if (!worksheet || !worksheet['!merges'] || !Array.isArray(worksheet['!merges'])) return worksheet;
+
+  worksheet['!merges'].forEach(range => {
+    const startAddress = XLSX.utils.encode_cell(range.s);
+    const startCell = worksheet[startAddress];
+    if (!startCell || startCell.v === undefined || startCell.v === null || String(startCell.v).trim() === '') return;
+
+    for (let R = range.s.r; R <= range.e.r; ++R) {
+      for (let C = range.s.c; C <= range.e.c; ++C) {
+        if (R === range.s.r && C === range.s.c) continue;
+        const targetAddress = XLSX.utils.encode_cell({ r: R, c: C });
+        if (!worksheet[targetAddress] || worksheet[targetAddress].v === undefined || worksheet[targetAddress].v === '') {
+          worksheet[targetAddress] = { ...startCell };
+        }
+      }
+    }
+  });
+
+  return worksheet;
+}
+
+/**
+ * Parses composite or merged officer details string (e.g. "name posting dist mob" column)
+ * Extracts 10-digit mobile number, district, posting/thana, and clean officer name & rank.
+ */
+export function parseCompositeOfficerDetails(compositeStr = '') {
+  if (!compositeStr) return { name: '', mobile: '', posting: '', district: '' };
+
+  const raw = String(compositeStr).trim();
+  let text = raw;
+
+  // 1. Extract 10-digit mobile number
+  let mobile = '';
+  const mobMatch = text.match(/\b([6-9]\d{9})\b/);
+  if (mobMatch) {
+    mobile = mobMatch[1];
+    text = text.replace(mobMatch[0], ' ');
+  }
+
+  // 2. Extract District from UP_DISTRICTS
+  let district = '';
+  for (const d of UP_DISTRICTS) {
+    if (text.includes(d)) {
+      district = d;
+      break;
+    }
+  }
+
+  // 3. Extract Posting & Clean Name
+  let name = '';
+  let posting = '';
+
+  const parts = text.split(/[,।]/).map(p => p.trim()).filter(Boolean);
+  if (parts.length > 1) {
+    name = parts[0];
+    const otherParts = parts.slice(1).filter(p => !district || (p !== district && p !== `जनपद ${district}`));
+    if (otherParts.length > 0) {
+      posting = otherParts.join(', ');
+    }
+  } else {
+    // Space-separated: look for thana/unit keywords
+    const thanaMatch = text.match(/(?:थाना|को०|को0|कोतवाली|चौकी|वाहिनी|पीएसी|यातायात|प्र0|प्र०|सेल|शाखा)\s*[^,\n]*/i);
+    if (thanaMatch) {
+      let matchedThana = thanaMatch[0].trim();
+      if (district && matchedThana.includes(district)) {
+        matchedThana = matchedThana.replace(new RegExp(`(?:जनपद\\s*)?${district}`, 'gi'), '').trim();
+      }
+      posting = matchedThana;
+      name = text.replace(thanaMatch[0], ' ').trim();
+    } else {
+      if (district) {
+        name = text.replace(new RegExp(`(?:जनपद\\s*)?${district}`, 'gi'), ' ').trim();
+        if (!posting) posting = district;
+      } else {
+        name = text;
+      }
+    }
+  }
+
+  if (district && posting && posting.includes(district)) {
+    posting = posting.replace(new RegExp(`(?:जनपद\\s*)?${district}`, 'gi'), '').trim();
+  }
+
+  name = name.replace(/,\s*,/g, ',').replace(/\s*,\s*$/, '').replace(/^[\s,]+/, '').replace(/\s+/g, ' ').trim();
+
+  return {
+    name,
+    mobile,
+    posting,
+    district
+  };
+}
+
+/**
  * Enhanced file parser for .xlsx, .xls, .docx, and .json files.
  * Zero hardcoded fallbacks - if a field is blank, it remains blank.
  */
@@ -52,7 +151,8 @@ export async function parseDutyFile(file) {
   if (fileName.endsWith('.xlsx') || fileName.endsWith('.xls')) {
     const workbook = XLSX.read(arrayBuffer, { type: 'array' });
     const firstSheetName = workbook.SheetNames[0];
-    const worksheet = workbook.Sheets[firstSheetName];
+    const rawWorksheet = workbook.Sheets[firstSheetName];
+    const worksheet = unmergeAndFillWorksheet(rawWorksheet);
     
     const objectRows = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
     const rawRows = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' });
@@ -141,8 +241,15 @@ function processObjectRows(rows) {
   const records = [];
 
   rows.forEach((row, idx) => {
-    // 1. Prioritize composite column "name thana district mob" for Officer Name & Details
+    // 1. Prioritize composite column "name thana district mob" or "name posting dist mob" for Officer Name & Details
     const compositeCol = getRowValueByPattern(row, [
+      'name posting dist mob',
+      'name_posting_dist_mob',
+      'name posting dist mobile',
+      'name posting dist',
+      'name posting district mob',
+      'name posting district mobile',
+      'name posting district',
       'name thana district mob',
       'name_thana_district_mob',
       'name thana district mobile',
@@ -151,22 +258,25 @@ function processObjectRows(rows) {
       'name and posting place district',
       'name and posting place',
       'name and posting',
-      'name posting district',
+      'name dist posting mob',
+      'name mob posting dist',
       'name & posting place',
       'name posting place district'
     ]);
 
-    // 2. Standard single name column (exclude pad/rank/father/zone/sector so rank or zone name is never confused)
+    // 2. Standard single name column (exclude pad/rank/father/zone/sector AND composite keywords)
     const nameCol = getRowValueByPattern(
       row,
       ['name', 'नाम', 'नाम (name)', 'name (नाम)', 'officer name', 'कर्मचारी नाम', 'अधिकारी नाम'],
-      ['pad', 'पद', 'rank', 'पिता', 'father', 'zone', 'जोन', 'sector', 'सेक्टर', 'incharge', 'प्रभारी', 'place', 'स्थल']
+      ['pad', 'पद', 'rank', 'पिता', 'father', 'zone', 'जोन', 'sector', 'सेक्टर', 'incharge', 'प्रभारी', 'place', 'स्थल', 'posting', 'dist', 'thana', 'mob', 'mobile']
     );
 
-    // 3. Mobile column (for mobile search)
-    const rawMob = getRowValueByPattern(row, [
-      'mob', 'mobile', 'मोबाइल', 'फ़ोन', 'फोन', 'मोबाइल (mobile)', 'mobile (मोबाइल)', 'phone', 'contact'
-    ]);
+    // 3. Mobile column (exclude composite keywords)
+    const rawMob = getRowValueByPattern(
+      row,
+      ['mob', 'mobile', 'मोबाइल', 'फ़ोन', 'फोन', 'मोबाइल (mobile)', 'mobile (मोबाइल)', 'phone', 'contact'],
+      ['name', 'नाम', 'posting', 'dist', 'thana']
+    );
     const mobCol = cleanMobileNumber(rawMob);
 
     // 4. Other fields
@@ -209,14 +319,22 @@ function processObjectRows(rows) {
       'ड्यूटी प्वाइंट', 'ड्यूटी स्थल (duty point)', 'duty place (ड्यूटी स्थल)'
     ]);
 
-    const thanaCol = getRowValueByPattern(row, [
-      'posting place', 'posting_place', 'postingplace', 'place of posting', 'posting',
-      'thana', 'थाना', 'मूल तैनाती', 'तैनाती', 'मूल तैनाती / थाना', 'मूल तैनाती/थाना',
-      'थाना / तैनाती', 'मूल तैनाती / थाना (posting)', 'posting / thana', 'तैनाती स्थल', 'तैनाती स्थान'
-    ]);
-    const districtCol = getRowValueByPattern(row, [
-      'district', 'जनपद', 'जिला', 'जनपद (district)', 'district (जनपद)', 'home district', 'dist', 'home dist'
-    ]);
+    const thanaCol = getRowValueByPattern(
+      row,
+      [
+        'posting place', 'posting_place', 'postingplace', 'place of posting', 'posting',
+        'thana', 'थाना', 'मूल तैनाती', 'तैनाती', 'मूल तैनाती / थाना', 'मूल तैनाती/थाना',
+        'थाना / तैनाती', 'मूल तैनाती / थाना (posting)', 'posting / thana', 'तैनाती स्थल', 'तैनाती स्थान'
+      ],
+      ['name', 'नाम', 'mob', 'dist', 'district', 'जनपद']
+    );
+    const districtCol = getRowValueByPattern(
+      row,
+      [
+        'district', 'जनपद', 'जिला', 'जनपद (district)', 'district (जनपद)', 'home district', 'dist', 'home dist'
+      ],
+      ['name', 'नाम', 'mob', 'posting', 'thana']
+    );
     const timeCol = getRowValueByPattern(row, [
       'time', 'समय', 'दिनांक', 'shift', 'पाली', 'ड्यूटी समय', 'शिफ्ट', 'ड्यूटी समय / शिफ्ट', 'ड्यूटी समय/शिफ्ट',
       'duty time', 'shift time', 'ड्यूटी समय / शिफ्ट (shift)'
@@ -237,12 +355,27 @@ function processObjectRows(rows) {
 
     if (!nameCol && !compositeCol && !mobCol && !dutyPlace) return;
 
-    // Use "name thana district mob" column content as officer name/details FIRST as requested by user
-    const displayName = compositeCol || nameCol || (mobCol ? `पुलिसकर्मी (${mobCol})` : '');
-    const finalMobile = mobCol || cleanMobileNumber(compositeCol) || cleanMobileNumber(nameCol);
+    // Parse composite or merged details from "name posting dist mob"
+    const compositeParsed = compositeCol ? parseCompositeOfficerDetails(compositeCol) : null;
+    const nameParsed = (nameCol && (/\b[6-9]\d{9}\b/.test(nameCol) || /(?:थाना|कोतवाली)/.test(nameCol))) ? parseCompositeOfficerDetails(nameCol) : null;
+
+    let finalName = '';
+    if (compositeParsed?.name && compositeParsed.name.trim()) {
+      finalName = compositeParsed.name.trim();
+    } else if (nameParsed?.name && nameParsed.name.trim()) {
+      finalName = nameParsed.name.trim();
+    } else if (nameCol && nameCol.trim()) {
+      finalName = nameCol.trim();
+    } else if (compositeCol && compositeCol.trim()) {
+      finalName = compositeCol.trim().replace(/\b[6-9]\d{9}\b/g, '').replace(/,\s*,/g, ',').replace(/\s*,\s*$/, '').trim();
+    } else if (mobCol) {
+      finalName = `पुलिसकर्मी (${mobCol})`;
+    }
+
+    const finalMobile = mobCol || compositeParsed?.mobile || nameParsed?.mobile || cleanMobileNumber(compositeCol) || cleanMobileNumber(nameCol) || '';
 
     const rankCol = getRowValueByPattern(row, ['rank', 'पद', 'पदनाम', 'पद नाम', 'designation']);
-    const rank = resolvePoliceRank(rankCol, displayName);
+    const rank = resolvePoliceRank(rankCol, finalName);
 
     // Clean & Parse Sector and Sector Incharge if combined with /
     let cleanSector = (sector || '').trim();
@@ -274,12 +407,16 @@ function processObjectRows(rows) {
 
     const cleanPnoVal = pnoCol ? String(pnoCol).trim() : '';
 
-    let finalPosting = thanaCol;
-    let finalDistrict = districtCol || extractDistrictFromText(`${compositeCol} ${nameCol} ${thanaCol}`);
+    let finalPosting = thanaCol || compositeParsed?.posting || nameParsed?.posting || '';
+    let finalDistrict = districtCol || compositeParsed?.district || nameParsed?.district || extractDistrictFromText(`${compositeCol} ${nameCol} ${finalPosting}`);
+
+    if (finalDistrict && finalPosting && finalPosting.includes(finalDistrict)) {
+      finalPosting = finalPosting.replace(new RegExp(`(?:जनपद\\s*)?${finalDistrict}`, 'gi'), '').trim();
+    }
 
     if (!finalPosting && (compositeCol || nameCol)) {
       const sourceText = compositeCol || nameCol;
-      const parts = sourceText.split(',').map(s => s.trim()).filter(Boolean);
+      const parts = sourceText.split(/[,।]/).map(s => s.trim()).filter(Boolean);
       if (parts.length > 1) {
         for (let i = 1; i < parts.length; i++) {
           const part = parts[i];
@@ -295,7 +432,7 @@ function processObjectRows(rows) {
     records.push({
       id: cleanPnoVal ? cleanPnoVal : `DUTY-${String(records.length + 1).padStart(4, '0')}`,
       pno: cleanPnoVal,
-      name: displayName,
+      name: finalName || nameCol || compositeCol || '-',
       raw_name: nameCol,
       composite_details: compositeCol,
       rank: rank,
@@ -375,6 +512,10 @@ function processRawRows(rawRows) {
   }
 
   let colComposite = headers.findIndex(h => 
+    h.includes('name posting dist mob') || 
+    h.includes('name_posting_dist_mob') || 
+    h.includes('name posting dist') || 
+    h.includes('name posting district mob') || 
     h.includes('name thana district mob') || 
     h.includes('name_thana_district_mob') || 
     h.includes('name and posting place district') ||
@@ -383,10 +524,17 @@ function processRawRows(rawRows) {
     h.includes('name posting district') ||
     h.includes('name & posting place') ||
     h.includes('name posting place district') ||
+    (h.includes('name') && h.includes('posting') && h.includes('mob')) ||
     (h.includes('name') && h.includes('mob') && h.includes('thana'))
   );
-  let colName = headers.findIndex(h => (h === 'name' || h === 'नाम' || h.includes('नाम') || h.includes('name')) && !h.includes('पद') && !h.includes('rank') && !h.includes('पिता') && !h.includes('father') && !h.includes('जोन') && !h.includes('zone') && !h.includes('सेक्टर') && !h.includes('sector') && !h.includes('स्थान') && !h.includes('place') && !h.includes('प्रभारी') && !h.includes('incharge'));
-  let colMob = headers.findIndex(h => h === 'mob' || h === 'mobile' || h === 'मोबाइल' || h.includes('mobile') || h.includes('मोबाइल') || h.includes('mob') || h.includes('phone') || h.includes('contact'));
+  let colName = headers.findIndex((h, idx) => 
+    idx !== colComposite && 
+    (h === 'name' || h === 'नाम' || h === 'officer name' || ((h.includes('नाम') || h.includes('name')) && !h.includes('posting') && !h.includes('dist') && !h.includes('mob') && !h.includes('thana') && !h.includes('पद') && !h.includes('rank') && !h.includes('पिता') && !h.includes('father') && !h.includes('जोन') && !h.includes('zone') && !h.includes('सेक्टर') && !h.includes('sector') && !h.includes('स्थान') && !h.includes('place') && !h.includes('प्रभारी') && !h.includes('incharge')))
+  );
+  let colMob = headers.findIndex((h, idx) => 
+    idx !== colComposite && 
+    (h === 'mob' || h === 'mobile' || h === 'मोबाइल' || ((h.includes('mobile') || h.includes('मोबाइल') || h.includes('mob') || h.includes('phone') || h.includes('contact')) && !h.includes('name') && !h.includes('नाम') && !h.includes('posting') && !h.includes('dist') && !h.includes('thana')))
+  );
   let colZone = headers.findIndex(h => 
     h === 'zone' || h === 'जोन' || 
     ((h.includes('zone') || h.includes('जोन')) && !h.includes('incharge') && !h.includes('प्रभारी') && !h.includes('officer') && !h.includes('अधिकारी'))
@@ -414,14 +562,13 @@ function processRawRows(rawRows) {
   );
   let colDutyPlace = headers.findIndex(h => h.includes('duty place') || h.includes('duty_place') || h.includes('स्थान') || h.includes('duty point') || h.includes('स्थल') || h.includes('ड्यूटी स्थल'));
   let colRank = headers.findIndex(h => h === 'rank' || h === 'पद' || h === 'पदनाम' || h === 'पद नाम' || h.includes('designation') || h.includes('पद') || h.includes('rank'));
-  let colThana = headers.findIndex(h => 
-    h === 'thana' || h === 'थाना' || h.includes('thana') || h.includes('थाना') || 
-    h.includes('तैनाती') || h.includes('posting') || h.includes('posting place') || 
-    h.includes('posting_place') || h.includes('place of posting')
+  let colThana = headers.findIndex((h, idx) => 
+    idx !== colComposite && 
+    (h === 'thana' || h === 'थाना' || h === 'posting' || ((h.includes('thana') || h.includes('थाना') || h.includes('तैनाती') || h.includes('posting') || h.includes('posting place') || h.includes('posting_place') || h.includes('place of posting')) && !h.includes('name') && !h.includes('नाम') && !h.includes('mob') && !h.includes('dist')))
   );
-  let colDistrict = headers.findIndex(h => 
-    h === 'district' || h === 'जनपद' || h === 'जिला' || 
-    h.includes('district') || h.includes('जनपद') || h.includes('जिला') || h.includes('dist')
+  let colDistrict = headers.findIndex((h, idx) => 
+    idx !== colComposite && 
+    (h === 'district' || h === 'जनपद' || h === 'जिला' || h === 'dist' || ((h.includes('district') || h.includes('जनपद') || h.includes('जिला') || h.includes('dist')) && !h.includes('name') && !h.includes('नाम') && !h.includes('mob') && !h.includes('posting') && !h.includes('thana')))
   );
   let colTime = headers.findIndex(h => h.includes('time') || h.includes('समय') || h.includes('दिनांक') || h.includes('shift') || h.includes('पाली') || h.includes('शिफ्ट'));
   let colBriefing = headers.findIndex(h => h.includes('briefing') || h.includes('ब्रीफिंग'));
@@ -485,21 +632,41 @@ function processRawRows(rawRows) {
     if (dutyPlaceVal) currentDutyPlace = dutyPlaceVal;
     if (rawTime) currentTime = rawTime;
 
-    const displayName = rawComposite.trim() || rawName.trim() || (rawMob ? `पुलिसकर्मी (${rawMob})` : '');
-    const mobNumber = rawMob || cleanMobileNumber(rawComposite);
+    // Parse composite or merged details from "name posting dist mob"
+    const compositeParsed = rawComposite ? parseCompositeOfficerDetails(rawComposite) : null;
+    const nameParsed = (rawName && (/\b[6-9]\d{9}\b/.test(rawName) || /(?:थाना|कोतवाली)/.test(rawName))) ? parseCompositeOfficerDetails(rawName) : null;
 
-    if (!displayName && !mobNumber) continue;
+    let finalName = '';
+    if (compositeParsed?.name && compositeParsed.name.trim()) {
+      finalName = compositeParsed.name.trim();
+    } else if (nameParsed?.name && nameParsed.name.trim()) {
+      finalName = nameParsed.name.trim();
+    } else if (rawName && rawName.trim()) {
+      finalName = rawName.trim();
+    } else if (rawComposite && rawComposite.trim()) {
+      finalName = rawComposite.trim().replace(/\b[6-9]\d{9}\b/g, '').replace(/,\s*,/g, ',').replace(/\s*,\s*$/, '').trim();
+    } else if (rawMob) {
+      finalName = `पुलिसकर्मी (${rawMob})`;
+    }
+
+    const mobNumber = rawMob || compositeParsed?.mobile || nameParsed?.mobile || cleanMobileNumber(rawComposite) || cleanMobileNumber(rawName) || '';
+
+    if (!finalName && !mobNumber && !rawComposite && !rawName) continue;
 
     const rawRank = colRank !== -1 ? convertKrutiToUnicode(cells[colRank] || '') : '';
-    const rank = resolvePoliceRank(rawRank, displayName);
+    const rank = resolvePoliceRank(rawRank, finalName);
     const cleanPno = rawPno ? rawPno.trim() : '';
 
-    let finalThana = rawThana;
-    let finalDist = rawDistrict || extractDistrictFromText(`${rawComposite} ${rawName} ${rawThana}`);
+    let finalThana = rawThana || compositeParsed?.posting || nameParsed?.posting || '';
+    let finalDist = rawDistrict || compositeParsed?.district || nameParsed?.district || extractDistrictFromText(`${rawComposite} ${rawName} ${finalThana}`);
+
+    if (finalDist && finalThana && finalThana.includes(finalDist)) {
+      finalThana = finalThana.replace(new RegExp(`(?:जनपद\\s*)?${finalDist}`, 'gi'), '').trim();
+    }
 
     if (!finalThana && (rawComposite || rawName)) {
       const sourceText = rawComposite || rawName;
-      const parts = sourceText.split(',').map(s => s.trim()).filter(Boolean);
+      const parts = sourceText.split(/[,।]/).map(s => s.trim()).filter(Boolean);
       if (parts.length > 1) {
         for (let i = 1; i < parts.length; i++) {
           const part = parts[i];
@@ -515,7 +682,7 @@ function processRawRows(rawRows) {
     records.push({
       id: cleanPno ? cleanPno : `DUTY-${String(records.length + 1).padStart(4, '0')}`,
       pno: cleanPno,
-      name: displayName,
+      name: finalName || rawName || rawComposite || '-',
       raw_name: rawName,
       composite_details: rawComposite,
       rank: rank,

@@ -702,7 +702,7 @@ export default function DutyCard({
             <div>
               <span className="text-[10px] sm:text-[11px] font-bold text-slate-500">अधिकारी / कर्मचारी:</span>
               <div className="text-sm sm:text-lg font-black text-slate-950 mt-0.5 break-words">
-                <span>{duty.name || cleanOfficerName || '-'}</span>
+                <span>{duty.name || duty.composite_details || cleanOfficerName || '-'}</span>
               </div>
               <div className="text-xs font-mono font-bold text-slate-800 mt-1 flex items-center gap-1.5">
                 <Phone className="w-3.5 h-3.5 text-slate-500" />
@@ -714,7 +714,7 @@ export default function DutyCard({
               {cleanPno && (
                 <div>P.No: <strong className="font-mono text-slate-950">{cleanPno}</strong></div>
               )}
-              <div>मूल तैनाती: <strong className="text-slate-950">{duty.posting || duty.posting_place || duty.thana || '-'}</strong> {duty.district ? `(${duty.district})` : ''}</div>
+              <div>मूल तैनाती: <strong className="text-slate-950">{duty.posting || duty.posting_place || duty.thana || (duty.district ? `जनपद ${duty.district}` : '-')}</strong> {duty.posting && duty.district && !String(duty.posting).includes(duty.district) ? `(${duty.district})` : ''}</div>
             </div>
           </div>
         </div>

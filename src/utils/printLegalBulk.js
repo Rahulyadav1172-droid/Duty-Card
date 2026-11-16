@@ -325,7 +325,7 @@ export function printLegalBulk({
                 <div>
                   <span class="officer-tag">अधिकारी / कर्मचारी विवरण:</span>
                   <h3 class="officer-name">
-                    <span>${escapeHtml(cleanOfficerName || duty.name || '-')}</span>
+                    <span>${escapeHtml(duty.name || cleanOfficerName || duty.composite_details || '-')}</span>
                   </h3>
                   <div class="officer-mobile">
                     ${phoneSvg}
@@ -334,7 +334,7 @@ export function printLegalBulk({
                 </div>
                 <div class="officer-sub-bar">
                   ${cleanPno ? `<span>P.No: <strong>${escapeHtml(cleanPno)}</strong></span>` : ''}
-                  <span>मूल तैनाती: <strong>${escapeHtml(duty.posting || duty.posting_place || duty.thana || '-')}</strong> ${duty.district ? `(${escapeHtml(duty.district)})` : ''}</span>
+                  <span>मूल तैनाती: <strong>${escapeHtml(duty.posting || duty.posting_place || duty.thana || (duty.district ? `जनपद ${duty.district}` : '-'))}</strong> ${duty.posting && duty.district && !String(duty.posting).includes(duty.district) ? `(${escapeHtml(duty.district)})` : ''}</span>
                 </div>
               </div>
             </div>
@@ -1669,7 +1669,7 @@ export function generateIndividualPassHtml({
           </div>
           <div class="officer-details">
             <div class="officer-name">
-              <span>${escapeHtml(duty.name || '-')}</span>
+              <span>${escapeHtml(duty.name || duty.composite_details || '-')}</span>
             </div>
             <div class="officer-mob">📱 ${escapeHtml(duty.mobile || '-')}</div>
             <div class="officer-meta">
@@ -1678,7 +1678,7 @@ export function generateIndividualPassHtml({
                 : (duty.id && !String(duty.id).toUpperCase().startsWith('DUTY-') && String(duty.id).length <= 12)
                   ? `PNO: <strong style="font-family:monospace;">${escapeHtml(duty.id)}</strong> | `
                   : ''
-              }मूल तैनाती: <strong>${escapeHtml(duty.posting || duty.posting_place || duty.thana || '-')}</strong> ${duty.district ? `(${escapeHtml(duty.district)})` : ''}
+              }मूल तैनाती: <strong>${escapeHtml(duty.posting || duty.posting_place || duty.thana || (duty.district ? `जनपद ${duty.district}` : '-'))}</strong> ${duty.posting && duty.district && !String(duty.posting).includes(duty.district) ? `(${escapeHtml(duty.district)})` : ''}
             </div>
           </div>
           <div style="text-align:center;padding:4px;background:#ffffff;border:1px solid #cbd5e1;border-radius:6px;">

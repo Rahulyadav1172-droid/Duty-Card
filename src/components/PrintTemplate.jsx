@@ -58,11 +58,11 @@ export default function PrintTemplate({
 
           <div className="flex-1 text-xs">
             <div className="font-bold text-sm text-black">
-              {duty.name}
+              {duty.name || duty.composite_details || '-'}
             </div>
-            <div className="font-mono text-black font-bold">मो०: {duty.mobile}</div>
+            <div className="font-mono text-black font-bold">मो०: {duty.mobile || '-'}</div>
             <div className="text-[10px] text-gray-800">
-              P.No: <strong>{duty.pno || duty.id}</strong> | मूल तैनाती: <strong>{duty.posting || ''}</strong> {duty.district ? `(${duty.district})` : ''}
+              P.No: <strong>{duty.pno || duty.id}</strong> | मूल तैनाती: <strong>{duty.posting || (duty.district ? `जनपद ${duty.district}` : '-')}</strong> {duty.posting && duty.district && !String(duty.posting).includes(duty.district) ? `(${duty.district})` : ''}
             </div>
           </div>
         </div>

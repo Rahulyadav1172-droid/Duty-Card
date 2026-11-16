@@ -633,10 +633,10 @@ export default function DutyPointFilterSection({
                     {/* Officer Name & Posting */}
                     <div>
                       <h4 className="font-black text-slate-950 text-sm leading-snug">
-                        {p.name || cleanName || displayCleanName || '-'}
+                        {p.name || p.composite_details || cleanName || displayCleanName || '-'}
                       </h4>
                       <p className="text-xs text-slate-600 font-medium mt-0.5">
-                        मूल तैनाती: <strong className="text-slate-900">{p.posting || '-'}</strong> {p.district ? `(${p.district})` : ''}
+                        मूल तैनाती: <strong className="text-slate-900">{p.posting || (p.district ? `जनपद ${p.district}` : '-')}</strong> {p.posting && p.district && !String(p.posting).includes(p.district) ? `(${p.district})` : ''}
                       </p>
                     </div>
 
