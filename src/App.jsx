@@ -23,7 +23,8 @@ import {
   History,
   Phone,
   QrCode,
-  WifiOff
+  WifiOff,
+  Sparkles
 } from 'lucide-react';
 
 import { useLanguage } from './context/LanguageContext';
@@ -146,6 +147,15 @@ export default function App() {
   const [events, setEvents] = useState(getInitialEvents);
 
   const [activeEventId, setActiveEventId] = useState(() => {
+    try {
+      if (typeof window !== 'undefined' && window.location?.search) {
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlEventId = urlParams.get('event');
+        if (urlEventId && !KNOWN_ARCHIVED_EVENT_IDS.has(urlEventId)) {
+          return urlEventId;
+        }
+      }
+    } catch (e) {}
     try {
       const savedId = localStorage.getItem(ACTIVE_EVENT_ID_KEY);
       // If cached ID on phone was from a past completed event, automatically switch to active 14 Kosi Mela
@@ -845,36 +855,40 @@ export default function App() {
     }
 
     const cleanQuery = searchQuery.replace(/\D/g, '');
+    const phoneQuery = cleanQuery.length > 10 ? cleanQuery.slice(-10) : cleanQuery;
     const textQuery = searchQuery.trim().toLowerCase();
 
-    let activeRecords = currentEvent.records || [];
-    let matches = activeRecords.filter(record => {
+    const isRecordMatch = (record) => {
+      if (!record) return false;
       const recordMob = (record.mobile || '').replace(/\D/g, '');
       const recordName = (record.name || '').toLowerCase();
       const recordId = (record.id || '').toLowerCase();
       const recordPno = (record.pno || '').toLowerCase();
 
-      if (cleanQuery.length >= 4 && recordMob.includes(cleanQuery)) return true;
+      // 1. Mobile number matching (+91, leading 0, 10-digit exact or 4+ partial)
+      if (cleanQuery.length >= 4) {
+        if (recordMob.includes(cleanQuery)) return true;
+        if (phoneQuery.length >= 4 && recordMob.includes(phoneQuery)) return true;
+        if (phoneQuery.length === 10 && recordMob.endsWith(phoneQuery)) return true;
+      }
+
+      // 2. Name search (2+ characters)
       if (textQuery.length >= 2 && recordName.includes(textQuery)) return true;
+
+      // 3. PNO or Duty ID search (3+ characters)
       if (textQuery.length >= 3 && (recordId.includes(textQuery) || recordPno.includes(textQuery))) return true;
+
       return false;
-    });
+    };
+
+    let activeRecords = currentEvent.records || [];
+    let matches = activeRecords.filter(isRecordMatch);
 
     // Cross-event fallback: If no matches in current event, check other active events that have records
     if (matches.length === 0 && Array.isArray(events)) {
       for (const ev of events) {
         if (ev.id !== currentEvent.id && ev.status !== 'archived' && Array.isArray(ev.records) && ev.records.length > 0) {
-          const crossMatches = ev.records.filter(record => {
-            const recordMob = (record.mobile || '').replace(/\D/g, '');
-            const recordName = (record.name || '').toLowerCase();
-            const recordId = (record.id || '').toLowerCase();
-            const recordPno = (record.pno || '').toLowerCase();
-
-            if (cleanQuery.length >= 4 && recordMob.includes(cleanQuery)) return true;
-            if (textQuery.length >= 2 && recordName.includes(textQuery)) return true;
-            if (textQuery.length >= 3 && (recordId.includes(textQuery) || recordPno.includes(textQuery))) return true;
-            return false;
-          });
+          const crossMatches = ev.records.filter(isRecordMatch);
           if (crossMatches.length > 0) {
             setActiveEventId(ev.id);
             matches = crossMatches;
@@ -1304,6 +1318,7 @@ export default function App() {
                   onUpdateDutyPhoto={handleUpdateDutyPhoto}
                   onUpdateDutyRecord={handleUpdateDutyRecord}
                   userRole={userRole}
+                  eventId={currentEvent.id}
                   onRequestAuth={(callback) => {
                     setPendingTab('search');
                     setIsLoginModalOpen(true);
@@ -1551,9 +1566,23 @@ export default function App() {
       )}
 
       {/* Footer */}
-      <footer className="bg-white border-t border-slate-200 py-3.5 px-4 text-center text-xs text-slate-500 space-y-0.5 mt-auto no-print">
-        <p className="font-bold text-slate-700">अयोध्या पुलिस ड्यूटी व पास प्रबंधन प्रणाली © 2026</p>
-        <p className="text-[11px] font-semibold text-slate-500">Designed & Developed by Smart Cell Ayodhya</p>
+      <footer className="bg-slate-900 border-t border-slate-800 py-4 px-4 text-center text-xs text-slate-400 space-y-2.5 mt-auto no-print">
+        <p className="font-bold text-slate-300 tracking-wide text-xs">अयोध्या पुलिस ड्यूटी व पास प्रबंधन प्रणाली © 2026</p>
+        <div className="flex justify-center items-center">
+          <div className="flashy-smart-cell-badge inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-slate-950/90 border border-amber-500/80 shadow-xl cursor-default">
+            <span className="relative flex h-2.5 w-2.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-80"></span>
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500"></span>
+            </span>
+            <Sparkles className="w-3.5 h-3.5 text-amber-400 animate-spin-slow shrink-0" />
+            <span className="text-[12px] font-black tracking-wider uppercase font-sans flashy-text-shimmer">
+              Designed & Developed by Smart Cell Ayodhya
+            </span>
+            <span className="text-[10px] bg-amber-500/20 text-amber-300 font-bold px-2 py-0.5 rounded-full border border-amber-500/40 shrink-0">
+              तकनीक एवं नवाचार
+            </span>
+          </div>
+        </div>
       </footer>
       </div>
     </div>

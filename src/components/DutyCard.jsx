@@ -47,12 +47,14 @@ export default function DutyCard({
   userRole = 'guest',
   onRequestAuth,
   customLabels = {},
-  isOffline = false
+  isOffline = false,
+  eventId = ''
 }) {
   const { language, t } = useLanguage();
   const [isDownloadingPDF, setIsDownloadingPDF] = useState(false);
   const [showBackSide, setShowBackSide] = useState(false);
   const [isVerifyModalOpen, setIsVerifyModalOpen] = useState(false);
+  const [isPhotoZoomOpen, setIsPhotoZoomOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editFormData, setEditFormData] = useState({
     duty_place: '',
@@ -431,8 +433,11 @@ export default function DutyCard({
   };
 
   // Direct live verification URL so scanning with any phone camera opens the verified card directly
+  const targetEventId = eventId || duty?.event_id || '';
+  const eventParam = targetEventId ? `&event=${encodeURIComponent(targetEventId)}` : '';
+  const searchParam = encodeURIComponent(duty.mobile || duty.pno || duty.id || '');
   const qrVerificationUrl = typeof window !== 'undefined' && window.location?.origin
-    ? `${window.location.origin}/?search=${encodeURIComponent(duty.mobile || duty.pno || duty.id || '')}`
+    ? `${window.location.origin}/?search=${searchParam}${eventParam}`
     : '';
 
   const cleanPno = (duty.pno && !String(duty.pno).startsWith('DUTY-'))
@@ -455,7 +460,7 @@ export default function DutyCard({
   const cleanOfficerName = cleanOfficerNameAndTitle(duty?.name, duty?.posting, duty?.district, duty?.mobile);
 
   return (
-    <div className="w-full max-w-4xl mx-auto space-y-4 font-devanagari text-slate-900 animate-in fade-in zoom-in-95 duration-300 pb-20 md:pb-0">
+    <div className="w-full max-w-4xl mx-auto space-y-4 font-devanagari text-slate-900 animate-in fade-in zoom-in-95 duration-300 pb-32 md:pb-6">
       {/* Hidden File Input for Photo Upload */}
       <input
         ref={photoInputRef}
@@ -707,9 +712,15 @@ export default function DutyCard({
         <div className="flex items-stretch gap-2.5 sm:gap-3 border border-slate-300 p-2.5 sm:p-3 rounded-lg sm:rounded-xl bg-slate-50/80">
           {/* Photo Frame */}
           <div
-            onClick={() => photoInputRef.current?.click()}
+            onClick={() => {
+              if (duty.photo) {
+                setIsPhotoZoomOpen(true);
+              } else {
+                photoInputRef.current?.click();
+              }
+            }}
             className="w-18 h-24 sm:w-24 sm:h-28 border-2 border-dashed border-slate-400 hover:border-slate-600 rounded-lg bg-white overflow-hidden flex flex-col items-center justify-center text-center shrink-0 relative group cursor-pointer transition shadow-inner"
-            title="फोटो अपलोड/बदलने के लिए क्लिक करें"
+            title={duty.photo ? "पासपोर्ट फोटो देखने / ज़ूम करने के लिए क्लिक करें" : "फोटो अपलोड/बदलने के लिए क्लिक करें"}
           >
             {duty.photo ? (
               <img
@@ -730,7 +741,7 @@ export default function DutyCard({
             {/* Hover overlay */}
             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center text-white text-[9px] font-bold transition no-print">
               <Camera className="w-4 h-4 mb-0.5" />
-              <span>बदलें</span>
+              <span>{duty.photo ? 'देखें / बदलें' : 'अपलोड'}</span>
             </div>
           </div>
 
@@ -978,7 +989,7 @@ export default function DutyCard({
                 key={idx}
                 className="p-2.5 sm:p-3 bg-slate-50 rounded-xl border border-slate-200 hover:border-slate-300 transition flex items-center justify-between gap-2 shadow-2xs"
               >
-                <div className="min-w-0 space-y-0.5">
+                <div className="min-w-0 flex-1 space-y-0.5">
                   <div className="flex items-center gap-1.5 flex-wrap">
                     <span className="font-bold text-slate-900 text-xs sm:text-sm truncate">
                       {cleanOfficerNameAndTitle(peer.name, peer.posting, peer.district, peer.mobile)}
@@ -995,10 +1006,10 @@ export default function DutyCard({
                 {peer.mobile && (
                   <a
                     href={`tel:${peer.mobile}`}
-                    className="px-2.5 sm:px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-lg flex items-center gap-1 transition shrink-0 active:scale-95 shadow-2xs"
+                    className="px-2.5 sm:px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-lg flex items-center gap-1 transition shrink-0 ml-auto active:scale-95 shadow-2xs"
                     title="सीधे कॉल करें"
                   >
-                    <Phone className="w-3 h-3" />
+                    <Phone className="w-3 h-3 shrink-0" />
                     <span>कॉल</span>
                   </a>
                 )}
@@ -1006,11 +1017,74 @@ export default function DutyCard({
             ))}
           </div>
         ) : (
-          <div className="p-3 text-center text-xs text-slate-500 font-medium">
-            इस ड्यूटी पॉइंट पर आपके अतिरिक्त अन्य कोई बल डेटाबेस में आवंटित नहीं है।
+          <div className="py-4 px-3 text-center bg-slate-50/80 rounded-xl border border-dashed border-slate-200 space-y-1">
+            <ShieldCheck className="w-6 h-6 text-amber-600 mx-auto opacity-80" />
+            <p className="text-xs font-bold text-slate-800">इस स्थल पर एकल ड्यूटी आवंटित है</p>
+            <p className="text-[11px] text-slate-500">इस ड्यूटी पॉइंट पर वर्तमान में केवल आपकी ही तैनाती दर्ज है।</p>
           </div>
         )}
       </div>
+
+      {/* Passport Photo Preview & Zoom Modal */}
+      {isPhotoZoomOpen && duty.photo && (
+        <div
+          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150"
+          onClick={() => setIsPhotoZoomOpen(false)}
+        >
+          <div
+            className="relative max-w-sm w-full bg-white rounded-3xl p-5 shadow-2xl space-y-4 border border-slate-200 animate-in zoom-in-95 duration-150"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
+              <div className="min-w-0">
+                <h4 className="font-black text-sm text-slate-900 truncate">
+                  {cleanOfficerName || duty.name}
+                </h4>
+                <p className="text-[11px] text-slate-500 font-bold">पासपोर्ट फोटो पूर्वावलोकन</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsPhotoZoomOpen(false)}
+                className="p-1.5 rounded-xl hover:bg-slate-100 text-slate-500 hover:text-slate-800 transition cursor-pointer"
+                title="बंद करें"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="rounded-2xl overflow-hidden bg-slate-100 border border-slate-200 aspect-3/4 flex items-center justify-center shadow-inner">
+              <img
+                src={duty.photo}
+                alt={duty.name}
+                className="w-full h-full object-contain"
+              />
+            </div>
+
+            <div className="flex items-center gap-2 pt-1">
+              {(userRole === 'admin' || userRole === 'superadmin') && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsPhotoZoomOpen(false);
+                    photoInputRef.current?.click();
+                  }}
+                  className="flex-1 py-2 px-3 bg-amber-500 hover:bg-amber-600 text-slate-950 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 transition cursor-pointer shadow-xs"
+                >
+                  <Camera className="w-4 h-4" />
+                  <span>फोटो बदलें</span>
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => setIsPhotoZoomOpen(false)}
+                className="flex-1 py-2 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold text-xs transition cursor-pointer text-center"
+              >
+                बंद करें
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Live Verification Modal */}
       <VerifyModal

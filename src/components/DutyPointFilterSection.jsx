@@ -80,10 +80,15 @@ export default function DutyPointFilterSection({
 
   // Active attendance for the selected date
   const activeAttendance = useMemo(() => {
+    const todayStr = new Date().toISOString().split('T')[0];
     if (attendanceByDate && attendanceByDate[checkingDate]) {
       return attendanceByDate[checkingDate];
     }
-    return attendanceMap || {};
+    // Only fall back to attendanceMap if checkingDate is today
+    if (checkingDate === todayStr) {
+      return attendanceMap || {};
+    }
+    return {};
   }, [attendanceByDate, checkingDate, attendanceMap]);
 
   // Unique Zones with personnel count

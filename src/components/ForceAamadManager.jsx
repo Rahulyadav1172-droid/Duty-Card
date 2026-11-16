@@ -339,6 +339,18 @@ export default function ForceAamadManager({
     const updatedLogs = [deletedLogEntry, ...auditLogs];
 
     saveAamadState(updatedAamad, updatedLogs);
+
+    // 2-Way Reactive Sync with Master Force
+    if (onUpdateForce && Array.isArray(forceRecords)) {
+      const updatedForce = forceRecords.filter(f => {
+        const mobMatch = recordToDelete.mobile && f.mobile && f.mobile.replace(/\D/g, '') === recordToDelete.mobile.replace(/\D/g, '');
+        const pnoMatch = recordToDelete.pno && f.pno && f.pno.trim().toLowerCase() === recordToDelete.pno.trim().toLowerCase();
+        return !(mobMatch || pnoMatch || f.id === recordToDelete.id);
+      });
+      onUpdateForce(updatedForce);
+      saveMasterForceToSupabase(updatedForce);
+    }
+
     setIsDeleteModalOpen(false);
     setRecordToDelete(null);
     setDeleteRemark('');

@@ -103,7 +103,7 @@ export default function SearchSection({
             onKeyDown={(e) => e.key === 'Enter' && onSearchSubmit?.()}
             placeholder={language === 'en' ? 'Enter PNO, Mobile Number or Name...' : 'PNO, मोबाइल नंबर या नाम लिखें...'}
             className="w-full pl-11 sm:pl-12 pr-10 py-3 sm:py-3.5 bg-slate-50 border border-slate-300 rounded-xl text-xs sm:text-sm font-bold text-slate-900 placeholder:text-slate-400 placeholder:font-normal focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 focus:bg-white transition shadow-inner select-text cursor-text"
-            autoFocus
+            autoFocus={typeof window !== 'undefined' && window.innerWidth >= 768}
           />
 
           {/* Clear Button */}
