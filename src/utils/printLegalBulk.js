@@ -1,9 +1,401 @@
-// Dedicated high-speed isolated Legal print engine supporting Election 2-in-1 (with Co-deployed Force), 4-in-1, and 6-in-1 layouts
+// Dedicated high-speed isolated Legal print engine supporting Election 2-in-1 (with Co-deployed Force), 4-in-1, 6-in-1 layouts, and 4-in-1 Lanyard Pouch ID Card
 import React from 'react';
 import { renderToString } from 'react-dom/server';
 import { QRCodeSVG } from 'qrcode.react';
 import { resolvePoliceRank, stripRankFromName } from './rankResolver';
 import { ELECTION_DUTY_CARD_INSTRUCTIONS, ELECTION_CUG_DIRECTORY } from '../data/electionStandardData';
+
+/**
+ * Renders the Front Face of the 4-in-1 Lanyard Pouch ID Card
+ * Specifically structured for Lanyard Plastic Sleeves / Polybags:
+ * Large legible Duty Place box, Police header & emblems, photo, officer details, QR code & signature.
+ */
+export function renderIdBadgeFrontHtml({
+  duty,
+  eventTitle = '',
+  eventSubtitle = '',
+  signatureImg = '',
+  signatoryText = 'वरिष्ठ पुलिस अधीक्षक, अयोध्या',
+  phoneSvg = '',
+  records = []
+}) {
+  if (!duty) {
+    return `
+      <div class="id-badge-card empty-slot">
+        <div class="empty-text">स्थान रिक्त</div>
+      </div>
+    `;
+  }
+
+  const cleanPno = (duty.pno && !String(duty.pno).toUpperCase().startsWith('DUTY-'))
+    ? String(duty.pno)
+    : (duty.id && !String(duty.id).toUpperCase().startsWith('DUTY-') && String(duty.id).length <= 12)
+      ? String(duty.id)
+      : null;
+
+  const cleanOfficerName = (duty.name || '').trim()
+    .replace(/,\s*\d{10}\b/g, '')
+    .replace(/\b\d{10}\b/g, '')
+    .replace(/[,।]?\s*नं0?[-:]?\s*$/g, '')
+    .replace(/[,।]?\s*नं\s*\(?.*$/g, '')
+    .replace(/,\s*$/, '')
+    .trim() || duty.name;
+
+  const effectiveRank = resolvePoliceRank(duty.rank, cleanOfficerName);
+  const displayCleanName = stripRankFromName(cleanOfficerName);
+
+  const photoHtml = duty.photo
+    ? `<img src="${duty.photo}" class="officer-photo" style="width:100%;height:100%;object-fit:cover;" />`
+    : `
+      <div class="photo-placeholder" style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:#64748b;text-align:center;">
+        <svg style="width:20px;height:20px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+          <circle cx="12" cy="7" r="4"></circle>
+        </svg>
+        <span style="font-size:6.5px;font-weight:bold;margin-top:2px;">पासपोर्ट फोटो</span>
+      </div>
+    `;
+
+  const signHtml = signatureImg
+    ? `<img src="${signatureImg}" style="height:22px;max-width:85px;object-fit:contain;margin-left:auto;" />`
+    : `<div style="font-style:italic;font-size:7.5px;color:#475569;">(हस्ताक्षरित)</div>`;
+
+  let qrSvgHtml = '';
+  try {
+    const authCode = cleanPno || (duty.id && !String(duty.id).toUpperCase().startsWith('DUTY-') ? String(duty.id) : '') || `AUTH-${Math.abs(hashCode(duty.name + (duty.mobile || '') + (duty.duty_place || ''))).toString(36).toUpperCase()}`;
+    const qrPayload = [
+      `नाम: ${(duty.name || '').trim()}`,
+      `मोबाइल: ${(duty.mobile || '').trim()}`,
+      `मूल तैनाती: ${(duty.posting || '').trim()}`,
+      `जिला: ${(duty.district || '').trim()}`,
+      `ड्यूटी पॉइंट: ${(duty.duty_place || '').trim()}`,
+      `सत्यापन कोड: ${authCode}`
+    ].join('\n');
+
+    qrSvgHtml = renderToString(
+      React.createElement(QRCodeSVG, {
+        value: qrPayload,
+        size: 32,
+        level: 'L',
+        includeMargin: false
+      })
+    );
+  } catch (e) {
+    qrSvgHtml = '';
+  }
+
+  return `
+    <div class="id-badge-card id-badge-front">
+      <!-- 1. Top Header -->
+      <div class="card-header" style="border-bottom:2px solid #0b132b;padding-bottom:3px;display:flex;align-items:center;justify-content:space-between;gap:4px;">
+        <img src="/badge.png" class="badge-icon" alt="UP Police" style="width:34px;height:34px;object-fit:contain;" />
+        <div class="header-titles" style="text-align:center;flex:1;min-width:0;">
+          <div style="font-size:7.5px;font-weight:800;color:#475569;letter-spacing:0.5px;">उत्तर प्रदेश पुलिस • अयोध्या</div>
+          <div style="font-size:13px;font-weight:900;color:#0b132b;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+            ${escapeHtml(eventTitle || 'उत्तर प्रदेश पुलिस')}
+          </div>
+          <div style="font-size:8.5px;font-weight:700;color:#b45309;margin-top:1px;">
+            ${escapeHtml(eventSubtitle || 'ड्यूटी पहचान पत्र / पास अयोध्या - 2026')}
+          </div>
+        </div>
+        <img src="/badge.png" class="badge-icon" alt="UP Police" style="width:34px;height:34px;object-fit:contain;" />
+      </div>
+
+      <!-- 2. Officer Details Section -->
+      <div style="display:flex;align-items:center;gap:7px;border:1.2px solid #0b132b;border-radius:6px;padding:4px 6px;background:#f8fafc;margin:4px 0;">
+        <div style="width:44px;height:56px;border:1px solid #64748b;border-radius:4px;background:#ffffff;overflow:hidden;flex-shrink:0;">
+          ${photoHtml}
+        </div>
+        <div style="flex:1;min-width:0;display:flex;flex-direction:column;justify-content:space-between;">
+          <div>
+            <div style="font-size:7.5px;font-weight:bold;color:#64748b;">अधिकारी / कर्मचारी विवरण:</div>
+            <div style="font-size:12.5px;font-weight:900;color:#020617;display:flex;align-items:center;gap:4px;flex-wrap:wrap;line-height:1.2;">
+              <span>${escapeHtml(displayCleanName || duty.name)}</span>
+              ${effectiveRank ? `<span style="background:#fef3c7;color:#92400e;border:1px solid #fde68a;padding:0.5px 5px;border-radius:3px;font-size:9.5px;font-weight:800;">${escapeHtml(effectiveRank)}</span>` : ''}
+            </div>
+            <div style="font-size:10.5px;font-weight:900;color:#1e3a8a;display:flex;align-items:center;gap:3px;margin-top:2px;font-family:monospace;">
+              ${phoneSvg}
+              <span>${escapeHtml(duty.mobile || '-')}</span>
+            </div>
+          </div>
+          <div style="font-size:7.5px;color:#334155;border-top:1px solid #cbd5e1;padding-top:2px;margin-top:2px;display:flex;justify-content:space-between;flex-wrap:wrap;">
+            ${cleanPno ? `<span>PNO: <strong>${escapeHtml(cleanPno)}</strong></span>` : ''}
+            <span>मूल: <strong>${escapeHtml(duty.posting || duty.district || '-')}</strong> ${duty.posting && duty.district && !String(duty.posting).includes(duty.district) ? `(${escapeHtml(duty.district)})` : ''}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3. PROMINENT DUTY POINT BOX -->
+      <div class="id-badge-duty-box">
+        <div class="id-badge-duty-lbl">🚩 कर्तव्य स्थल (DUTY PLACE)</div>
+        <div class="id-badge-duty-val">${escapeHtml(duty.duty_place || '-')}</div>
+      </div>
+
+      <!-- 4. DUTY DATE & TIME BOX -->
+      <div class="id-badge-time-box">
+        <span style="font-size:8px;font-weight:800;color:#475569;white-space:nowrap;">दिनाँक व समय:</span>
+        <span style="font-size:9px;font-weight:900;color:#0f172a;text-align:right;line-height:1.2;">
+          ${escapeHtml(duty.shift || 'प्रातः 09:00 बजे से मेला समाप्ति तक')}
+        </span>
+      </div>
+
+      <!-- 5. CARD FOOTER (QR CODE & SSP SIGNATURE) -->
+      <div class="card-footer" style="display:flex;align-items:center;justify-content:space-between;border-top:1.5px solid #0b132b;padding-top:3px;margin-top:auto;">
+        <div style="display:flex;align-items:center;gap:4px;">
+          <div style="background:#ffffff;border:1px solid #cbd5e1;border-radius:4px;padding:1px;display:flex;align-items:center;justify-content:center;">
+            ${qrSvgHtml}
+          </div>
+          <div>
+            <div style="font-size:6.5px;font-weight:900;color:#166534;background:#dcfce7;border:1px solid #86efac;padding:1px 4px;border-radius:3px;white-space:nowrap;">
+              ✓ सत्यापित ड्यूटी पास
+            </div>
+            <div style="font-size:6.5px;font-family:monospace;color:#475569;font-weight:bold;margin-top:1px;">
+              ID: ${escapeHtml(cleanPno || duty.id || '-')}
+            </div>
+          </div>
+        </div>
+
+        <div style="text-align:right;display:flex;flex-direction:column;align-items:flex-end;">
+          ${signHtml}
+          <div style="font-size:7.5px;font-weight:900;color:#020617;margin-top:1px;">
+            ${escapeHtml(signatoryText)}
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+/**
+ * Renders the Back Face of the 4-in-1 Lanyard Pouch ID Card
+ * Specifically structured for Lanyard Plastic Sleeves / Polybags:
+ * Zone & Zonal Incharge, Sector & Sector Incharge, Briefing Place/Time, Special Instructions & Emergency Contacts.
+ */
+export function renderIdBadgeBackHtml({
+  duty,
+  eventTitle = '',
+  eventSubtitle = '',
+  isNoteEnabled = true,
+  customNote = '',
+  isBriefingEnabled = true,
+  customBriefing = '',
+  phoneSvg = '',
+  records = []
+}) {
+  if (!duty) {
+    return `
+      <div class="id-badge-card id-badge-back empty-slot">
+        <div class="empty-text">स्थान रिक्त</div>
+      </div>
+    `;
+  }
+
+  const cleanPno = (duty.pno && !String(duty.pno).toUpperCase().startsWith('DUTY-'))
+    ? String(duty.pno)
+    : (duty.id && !String(duty.id).toUpperCase().startsWith('DUTY-') && String(duty.id).length <= 12)
+      ? String(duty.id)
+      : null;
+
+  const cleanOfficerName = (duty.name || '').trim()
+    .replace(/,\s*\d{10}\b/g, '')
+    .replace(/\b\d{10}\b/g, '')
+    .replace(/[,।]?\s*नं0?[-:]?\s*$/g, '')
+    .replace(/[,।]?\s*नं\s*\(?.*$/g, '')
+    .replace(/,\s*$/, '')
+    .trim() || duty.name;
+
+  const effectiveRank = resolvePoliceRank(duty.rank, cleanOfficerName);
+  const displayCleanName = stripRankFromName(cleanOfficerName);
+
+  const activeNote = (isNoteEnabled !== false && customNote) ? customNote : (isNoteEnabled ? (duty.note || '') : '');
+  const activeBriefing = (isBriefingEnabled !== false && customBriefing) ? customBriefing : (isBriefingEnabled ? (duty.briefing_place || '') : '');
+
+  // Clean & Parse Zone and Zonal Incharge
+  let cleanZone = (duty.zone || '').trim();
+  let cleanZonalIncharge = (
+    duty.zonal_incharge || 
+    duty.zonal || 
+    duty.zonal_officer || 
+    duty.zonalOfficer || 
+    duty.zone_incharge || 
+    duty.zonal_magistrate ||
+    duty['जोनाल प्रभारी'] ||
+    duty['जोनल प्रभारी'] ||
+    ''
+  ).trim();
+  if (cleanZonalIncharge === '-') cleanZonalIncharge = '';
+
+  if (!cleanZonalIncharge && cleanZone.includes('/')) {
+    const parts = cleanZone.split('/');
+    cleanZone = parts[0].trim();
+    cleanZonalIncharge = parts.slice(1).join('/').trim();
+  } else if (cleanZone.endsWith('/')) {
+    cleanZone = cleanZone.replace(/\/+\s*$/, '').trim();
+  }
+  if (cleanZonalIncharge && cleanZone.includes(cleanZonalIncharge)) {
+    cleanZone = cleanZone.replace(cleanZonalIncharge, '').replace(/\/+\s*$/, '').trim();
+  }
+
+  if (!cleanZonalIncharge && cleanZone && Array.isArray(records)) {
+    const matchedZone = records.find(r => 
+      r && 
+      (r.zone || '').trim().toLowerCase() === cleanZone.toLowerCase() && 
+      (r.zonal_incharge || r.zonal || r.zonal_officer || r.zonalOfficer || r.zone_incharge || r['जोनाल प्रभारी'] || r['जोनल प्रभारी'])
+    );
+    if (matchedZone) {
+      cleanZonalIncharge = (
+        matchedZone.zonal_incharge || 
+        matchedZone.zonal || 
+        matchedZone.zonal_officer || 
+        matchedZone.zonalOfficer || 
+        matchedZone.zone_incharge || 
+        matchedZone['जोनाल प्रभारी'] || 
+        matchedZone['जोनल प्रभारी'] || 
+        ''
+      ).trim();
+    }
+  }
+
+  // Clean & Parse Sector and Sector Incharge
+  let cleanSector = (duty.sector || '').trim();
+  let cleanSectorIncharge = (
+    duty.sector_incharge || 
+    duty.sector_officer || 
+    duty.sectorOfficer || 
+    duty.sectorIncharge || 
+    duty.sector_magistrate || 
+    duty.sectorMagistrate || 
+    duty.incharge || 
+    duty['सेक्टर प्रभारी'] ||
+    duty['सेक्टर अधिकारी'] ||
+    duty['सेक्टर मजिस्ट्रेट'] ||
+    duty['प्रभारी'] ||
+    ''
+  ).trim();
+  if (cleanSectorIncharge === '-') cleanSectorIncharge = '';
+
+  if (!cleanSectorIncharge && cleanSector.includes('/')) {
+    const parts = cleanSector.split('/');
+    cleanSector = parts[0].trim();
+    cleanSectorIncharge = parts.slice(1).join('/').trim();
+  } else if (cleanSector.endsWith('/')) {
+    cleanSector = cleanSector.replace(/\/+\s*$/, '').trim();
+  }
+  if (cleanSectorIncharge && cleanSector.includes(cleanSectorIncharge)) {
+    cleanSector = cleanSector.replace(cleanSectorIncharge, '').replace(/\/+\s*$/, '').trim();
+  }
+
+  if (!cleanSectorIncharge && cleanSector && Array.isArray(records)) {
+    const matchedSector = records.find(r => {
+      if (!r) return false;
+      const rSec = (r.sector || '').trim().toLowerCase();
+      const currSec = cleanSector.toLowerCase();
+      const isSame = rSec === currSec || rSec.startsWith(currSec) || currSec.startsWith(rSec);
+      const inc = (
+        r.sector_incharge || 
+        r.sector_officer || 
+        r.sectorOfficer || 
+        r.sectorIncharge || 
+        r.sector_magistrate || 
+        r.sectorMagistrate || 
+        r.incharge || 
+        r['सेक्टर प्रभारी'] ||
+        r['सेक्टर अधिकारी'] ||
+        r['सेक्टर मजिस्ट्रेट'] ||
+        r['प्रभारी'] ||
+        ''
+      ).trim();
+      return isSame && inc && inc !== '-';
+    });
+    if (matchedSector) {
+      cleanSectorIncharge = (
+        matchedSector.sector_incharge || 
+        matchedSector.sector_officer || 
+        matchedSector.sectorOfficer || 
+        matchedSector.sectorIncharge || 
+        matchedSector.sector_magistrate || 
+        matchedSector.sectorMagistrate || 
+        matchedSector.incharge || 
+        matchedSector['सेक्टर प्रभारी'] || 
+        matchedSector['सेक्टर अधिकारी'] || 
+        matchedSector['सेक्टर मजिस्ट्रेट'] || 
+        matchedSector['प्रभारी'] || 
+        ''
+      ).trim();
+    }
+  }
+
+  return `
+    <div class="id-badge-card id-badge-back">
+      <!-- 1. Header -->
+      <div style="border-bottom:1.5px solid #0b132b;padding-bottom:3px;text-align:center;">
+        <div style="font-size:7.5px;font-weight:800;color:#475569;">कार्यालय वरिष्ठ पुलिस अधीक्षक, जनपद अयोध्या</div>
+        <div style="font-size:10.5px;font-weight:900;color:#0f172a;margin-top:1px;">ड्यूटी विवरण एवं आवश्यक निर्देश (पृष्ठ भाग)</div>
+      </div>
+
+      <!-- 2. Mini Officer Strip -->
+      <div style="background:#f1f5f9;border:1px solid #cbd5e1;border-radius:4px;padding:2px 5px;margin:3px 0;font-size:7.5px;font-weight:800;color:#1e293b;display:flex;justify-content:space-between;align-items:center;">
+        <span>अधिकारी: <strong>${escapeHtml(displayCleanName || duty.name)}</strong> ${effectiveRank ? `(${escapeHtml(effectiveRank)})` : ''}</span>
+        <span>मो०: <strong>${escapeHtml(duty.mobile || '-')}</strong></span>
+        ${cleanPno ? `<span>PNO: <strong>${escapeHtml(cleanPno)}</strong></span>` : ''}
+      </div>
+
+      <!-- 3. Zone & Zonal Incharge -->
+      <div class="badge-back-section">
+        <div class="badge-back-sec-hdr">
+          <span>जोन / जोनल प्रभारी</span>
+        </div>
+        <div class="badge-back-sec-body">
+          <div><span style="color:#64748b;font-weight:700;">जोन:</span> <strong>${escapeHtml(cleanZone || '-')}</strong></div>
+          ${cleanZonalIncharge ? `<div style="margin-top:1px;"><span style="color:#64748b;font-weight:700;">प्रभारी:</span> <strong style="color:#0369a1;">${escapeHtml(cleanZonalIncharge)}</strong></div>` : ''}
+        </div>
+      </div>
+
+      <!-- 4. Sector & Sector Incharge -->
+      <div class="badge-back-section">
+        <div class="badge-back-sec-hdr">
+          <span>सेक्टर / सेक्टर प्रभारी</span>
+        </div>
+        <div class="badge-back-sec-body">
+          <div><span style="color:#64748b;font-weight:700;">सेक्टर:</span> <strong>${escapeHtml(cleanSector || '-')}</strong></div>
+          ${cleanSectorIncharge ? `<div style="margin-top:1px;"><span style="color:#64748b;font-weight:700;">प्रभारी:</span> <strong style="color:#0369a1;">${escapeHtml(cleanSectorIncharge)}</strong></div>` : ''}
+        </div>
+      </div>
+
+      <!-- 5. Briefing Place & Time -->
+      <div class="badge-back-briefing">
+        <div style="font-weight:900;color:#075985;">ब्रीफिंग स्थल व समय:</div>
+        <div style="color:#0c4a6e;font-weight:700;margin-top:1px;">${escapeHtml(activeBriefing || 'यथास्थान पुलिस लाइन्स आर०टी०सी० सभागार जनपद अयोध्या')}</div>
+      </div>
+
+      <!-- 6. Special Instructions / Note -->
+      <div class="badge-back-note">
+        <div style="font-weight:900;color:#92400e;margin-bottom:1px;">विशेष निर्देश / कर्तव्य हिदायतें:</div>
+        <div style="color:#78350f;font-weight:600;text-align:justify;">
+          ${escapeHtml(activeNote || '1. समस्त पुलिस कर्मी निर्धारित वर्दी में समय से उपस्थित होंगे। 2. श्रद्धालुओं/नागरिकों से शालीन व सौम्य व्यवहार करेंगे। 3. किसी भी आपात स्थिति में तत्काल प्रभारी अधिकारी को सूचित करेंगे।')}
+        </div>
+      </div>
+
+      <!-- 7. Emergency CUG & Control Rooms -->
+      <div class="badge-back-cug">
+        <div style="font-weight:900;color:#0f172a;display:flex;justify-content:space-between;border-bottom:1px solid #cbd5e1;padding-bottom:1.5px;margin-bottom:2px;">
+          <span>📞 आपातकालीन दूरभाष / कण्ट्रोल रूम:</span>
+          <span style="color:#b91c1c;font-weight:900;">आपातकाल: 112</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:2px;color:#1e293b;">
+          <span>पुलिस नियंत्रण: <strong>9454402648</strong></span>
+          <span>मेला नियंत्रण: <strong>9454402655</strong></span>
+          <span>जनपद: <strong>9454417465</strong></span>
+        </div>
+      </div>
+
+      <!-- 8. Bottom Authority Sign-off -->
+      <div style="text-align:center;font-size:7.5px;font-weight:900;color:#0f172a;border-top:1px solid #94a3b8;padding-top:2px;margin-top:2px;">
+        ( वरिष्ठ पुलिस अधीक्षक, जनपद अयोध्या )
+      </div>
+    </div>
+  `;
+}
 
 export function printLegalBulk({
   records = [],
@@ -18,7 +410,8 @@ export function printLegalBulk({
   layoutMode = 6, // 2 (Election Special with Co-force), 4, or 6 cards per page
   includeCoForce = true,
   paperSize = 'a4', // 'a4' | 'legal'
-  includeBackSide = false
+  includeBackSide = false,
+  cardFormat = 'standard' // 'id_badge' (4-in-1 Legal Lanyard Polybag ID Badge) | 'standard'
 }) {
   try {
     const validRecords = (records || []).filter(r => r && (r.name || r.id));
@@ -27,9 +420,11 @@ export function printLegalBulk({
       return;
     }
 
-    const is2In1 = layoutMode === 2;
-    const is4In1 = layoutMode === 4;
-    const CARDS_PER_PAGE = is2In1 ? 2 : (is4In1 ? 4 : 6);
+    const isIdBadge = cardFormat === 'id_badge';
+    const is2In1 = !isIdBadge && layoutMode === 2;
+    const is4In1 = isIdBadge || layoutMode === 4;
+    const CARDS_PER_PAGE = isIdBadge ? 4 : (is2In1 ? 2 : (is4In1 ? 4 : 6));
+    const effectivePaperSize = isIdBadge ? 'legal' : paperSize;
     const totalPages = Math.ceil(validRecords.length / CARDS_PER_PAGE);
 
     // Modern crisp vector SVG icons (replacing old pixelated emojis)
@@ -50,11 +445,72 @@ export function printLegalBulk({
 
     let pagesHtml = '';
 
-    for (let p = 0; p < totalPages; p++) {
-      const pageRecords = validRecords.slice(p * CARDS_PER_PAGE, (p + 1) * CARDS_PER_PAGE);
+    // =========================================================================
+    // BRANCH A: DEDICATED 4-IN-1 LANYARD POUCH ID CARD (LEGAL DUPLEX)
+    // =========================================================================
+    if (isIdBadge) {
+      for (let p = 0; p < totalPages; p++) {
+        const pageRecords = validRecords.slice(p * CARDS_PER_PAGE, (p + 1) * CARDS_PER_PAGE);
 
-      let cardsHtml = '';
-      for (let c = 0; c < CARDS_PER_PAGE; c++) {
+        // 1. FRONT PAGE (4 Front ID Badges: [0, 1, 2, 3])
+        let frontCardsHtml = '';
+        for (let c = 0; c < CARDS_PER_PAGE; c++) {
+          const duty = pageRecords[c];
+          frontCardsHtml += renderIdBadgeFrontHtml({
+            duty,
+            eventTitle,
+            eventSubtitle,
+            signatureImg,
+            signatoryText,
+            phoneSvg,
+            records: validRecords
+          });
+        }
+
+        pagesHtml += `
+          <div class="legal-page page-id-badge">
+            <div class="cut-line-h-center"></div>
+            <div class="cut-line-v"></div>
+            ${frontCardsHtml}
+          </div>
+        `;
+
+        // 2. BACK PAGE (4 Back ID Badges, Mirrored Horizontally [1, 0, 3, 2] for Long-edge Duplex)
+        const mirroredIndices = [1, 0, 3, 2];
+        let backCardsHtml = '';
+        for (let m = 0; m < CARDS_PER_PAGE; m++) {
+          const c = mirroredIndices[m];
+          const duty = pageRecords[c];
+          backCardsHtml += renderIdBadgeBackHtml({
+            duty,
+            eventTitle,
+            eventSubtitle,
+            isNoteEnabled,
+            customNote,
+            isBriefingEnabled,
+            customBriefing,
+            phoneSvg,
+            records: validRecords
+          });
+        }
+
+        pagesHtml += `
+          <div class="legal-page page-id-badge page-id-badge-back">
+            <div class="cut-line-h-center"></div>
+            <div class="cut-line-v"></div>
+            ${backCardsHtml}
+          </div>
+        `;
+      }
+    } else {
+      // =========================================================================
+      // BRANCH B: STANDARD 2 / 4 / 6 IN 1 ROSTER CARD FORMAT
+      // =========================================================================
+      for (let p = 0; p < totalPages; p++) {
+        const pageRecords = validRecords.slice(p * CARDS_PER_PAGE, (p + 1) * CARDS_PER_PAGE);
+
+        let cardsHtml = '';
+        for (let c = 0; c < CARDS_PER_PAGE; c++) {
         const duty = pageRecords[c];
         if (!duty) {
           cardsHtml += `
@@ -548,17 +1004,18 @@ export function printLegalBulk({
         `;
       }
     }
+    } // Closes Branch B (Standard 2/4/6 in 1)
 
-    const isA4 = paperSize === 'a4';
+    const isA4 = effectivePaperSize === 'a4';
     const paperLabel = isA4 ? 'A4' : 'Legal';
-    const layoutName = is2In1 ? '2-in-1 Election Special' : (is4In1 ? '4-in-1 Standard' : '6-in-1 Compact');
+    const layoutName = isIdBadge ? 'गले का पॉलीबैग ID कार्ड (4-इन-1 लीगल)' : (is2In1 ? '2-in-1 Election Special' : (is4In1 ? '4-in-1 Standard' : '6-in-1 Compact'));
 
     const fullHtml = `
       <!DOCTYPE html>
       <html lang="hi">
       <head>
         <meta charset="utf-8">
-        <title>${escapeHtml(eventTitle || 'ड्यूटी पास')} - Bulk Print (${layoutName} ${paperLabel})</title>
+        <title>${escapeHtml(eventTitle || 'ड्यूटी पास')} - ${escapeHtml(layoutName)}</title>
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
         <link href="https://fonts.googleapis.com/css2?family=Mukta:wght@400;500;600;700;800;900&family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -603,6 +1060,135 @@ export function printLegalBulk({
             grid-template-rows: 1fr 1fr;
             gap: ${isA4 ? '4mm' : '6mm'};
             padding: 2mm;
+          }
+
+          /* ========================================================= */
+          /* 4-IN-1 LANYARD POUCH ID CARD PAGE LAYOUT (LEGAL PORTRAIT)  */
+          /* ========================================================= */
+          .page-id-badge {
+            width: 207.9mm;
+            height: 349.6mm;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: 1fr 1fr;
+            gap: 4mm;
+            padding: 1.5mm;
+            page-break-after: always;
+            break-after: page;
+            box-sizing: border-box;
+            position: relative;
+            background: #ffffff;
+          }
+
+          .id-badge-card {
+            border: 2px solid #0b132b;
+            box-shadow: inset 0 0 0 1.5px #d97706;
+            border-radius: 8px;
+            padding: 8px 10px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            background: #ffffff;
+            box-sizing: border-box;
+            height: 100%;
+            overflow: hidden;
+            position: relative;
+          }
+
+          .id-badge-back {
+            box-shadow: inset 0 0 0 1.5px #1e3a8a;
+            padding: 7px 9px;
+            background: #ffffff;
+          }
+
+          .id-badge-duty-box {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            border: 1.8px solid #b45309;
+            border-radius: 6px;
+            padding: 5px 8px;
+            margin: 5px 0;
+            text-align: center;
+            box-shadow: 0 1px 3px rgba(180, 83, 9, 0.12);
+          }
+
+          .id-badge-duty-lbl {
+            font-size: 8.5px;
+            font-weight: 900;
+            color: #78350f;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+          }
+
+          .id-badge-duty-val {
+            font-size: 14.5px;
+            font-weight: 900;
+            color: #0f172a;
+            line-height: 1.25;
+            margin-top: 2px;
+            word-break: break-word;
+          }
+
+          .id-badge-time-box {
+            background: #f8fafc;
+            border: 1.2px solid #cbd5e1;
+            border-radius: 5px;
+            padding: 4px 7px;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 4px;
+          }
+
+          .badge-back-section {
+            border: 1.2px solid #cbd5e1;
+            border-radius: 5px;
+            overflow: hidden;
+            margin-bottom: 3.5px;
+            font-size: 8.5px;
+          }
+
+          .badge-back-sec-hdr {
+            background: #e2e8f0;
+            font-weight: 900;
+            color: #0f172a;
+            padding: 2px 6px;
+            font-size: 8.5px;
+          }
+
+          .badge-back-sec-body {
+            padding: 3px 6px;
+            background: #ffffff;
+            line-height: 1.3;
+          }
+
+          .badge-back-briefing {
+            background: #f0f9ff;
+            border: 1.2px solid #bae6fd;
+            border-radius: 5px;
+            padding: 3px 6px;
+            margin-bottom: 3.5px;
+            font-size: 8px;
+            line-height: 1.25;
+          }
+
+          .badge-back-note {
+            background: #fffbeb;
+            border: 1.2px solid #fde68a;
+            border-radius: 5px;
+            padding: 3px 6px;
+            margin-bottom: 3.5px;
+            font-size: 8px;
+            line-height: 1.25;
+          }
+
+          .badge-back-cug {
+            background: #f8fafc;
+            border: 1px solid #cbd5e1;
+            border-radius: 4px;
+            padding: 3px 5px;
+            font-size: 7.5px;
+            line-height: 1.2;
           }
 
           /* ✂️ Cut markers */

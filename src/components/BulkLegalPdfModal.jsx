@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   FileDown,
   X,
@@ -13,7 +13,8 @@ import {
   Check,
   Grid,
   Users,
-  FileText
+  FileText,
+  CreditCard
 } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import jsPDF from 'jspdf';
@@ -34,14 +35,18 @@ export default function BulkLegalPdfModal({
   customNote = '',
   isNoteEnabled = true,
   customBriefing = '',
-  isBriefingEnabled = true
+  isBriefingEnabled = true,
+  initialFormat = 'id_badge'
 }) {
   const { language, t } = useLanguage();
+  const [cardFormat, setCardFormat] = useState(initialFormat || 'id_badge');
+  const [activeBatchType, setActiveBatchType] = useState('front'); // 'front' | 'back'
+  const [previewSide, setPreviewSide] = useState('front'); // 'front' | 'back'
   const [isGenerating, setIsGenerating] = useState(false);
   const [progress, setProgress] = useState({ current: 0, total: 0, page: 0, totalPages: 0 });
   const [selectedPointFilter, setSelectedPointFilter] = useState('ALL');
   const [rangeMode, setRangeMode] = useState('all'); // 'all' | 'custom'
-  const [paperSize, setPaperSize] = useState('a4'); // 'a4' | 'legal'
+  const [paperSize, setPaperSize] = useState('legal'); // 'a4' | 'legal'
   const [layoutMode, setLayoutMode] = useState(4); // 4 or 2 for A4, 6 or 4 or 2 for Legal
   const [includeCoForce, setIncludeCoForce] = useState(true);
   const [includeBackSide, setIncludeBackSide] = useState(false);
@@ -49,6 +54,16 @@ export default function BulkLegalPdfModal({
   const [endPage, setEndPage] = useState(25);
   const [activeBatch, setActiveBatch] = useState([]);
   const printContainerRef = useRef(null);
+
+  useEffect(() => {
+    if (initialFormat) {
+      setCardFormat(initialFormat);
+      if (initialFormat === 'id_badge') {
+        setPaperSize('legal');
+        setLayoutMode(4);
+      }
+    }
+  }, [initialFormat, isOpen]);
 
   if (!isOpen) return null;
 
@@ -59,7 +74,7 @@ export default function BulkLegalPdfModal({
     ? validRecords
     : validRecords.filter(r => (r.duty_place || '').trim() === selectedPointFilter);
 
-  const totalPossiblePages = Math.max(1, Math.ceil(targetRecords.length / layoutMode));
+  const totalPossiblePages = Math.max(1, Math.ceil(targetRecords.length / (cardFormat === 'id_badge' ? 4 : layoutMode)));
 
   // Determine active slice for JS PDF generator
   const actualStart = rangeMode === 'custom' ? Math.max(1, parseInt(startPage) || 1) : 1;
@@ -85,10 +100,11 @@ export default function BulkLegalPdfModal({
       isNoteEnabled,
       customBriefing,
       isBriefingEnabled,
-      layoutMode,
-      paperSize,
-      includeCoForce,
-      includeBackSide
+      layoutMode: cardFormat === 'id_badge' ? 4 : layoutMode,
+      paperSize: cardFormat === 'id_badge' ? 'legal' : paperSize,
+      includeCoForce: cardFormat === 'id_badge' ? false : includeCoForce,
+      includeBackSide: cardFormat === 'id_badge' ? true : includeBackSide,
+      cardFormat
     });
   };
 
@@ -108,8 +124,104 @@ export default function BulkLegalPdfModal({
         await document.fonts.ready;
       }
 
+      // -----------------------------------------------------------
+      // BRANCH A: FAST JS-PDF FOR 4-IN-1 LANYARD POUCH ID BADGES (LEGAL DUPLEX)
+      // -----------------------------------------------------------
+      if (cardFormat === 'id_badge') {
+        const pdf = new jsPDF({
+          orientation: 'portrait',
+          unit: 'mm',
+          format: 'legal',
+          compress: true
+        });
+
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = pdf.internal.pageSize.getHeight();
+
+        const BATCH_SIZE = 4;
+        const pageStartIdx = (actualStart - 1) * BATCH_SIZE;
+        const pageEndIdx = actualEnd * BATCH_SIZE;
+        const recordsToProcess = targetRecords.slice(pageStartIdx, pageEndIdx);
+        const totalBatches = Math.ceil(recordsToProcess.length / BATCH_SIZE);
+
+        for (let p = 0; p < totalBatches; p++) {
+          const batch = recordsToProcess.slice(p * BATCH_SIZE, (p + 1) * BATCH_SIZE);
+
+          // 1. FRONT PAGE OF 4 CARDS
+          setActiveBatch(batch);
+          setActiveBatchType('front');
+          setProgress({
+            current: Math.min((p + 1) * BATCH_SIZE, recordsToProcess.length),
+            total: recordsToProcess.length,
+            page: (p * 2) + 1,
+            totalPages: totalBatches * 2
+          });
+
+          await new Promise((res) => setTimeout(res, 60));
+
+          const element = printContainerRef.current;
+          if (element) {
+            const canvasFront = await html2canvas(element, {
+              scale: 1.4,
+              useCORS: true,
+              backgroundColor: '#ffffff',
+              logging: false
+            });
+            const imgFront = canvasFront.toDataURL('image/jpeg', 0.85);
+
+            if (p > 0) {
+              pdf.addPage('legal', 'portrait');
+            }
+
+            const marginX = 4;
+            const marginY = 4;
+            const printW = pdfWidth - (marginX * 2);
+            const printH = (canvasFront.height * printW) / canvasFront.width;
+            pdf.addImage(imgFront, 'JPEG', marginX, marginY, printW, Math.min(printH, pdfHeight - (marginY * 2)));
+          }
+
+          // 2. BACK PAGE (MIRRORED HORIZONTALLY: [1, 0, 3, 2] FOR DUPLEX LONG-EDGE)
+          const mirroredBatch = [batch[1], batch[0], batch[3], batch[2]];
+          setActiveBatch(mirroredBatch);
+          setActiveBatchType('back');
+          setProgress({
+            current: Math.min((p + 1) * BATCH_SIZE, recordsToProcess.length),
+            total: recordsToProcess.length,
+            page: (p * 2) + 2,
+            totalPages: totalBatches * 2
+          });
+
+          await new Promise((res) => setTimeout(res, 60));
+
+          if (element) {
+            const canvasBack = await html2canvas(element, {
+              scale: 1.4,
+              useCORS: true,
+              backgroundColor: '#ffffff',
+              logging: false
+            });
+            const imgBack = canvasBack.toDataURL('image/jpeg', 0.85);
+
+            pdf.addPage('legal', 'portrait');
+
+            const marginX = 4;
+            const marginY = 4;
+            const printW = pdfWidth - (marginX * 2);
+            const printH = (canvasBack.height * printW) / canvasBack.width;
+            pdf.addImage(imgBack, 'JPEG', marginX, marginY, printW, Math.min(printH, pdfHeight - (marginY * 2)));
+          }
+        }
+
+        const safeTitle = (eventTitle || 'DutyPass').replace(/\s+/g, '_');
+        pdf.save(`Lanyard_ID_Card_4in1_Legal_${safeTitle}_Batches_${actualStart}_to_${actualEnd}.pdf`);
+        onClose();
+        return;
+      }
+
+      // -----------------------------------------------------------
+      // BRANCH B: STANDARD ROSTER CARDS (2 / 4 / 6 IN 1)
+      // -----------------------------------------------------------
       const isA4 = paperSize === 'a4';
-      // Dynamic Paper dimensions in mm: A4 (210x297mm) vs Legal (215.9x355.6mm)
       const pdf = new jsPDF({
         orientation: 'portrait',
         unit: 'mm',
@@ -175,9 +287,332 @@ export default function BulkLegalPdfModal({
     }
   };
 
+  // Helper to render ID Badge Front in React (for Canvas & Preview)
+  const renderIdBadgeFrontReact = (duty, idx, isPreview = false) => {
+    if (!duty) return <div key={idx} style={{ border: '1px dashed #cbd5e1', borderRadius: '8px', minHeight: isPreview ? '220px' : '100%' }} />;
+
+    const cleanPno = (duty.pno && !String(duty.pno).toUpperCase().startsWith('DUTY-'))
+      ? String(duty.pno)
+      : (duty.id && !String(duty.id).toUpperCase().startsWith('DUTY-') && String(duty.id).length <= 12)
+        ? String(duty.id)
+        : null;
+
+    const cleanOfficerName = (duty.name || '').trim()
+      .replace(/,\s*\d{10}\b/g, '')
+      .replace(/\b\d{10}\b/g, '')
+      .replace(/[,।]?\s*नं0?[-:]?\s*$/g, '')
+      .replace(/[,।]?\s*नं\s*\(?.*$/g, '')
+      .replace(/,\s*$/, '')
+      .trim() || duty.name;
+
+    const effectiveRank = resolvePoliceRank(duty.rank, cleanOfficerName);
+    const displayCleanName = stripRankFromName(cleanOfficerName);
+
+    const qrDirectUrl = typeof window !== 'undefined' && window.location?.origin
+      ? `${window.location.origin}/?search=${encodeURIComponent(duty.mobile || duty.pno || duty.id || '')}`
+      : '';
+
+    const qrData = qrDirectUrl || JSON.stringify({
+      id: duty.id || 'DUTY',
+      name: duty.name || '',
+      duty_place: duty.duty_place || '',
+      mobile: duty.mobile || '',
+      auth: "UP_POLICE_SECURE_VERIFIED"
+    });
+
+    return (
+      <div
+        key={idx}
+        style={{
+          border: '2px solid #0b132b',
+          boxShadow: 'inset 0 0 0 1.5px #d97706',
+          borderRadius: '8px',
+          padding: isPreview ? '8px 10px' : '10px 12px',
+          backgroundColor: '#ffffff',
+          color: '#000000',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'space-between',
+          boxSizing: 'border-box',
+          fontSize: isPreview ? '9px' : '10px',
+          lineHeight: '1.25',
+          height: '100%'
+        }}
+      >
+        {/* Header */}
+        <div style={{ borderBottom: '2px solid #0b132b', paddingBottom: '3px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '4px' }}>
+          <img src="/badge.png" alt="Badge" style={{ width: '32px', height: '32px', objectFit: 'contain' }} />
+          <div style={{ textAlign: 'center', flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: '7.5px', fontWeight: '800', color: '#475569', letterSpacing: '0.4px' }}>उत्तर प्रदेश पुलिस • अयोध्या</div>
+            <div style={{ fontSize: isPreview ? '11.5px' : '13px', fontWeight: '900', color: '#0b132b', lineHeight: '1.2', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {eventTitle}
+            </div>
+            <div style={{ fontSize: '8px', fontWeight: '700', color: '#b45309', marginTop: '1px' }}>
+              {eventSubtitle || 'ड्यूटी पहचान पत्र / पास अयोध्या - 2026'}
+            </div>
+          </div>
+          <img src="/badge.png" alt="Badge" style={{ width: '32px', height: '32px', objectFit: 'contain' }} />
+        </div>
+
+        {/* Officer Profile */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', border: '1.2px solid #0b132b', borderRadius: '6px', padding: '4px 6px', backgroundColor: '#f8fafc', margin: '4px 0' }}>
+          <div style={{ width: '42px', height: '54px', border: '1px solid #64748b', borderRadius: '4px', backgroundColor: '#ffffff', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flexShrink: 0, overflow: 'hidden' }}>
+            {duty.photo ? (
+              <img src={duty.photo} alt={duty.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            ) : (
+              <div style={{ fontSize: '6.5px', fontWeight: 'bold', color: '#64748b', textAlign: 'center', lineHeight: '1.1' }}>
+                पासपोर्ट<br />फोटो
+              </div>
+            )}
+          </div>
+          <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+            <div>
+              <div style={{ fontSize: '7.5px', fontWeight: 'bold', color: '#64748b' }}>अधिकारी / कर्मचारी विवरण:</div>
+              <div style={{ fontSize: isPreview ? '11px' : '12.5px', fontWeight: '900', color: '#020617', display: 'flex', alignItems: 'center', gap: '4px', flexWrap: 'wrap', lineHeight: '1.2' }}>
+                <span>{displayCleanName || duty.name}</span>
+                {effectiveRank && (
+                  <span style={{ backgroundColor: '#fef3c7', color: '#92400e', border: '1px solid #fde68a', padding: '0.5px 5px', borderRadius: '3px', fontSize: '9px', fontWeight: '800' }}>
+                    {effectiveRank}
+                  </span>
+                )}
+              </div>
+              <div style={{ fontSize: '10px', fontWeight: '900', color: '#1e3a8a', fontFamily: 'monospace', marginTop: '1px' }}>
+                📞 {duty.mobile || '-'}
+              </div>
+            </div>
+            <div style={{ fontSize: '7.5px', color: '#334155', borderTop: '1px solid #cbd5e1', paddingTop: '2px', marginTop: '2px', display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap' }}>
+              {cleanPno && <span>PNO: <strong>{cleanPno}</strong></span>}
+              <span>मूल: <strong>{duty.posting || duty.district || '-'}</strong> {duty.posting && duty.district && !String(duty.posting).includes(duty.district) ? `(${duty.district})` : ''}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* PROMINENT DUTY PLACE BOX */}
+        <div style={{ background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)', border: '1.8px solid #b45309', borderRadius: '6px', padding: '5px 7px', margin: '4px 0', textAlign: 'center', boxShadow: '0 1px 3px rgba(180, 83, 9, 0.12)' }}>
+          <div style={{ fontSize: '8px', fontWeight: '900', color: '#78350f', letterSpacing: '0.4px', textTransform: 'uppercase' }}>
+            🚩 कर्तव्य स्थल (DUTY PLACE)
+          </div>
+          <div style={{ fontSize: isPreview ? '13px' : '14.5px', fontWeight: '900', color: '#0f172a', lineHeight: '1.25', marginTop: '2px', wordBreak: 'break-word' }}>
+            {duty.duty_place || '-'}
+          </div>
+        </div>
+
+        {/* DUTY DATE & TIME */}
+        <div style={{ backgroundColor: '#f8fafc', border: '1.2px solid #cbd5e1', borderRadius: '5px', padding: '3.5px 6px', marginBottom: '4px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '4px' }}>
+          <span style={{ fontSize: '7.5px', fontWeight: '800', color: '#475569', whiteSpace: 'nowrap' }}>दिनाँक व समय:</span>
+          <span style={{ fontSize: '8.5px', fontWeight: '900', color: '#0f172a', textAlign: 'right', lineHeight: '1.2' }}>
+            {duty.shift || 'प्रातः 09:00 बजे से मेला समाप्ति तक'}
+          </span>
+        </div>
+
+        {/* Card Footer */}
+        <div style={{ borderTop: '1.5px solid #0b132b', paddingTop: '3px', marginTop: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+            <QRCodeSVG value={qrData} size={30} level="M" />
+            <div>
+              <div style={{ fontSize: '6.5px', fontWeight: '900', color: '#166534', backgroundColor: '#dcfce7', border: '1px solid #86efac', padding: '0.5px 3px', borderRadius: '3px', whiteSpace: 'nowrap' }}>
+                ✓ सत्यापित पास
+              </div>
+              <div style={{ fontSize: '6.5px', fontFamily: 'monospace', color: '#475569', fontWeight: 'bold', marginTop: '1px' }}>
+                ID: {cleanPno || duty.id || '-'}
+              </div>
+            </div>
+          </div>
+
+          <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+            {signatureImg ? (
+              <img src={signatureImg} alt="Sign" style={{ height: '20px', maxWidth: '80px', objectFit: 'contain' }} />
+            ) : (
+              <div style={{ fontSize: '7px', fontStyle: 'italic', color: '#475569' }}>(हस्ताक्षरित)</div>
+            )}
+            <div style={{ fontSize: '7px', fontWeight: '900', color: '#020617', marginTop: '1px' }}>
+              {signatoryText}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // Helper to render ID Badge Back in React (for Canvas & Preview)
+  const renderIdBadgeBackReact = (duty, idx, isPreview = false) => {
+    if (!duty) return <div key={idx} style={{ border: '1px dashed #cbd5e1', borderRadius: '8px', minHeight: isPreview ? '220px' : '100%' }} />;
+
+    const cleanPno = (duty.pno && !String(duty.pno).toUpperCase().startsWith('DUTY-'))
+      ? String(duty.pno)
+      : (duty.id && !String(duty.id).toUpperCase().startsWith('DUTY-') && String(duty.id).length <= 12)
+        ? String(duty.id)
+        : null;
+
+    const cleanOfficerName = (duty.name || '').trim()
+      .replace(/,\s*\d{10}\b/g, '')
+      .replace(/\b\d{10}\b/g, '')
+      .replace(/[,।]?\s*नं0?[-:]?\s*$/g, '')
+      .replace(/[,।]?\s*नं\s*\(?.*$/g, '')
+      .replace(/,\s*$/, '')
+      .trim() || duty.name;
+
+    const effectiveRank = resolvePoliceRank(duty.rank, cleanOfficerName);
+    const displayCleanName = stripRankFromName(cleanOfficerName);
+
+    const activeNoteText = (isNoteEnabled !== false && customNote) ? customNote : (isNoteEnabled ? (duty.note || '') : '');
+    const activeBriefingText = (isBriefingEnabled !== false && customBriefing) ? customBriefing : (isBriefingEnabled ? (duty.briefing_place || '') : '');
+
+    // Clean & Parse Zone and Zonal Incharge
+    let cleanZone = (duty.zone || '').trim();
+    let cleanZonalIncharge = (
+      duty.zonal_incharge || 
+      duty.zonal || 
+      duty.zonal_officer || 
+      duty.zonalOfficer || 
+      duty.zone_incharge || 
+      duty.zonal_magistrate ||
+      duty['जोनाल प्रभारी'] ||
+      duty['जोनल प्रभारी'] ||
+      ''
+    ).trim();
+    if (cleanZonalIncharge === '-') cleanZonalIncharge = '';
+
+    if (!cleanZonalIncharge && cleanZone.includes('/')) {
+      const parts = cleanZone.split('/');
+      cleanZone = parts[0].trim();
+      cleanZonalIncharge = parts.slice(1).join('/').trim();
+    } else if (cleanZone.endsWith('/')) {
+      cleanZone = cleanZone.replace(/\/+\s*$/, '').trim();
+    }
+    if (cleanZonalIncharge && cleanZone.includes(cleanZonalIncharge)) {
+      cleanZone = cleanZone.replace(cleanZonalIncharge, '').replace(/\/+\s*$/, '').trim();
+    }
+
+    // Clean & Parse Sector and Sector Incharge
+    let cleanSector = (duty.sector || '').trim();
+    let cleanSectorIncharge = (
+      duty.sector_incharge || 
+      duty.sector_officer || 
+      duty.sectorOfficer || 
+      duty.sectorIncharge || 
+      duty.sector_magistrate || 
+      duty.sectorMagistrate || 
+      duty.incharge || 
+      duty['सेक्टर प्रभारी'] ||
+      duty['सेक्टर अधिकारी'] ||
+      duty['सेक्टर मजिस्ट्रेट'] ||
+      duty['प्रभारी'] ||
+      ''
+    ).trim();
+    if (cleanSectorIncharge === '-') cleanSectorIncharge = '';
+
+    if (!cleanSectorIncharge && cleanSector.includes('/')) {
+      const parts = cleanSector.split('/');
+      cleanSector = parts[0].trim();
+      cleanSectorIncharge = parts.slice(1).join('/').trim();
+    } else if (cleanSector.endsWith('/')) {
+      cleanSector = cleanSector.replace(/\/+\s*$/, '').trim();
+    }
+    if (cleanSectorIncharge && cleanSector.includes(cleanSectorIncharge)) {
+      cleanSector = cleanSector.replace(cleanSectorIncharge, '').replace(/\/+\s*$/, '').trim();
+    }
+
+    return (
+      <div
+        key={idx}
+        style={{
+          border: '2px solid #0b132b',
+          boxShadow: 'inset 0 0 0 1.5px #1e3a8a',
+          borderRadius: '8px',
+          padding: isPreview ? '7px 9px' : '9px 11px',
+          backgroundColor: '#ffffff',
+          color: '#000000',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'space-between',
+          boxSizing: 'border-box',
+          fontSize: isPreview ? '8.5px' : '9px',
+          lineHeight: '1.25',
+          height: '100%'
+        }}
+      >
+        {/* Header */}
+        <div style={{ borderBottom: '1.5px solid #0b132b', paddingBottom: '3px', textAlign: 'center' }}>
+          <div style={{ fontSize: '7px', fontWeight: '800', color: '#475569' }}>कार्यालय वरिष्ठ पुलिस अधीक्षक, जनपद अयोध्या</div>
+          <div style={{ fontSize: isPreview ? '9.5px' : '10.5px', fontWeight: '900', color: '#0f172a', marginTop: '1px' }}>
+            ड्यूटी विवरण एवं आवश्यक निर्देश (पृष्ठ भाग)
+          </div>
+        </div>
+
+        {/* Mini Officer Strip */}
+        <div style={{ backgroundColor: '#f1f5f9', border: '1px solid #cbd5e1', borderRadius: '4px', padding: '2px 5px', margin: '3px 0', fontSize: '7.5px', fontWeight: '800', color: '#1e293b', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span>अधिकारी: <strong>{displayCleanName || duty.name}</strong> {effectiveRank && `(${effectiveRank})`}</span>
+          <span>मो०: <strong>{duty.mobile || '-'}</strong></span>
+          {cleanPno && <span>PNO: <strong>{cleanPno}</strong></span>}
+        </div>
+
+        {/* Zone & Incharge */}
+        <div style={{ border: '1.2px solid #cbd5e1', borderRadius: '5px', overflow: 'hidden', marginBottom: '3px' }}>
+          <div style={{ backgroundColor: '#e2e8f0', fontWeight: '900', color: '#0f172a', padding: '1.5px 5px', fontSize: '8px' }}>
+            जोन / जोनल प्रभारी
+          </div>
+          <div style={{ padding: '2px 5px', backgroundColor: '#ffffff', fontSize: '8px' }}>
+            <div><span style={{ color: '#64748b', fontWeight: '700' }}>जोन:</span> <strong>{cleanZone || '-'}</strong></div>
+            {cleanZonalIncharge && <div style={{ marginTop: '1px' }}><span style={{ color: '#64748b', fontWeight: '700' }}>प्रभारी:</span> <strong style={{ color: '#0369a1' }}>{cleanZonalIncharge}</strong></div>}
+          </div>
+        </div>
+
+        {/* Sector & Incharge */}
+        <div style={{ border: '1.2px solid #cbd5e1', borderRadius: '5px', overflow: 'hidden', marginBottom: '3px' }}>
+          <div style={{ backgroundColor: '#e2e8f0', fontWeight: '900', color: '#0f172a', padding: '1.5px 5px', fontSize: '8px' }}>
+            सेक्टर / सेक्टर प्रभारी
+          </div>
+          <div style={{ padding: '2px 5px', backgroundColor: '#ffffff', fontSize: '8px' }}>
+            <div><span style={{ color: '#64748b', fontWeight: '700' }}>सेक्टर:</span> <strong>{cleanSector || '-'}</strong></div>
+            {cleanSectorIncharge && <div style={{ marginTop: '1px' }}><span style={{ color: '#64748b', fontWeight: '700' }}>प्रभारी:</span> <strong style={{ color: '#0369a1' }}>{cleanSectorIncharge}</strong></div>}
+          </div>
+        </div>
+
+        {/* Briefing */}
+        <div style={{ backgroundColor: '#f0f9ff', border: '1.2px solid #bae6fd', borderRadius: '5px', padding: '2.5px 5px', marginBottom: '3px', fontSize: '7.5px' }}>
+          <span style={{ fontWeight: '900', color: '#075985' }}>ब्रीफिंग स्थल व समय: </span>
+          <span style={{ color: '#0c4a6e', fontWeight: '700' }}>{activeBriefingText || 'यथास्थान पुलिस लाइन्स आर०टी०सी० सभागार जनपद अयोध्या'}</span>
+        </div>
+
+        {/* Special Note */}
+        <div style={{ backgroundColor: '#fffbeb', border: '1.2px solid #fde68a', borderRadius: '5px', padding: '2.5px 5px', marginBottom: '3px', fontSize: '7.5px', lineHeight: '1.25' }}>
+          <div style={{ fontWeight: '900', color: '#92400e', marginBottom: '1px' }}>विशेष निर्देश / कर्तव्य हिदायतें:</div>
+          <div style={{ color: '#78350f', fontWeight: '600' }}>
+            {activeNoteText || '1. निर्धारित वर्दी में समय से ड्यूटी स्थल पर उपस्थित रहें। 2. श्रद्धालुओं व आमजन से शालीनता व सौम्य व्यवहार रखें। 3. किसी भी आपात स्थिति में तत्काल प्रभारी अधिकारी को सूचित करें।'}
+          </div>
+        </div>
+
+        {/* Emergency CUG */}
+        <div style={{ backgroundColor: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '4px', padding: '2px 4px', fontSize: '7px', lineHeight: '1.2' }}>
+          <div style={{ fontWeight: '900', color: '#0f172a', display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #cbd5e1', paddingBottom: '1px', marginBottom: '1.5px' }}>
+            <span>📞 आपातकालीन दूरभाष / कण्ट्रोल रूम:</span>
+            <span style={{ color: '#b91c1c', fontWeight: '900' }}>डायल 112</span>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '2px', color: '#1e293b' }}>
+            <span>पुलिस नियंत्रण: <strong>9454402648</strong></span>
+            <span>मेला नियंत्रण: <strong>9454402655</strong></span>
+            <span>जनपद: <strong>9454417465</strong></span>
+          </div>
+        </div>
+
+        {/* Bottom Sign-off */}
+        <div style={{ textAlign: 'center', fontSize: '7px', fontWeight: '900', color: '#0f172a', borderTop: '1px solid #94a3b8', paddingTop: '1.5px', marginTop: '1.5px' }}>
+          ( वरिष्ठ पुलिस अधीक्षक, जनपद अयोध्या )
+        </div>
+      </div>
+    );
+  };
+
   // Helper to render individual card for background canvas
   const renderSingleCard = (duty, idx) => {
     if (!duty) return <div key={idx} style={{ border: '1px dashed #cbd5e1', borderRadius: '8px' }} />;
+
+    if (cardFormat === 'id_badge') {
+      return activeBatchType === 'back'
+        ? renderIdBadgeBackReact(duty, idx, false)
+        : renderIdBadgeFrontReact(duty, idx, false);
+    }
 
     const activeNoteText = (isNoteEnabled !== false && customNote) ? customNote : (isNoteEnabled ? (duty.note || '') : '');
     const activeBriefingText = (isBriefingEnabled !== false && customBriefing) ? customBriefing : (isBriefingEnabled ? (duty.briefing_place || '') : '');
@@ -556,134 +991,263 @@ export default function BulkLegalPdfModal({
 
           {/* Content Body */}
           <div className="p-5 space-y-4 text-slate-800 text-xs max-h-[75vh] overflow-y-auto">
-            {/* PAPER SIZE SELECTOR */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 p-2.5 bg-slate-100 rounded-2xl border border-slate-300">
-              <span className="font-black text-slate-900 text-xs">प्रिंटर पेपर:</span>
-              <div className="flex items-center gap-1.5 w-full sm:w-auto">
+            {/* 1. CARD FORMAT SWITCHER (ID BADGE VS STANDARD ROSTER) */}
+            <div className="space-y-1.5">
+              <div className="text-[11px] font-black text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                <CreditCard className="w-3.5 h-3.5 text-amber-600" />
+                <span>कार्ड प्रारूप चुनें (Card Format):</span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 bg-slate-100 p-1.5 rounded-2xl border border-slate-300">
                 <button
                   type="button"
                   onClick={() => {
-                    setPaperSize('a4');
-                    if (layoutMode === 6) setLayoutMode(4);
+                    setCardFormat('id_badge');
+                    setPaperSize('legal');
+                    setLayoutMode(4);
                   }}
-                  className={`flex-1 sm:flex-none px-3.5 py-1.5 rounded-xl font-bold text-xs transition cursor-pointer flex items-center justify-center gap-1 ${
-                    paperSize === 'a4'
-                      ? 'bg-slate-900 text-white shadow-xs'
+                  className={`p-2.5 rounded-xl text-left transition cursor-pointer flex items-start gap-2.5 ${
+                    cardFormat === 'id_badge'
+                      ? 'bg-[#0b132b] text-white shadow-sm ring-2 ring-amber-500/60'
                       : 'bg-white text-slate-700 hover:bg-slate-200 border border-slate-200'
                   }`}
                 >
-                  <span>A4</span>
-                  {paperSize === 'a4' && <Check className="w-3.5 h-3.5 stroke-[2.5]" />}
+                  <div className={`p-1.5 rounded-lg shrink-0 mt-0.5 ${cardFormat === 'id_badge' ? 'bg-amber-500/20 text-amber-400' : 'bg-slate-100 text-slate-500'}`}>
+                    <CreditCard className="w-4 h-4" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-black text-xs flex items-center justify-between">
+                      <span>गले का ID कार्ड (4-इन-1)</span>
+                      {cardFormat === 'id_badge' && <Check className="w-3.5 h-3.5 text-amber-400" />}
+                    </div>
+                    <div className={`text-[10px] mt-0.5 leading-tight ${cardFormat === 'id_badge' ? 'text-slate-300' : 'text-slate-500'}`}>
+                      पॉलीबैग पाउच साइज • फ्रंट + बैक डुप्लेक्स
+                    </div>
+                  </div>
                 </button>
+
                 <button
                   type="button"
-                  onClick={() => setPaperSize('legal')}
-                  className={`flex-1 sm:flex-none px-3.5 py-1.5 rounded-xl font-bold text-xs transition cursor-pointer flex items-center justify-center gap-1 ${
-                    paperSize === 'legal'
-                      ? 'bg-slate-900 text-white shadow-xs'
+                  onClick={() => setCardFormat('standard')}
+                  className={`p-2.5 rounded-xl text-left transition cursor-pointer flex items-start gap-2.5 ${
+                    cardFormat === 'standard'
+                      ? 'bg-[#0b132b] text-white shadow-sm ring-2 ring-blue-500/60'
                       : 'bg-white text-slate-700 hover:bg-slate-200 border border-slate-200'
                   }`}
                 >
-                  <span>Legal</span>
-                  {paperSize === 'legal' && <Check className="w-3.5 h-3.5 stroke-[2.5]" />}
+                  <div className={`p-1.5 rounded-lg shrink-0 mt-0.5 ${cardFormat === 'standard' ? 'bg-blue-500/20 text-blue-400' : 'bg-slate-100 text-slate-500'}`}>
+                    <Grid className="w-4 h-4" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-black text-xs flex items-center justify-between">
+                      <span>विस्तृत ड्यूटी रोस्टर</span>
+                      {cardFormat === 'standard' && <Check className="w-3.5 h-3.5 text-blue-400" />}
+                    </div>
+                    <div className={`text-[10px] mt-0.5 leading-tight ${cardFormat === 'standard' ? 'text-slate-300' : 'text-slate-500'}`}>
+                      मानक शीट • 2, 4 या 6 कार्ड प्रति पेज
+                    </div>
+                  </div>
                 </button>
               </div>
             </div>
 
-            {/* LAYOUT TOGGLE */}
-            <div className="space-y-1">
-              <div className="text-[11px] font-bold text-slate-600">प्रति पृष्ठ कार्ड:</div>
-              <div className="bg-slate-100 p-1.5 rounded-xl border border-slate-300 flex flex-wrap sm:flex-nowrap items-center gap-1.5">
-                <button
-                  type="button"
-                  onClick={() => setLayoutMode(2)}
-                  className={`flex-1 py-2 px-2 rounded-lg text-[11px] sm:text-xs font-bold flex items-center justify-center gap-1 transition cursor-pointer ${
-                    layoutMode === 2
-                      ? 'bg-slate-900 text-white shadow-xs'
-                      : 'bg-transparent text-slate-700 hover:bg-slate-200'
-                  }`}
-                >
-                  <span>2 कार्ड / पेज</span>
-                  {layoutMode === 2 && <Check className="w-3.5 h-3.5 stroke-[2.5]" />}
-                </button>
+            {/* 2A. ID BADGE SPECIFIC CONTROLS & LIVE PREVIEW */}
+            {cardFormat === 'id_badge' ? (
+              <div className="space-y-3">
+                {/* ID Badge Info Banner */}
+                <div className="p-3 bg-amber-50/90 border border-amber-300/80 rounded-2xl space-y-1.5 text-amber-950">
+                  <div className="flex items-center gap-2 font-black text-xs text-amber-900">
+                    <Sparkles className="w-4 h-4 text-amber-600 shrink-0" />
+                    <span>गले में लटकाने वाला पॉलीबैग ID कार्ड (4 कार्ड प्रति लीगल पेज)</span>
+                  </div>
+                  <div className="text-[10.5px] leading-relaxed text-amber-900/90 font-medium space-y-1">
+                    <div>
+                      • <strong>मुख पृष्ठ (Front):</strong> बड़ा ड्यूटी स्थल (Duty Place), पुलिस लोगो, फोटो, पद, नाम, मोबाइल, PNO, समय, QR सत्यापन व SSP हस्ताक्षर।
+                    </div>
+                    <div>
+                      • <strong>पृष्ठ भाग (Back):</strong> जोन/जोनल प्रभारी, सेक्टर/सेक्टर प्रभारी, ब्रीफिंग स्थल, विशेष निर्देश व 24x7 इमरजेंसी हेल्पलाइन।
+                    </div>
+                    <div className="text-[10px] text-emerald-800 font-bold bg-emerald-100/70 p-1.5 rounded-lg border border-emerald-300 flex items-center gap-1.5">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                      <span>डुप्लेक्स (2-तरफ़ा) प्रिंटिंग समर्थित: कटिंग करने पर प्रत्येक जवान का फ्रंट व बैक स्वतः 100% सही अलाइन रहेगा।</span>
+                    </div>
+                  </div>
+                </div>
 
-                <button
-                  type="button"
-                  onClick={() => setLayoutMode(4)}
-                  className={`flex-1 py-2 px-2 rounded-lg text-[11px] sm:text-xs font-bold flex items-center justify-center gap-1 transition cursor-pointer ${
-                    layoutMode === 4
-                      ? 'bg-slate-900 text-white shadow-xs'
-                      : 'bg-transparent text-slate-700 hover:bg-slate-200'
-                  }`}
-                >
-                  <span>4 कार्ड / पेज</span>
-                  {layoutMode === 4 && <Check className="w-3.5 h-3.5 stroke-[2.5]" />}
-                </button>
+                {/* Live Sample Badge Preview Toggle */}
+                {targetRecords[0] && (
+                  <div className="bg-slate-100 border border-slate-300 rounded-2xl p-3 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1.5">
+                        <CreditCard className="w-3.5 h-3.5 text-amber-700" />
+                        <span className="font-black text-slate-800 text-xs">लाइव आईडी कार्ड नमूना:</span>
+                      </div>
+                      <div className="flex items-center bg-slate-200 p-0.5 rounded-lg text-[10px] font-bold">
+                        <button
+                          type="button"
+                          onClick={() => setPreviewSide('front')}
+                          className={`px-2.5 py-1 rounded-md transition cursor-pointer ${
+                            previewSide === 'front'
+                              ? 'bg-amber-600 text-white shadow-xs font-black'
+                              : 'text-slate-700 hover:text-slate-900'
+                          }`}
+                        >
+                          मुख पृष्ठ (Front)
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setPreviewSide('back')}
+                          className={`px-2.5 py-1 rounded-md transition cursor-pointer ${
+                            previewSide === 'back'
+                              ? 'bg-[#0b132b] text-white shadow-xs font-black'
+                              : 'text-slate-700 hover:text-slate-900'
+                          }`}
+                        >
+                          पृष्ठ भाग (Back)
+                        </button>
+                      </div>
+                    </div>
 
-                {paperSize === 'legal' && (
-                  <button
-                    type="button"
-                    onClick={() => setLayoutMode(6)}
-                    className={`flex-1 py-2 px-2 rounded-lg text-[11px] sm:text-xs font-bold flex items-center justify-center gap-1 transition cursor-pointer ${
-                      layoutMode === 6
-                        ? 'bg-slate-900 text-white shadow-xs'
-                        : 'bg-transparent text-slate-700 hover:bg-slate-200'
-                    }`}
-                  >
-                    <span>6 कार्ड / पेज</span>
-                    {layoutMode === 6 && <Check className="w-3.5 h-3.5 stroke-[3]" />}
-                  </button>
+                    <div className="max-w-[275px] mx-auto bg-white rounded-xl shadow-sm border border-slate-300 p-1">
+                      {previewSide === 'front'
+                        ? renderIdBadgeFrontReact(targetRecords[0], 0, true)
+                        : renderIdBadgeBackReact(targetRecords[0], 0, true)}
+                    </div>
+                  </div>
                 )}
               </div>
-            </div>
-
-            {/* TOGGLE OPTION: INCLUDE CO-DEPLOYED FORCE */}
-            <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 flex items-center justify-between shadow-xs">
-              <div className="flex items-center gap-2.5">
-                <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${includeCoForce ? 'bg-amber-100 text-amber-800' : 'bg-slate-200 text-slate-500'}`}>
-                  <Users className="w-4 h-4" />
+            ) : (
+              /* 2B. STANDARD ROSTER CONTROLS */
+              <div className="space-y-4">
+                {/* PAPER SIZE SELECTOR */}
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 p-2.5 bg-slate-100 rounded-2xl border border-slate-300">
+                  <span className="font-black text-slate-900 text-xs">प्रिंटर पेपर:</span>
+                  <div className="flex items-center gap-1.5 w-full sm:w-auto">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setPaperSize('a4');
+                        if (layoutMode === 6) setLayoutMode(4);
+                      }}
+                      className={`flex-1 sm:flex-none px-3.5 py-1.5 rounded-xl font-bold text-xs transition cursor-pointer flex items-center justify-center gap-1 ${
+                        paperSize === 'a4'
+                          ? 'bg-slate-900 text-white shadow-xs'
+                          : 'bg-white text-slate-700 hover:bg-slate-200 border border-slate-200'
+                      }`}
+                    >
+                      <span>A4</span>
+                      {paperSize === 'a4' && <Check className="w-3.5 h-3.5 stroke-[2.5]" />}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPaperSize('legal')}
+                      className={`flex-1 sm:flex-none px-3.5 py-1.5 rounded-xl font-bold text-xs transition cursor-pointer flex items-center justify-center gap-1 ${
+                        paperSize === 'legal'
+                          ? 'bg-slate-900 text-white shadow-xs'
+                          : 'bg-white text-slate-700 hover:bg-slate-200 border border-slate-200'
+                      }`}
+                    >
+                      <span>Legal</span>
+                      {paperSize === 'legal' && <Check className="w-3.5 h-3.5 stroke-[2.5]" />}
+                    </button>
+                  </div>
                 </div>
-                <div>
-                  <div className="text-xs font-black text-slate-900">
-                    सहयोगार्थ पुलिस बल
+
+                {/* LAYOUT TOGGLE */}
+                <div className="space-y-1">
+                  <div className="text-[11px] font-bold text-slate-600">प्रति पृष्ठ कार्ड:</div>
+                  <div className="bg-slate-100 p-1.5 rounded-xl border border-slate-300 flex flex-wrap sm:flex-nowrap items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => setLayoutMode(2)}
+                      className={`flex-1 py-2 px-2 rounded-lg text-[11px] sm:text-xs font-bold flex items-center justify-center gap-1 transition cursor-pointer ${
+                        layoutMode === 2
+                          ? 'bg-slate-900 text-white shadow-xs'
+                          : 'bg-transparent text-slate-700 hover:bg-slate-200'
+                      }`}
+                    >
+                      <span>2 कार्ड / पेज</span>
+                      {layoutMode === 2 && <Check className="w-3.5 h-3.5 stroke-[2.5]" />}
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setLayoutMode(4)}
+                      className={`flex-1 py-2 px-2 rounded-lg text-[11px] sm:text-xs font-bold flex items-center justify-center gap-1 transition cursor-pointer ${
+                        layoutMode === 4
+                          ? 'bg-slate-900 text-white shadow-xs'
+                          : 'bg-transparent text-slate-700 hover:bg-slate-200'
+                      }`}
+                    >
+                      <span>4 कार्ड / पेज</span>
+                      {layoutMode === 4 && <Check className="w-3.5 h-3.5 stroke-[2.5]" />}
+                    </button>
+
+                    {paperSize === 'legal' && (
+                      <button
+                        type="button"
+                        onClick={() => setLayoutMode(6)}
+                        className={`flex-1 py-2 px-2 rounded-lg text-[11px] sm:text-xs font-bold flex items-center justify-center gap-1 transition cursor-pointer ${
+                          layoutMode === 6
+                            ? 'bg-slate-900 text-white shadow-xs'
+                            : 'bg-transparent text-slate-700 hover:bg-slate-200'
+                        }`}
+                      >
+                        <span>6 कार्ड / पेज</span>
+                        {layoutMode === 6 && <Check className="w-3.5 h-3.5 stroke-[3]" />}
+                      </button>
+                    )}
                   </div>
-                  <div className="text-[10px] text-slate-500 font-medium mt-0.5">
-                    {includeCoForce
-                      ? 'उसी ड्यूटी स्थल के अन्य जवानों का विवरण शामिल रहेगा'
-                      : 'कार्ड पर सहयोगार्थ बल नहीं छपेगा'}
+                </div>
+
+                {/* TOGGLE OPTION: INCLUDE CO-DEPLOYED FORCE */}
+                <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 flex items-center justify-between shadow-xs">
+                  <div className="flex items-center gap-2.5">
+                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${includeCoForce ? 'bg-amber-100 text-amber-800' : 'bg-slate-200 text-slate-500'}`}>
+                      <Users className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <div className="text-xs font-black text-slate-900">
+                        सहयोगार्थ पुलिस बल
+                      </div>
+                      <div className="text-[10px] text-slate-500 font-medium mt-0.5">
+                        {includeCoForce
+                          ? 'उसी ड्यूटी स्थल के अन्य जवानों का विवरण शामिल रहेगा'
+                          : 'कार्ड पर सहयोगार्थ बल नहीं छपेगा'}
+                      </div>
+                    </div>
                   </div>
+
+                  <ToggleSwitch
+                    enabled={includeCoForce}
+                    onChange={setIncludeCoForce}
+                  />
+                </div>
+
+                {/* TOGGLE OPTION: INCLUDE ELECTION BACK SIDE (16 INSTRUCTIONS & CUG DIRECTORY) */}
+                <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 flex items-center justify-between shadow-xs">
+                  <div className="flex items-center gap-2.5">
+                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${includeBackSide ? 'bg-indigo-100 text-indigo-800' : 'bg-slate-200 text-slate-500'}`}>
+                      <FileText className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <div className="text-xs font-black text-slate-900">
+                        कार्ड बैक-साइड (16 पुलिस निर्देश + सीयूजी डायरेक्टरी)
+                      </div>
+                      <div className="text-[10px] text-slate-500 font-medium mt-0.5">
+                        {includeBackSide
+                          ? 'ड्यूटी कार्ड के पीछे 16 आचार संहिता निर्देश व CUG फोन छपेंगे'
+                          : 'केवल फ्रंट पास प्रिंट होगा (सिंगल साइडेड)'}
+                      </div>
+                    </div>
+                  </div>
+
+                  <ToggleSwitch
+                    enabled={includeBackSide}
+                    onChange={setIncludeBackSide}
+                  />
                 </div>
               </div>
-
-              <ToggleSwitch
-                enabled={includeCoForce}
-                onChange={setIncludeCoForce}
-              />
-            </div>
-
-            {/* TOGGLE OPTION: INCLUDE ELECTION BACK SIDE (16 INSTRUCTIONS & CUG DIRECTORY) */}
-            <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 flex items-center justify-between shadow-xs">
-              <div className="flex items-center gap-2.5">
-                <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${includeBackSide ? 'bg-indigo-100 text-indigo-800' : 'bg-slate-200 text-slate-500'}`}>
-                  <FileText className="w-4 h-4" />
-                </div>
-                <div>
-                  <div className="text-xs font-black text-slate-900">
-                    कार्ड बैक-साइड (16 पुलिस निर्देश + सीयूजी डायरेक्टरी)
-                  </div>
-                  <div className="text-[10px] text-slate-500 font-medium mt-0.5">
-                    {includeBackSide
-                      ? 'ड्यूटी कार्ड के पीछे 16 आचार संहिता निर्देश व CUG फोन छपेंगे'
-                      : 'केवल फ्रंट पास प्रिंट होगा (सिंगल साइडेड)'}
-                  </div>
-                </div>
-              </div>
-
-              <ToggleSwitch
-                enabled={includeBackSide}
-                onChange={setIncludeBackSide}
-              />
-            </div>
+            )}
 
             {/* Filter by Duty Point Option */}
             {uniqueDutyPoints.length > 1 && !isGenerating && (
@@ -844,15 +1408,16 @@ export default function BulkLegalPdfModal({
           opacity: 0,
           pointerEvents: 'none',
           width: '780px',
-          minHeight: '1280px',
+          minHeight: '1285px',
+          height: '1285px',
           backgroundColor: '#ffffff',
           display: 'grid',
           gridTemplateColumns: '1fr 1fr',
-          gridTemplateRows: layoutMode === 4 ? '1fr 1fr' : '1fr 1fr 1fr',
-          gap: '8px',
-          padding: '8px',
+          gridTemplateRows: (cardFormat === 'id_badge' || layoutMode === 4) ? '1fr 1fr' : (layoutMode === 2 ? '1fr 1fr' : '1fr 1fr 1fr'),
+          gap: '10px',
+          padding: '10px',
           boxSizing: 'border-box',
-          fontFamily: "'Noto Sans Devanagari', sans-serif"
+          fontFamily: "'Mukta', 'Poppins', sans-serif"
         }}
       >
         {activeBatch.map((duty, idx) => renderSingleCard(duty, idx))}

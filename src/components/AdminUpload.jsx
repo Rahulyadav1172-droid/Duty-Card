@@ -29,7 +29,8 @@ import {
   Phone,
   HelpCircle,
   Sparkles,
-  ShieldCheck
+  ShieldCheck,
+  CreditCard
 } from 'lucide-react';
 import { parseDutyFile } from '../utils/fileParser';
 import * as XLSX from 'xlsx';
@@ -113,6 +114,7 @@ export default function AdminUpload({
 
   // Bulk Legal PDF Modal State
   const [isBulkPdfModalOpen, setIsBulkPdfModalOpen] = useState(false);
+  const [bulkModalInitialFormat, setBulkModalInitialFormat] = useState('id_badge');
   const [showTemplateGuide, setShowTemplateGuide] = useState(false);
 
   // Duty Edit/Add Modal State
@@ -735,10 +737,25 @@ export default function AdminUpload({
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <button
-            onClick={() => setIsBulkPdfModalOpen(true)}
-            className="px-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold flex items-center gap-2 shadow-xs transition cursor-pointer"
+            onClick={() => {
+              setBulkModalInitialFormat('id_badge');
+              setIsBulkPdfModalOpen(true);
+            }}
+            className="px-3.5 py-2.5 bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-white rounded-xl text-xs font-bold flex items-center gap-2 shadow-xs transition active:scale-95 cursor-pointer"
+            title="गले में लटकाने वाला पॉलीबैग ID कार्ड (4-इन-1 लीगल)"
+          >
+            <CreditCard className="w-4 h-4 text-amber-200" />
+            <span>गले का ID कार्ड (4-इन-1 लीगल)</span>
+          </button>
+
+          <button
+            onClick={() => {
+              setBulkModalInitialFormat('standard');
+              setIsBulkPdfModalOpen(true);
+            }}
+            className="px-3.5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold flex items-center gap-2 shadow-xs transition cursor-pointer"
           >
             <FileDown className="w-4 h-4 text-slate-300" />
             <span>बल्क पास प्रिंट / PDF</span>
@@ -1477,7 +1494,23 @@ export default function AdminUpload({
             <div className="flex items-center gap-2 flex-wrap">
               <button
                 type="button"
-                onClick={() => setIsBulkPdfModalOpen(true)}
+                onClick={() => {
+                  setBulkModalInitialFormat('id_badge');
+                  setIsBulkPdfModalOpen(true);
+                }}
+                className="h-9 px-3.5 bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-white font-bold text-xs rounded-xl flex items-center gap-1.5 shadow-xs transition active:scale-95 cursor-pointer"
+                title="गले में लटकाने वाला पॉलीबैग ID कार्ड (4-इन-1 लीगल)"
+              >
+                <CreditCard className="w-3.5 h-3.5 text-amber-200" />
+                <span>गले का ID कार्ड (4-इन-1 लीगल)</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setBulkModalInitialFormat('standard');
+                  setIsBulkPdfModalOpen(true);
+                }}
                 className="h-9 px-3.5 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl flex items-center gap-1.5 shadow-xs transition active:scale-95 cursor-pointer"
                 title="ड्यूटी पास बल्क PDF डाउनलोड या प्रिंट करें"
               >
@@ -1843,6 +1876,7 @@ export default function AdminUpload({
         isNoteEnabled={noteToggle}
         customBriefing={briefingText}
         isBriefingEnabled={briefingToggle}
+        initialFormat={bulkModalInitialFormat}
       />
     </div>
   );
