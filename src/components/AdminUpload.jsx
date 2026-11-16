@@ -30,7 +30,8 @@ import {
   HelpCircle,
   Sparkles,
   ShieldCheck,
-  CreditCard
+  CreditCard,
+  Printer
 } from 'lucide-react';
 import { parseDutyFile } from '../utils/fileParser';
 import * as XLSX from 'xlsx';
