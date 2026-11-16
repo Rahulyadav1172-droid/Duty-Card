@@ -1233,6 +1233,67 @@ export function printIndividualPass({
 }
 
 /**
+ * Helper to clean raw name string by stripping duplicate mobile numbers,
+ * trailing noise, and separating clean name from posting/thana/district.
+ */
+export function cleanOfficerNameAndTitle(rawName = '', posting = '', district = '', mobile = '') {
+  if (!rawName) return '';
+  let s = String(rawName).trim();
+
+  // 1. Remove 10-digit mobile numbers from name text
+  s = s.replace(/\b[6-9]\d{9}\b/g, '');
+  if (mobile) {
+    const cleanMob = String(mobile).trim();
+    if (cleanMob.length >= 5) {
+      s = s.replace(new RegExp(`\\b${cleanMob}\\b`, 'g'), '');
+    }
+  }
+
+  // 2. Remove trailing noise
+  s = s.replace(/[,।]?\s*नं0?[-:]?\s*$/g, '').replace(/[,।]?\s*नं\s*\(?.*$/g, '');
+
+  // 3. Remove posting / thana if passed
+  if (posting && String(posting).trim().length >= 2) {
+    const p = String(posting).trim();
+    s = s.replace(new RegExp(`(?:थाना\\s*)?${p}`, 'gi'), ' ');
+  }
+
+  // 4. Remove district if passed
+  if (district && String(district).trim().length >= 2) {
+    const d = String(district).trim();
+    s = s.replace(new RegExp(`(?:जनपद\\s*)?${d}`, 'gi'), ' ');
+  }
+
+  // 5. Remove common station/line unit tags accidentally appended to officer names
+  s = s.replace(/(?:थाना|कोतवाली|चौकी|पुलिस\s*लाइन|महिला\s*थाना|वाहिनी|पीएसी)\s*[^,\n]*/gi, ' ');
+
+  // 6. Clean punctuation & whitespace
+  s = s.replace(/,\s*,/g, ',').replace(/\s*,\s*$/, '').replace(/^[\s,]+/, '').replace(/\s+/g, ' ').trim();
+
+  return s || rawName;
+}
+
+/**
+ * Helper to format clean posting & district without duplicate repetition
+ */
+export function formatCleanPosting(posting = '', district = '') {
+  let p = (posting || '').trim();
+  let d = (district || '').trim();
+  if (p === '-' || p === 'null' || p === 'undefined') p = '';
+  if (d === '-' || d === 'null' || d === 'undefined') d = '';
+
+  if (p && d) {
+    if (p.toLowerCase().includes(d.toLowerCase())) {
+      return p;
+    }
+    return `${p} (${d})`;
+  }
+  if (p) return p;
+  if (d) return `जनपद ${d}`;
+  return '-';
+}
+
+/**
  * HTML Generator for Individual "सहयोगार्थ पुलिस बल" Duty Pass
  */
 export function generateIndividualPassHtml({
@@ -1251,13 +1312,13 @@ export function generateIndividualPassHtml({
   if (!duty) return '';
 
   const phoneSvg = `
-    <svg style="width:13px;height:13px;stroke:#047857;display:inline-block;vertical-align:middle;margin-right:3px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+    <svg style="width:12px;height:12px;stroke:#0f172a;display:inline-block;vertical-align:middle;margin-right:4px;flex-shrink:0;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
       <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
     </svg>
   `;
 
   const usersSvg = `
-    <svg style="width:15px;height:15px;stroke:#047857;display:inline-block;vertical-align:middle;margin-right:4px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+    <svg style="width:14px;height:14px;stroke:#ffffff;display:inline-block;vertical-align:middle;margin-right:5px;flex-shrink:0;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
       <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
       <circle cx="9" cy="7" r="4"></circle>
       <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
@@ -1431,38 +1492,52 @@ export function generateIndividualPassHtml({
     qrSvgHtml = '';
   }
 
+  const cleanMainOfficerName = cleanOfficerNameAndTitle(duty.name || duty.composite_details, duty.posting, duty.district, duty.mobile);
+  const cleanMainPosting = formatCleanPosting(duty.posting || duty.posting_place || duty.thana, duty.district);
+  const cleanPnoText = (duty.pno && !String(duty.pno).toUpperCase().startsWith('DUTY-'))
+    ? String(duty.pno)
+    : (duty.id && !String(duty.id).toUpperCase().startsWith('DUTY-') && String(duty.id).length <= 12)
+      ? String(duty.id)
+      : '';
+
   let coForceHtml = '';
   if (coForceList.length > 0) {
     const coRows = coForceList.map((colleague, cIdx) => {
-      const cleanColleagueName = (colleague.name || '').trim()
-        .replace(/,\s*\d{10}\b/g, '')
-        .replace(/\b\d{10}\b/g, '')
-        .replace(/,\s*,/g, ',')
-        .replace(/,\s*$/, '')
-        .trim();
+      const cleanColleagueName = cleanOfficerNameAndTitle(colleague.name, colleague.posting, colleague.district, colleague.mobile);
+      const cleanColleaguePosting = formatCleanPosting(colleague.posting, colleague.district);
 
       return `
-        <div style="display:flex;align-items:center;padding:4px 6px;border-bottom:1px solid #e2e8f0;font-size:11px;background:${cIdx % 2 === 0 ? '#ffffff' : '#f8fafc'};">
-          <div style="width:28px;font-weight:bold;color:#64748b;font-family:monospace;">${cIdx + 1}.</div>
-          <div style="flex:1.2;font-weight:900;color:#0f172a;">${escapeHtml(cleanColleagueName)} <span style="font-size:9.5px;padding:1px 4px;background:#e2e8f0;border-radius:4px;font-weight:bold;">${escapeHtml(colleague.rank || 'का0')}</span></div>
-          <div style="flex:1;font-family:monospace;font-weight:bold;color:#0f172a;">${phoneSvg}${escapeHtml(colleague.mobile || '-')}</div>
-          <div style="flex:1.4;color:#334155;font-weight:500;">${escapeHtml(colleague.posting || '')} ${colleague.district ? `(${escapeHtml(colleague.district)})` : ''}</div>
-        </div>
+        <tr style="background:${cIdx % 2 === 0 ? '#ffffff' : '#f8fafc'};">
+          <td style="padding:6px 8px;border:1px solid #cbd5e1;text-align:center;font-weight:bold;color:#64748b;font-family:monospace;">${cIdx + 1}</td>
+          <td style="padding:6px 8px;border:1px solid #cbd5e1;font-weight:800;color:#0f172a;">${escapeHtml(cleanColleagueName)}</td>
+          <td style="padding:6px 8px;border:1px solid #cbd5e1;font-family:monospace;font-weight:700;color:#0f172a;white-space:nowrap;">${phoneSvg}${escapeHtml(colleague.mobile || '-')}</td>
+          <td style="padding:6px 8px;border:1px solid #cbd5e1;color:#334155;font-weight:600;">${escapeHtml(cleanColleaguePosting)}</td>
+        </tr>
       `;
     }).join('');
 
     coForceHtml = `
-      <div style="border:1.5px solid #047857;border-radius:8px;overflow:hidden;margin-top:10px;background:#ffffff;">
-        <div style="background:#ecfdf5;padding:6px 10px;border-bottom:1.5px solid #a7f3d0;display:flex;align-items:center;justify-content:between;">
-          <div style="font-weight:900;color:#065f46;font-size:11.5px;display:flex;align-items:center;">
+      <div style="border:1.5px solid #0f172a;border-radius:8px;overflow:hidden;margin-top:12px;background:#ffffff;">
+        <div style="background:#1e293b;padding:6px 12px;display:flex;align-items:center;justify-content:space-between;">
+          <div style="font-weight:800;color:#ffffff;font-size:12px;display:flex;align-items:center;">
             ${usersSvg}
             <span>सहयोगार्थ पुलिस बल (उसी स्थल पर तैनात अन्य पुलिसकर्मी):</span>
           </div>
-          <span style="font-size:11px;font-weight:bold;color:#065f46;background:#d1fae5;padding:2px 8px;border-radius:12px;font-family:monospace;margin-left:auto;">कुल: ${coForceList.length} जवान</span>
+          <span style="font-size:10.5px;font-weight:bold;color:#f8fafc;background:#334155;padding:2px 8px;border-radius:12px;font-family:monospace;">कुल: ${coForceList.length} जवान</span>
         </div>
-        <div style="max-height:none;">
-          ${coRows}
-        </div>
+        <table style="width:100%;border-collapse:collapse;font-size:11px;text-align:left;">
+          <thead>
+            <tr style="background:#f1f5f9;color:#334155;font-weight:800;font-size:10.5px;">
+              <th style="padding:6px 8px;border:1px solid #cbd5e1;width:35px;text-align:center;">क्र०</th>
+              <th style="padding:6px 8px;border:1px solid #cbd5e1;">पद व नाम</th>
+              <th style="padding:6px 8px;border:1px solid #cbd5e1;width:125px;">मोबाइल नंबर</th>
+              <th style="padding:6px 8px;border:1px solid #cbd5e1;width:160px;">मूल तैनाती (जनपद)</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${coRows}
+          </tbody>
+        </table>
       </div>
     `;
   }
@@ -1472,7 +1547,7 @@ export function generateIndividualPassHtml({
     <html lang="hi">
     <head>
       <meta charset="utf-8">
-      <title>${escapeHtml(duty.name || 'ड्यूटी पास')} - ${escapeHtml(eventTitle || 'उत्तर प्रदेश पुलिस')}</title>
+      <title>${escapeHtml(cleanMainOfficerName || 'ड्यूटी पास')} - ${escapeHtml(eventTitle || 'उत्तर प्रदेश पुलिस')}</title>
       <link rel="preconnect" href="https://fonts.googleapis.com">
       <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
       <link href="https://fonts.googleapis.com/css2?family=Mukta:wght@400;500;600;700;800;900&family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -1489,7 +1564,7 @@ export function generateIndividualPassHtml({
         body {
           font-family: 'Mukta', 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
           background: #ffffff;
-          color: #020617;
+          color: #0f172a;
           -webkit-print-color-adjust: exact;
           print-color-adjust: exact;
           padding: 10px;
@@ -1498,9 +1573,8 @@ export function generateIndividualPassHtml({
         .pass-container {
           max-width: 680px;
           margin: 0 auto;
-          border: 2.5px solid #0b132b;
-          box-shadow: inset 0 0 0 2px #d97706;
-          border-radius: 12px;
+          border: 2px solid #0f172a;
+          border-radius: 10px;
           padding: 16px 20px;
           background: #ffffff;
         }
@@ -1508,9 +1582,9 @@ export function generateIndividualPassHtml({
           display: flex;
           align-items: center;
           justify-content: space-between;
-          border-bottom: 2px solid #0b132b;
+          border-bottom: 2px solid #0f172a;
           padding-bottom: 8px;
-          margin-bottom: 10px;
+          margin-bottom: 12px;
         }
         .badge-img {
           width: 52px;
@@ -1521,31 +1595,31 @@ export function generateIndividualPassHtml({
           text-align: center;
         }
         .main-title {
-          font-size: 19px;
+          font-size: 20px;
           font-weight: 900;
-          color: #020617;
+          color: #0f172a;
           line-height: 1.2;
         }
         .sub-title {
           font-size: 13px;
           font-weight: 800;
-          color: #b45309;
-          margin-top: 2px;
+          color: #475569;
+          margin-top: 3px;
         }
         .officer-box {
           display: flex;
           align-items: center;
           gap: 12px;
-          border: 1.5px solid #0f172a;
+          border: 1.5px solid #cbd5e1;
           border-radius: 8px;
-          padding: 8px 12px;
+          padding: 10px 14px;
           background: #f8fafc;
-          margin-bottom: 10px;
+          margin-bottom: 12px;
         }
         .photo-slot {
           width: 68px;
           height: 84px;
-          border: 1.5px solid #0f172a;
+          border: 1.5px solid #94a3b8;
           border-radius: 6px;
           background: #ffffff;
           display: flex;
@@ -1558,34 +1632,27 @@ export function generateIndividualPassHtml({
           flex: 1;
         }
         .officer-name {
-          font-size: 17px;
+          font-size: 18px;
           font-weight: 900;
-          color: #020617;
+          color: #0f172a;
           display: flex;
           align-items: center;
           gap: 6px;
         }
-        .rank-tag {
-          font-size: 11px;
-          background: #fef3c7;
-          color: #78350f;
-          border: 1px solid #fde68a;
-          padding: 1px 6px;
-          border-radius: 4px;
-          font-weight: 900;
-        }
         .officer-meta {
           font-size: 12px;
-          color: #334155;
-          margin-top: 3px;
+          color: #475569;
+          margin-top: 4px;
           font-weight: 600;
         }
         .officer-mob {
           font-family: monospace;
-          font-size: 14px;
-          font-weight: 900;
-          color: #047857;
-          margin-top: 2px;
+          font-size: 13.5px;
+          font-weight: 800;
+          color: #1e3a8a;
+          margin-top: 3px;
+          display: flex;
+          align-items: center;
         }
         .duty-table {
           width: 100%;
@@ -1594,32 +1661,31 @@ export function generateIndividualPassHtml({
           border-radius: 6px;
           overflow: hidden;
           font-size: 12px;
+          background: #ffffff;
         }
         .duty-table td {
           padding: 6px 10px;
           border-bottom: 1px solid #cbd5e1;
+          border-right: 1px solid #cbd5e1;
         }
         .duty-table tr:last-child td {
           border-bottom: none;
         }
         .duty-table .lbl-td {
-          width: 32%;
+          width: 30%;
           background: #f1f5f9;
           font-weight: 900;
-          color: #1e293b;
+          color: #0f172a;
           border-right: 1.5px solid #cbd5e1;
         }
         .duty-table .val-td {
           font-weight: 700;
-          color: #020617;
-        }
-        .duty-place-row {
-          background: #fffbeb;
+          color: #0f172a;
         }
         .duty-place-val {
-          font-size: 13.5px;
+          font-size: 14px;
           font-weight: 900;
-          color: #92400e;
+          color: #0f172a;
         }
         .footer-bar {
           display: flex;
@@ -1632,21 +1698,21 @@ export function generateIndividualPassHtml({
         .verified-badge {
           display: inline-flex;
           align-items: center;
-          gap: 4px;
-          background: #ecfdf5;
-          color: #065f46;
-          border: 1px solid #a7f3d0;
-          padding: 3px 8px;
+          gap: 5px;
+          background: #f0fdf4;
+          color: #166534;
+          border: 1px solid #bbf7d0;
+          padding: 3px 9px;
           border-radius: 20px;
           font-size: 10px;
-          font-weight: 900;
+          font-weight: 800;
         }
         .sign-title {
           font-size: 12px;
           font-weight: 900;
-          color: #020617;
+          color: #0f172a;
           text-align: right;
-          margin-top: 2px;
+          margin-top: 3px;
         }
       </style>
     </head>
@@ -1669,56 +1735,51 @@ export function generateIndividualPassHtml({
           </div>
           <div class="officer-details">
             <div class="officer-name">
-              <span>${escapeHtml(duty.name || duty.composite_details || '-')}</span>
+              <span>${escapeHtml(cleanMainOfficerName || '-')}</span>
             </div>
-            <div class="officer-mob">📱 ${escapeHtml(duty.mobile || '-')}</div>
+            <div class="officer-mob">${phoneSvg}<span style="letter-spacing:0.5px;">${escapeHtml(duty.mobile || '-')}</span></div>
             <div class="officer-meta">
-              ${(duty.pno && !String(duty.pno).toUpperCase().startsWith('DUTY-'))
-                ? `PNO: <strong style="font-family:monospace;">${escapeHtml(duty.pno)}</strong> | `
-                : (duty.id && !String(duty.id).toUpperCase().startsWith('DUTY-') && String(duty.id).length <= 12)
-                  ? `PNO: <strong style="font-family:monospace;">${escapeHtml(duty.id)}</strong> | `
-                  : ''
-              }मूल तैनाती: <strong>${escapeHtml(duty.posting || duty.posting_place || duty.thana || (duty.district ? `जनपद ${duty.district}` : '-'))}</strong> ${duty.posting && duty.district && !String(duty.posting).includes(duty.district) ? `(${escapeHtml(duty.district)})` : ''}
+              ${cleanPnoText ? `PNO: <strong style="font-family:monospace;color:#0f172a;">${escapeHtml(cleanPnoText)}</strong> | ` : ''}मूल तैनाती: <strong>${escapeHtml(cleanMainPosting)}</strong>
             </div>
           </div>
-          <div style="text-align:center;padding:4px;background:#ffffff;border:1px solid #cbd5e1;border-radius:6px;">
+          <div style="text-align:center;padding:4px;background:#ffffff;border:1px solid #cbd5e1;border-radius:6px;flex-shrink:0;">
             ${qrSvgHtml}
-            <div style="font-size:8px;font-weight:900;color:#64748b;margin-top:2px;">स्कैन सत्यापन</div>
+            <div style="font-size:8px;font-weight:800;color:#475569;margin-top:2px;">स्कैन सत्यापन</div>
           </div>
         </div>
 
         <!-- 3. Duty Table -->
         <table class="duty-table">
           <tbody>
-            <tr class="duty-place-row">
+            <tr>
               <td class="lbl-td">ड्यूटी का स्थान</td>
               <td class="val-td duty-place-val">${escapeHtml(duty.duty_place || '-')}</td>
             </tr>
             ${duty.booth_no ? `
             <tr>
               <td class="lbl-td">बूथ सं० / श्रेणी</td>
-              <td class="val-td" style="color:#1e3a8a; font-weight:900;">
+              <td class="val-td" style="color:#0f172a; font-weight:800;">
                 बूथ सं० <strong>${escapeHtml(duty.booth_no)}</strong> ${duty.category ? `(${escapeHtml(duty.category)})` : ''}
               </td>
             </tr>` : ''}
             ${(duty.vehicle_no || duty.bus_no) ? `
             <tr>
               <td class="lbl-td">वाहन संख्या (Bus No.)</td>
-              <td class="val-td" style="color:#b45309; font-weight:900;">
+              <td class="val-td" style="color:#0f172a; font-weight:800; font-family:monospace;">
                 🚌 वाहन सं० <strong>${escapeHtml(duty.vehicle_no || duty.bus_no)}</strong>
               </td>
             </tr>` : ''}
             ${(duty.weapon || duty.duty_type || duty.weapon_type) ? `
             <tr>
               <td class="lbl-td">शस्त्र स्थिति</td>
-              <td class="val-td" style="color:#0f766e; font-weight:900;">
+              <td class="val-td" style="color:#0f172a; font-weight:800;">
                 🛡️ ${escapeHtml(duty.weapon || duty.duty_type || duty.weapon_type)}
               </td>
             </tr>` : ''}
             ${(duty.capf || duty.pac) ? `
             <tr>
               <td class="lbl-td">सीएपीएफ/पीएसी</td>
-              <td class="val-td" style="color:#6b21a8; font-weight:900;">
+              <td class="val-td" style="color:#0f172a; font-weight:800;">
                 🎖️ ${escapeHtml(duty.capf || duty.pac)}
               </td>
             </tr>` : ''}
@@ -1728,21 +1789,35 @@ export function generateIndividualPassHtml({
             </tr>
             <tr>
               <td class="lbl-td">जोन / जोनाल प्रभारी</td>
-              <td class="val-td">${escapeHtml(cleanZone || '-')}${cleanZonalIncharge ? ` / <strong>${escapeHtml(cleanZonalIncharge)}</strong>` : ''}</td>
+              <td class="val-td">
+                ${(cleanZone && cleanZonalIncharge) ? `
+                  <div style="font-weight:800;color:#0f172a;"><span style="color:#64748b;font-weight:700;">जोन:</span> ${escapeHtml(cleanZone)}</div>
+                  <div style="margin-top:3px;font-weight:800;color:#1e3a8a;"><span style="color:#64748b;font-weight:700;">जोनाल प्रभारी:</span> ${escapeHtml(cleanZonalIncharge)}</div>
+                ` : `
+                  ${escapeHtml(cleanZone || '-')}${cleanZonalIncharge ? ` / <strong>${escapeHtml(cleanZonalIncharge)}</strong>` : ''}
+                `}
+              </td>
             </tr>
             <tr>
               <td class="lbl-td">सेक्टर / सेक्टर प्रभारी</td>
-              <td class="val-td">${escapeHtml(cleanSector || '-')}${cleanSectorIncharge ? ` / <strong>${escapeHtml(cleanSectorIncharge)}</strong>` : ''}</td>
+              <td class="val-td">
+                ${(cleanSector && cleanSectorIncharge) ? `
+                  <div style="font-weight:800;color:#0f172a;"><span style="color:#64748b;font-weight:700;">सेक्टर:</span> ${escapeHtml(cleanSector)}</div>
+                  <div style="margin-top:3px;font-weight:800;color:#1e3a8a;"><span style="color:#64748b;font-weight:700;">सेक्टर प्रभारी:</span> ${escapeHtml(cleanSectorIncharge)}</div>
+                ` : `
+                  ${escapeHtml(cleanSector || '-')}${cleanSectorIncharge ? ` / <strong>${escapeHtml(cleanSectorIncharge)}</strong>` : ''}
+                `}
+              </td>
             </tr>
             ${activeBriefing ? `
-            <tr style="background:#f0fdf4;">
+            <tr>
               <td class="lbl-td">ब्रीफिंग स्थान</td>
-              <td class="val-td" style="color:#166534;font-weight:900;">${escapeHtml(activeBriefing)}</td>
+              <td class="val-td" style="font-weight:800;color:#0f172a;">${escapeHtml(activeBriefing)}</td>
             </tr>` : ''}
             ${activeNote ? `
-            <tr style="background:#fffbeb;">
+            <tr>
               <td class="lbl-td">विशेष निर्देश</td>
-              <td class="val-td" style="color:#92400e;font-size:11px;">${escapeHtml(activeNote)}</td>
+              <td class="val-td" style="color:#334155;font-size:11px;line-height:1.4;">${escapeHtml(activeNote)}</td>
             </tr>` : ''}
           </tbody>
         </table>
@@ -1754,11 +1829,11 @@ export function generateIndividualPassHtml({
         <div class="footer-bar">
           <div>
             <div class="verified-badge">
-              <span>●</span>
+              <span style="color:#16a34a;font-size:11px;">●</span>
               <span>डिजिटल सत्यापित पास (UP POLICE)</span>
             </div>
-            <div style="font-size:9px;color:#64748b;font-weight:bold;margin-top:3px;">
-              कार्यालय वरिष्ठ पुलिस अधीक्षक, अयोध्या
+            <div style="font-size:10px;color:#475569;font-weight:700;margin-top:4px;">
+              कार्यालय वरिष्ठ पुलिस अधीक्षक, जनपद अयोध्या
             </div>
           </div>
 

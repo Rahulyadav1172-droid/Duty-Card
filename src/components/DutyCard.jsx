@@ -24,7 +24,7 @@ import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import VerifyModal from './VerifyModal';
 import { useLanguage } from '../context/LanguageContext';
-import { printIndividualPass, generateIndividualPassHtml } from '../utils/printLegalBulk';
+import { printIndividualPass, generateIndividualPassHtml, cleanOfficerNameAndTitle, formatCleanPosting } from '../utils/printLegalBulk';
 import { resolvePoliceRank, stripRankFromName } from '../utils/rankResolver';
 import { ELECTION_DUTY_CARD_INSTRUCTIONS, ELECTION_CUG_DIRECTORY } from '../data/electionStandardData';
 
@@ -415,7 +415,7 @@ export default function DutyCard({
   });
 
   const effectiveRank = resolvePoliceRank(duty?.rank, duty?.name);
-  const cleanOfficerName = stripRankFromName(duty?.name);
+  const cleanOfficerName = cleanOfficerNameAndTitle(duty?.name, duty?.posting, duty?.district, duty?.mobile);
 
   return (
     <div className="w-full max-w-4xl mx-auto space-y-4 font-devanagari text-slate-900 animate-in fade-in zoom-in-95 duration-300 pb-20 md:pb-0">
@@ -648,7 +648,7 @@ export default function DutyCard({
         /* Main Printable Duty Card Container */
         <div
           id="printable-duty-card"
-          className="bg-white text-slate-900 p-4 sm:p-6 rounded-xl sm:rounded-2xl border-[2.5px] border-[#0b132b] shadow-xl ring-2 ring-amber-500/80 ring-offset-2 space-y-3.5 sm:space-y-4"
+          className="bg-white text-slate-900 p-4 sm:p-6 rounded-xl sm:rounded-2xl border-2 border-slate-900 shadow-md space-y-3.5 sm:space-y-4"
         >
         {/* Pass Header */}
         <div className="border-b-2 border-slate-900 pb-2.5 sm:pb-3.5 flex items-center justify-between gap-2 sm:gap-3">
@@ -671,7 +671,7 @@ export default function DutyCard({
           {/* Photo Frame */}
           <div
             onClick={() => photoInputRef.current?.click()}
-            className="w-18 h-24 sm:w-24 sm:h-28 border-2 border-dashed border-slate-400 hover:border-amber-500 rounded-lg bg-white overflow-hidden flex flex-col items-center justify-center text-center shrink-0 relative group cursor-pointer transition shadow-inner"
+            className="w-18 h-24 sm:w-24 sm:h-28 border-2 border-dashed border-slate-400 hover:border-slate-600 rounded-lg bg-white overflow-hidden flex flex-col items-center justify-center text-center shrink-0 relative group cursor-pointer transition shadow-inner"
             title="फोटो अपलोड/बदलने के लिए क्लिक करें"
           >
             {duty.photo ? (
@@ -702,7 +702,7 @@ export default function DutyCard({
             <div>
               <span className="text-[10px] sm:text-[11px] font-bold text-slate-500">अधिकारी / कर्मचारी:</span>
               <div className="text-sm sm:text-lg font-black text-slate-950 mt-0.5 break-words">
-                <span>{duty.name || duty.composite_details || cleanOfficerName || '-'}</span>
+                <span>{cleanOfficerName || duty.name || duty.composite_details || '-'}</span>
               </div>
               <div className="text-xs font-mono font-bold text-slate-800 mt-1 flex items-center gap-1.5">
                 <Phone className="w-3.5 h-3.5 text-slate-500" />
@@ -714,7 +714,7 @@ export default function DutyCard({
               {cleanPno && (
                 <div>P.No: <strong className="font-mono text-slate-950">{cleanPno}</strong></div>
               )}
-              <div>मूल तैनाती: <strong className="text-slate-950">{duty.posting || duty.posting_place || duty.thana || (duty.district ? `जनपद ${duty.district}` : '-')}</strong> {duty.posting && duty.district && !String(duty.posting).includes(duty.district) ? `(${duty.district})` : ''}</div>
+              <div>मूल तैनाती: <strong className="text-slate-950">{formatCleanPosting(duty.posting || duty.posting_place || duty.thana, duty.district)}</strong></div>
             </div>
           </div>
         </div>
@@ -738,7 +738,7 @@ export default function DutyCard({
                 <td className="w-[38%] sm:w-1/3 bg-slate-50 font-bold p-2 sm:p-2.5 border-r border-slate-200 text-slate-700 text-[11px] sm:text-sm leading-relaxed">
                   {labels.duty_place}
                 </td>
-                <td className="p-2 sm:p-2.5 font-black text-xs sm:text-base text-amber-950 bg-amber-50/50 break-words leading-relaxed">
+                <td className="p-2 sm:p-2.5 font-black text-xs sm:text-base text-slate-950 bg-white break-words leading-relaxed">
                   {duty.duty_place || '-'}
                 </td>
               </tr>
@@ -845,11 +845,11 @@ export default function DutyCard({
 
               {/* Briefing Location Row */}
               {activeBriefingPlace && (
-                <tr className="bg-amber-50/70 border-t-2 border-amber-200">
-                  <td className="bg-amber-100/60 font-black p-2 sm:p-2.5 border-r border-amber-200 text-amber-950 text-[11px] sm:text-sm leading-relaxed">
+                <tr className="bg-slate-50/70 border-t border-slate-200">
+                  <td className="bg-slate-100/80 font-bold p-2 sm:p-2.5 border-r border-slate-200 text-slate-800 text-[11px] sm:text-sm leading-relaxed">
                     {labels.briefing}
                   </td>
-                  <td className="p-2 sm:p-2.5 font-bold text-amber-950 bg-amber-50/70 text-[11px] sm:text-sm break-words leading-relaxed">
+                  <td className="p-2 sm:p-2.5 font-bold text-slate-900 bg-slate-50/70 text-[11px] sm:text-sm break-words leading-relaxed">
                     {activeBriefingPlace}
                   </td>
                 </tr>
@@ -857,11 +857,11 @@ export default function DutyCard({
 
               {/* Special Note Row */}
               {activeNote && (
-                <tr className="bg-amber-50/70 border-t-2 border-amber-200">
-                  <td className="bg-amber-100/60 font-black p-2 sm:p-2.5 border-r border-amber-200 text-amber-950 text-[11px] sm:text-sm leading-relaxed">
+                <tr className="bg-slate-50/70 border-t border-slate-200">
+                  <td className="bg-slate-100/80 font-bold p-2 sm:p-2.5 border-r border-slate-200 text-slate-800 text-[11px] sm:text-sm leading-relaxed">
                     {labels.note}
                   </td>
-                  <td className="p-2 sm:p-2.5 font-bold text-amber-950 bg-amber-50/70 text-[11px] sm:text-sm leading-relaxed break-words">
+                  <td className="p-2 sm:p-2.5 font-normal text-slate-800 bg-slate-50/70 text-[11px] sm:text-sm leading-relaxed break-words">
                     {activeNote}
                   </td>
                 </tr>
@@ -943,10 +943,12 @@ export default function DutyCard({
               >
                 <div className="min-w-0 space-y-0.5">
                   <div className="flex items-center gap-1.5 flex-wrap">
-                    <span className="font-bold text-slate-900 text-xs sm:text-sm truncate">{peer.name}</span>
+                    <span className="font-bold text-slate-900 text-xs sm:text-sm truncate">
+                      {cleanOfficerNameAndTitle(peer.name, peer.posting, peer.district, peer.mobile)}
+                    </span>
                   </div>
-                  <div className="text-[10px] sm:text-[11px] text-slate-500 truncate">
-                    {peer.posting || peer.thana || '-'} {peer.district ? `(${peer.district})` : ''}
+                  <div className="text-[10px] sm:text-[11px] text-slate-600 truncate">
+                    {formatCleanPosting(peer.posting || peer.thana, peer.district)}
                   </div>
                   <div className="text-[10px] sm:text-[11px] font-mono font-bold text-slate-700">
                     मो० {peer.mobile || '-'}
