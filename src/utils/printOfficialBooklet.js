@@ -285,9 +285,7 @@ export function printOfficialBookletDocument({
               <tbody>
                 ${placeRecords.map((row, idx) => {
                   const cleanName = cleanOfficerName(row.name, row.posting, row.district, row.mobile);
-                  const effectiveRank = resolvePoliceRank(row.rank, row.name);
-                  const displayCleanName = stripRankFromName(cleanName);
-                  const fullOfficerTitle = `${effectiveRank} ${displayCleanName}`;
+                  const fullOfficerTitle = row.name || cleanName || '-';
                   return `
                     <tr>
                       <td style="text-align:center; font-weight:bold; font-size:12px; background:#f8fafc;">${idx + 1}</td>

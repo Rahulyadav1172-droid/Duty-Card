@@ -1,4 +1,5 @@
 import { supabase } from './supabaseClient';
+import { extractDistrictFromText } from './fileParser';
 
 const EVENTS_TABLE = 'police_events';
 const CLOUD_MASTER_FORCE_ID = 'global-master-force-registry';
@@ -493,5 +494,123 @@ export function subscribeToActiveEventIdRealtime(onUpdateCallback) {
     console.warn('Active Event ID Realtime subscription error:', err);
     return () => {};
   }
+}
+
+/**
+ * Universal Cross-Event Master Force Enrichment
+ * Populates missing posting / district / pno across all events by matching mobile number or clean name.
+ */
+export function enrichEventsWithMasterForce(eventsList = [], masterForceList = []) {
+  if (!Array.isArray(eventsList) || eventsList.length === 0) return { enrichedEvents: eventsList, hasChanges: false };
+
+  const phoneMap = new Map();
+  const nameMap = new Map();
+
+  function registerRecord(r) {
+    if (!r) return;
+    const post = (r.posting || r.thana || '').trim();
+    const dist = (r.district || '').trim();
+    const pno = (r.pno || '').trim();
+    if (!post && !dist && !pno) return;
+
+    if (r.mobile) {
+      const mob = String(r.mobile).replace(/\D/g, '').slice(-10);
+      if (mob && mob.length >= 10) {
+        const existing = phoneMap.get(mob) || {};
+        phoneMap.set(mob, {
+          posting: (post && post !== '-') ? post : existing.posting || '',
+          district: (dist && dist !== '-') ? dist : existing.district || '',
+          pno: (pno && pno !== '-') ? pno : existing.pno || ''
+        });
+      }
+    }
+
+    if (r.name) {
+      const cleanN = String(r.name).trim();
+      if (cleanN.length > 2) {
+        const existing = nameMap.get(cleanN) || {};
+        nameMap.set(cleanN, {
+          posting: (post && post !== '-') ? post : existing.posting || '',
+          district: (dist && dist !== '-') ? dist : existing.district || '',
+          pno: (pno && pno !== '-') ? pno : existing.pno || ''
+        });
+      }
+    }
+  }
+
+  // 1. Ingest Master Force
+  if (Array.isArray(masterForceList)) {
+    masterForceList.forEach(registerRecord);
+  }
+
+  // 2. Ingest records from all events
+  eventsList.forEach(ev => {
+    if (Array.isArray(ev.records)) {
+      ev.records.forEach(registerRecord);
+    }
+  });
+
+  let globalChanged = false;
+
+  // 3. Enrich events that have missing posting / district
+  const enrichedEvents = eventsList.map(ev => {
+    if (!Array.isArray(ev.records) || ev.records.length === 0) return ev;
+    let eventChanged = false;
+
+    const newRecords = ev.records.map(r => {
+      let posting = (r.posting || r.thana || '').trim();
+      let district = (r.district || '').trim();
+      let pno = (r.pno || '').trim();
+
+      const mob = String(r.mobile || '').replace(/\D/g, '').slice(-10);
+      const matched = (mob && phoneMap.get(mob)) || (r.name && nameMap.get(String(r.name).trim()));
+
+      let modified = false;
+
+      if ((!posting || posting === '-') && matched?.posting) {
+        posting = matched.posting;
+        modified = true;
+      }
+      if ((!district || district === '-') && matched?.district) {
+        district = matched.district;
+        modified = true;
+      }
+      if ((!pno || pno === '-') && matched?.pno) {
+        pno = matched.pno;
+        modified = true;
+      }
+
+      // Check if district is embedded in name or posting
+      if (!district || district === '-') {
+        const extracted = extractDistrictFromText(`${r.name || ''} ${posting}`);
+        if (extracted) {
+          district = extracted;
+          modified = true;
+        }
+      }
+
+      if (modified) {
+        eventChanged = true;
+        return {
+          ...r,
+          posting,
+          district,
+          pno: pno || r.pno
+        };
+      }
+      return r;
+    });
+
+    if (eventChanged) {
+      globalChanged = true;
+      return {
+        ...ev,
+        records: newRecords
+      };
+    }
+    return ev;
+  });
+
+  return { enrichedEvents, hasChanges: globalChanged };
 }
 

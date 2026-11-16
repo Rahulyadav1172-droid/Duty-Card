@@ -58,7 +58,8 @@ import {
   saveGlobalActiveEventId,
   subscribeToActiveEventIdRealtime,
   checkSupabaseHealth,
-  checkIfEventsUpdated
+  checkIfEventsUpdated,
+  enrichEventsWithMasterForce
 } from './utils/supabaseSync';
 import {
   initCloudAuthConfig,
@@ -289,10 +290,17 @@ export default function App() {
       // 3. Fetch Events from Cloud
       const cloudEvents = await fetchEventsFromSupabase();
       if (cloudEvents && cloudEvents.length > 0) {
-        setEvents(cloudEvents);
+        const { enrichedEvents, hasChanges } = enrichEventsWithMasterForce(cloudEvents, cloudForce || forceRecords);
+        setEvents(enrichedEvents);
         try {
-          localStorage.setItem(EVENTS_STORAGE_KEY, JSON.stringify(cloudEvents));
+          localStorage.setItem(EVENTS_STORAGE_KEY, JSON.stringify(enrichedEvents));
         } catch (e) {}
+
+        if (hasChanges) {
+          for (const ev of enrichedEvents) {
+            upsertEventToSupabase(ev);
+          }
+        }
       } else if (cloudEvents && cloudEvents.length === 0) {
         // Table exists but empty -> seed initial events to Supabase
         for (const evt of events) {
@@ -312,9 +320,10 @@ export default function App() {
       // Realtime Events Listener
       unsubscribeEvents = subscribeToEventsRealtime((freshEvents) => {
         if (freshEvents && freshEvents.length > 0) {
-          setEvents(freshEvents);
+          const { enrichedEvents } = enrichEventsWithMasterForce(freshEvents, forceRecords);
+          setEvents(enrichedEvents);
           try {
-            localStorage.setItem(EVENTS_STORAGE_KEY, JSON.stringify(freshEvents));
+            localStorage.setItem(EVENTS_STORAGE_KEY, JSON.stringify(enrichedEvents));
           } catch (e) {}
         }
       });

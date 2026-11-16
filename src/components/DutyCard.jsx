@@ -445,7 +445,7 @@ export default function DutyCard({
               )}
             </div>
             <div className="text-[10px] sm:text-xs text-slate-500 font-mono font-bold">
-              {cleanPno ? `P.No: ${cleanPno}` : `${effectiveRank} • ${duty.district || 'अयोध्या'}`}
+              {cleanPno ? `P.No: ${cleanPno}` : (duty.district ? `जनपद: ${duty.district}` : 'उत्तर प्रदेश पुलिस')}
             </div>
           </div>
         </div>
@@ -701,11 +701,8 @@ export default function DutyCard({
           <div className="flex-1 flex flex-col justify-between text-slate-900 py-0.5 min-w-0">
             <div>
               <span className="text-[10px] sm:text-[11px] font-bold text-slate-500">अधिकारी / कर्मचारी:</span>
-              <div className="text-sm sm:text-lg font-black text-slate-950 mt-0.5 break-words flex items-center gap-2">
-                <span>{cleanOfficerName}</span>
-                <span className="text-[11px] px-2 py-0.5 rounded-md bg-amber-100 text-amber-950 font-black border border-amber-300 shrink-0">
-                  {effectiveRank}
-                </span>
+              <div className="text-sm sm:text-lg font-black text-slate-950 mt-0.5 break-words">
+                <span>{duty.name || cleanOfficerName || '-'}</span>
               </div>
               <div className="text-xs font-mono font-bold text-slate-800 mt-1 flex items-center gap-1.5">
                 <Phone className="w-3.5 h-3.5 text-slate-500" />
@@ -717,7 +714,7 @@ export default function DutyCard({
               {cleanPno && (
                 <div>P.No: <strong className="font-mono text-slate-950">{cleanPno}</strong></div>
               )}
-              <div>मूल तैनाती: <strong className="text-slate-950">{duty.posting || '-'}</strong> {duty.district ? `(${duty.district})` : ''}</div>
+              <div>मूल तैनाती: <strong className="text-slate-950">{duty.posting || duty.posting_place || duty.thana || '-'}</strong> {duty.district ? `(${duty.district})` : ''}</div>
             </div>
           </div>
         </div>
@@ -947,12 +944,9 @@ export default function DutyCard({
                 <div className="min-w-0 space-y-0.5">
                   <div className="flex items-center gap-1.5 flex-wrap">
                     <span className="font-bold text-slate-900 text-xs sm:text-sm truncate">{peer.name}</span>
-                    <span className="text-[9px] sm:text-[10px] px-1.5 py-0.2 rounded bg-amber-100 text-amber-900 font-bold shrink-0">
-                      {peer.rank || 'जवान'}
-                    </span>
                   </div>
                   <div className="text-[10px] sm:text-[11px] text-slate-500 truncate">
-                    {peer.posting || 'थाना कोतवाली'} {peer.district ? `(${peer.district})` : ''}
+                    {peer.posting || peer.thana || '-'} {peer.district ? `(${peer.district})` : ''}
                   </div>
                   <div className="text-[10px] sm:text-[11px] font-mono font-bold text-slate-700">
                     मो० {peer.mobile || '-'}
@@ -1010,7 +1004,7 @@ export default function DutyCard({
             <div className="bg-slate-50 border border-slate-200 p-3 rounded-xl flex items-center justify-between text-xs font-bold">
               <div>
                 <span className="text-slate-500">अधिकारी / कर्मचारी:</span>
-                <div className="font-black text-slate-950 text-sm mt-0.5">{duty.name} ({duty.rank || 'जवान'})</div>
+                <div className="font-black text-slate-950 text-sm mt-0.5">{duty.name}</div>
               </div>
               <div className="font-mono text-slate-700">PNO: {duty.id}</div>
             </div>

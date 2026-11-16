@@ -383,8 +383,7 @@ export default function BulkLegalPdfModal({
             <div>
               <div style={{ fontSize: layoutMode === 2 ? '8.5px' : '7.5px', fontWeight: 'bold', color: '#64748b' }}>अधिकारी / कर्मचारी:</div>
               <div style={{ fontSize: layoutMode === 2 ? (hasCoForce ? '11.5px' : '13px') : '10px', fontWeight: '900', color: '#000000', lineHeight: '1.2', display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '4px', wordBreak: 'break-word' }}>
-                <span>{displayCleanName || '-'}</span>
-                <span style={{ fontSize: '9px', background: '#fef3c7', color: '#78350f', padding: '1px 5px', borderRadius: '4px', border: '1px solid #fde68a', fontWeight: 'bold' }}>{effectiveRank}</span>
+                <span>{cleanOfficerName || duty.name || '-'}</span>
               </div>
               <div style={{ fontSize: layoutMode === 2 ? (hasCoForce ? '9.5px' : '11px') : '8.5px', fontFamily: 'monospace', fontWeight: 'bold', color: '#1e293b' }}>
                 {duty.mobile || '-'}
@@ -394,7 +393,7 @@ export default function BulkLegalPdfModal({
               {cleanPno ? (
                 <span>P.No: <strong>{cleanPno}</strong></span>
               ) : null}
-              <span>मूल तैनाती: <strong>{duty.posting || '-'}</strong> {duty.district ? `(${duty.district})` : ''}</span>
+              <span>मूल तैनाती: <strong>{duty.posting || duty.posting_place || duty.thana || '-'}</strong> {duty.district ? `(${duty.district})` : ''}</span>
             </div>
           </div>
         </div>

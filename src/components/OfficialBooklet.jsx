@@ -975,9 +975,7 @@ function stripNumbering(rawText = '') {
                                 <tbody>
                                   {placeRecords.map((row, rIdx) => {
                                     const cleanName = cleanOfficerName(row.name, row.posting, row.district, row.mobile);
-                                    const effectiveRank = resolvePoliceRank(row.rank, row.name);
-                                    const displayCleanName = stripRankFromName(cleanName);
-                                    const fullOfficerTitle = `${effectiveRank} ${displayCleanName}`;
+                                    const fullOfficerTitle = row.name || cleanName || '-';
 
                                     return (
                                       <tr key={rIdx} className="border-b border-gray-300 hover:bg-gray-50 last:border-b-0 text-xs sm:text-sm">

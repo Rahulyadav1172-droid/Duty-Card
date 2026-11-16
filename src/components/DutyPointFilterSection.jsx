@@ -628,19 +628,15 @@ export default function DutyPointFilterSection({
                           ID: <strong className="text-slate-800">{p.id}</strong>
                         </span>
                       </div>
-
-                      <span className="text-[11px] px-2 py-0.5 rounded-md bg-amber-100 text-amber-950 font-black shrink-0 border border-amber-300">
-                        {effectiveRank}
-                      </span>
                     </div>
 
                     {/* Officer Name & Posting */}
                     <div>
                       <h4 className="font-black text-slate-950 text-sm leading-snug">
-                        {displayCleanName}
+                        {p.name || cleanName || displayCleanName || '-'}
                       </h4>
                       <p className="text-xs text-slate-600 font-medium mt-0.5">
-                        थाना: <strong className="text-slate-900">{p.posting || 'थाना कोतवाली'}</strong> {p.district ? `(${p.district})` : ''}
+                        मूल तैनाती: <strong className="text-slate-900">{p.posting || '-'}</strong> {p.district ? `(${p.district})` : ''}
                       </p>
                     </div>
 
