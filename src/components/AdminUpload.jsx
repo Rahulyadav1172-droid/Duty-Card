@@ -35,6 +35,7 @@ import {
 import { parseDutyFile } from '../utils/fileParser';
 import * as XLSX from 'xlsx';
 import BulkLegalPdfModal from './BulkLegalPdfModal';
+import LegalBwDutyCardModule from './LegalBwDutyCardModule';
 import ToggleSwitch from './ToggleSwitch';
 
 export default function AdminUpload({
@@ -114,6 +115,7 @@ export default function AdminUpload({
 
   // Bulk Legal PDF Modal State
   const [isBulkPdfModalOpen, setIsBulkPdfModalOpen] = useState(false);
+  const [isBwModuleOpen, setIsBwModuleOpen] = useState(false);
   const [bulkModalInitialFormat, setBulkModalInitialFormat] = useState('id_badge');
   const [showTemplateGuide, setShowTemplateGuide] = useState(false);
 
@@ -738,6 +740,15 @@ export default function AdminUpload({
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
+          <button
+            onClick={() => setIsBwModuleOpen(true)}
+            className="px-3.5 py-2.5 bg-black hover:bg-slate-800 text-white rounded-xl text-xs font-black flex items-center gap-2 shadow-xs transition active:scale-95 cursor-pointer border border-black"
+            title="क्लीन ब्लैक एंड व्हाइट लीगल प्रिंट मॉड्यूल (8.5 x 14 in • 4-इन-1 लेजर प्रिंट)"
+          >
+            <Printer className="w-4 h-4 text-white" />
+            <span>B&W लीगल ID कार्ड (4-इन-1)</span>
+          </button>
+
           <button
             onClick={() => {
               setBulkModalInitialFormat('id_badge');
@@ -1494,6 +1505,16 @@ export default function AdminUpload({
             <div className="flex items-center gap-2 flex-wrap">
               <button
                 type="button"
+                onClick={() => setIsBwModuleOpen(true)}
+                className="h-9 px-3.5 bg-black hover:bg-slate-800 text-white font-black text-xs rounded-xl flex items-center gap-1.5 shadow-xs transition active:scale-95 cursor-pointer border border-black"
+                title="क्लीन ब्लैक एंड व्हाइट लीगल प्रिंट मॉड्यूल (8.5 x 14 in • 4-इन-1 लेजर प्रिंट)"
+              >
+                <Printer className="w-3.5 h-3.5 text-white" />
+                <span>B&W लीगल ID कार्ड</span>
+              </button>
+
+              <button
+                type="button"
                 onClick={() => {
                   setBulkModalInitialFormat('id_badge');
                   setIsBulkPdfModalOpen(true);
@@ -1877,6 +1898,21 @@ export default function AdminUpload({
         customBriefing={briefingText}
         isBriefingEnabled={briefingToggle}
         initialFormat={bulkModalInitialFormat}
+      />
+
+      {/* Dedicated Legal Black & White Print-Optimized Module */}
+      <LegalBwDutyCardModule
+        isOpen={isBwModuleOpen}
+        onClose={() => setIsBwModuleOpen(false)}
+        records={records}
+        eventTitle={eventTitle}
+        eventSubtitle={eventSubtitle}
+        signatureImg={signaturePreview || signatureImg}
+        signatoryText={signText || signatoryText}
+        customNote={noteText}
+        isNoteEnabled={noteToggle}
+        customBriefing={briefingText}
+        isBriefingEnabled={briefingToggle}
       />
     </div>
   );
