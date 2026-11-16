@@ -85,83 +85,107 @@ export function renderIdBadgeHorizontalFrontHtml({
 
   return `
     <div class="id-badge-h-card id-badge-h-front">
-      <!-- 1. Header -->
-      <div style="border-bottom:1.5px solid #0b132b;padding-bottom:2px;display:flex;align-items:center;justify-content:space-between;gap:4px;">
-        <img src="/badge.png" alt="UP Police" style="width:24px;height:24px;object-fit:contain;" />
+      <!-- 1. Flush Top Navy Header Ribbon -->
+      <div style="background:#0b132b;color:#ffffff;padding:4px 6px 3px 6px;border-bottom:2px solid #b45309;display:flex;align-items:center;justify-content:space-between;gap:5px;">
+        <img src="/badge.png" alt="UP Police" style="width:24px;height:24px;object-fit:contain;flex-shrink:0;" />
         <div style="text-align:center;flex:1;min-width:0;">
-          <div style="font-size:6.8px;font-weight:800;color:#475569;letter-spacing:0.3px;line-height:1;">उत्तर प्रदेश पुलिस • जनपद अयोध्या</div>
-          <div style="font-size:11px;font-weight:900;color:#0b132b;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:0.5px;">
-            ${escapeHtml(eventTitle || 'उत्तर प्रदेश पुलिस')}
+          <div style="font-size:6.8px;font-weight:800;color:#fde68a;letter-spacing:0.4px;line-height:1;text-transform:uppercase;">उत्तर प्रदेश पुलिस • जनपद अयोध्या</div>
+          <div style="font-size:11.5px;font-weight:900;color:#ffffff;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:0.5px;">
+            ${escapeHtml(eventTitle || 'मेला चौदह कोसी परिक्रमा')}
           </div>
-          <div style="font-size:7.5px;font-weight:800;color:#b45309;line-height:1;">
-            ${escapeHtml(eventSubtitle || 'ड्यूटी पहचान पत्र / पास अयोध्या - 2026')}
+          <div style="font-size:7px;font-weight:800;color:#fde047;line-height:1;">
+            ${escapeHtml(eventSubtitle || 'विशेष सुरक्षा व्यवस्था • ड्यूटी पास')}
           </div>
         </div>
-        <img src="/badge.png" alt="UP Police" style="width:24px;height:24px;object-fit:contain;" />
+        <img src="/badge.png" alt="UP Police" style="width:24px;height:24px;object-fit:contain;flex-shrink:0;" />
       </div>
 
-      <!-- 2. Officer Details & Duty Place (Compact 2-Column Row) -->
-      <div style="display:flex;align-items:stretch;gap:5px;margin:2.5px 0;flex:1;">
-        <!-- Left: Photo + Name + Mobile -->
-        <div style="flex:1.1;min-width:0;display:flex;gap:4.5px;background:#f8fafc;border:1px solid #cbd5e1;border-radius:4px;padding:3px;">
-          <div style="width:34px;height:42px;border:1px solid #64748b;border-radius:3px;background:#ffffff;overflow:hidden;flex-shrink:0;">
+      <!-- Main Body Container -->
+      <div style="padding:4px 6px;display:flex;flex-direction:column;justify-content:space-between;flex:1;gap:3px;box-sizing:border-box;">
+        <!-- 2. Officer Profile Strip (Horizontal: Photo Left + Info Right) -->
+        <div style="display:flex;align-items:stretch;gap:6px;background:#f8fafc;border:1px solid #cbd5e1;border-radius:4px;padding:3px 5px;">
+          <!-- Photo Frame -->
+          <div style="width:32px;height:40px;border:1px solid #94a3b8;border-radius:3px;background:#ffffff;overflow:hidden;flex-shrink:0;">
             ${photoHtml}
           </div>
+
+          <!-- Officer Metadata -->
           <div style="flex:1;min-width:0;display:flex;flex-direction:column;justify-content:space-between;">
             <div>
-              <div style="font-size:10.5px;font-weight:900;color:#020617;line-height:1.15;display:flex;align-items:center;gap:3px;flex-wrap:wrap;">
-                <span>${escapeHtml(displayCleanName || duty.name)}</span>
-                ${effectiveRank ? `<span style="background:#fef3c7;color:#92400e;border:0.8px solid #fde68a;padding:0.2px 3.5px;border-radius:2px;font-size:7.5px;font-weight:800;">${escapeHtml(effectiveRank)}</span>` : ''}
+              <div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap;">
+                <span style="font-size:11px;font-weight:900;color:#0f172a;line-height:1.15;">
+                  ${escapeHtml(displayCleanName || duty.name)}
+                </span>
+                ${effectiveRank ? `
+                  <span style="background:#b45309;color:#ffffff;padding:0.5px 4.5px;border-radius:2px;font-size:7px;font-weight:900;line-height:1;">
+                    ${escapeHtml(effectiveRank)}
+                  </span>
+                ` : ''}
               </div>
-              <div style="font-size:9px;font-weight:900;color:#1e3a8a;font-family:monospace;margin-top:1px;display:flex;align-items:center;gap:2px;">
-                ${phoneSvg}
-                <span>${escapeHtml(duty.mobile || '-')}</span>
+
+              <div style="display:flex;align-items:center;gap:6px;font-size:8.5px;font-weight:800;color:#1e3a8a;margin-top:1.5px;">
+                <span style="display:flex;align-items:center;gap:2px;font-family:monospace;font-size:9.5px;font-weight:900;">
+                  ${phoneSvg} ${escapeHtml(duty.mobile || '-')}
+                </span>
+                ${cleanPno ? `
+                  <span style="color:#475569;font-family:monospace;font-size:7.5px;">PNO: <strong>${escapeHtml(cleanPno)}</strong></span>
+                ` : ''}
               </div>
             </div>
-            <div style="font-size:6.8px;color:#334155;border-top:0.8px solid #cbd5e1;padding-top:1px;line-height:1.1;">
-              ${cleanPno ? `<span>PNO: <strong>${escapeHtml(cleanPno)}</strong> | </span>` : ''}
-              <span>मूल: <strong>${escapeHtml(duty.posting || duty.district || '-')}</strong></span>
+
+            <div style="font-size:7px;color:#334155;border-top:0.8px solid #cbd5e1;padding-top:1px;margin-top:1.5px;line-height:1.1;">
+              मूल तैनाती: <strong style="color:#0f172a;">${escapeHtml(duty.posting || duty.posting_place || duty.thana || (duty.district ? 'जनपद ' + duty.district : '-'))}</strong>
             </div>
           </div>
         </div>
 
-        <!-- Right: Prominent Duty Point + Shift -->
-        <div style="flex:1.1;min-width:0;display:flex;flex-direction:column;justify-content:space-between;gap:2px;">
-          <div style="background:linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);border:1.2px solid #b45309;border-radius:4px;padding:3px 5px;text-align:center;box-shadow:0 1px 2px rgba(180,83,9,0.1);flex:1;display:flex;flex-direction:column;justify-content:center;">
-            <div style="font-size:6.8px;font-weight:900;color:#78350f;letter-spacing:0.3px;text-transform:uppercase;">🚩 कर्तव्य स्थल (DUTY PLACE)</div>
-            <div style="font-size:11px;font-weight:900;color:#0f172a;line-height:1.2;margin-top:1px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;">
-              ${escapeHtml(duty.duty_place || '-')}
-            </div>
+        <!-- 3. HERO BANNER: 🚩 कर्तव्य स्थल (DUTY PLACE) - Full Width -->
+        <div style="background:linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);border:1.4px solid #d97706;border-radius:4px;padding:3px 6px;text-align:center;box-shadow:0 1px 2px rgba(180,83,9,0.08);">
+          <div style="font-size:6.8px;font-weight:900;color:#92400e;letter-spacing:0.4px;text-transform:uppercase;">
+            🚩 कर्तव्य स्थल (ASSIGNED DUTY POINT)
           </div>
-          <div style="background:#f8fafc;border:0.8px solid #cbd5e1;border-radius:3px;padding:2px 4px;font-size:7px;display:flex;justify-content:space-between;align-items:center;">
-            <span style="font-weight:800;color:#475569;">समय:</span>
-            <span style="font-weight:900;color:#0f172a;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:115px;">
-              ${escapeHtml(duty.shift || 'प्रातः 09:00 से समाप्ति तक')}
-            </span>
-          </div>
-        </div>
-      </div>
-
-      <!-- 3. Bottom Footer (QR Code & Signature) -->
-      <div style="border-top:1px solid #0b132b;padding-top:2px;margin-top:auto;display:flex;align-items:center;justify-content:space-between;">
-        <div style="display:flex;align-items:center;gap:3px;">
-          <div style="background:#ffffff;border:0.8px solid #cbd5e1;border-radius:3px;padding:0.5px;">
-            ${qrSvgHtml}
-          </div>
-          <div>
-            <div style="font-size:6px;font-weight:900;color:#166534;background:#dcfce7;border:0.5px solid #86efac;padding:0.5px 3px;border-radius:2px;white-space:nowrap;">
-              ✓ सत्यापित पास
-            </div>
-            <div style="font-size:6px;font-family:monospace;color:#475569;font-weight:bold;margin-top:0.5px;">
-              ID: ${escapeHtml(cleanPno || duty.id || '-')}
-            </div>
+          <div style="font-size:12.5px;font-weight:900;color:#78350f;line-height:1.2;margin-top:1px;">
+            ${escapeHtml(duty.duty_place || '-')}
           </div>
         </div>
 
-        <div style="text-align:right;display:flex;flex-direction:column;align-items:flex-end;">
-          ${signHtml}
-          <div style="font-size:7px;font-weight:900;color:#020617;line-height:1;">
-            ${escapeHtml(signatoryText)}
+        <!-- 4. DUTY TIMING / SHIFT BANNER - Full Width (No Truncation) -->
+        <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:3px;padding:2px 6px;display:flex;justify-content:space-between;align-items:center;font-size:7.2px;">
+          <span style="font-weight:900;color:#166534;display:flex;align-items:center;gap:3px;">
+            <span>⏰</span>
+            <span>ड्यूटी दिनाँक व समय:</span>
+          </span>
+          <span style="font-weight:800;color:#0f172a;">
+            ${escapeHtml(duty.shift || 'प्रातः 09:00 से समाप्ति तक')}
+          </span>
+        </div>
+
+        <!-- 5. SECURITY & SIGNATURE FOOTER -->
+        <div style="border-top:1.2px solid #0f172a;padding-top:2px;margin-top:auto;display:flex;align-items:center;justify-content:space-between;">
+          <div style="display:flex;align-items:center;gap:3px;">
+            <div style="background:#ffffff;border:0.8px solid #cbd5e1;border-radius:2px;padding:1px;">
+              ${qrSvgHtml}
+            </div>
+            <div>
+              <div style="font-size:6px;font-weight:900;color:#166534;background:#dcfce7;border:0.5px solid #86efac;padding:0.5px 3px;border-radius:2px;white-space:nowrap;">
+                ✓ अधिकृत पास
+              </div>
+              <div style="font-size:6px;font-family:monospace;color:#475569;font-weight:bold;margin-top:0.5px;">
+                ID: ${escapeHtml(cleanPno || duty.id || '-')}
+              </div>
+            </div>
+          </div>
+
+          <div style="text-align:center;line-height:1;">
+            <div style="font-size:7px;font-weight:900;color:#64748b;letter-spacing:0.5px;">अयोध्या पुलिस</div>
+            <div style="font-size:5.5px;font-weight:800;color:#94a3b8;letter-spacing:0.8px;">AYODHYA POLICE</div>
+          </div>
+
+          <div style="text-align:right;display:flex;flex-direction:column;align-items:flex-end;">
+            ${signHtml}
+            <div style="font-size:6.8px;font-weight:900;color:#020617;line-height:1;margin-top:1px;">
+              ${escapeHtml(signatoryText)}
+            </div>
           </div>
         </div>
       </div>
@@ -330,56 +354,69 @@ export function renderIdBadgeHorizontalBackHtml({
 
   return `
     <div class="id-badge-h-card id-badge-h-back">
-      <!-- 1. Header -->
-      <div style="border-bottom:1.5px solid #0b132b;padding-bottom:2px;text-align:center;">
-        <div style="font-size:6.8px;font-weight:800;color:#475569;line-height:1;">कार्यालय वरिष्ठ पुलिस अधीक्षक, जनपद अयोध्या</div>
-        <div style="font-size:9.5px;font-weight:900;color:#0f172a;margin-top:1px;line-height:1.15;">ड्यूटी विवरण एवं आवश्यक निर्देश (पृष्ठ भाग)</div>
+      <!-- 1. Flush Top Navy Header -->
+      <div style="background:#0b132b;color:#ffffff;padding:3.5px 6px;border-bottom:2px solid #1e3a8a;text-align:center;">
+        <div style="font-size:6.5px;font-weight:800;color:#94a3b8;line-height:1;letter-spacing:0.3px;">कार्यालय वरिष्ठ पुलिस अधीक्षक, जनपद अयोध्या</div>
+        <div style="font-size:9.5px;font-weight:900;color:#ffffff;margin-top:0.5px;line-height:1.15;">ड्यूटी नियंत्रण एवं महत्वपूर्ण निर्देश (पृष्ठ भाग)</div>
       </div>
 
-      <!-- 2. Officer Mini Strip -->
-      <div style="background:#f1f5f9;border:0.8px solid #cbd5e1;border-radius:3px;padding:1.5px 5px;margin:2px 0;font-size:7px;font-weight:800;color:#1e293b;display:flex;justify-content:space-between;align-items:center;">
-        <span>अधिकारी: <strong>${escapeHtml(displayCleanName || duty.name)}</strong> ${effectiveRank ? `(${escapeHtml(effectiveRank)})` : ''}</span>
-        <span>मो०: <strong>${escapeHtml(duty.mobile || '-')}</strong></span>
-        ${cleanPno ? `<span>PNO: <strong>${escapeHtml(cleanPno)}</strong></span>` : ''}
-      </div>
-
-      <!-- 3. Zone & Sector 2-Column Grid -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:2px;">
-        <!-- Zone -->
-        <div style="background:#ffffff;border:0.8px solid #cbd5e1;border-radius:4px;padding:2px 4px;font-size:7px;line-height:1.2;">
-          <div style="font-weight:900;color:#0f172a;border-bottom:0.5px solid #e2e8f0;padding-bottom:1px;margin-bottom:1px;">जोन / जोनल प्रभारी</div>
-          <div><span style="color:#64748b;">जोन:</span> <strong style="color:#0f172a;">${escapeHtml(cleanZone || '-')}</strong></div>
-          ${cleanZonalIncharge ? `<div style="margin-top:0.5px;"><span style="color:#64748b;">प्रभारी:</span> <strong style="color:#0369a1;">${escapeHtml(cleanZonalIncharge)}</strong></div>` : ''}
+      <!-- Main Body Container -->
+      <div style="padding:4px 6px;display:flex;flex-direction:column;justify-content:space-between;flex:1;gap:3px;box-sizing:border-box;">
+        <!-- 2. Officer Mini Strip -->
+        <div style="background:#f1f5f9;border:0.8px solid #cbd5e1;border-radius:3px;padding:2px 6px;font-size:7.2px;display:flex;justify-content:space-between;align-items:center;">
+          <span>अधिकारी: <strong style="color:#0f172a;">${escapeHtml(displayCleanName || duty.name)}</strong> ${effectiveRank ? `<span style="background:#b45309;color:#fff;font-size:6.5px;padding:0.2px 3.5px;border-radius:2px;font-weight:bold;">${escapeHtml(effectiveRank)}</span>` : ''}</span>
+          <span>मो०: <strong style="font-family:monospace;color:#0369a1;">${escapeHtml(duty.mobile || '-')}</strong> ${cleanPno ? `| PNO: <strong>${escapeHtml(cleanPno)}</strong>` : ''}</span>
         </div>
 
-        <!-- Sector -->
-        <div style="background:#ffffff;border:0.8px solid #cbd5e1;border-radius:4px;padding:2px 4px;font-size:7px;line-height:1.2;">
-          <div style="font-weight:900;color:#0f172a;border-bottom:0.5px solid #e2e8f0;padding-bottom:1px;margin-bottom:1px;">सेक्टर / सेक्टर प्रभारी</div>
-          <div><span style="color:#64748b;">सेक्टर:</span> <strong style="color:#0f172a;">${escapeHtml(cleanSector || '-')}</strong></div>
-          ${cleanSectorIncharge ? `<div style="margin-top:0.5px;"><span style="color:#64748b;">प्रभारी:</span> <strong style="color:#0369a1;">${escapeHtml(cleanSectorIncharge)}</strong></div>` : ''}
-        </div>
-      </div>
+        <!-- 3. Zone & Sector Supervisory Hierarchy (2-Card Row) -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;">
+          <!-- Zone Card -->
+          <div style="background:#ffffff;border:1px solid #cbd5e1;border-radius:4px;padding:2.5px 4px;font-size:6.8px;line-height:1.25;">
+            <div style="font-weight:900;color:#0f172a;border-bottom:0.8px solid #e2e8f0;padding-bottom:1px;margin-bottom:1.5px;display:flex;align-items:center;gap:2px;">
+              <span>🏢</span><span>जोन / जोनल कमान</span>
+            </div>
+            <div><span style="color:#64748b;">जोन:</span> <strong style="color:#0f172a;">${escapeHtml(cleanZone || '-')}</strong></div>
+            ${cleanZonalIncharge ? `<div style="margin-top:1px;"><span style="color:#64748b;">प्रभारी:</span> <strong style="color:#0369a1;">${escapeHtml(cleanZonalIncharge)}</strong></div>` : ''}
+          </div>
 
-      <!-- 4. Briefing Place & Time -->
-      <div style="background:#eff6ff;border:0.8px solid #bfdbfe;border-radius:3px;padding:2px 5px;margin-bottom:2px;font-size:7px;line-height:1.2;">
-        <span style="font-weight:900;color:#1e40af;">ब्रीफिंग स्थल व समय: </span>
-        <span style="color:#0f172a;font-weight:700;">${escapeHtml(activeBriefing || 'पुलिस लाइन्स आर०टी०सी० सभागार जनपद अयोध्या')}</span>
-      </div>
-
-      <!-- 5. 📌 विशेष नोट / निर्देश (THE NOTE!) -->
-      <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:4px;padding:2.5px 5px;margin-bottom:2px;font-size:6.8px;line-height:1.25;">
-        <div style="font-weight:900;color:#92400e;display:flex;justify-content:space-between;margin-bottom:0.5px;">
-          <span>📌 विशेष नोट / निर्देश:</span>
-          <span style="font-size:6px;color:#b45309;">अनिवार्य अनुपालन</span>
+          <!-- Sector Card -->
+          <div style="background:#ffffff;border:1px solid #cbd5e1;border-radius:4px;padding:2.5px 4px;font-size:6.8px;line-height:1.25;">
+            <div style="font-weight:900;color:#0f172a;border-bottom:0.8px solid #e2e8f0;padding-bottom:1px;margin-bottom:1.5px;display:flex;align-items:center;gap:2px;">
+              <span>🛡️</span><span>सेक्टर / सेक्टर कमान</span>
+            </div>
+            <div><span style="color:#64748b;">सेक्टर:</span> <strong style="color:#0f172a;">${escapeHtml(cleanSector || '-')}</strong></div>
+            ${cleanSectorIncharge ? `<div style="margin-top:1px;"><span style="color:#64748b;">प्रभारी:</span> <strong style="color:#0369a1;">${escapeHtml(cleanSectorIncharge)}</strong></div>` : ''}
+          </div>
         </div>
-        <div style="color:#78350f;font-weight:600;">
-          ${escapeHtml(activeNote) ? escapeHtml(activeNote) : '14 कोसी परिक्रमा में ड्यूटीरत कर्मी 14 कोसी परिक्रमा समाप्ति के बाद दिनांक 19.11.2026 को अपना अगला ड्यूटी कार्ड मेला कार्यालय सिंचाई डाक बंगला नया घाट अयोध्या से प्राप्त करना सुनिश्चित करेंगे।'}
-        </div>
-      </div>
 
-      <!-- 6. Bottom Sign-off -->
-      <div style="text-align:center;font-size:7px;font-weight:900;color:#0f172a;border-top:1px solid #0b132b;padding-top:1.5px;margin-top:auto;">
-        ( वरिष्ठ पुलिस अधीक्षक, जनपद अयोध्या )
+        <!-- 4. Briefing Place & Time -->
+        <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:3px;padding:2px 5px;font-size:6.8px;line-height:1.2;">
+          <span style="font-weight:900;color:#1e40af;">📢 ब्रीफिंग स्थल व समय: </span>
+          <span style="color:#0f172a;font-weight:800;">${escapeHtml(activeBriefing || 'पुलिस लाइन्स आर०टी०सी० सभागार जनपद अयोध्या')}</span>
+        </div>
+
+        <!-- 5. 📌 विशेष नोट / निर्देश (THE NOTE) -->
+        <div style="background:#fffbeb;border:1.2px solid #fde68a;border-radius:4px;padding:3px 5px;font-size:6.8px;line-height:1.25;">
+          <div style="font-weight:900;color:#92400e;display:flex;justify-content:space-between;margin-bottom:1px;">
+            <span>📌 विशेष नोट / महत्वपूर्ण निर्देश:</span>
+            <span style="font-size:6px;color:#b45309;background:#fef3c7;border:0.5px solid #fde68a;padding:0.2px 3px;border-radius:2px;">अनिवार्य अनुपालन</span>
+          </div>
+          <div style="color:#78350f;font-weight:700;">
+            ${escapeHtml(activeNote) ? escapeHtml(activeNote) : '14 कोसी परिक्रमा में ड्यूटीरत कर्मी 14 कोसी परिक्रमा समाप्ति के बाद दिनांक 19.11.2026 को अपना अगला ड्यूटी कार्ड मेला कार्यालय सिंचाई डाक बंगला नया घाट अयोध्या से प्राप्त करना सुनिश्चित करेंगे।'}
+          </div>
+        </div>
+
+        <!-- 6. 24x7 Emergency CUG / Helpline -->
+        <div style="background:#f8fafc;border:1px solid #cbd5e1;border-radius:3px;padding:2px 5px;display:flex;justify-content:space-between;align-items:center;font-size:6.8px;">
+          <span>📞 पुलिस कंट्रोल: <strong style="font-family:monospace;color:#0f172a;">9454402648</strong></span>
+          <span>🎪 मेला कंट्रोल: <strong style="font-family:monospace;color:#0f172a;">9454402655</strong></span>
+          <span style="background:#fee2e2;color:#991b1b;border:0.5px solid #fca5a5;padding:0.5px 3px;border-radius:2px;font-weight:900;">🚨 आपातकाल: 112</span>
+        </div>
+
+        <!-- 7. Bottom Sign-off -->
+        <div style="text-align:center;font-size:7.2px;font-weight:900;color:#0f172a;border-top:1px solid #0f172a;padding-top:1.5px;margin-top:auto;">
+          ( वरिष्ठ पुलिस अधीक्षक, जनपद अयोध्या )
+        </div>
       </div>
     </div>
   `;
@@ -1082,10 +1119,9 @@ export function printLegalBulk({
           }
 
           .id-badge-h-card {
-            border: 1.8px solid #0b132b;
-            box-shadow: inset 0 0 0 1.2px #d97706;
+            border: 1.5px solid #0f172a;
             border-radius: 6px;
-            padding: 4px 6px;
+            padding: 0;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
@@ -1094,11 +1130,11 @@ export function printLegalBulk({
             height: 100%;
             overflow: hidden;
             position: relative;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
           }
 
           .id-badge-h-back {
-            box-shadow: inset 0 0 0 1.2px #1e3a8a;
-            border-color: #0b132b;
+            border-color: #0f172a;
             background: #ffffff;
           }
 
