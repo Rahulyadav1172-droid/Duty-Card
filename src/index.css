@@ -11,7 +11,7 @@
 
   body {
     @apply bg-slate-50 text-slate-900 antialiased selection:bg-amber-500 selection:text-slate-950;
-    font-family: 'Mukta', 'Poppins', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-family: 'Kokila', 'Mangal', 'Mukta', 'Poppins', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     overflow-x: hidden;
     width: 100%;
     margin: 0;

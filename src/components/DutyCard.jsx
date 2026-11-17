@@ -590,11 +590,6 @@ export default function DutyCard({
               <span className="text-slate-500 text-[11px]">अधिकारी / कर्मचारी:</span>
               <div className="font-black text-slate-950 text-sm mt-0.5 flex items-center gap-1.5">
                 <span>{cleanOfficerName || duty.name}</span>
-                {effectiveRank && (
-                  <span className="px-1.5 py-0.2 rounded bg-amber-100 text-amber-900 border border-amber-300 text-[9px] font-black">
-                    {effectiveRank}
-                  </span>
-                )}
               </div>
             </div>
             <div className="text-right">
@@ -744,11 +739,6 @@ export default function DutyCard({
               <span className="text-[10px] sm:text-[11px] font-bold text-slate-500">अधिकारी / कर्मचारी:</span>
               <div className="text-sm sm:text-lg font-black text-slate-950 mt-0.5 break-words flex items-center gap-1.5 flex-wrap">
                 <span>{cleanOfficerName || duty.name || duty.composite_details || '-'}</span>
-                {effectiveRank && (
-                  <span className="px-1.5 py-0.5 rounded bg-amber-100 text-amber-900 border border-amber-300 text-[10px] font-black shrink-0">
-                    {effectiveRank}
-                  </span>
-                )}
               </div>
               <div className="text-xs font-mono font-bold text-slate-800 mt-1 flex items-center gap-1.5">
                 <Phone className="w-3.5 h-3.5 text-slate-500" />
