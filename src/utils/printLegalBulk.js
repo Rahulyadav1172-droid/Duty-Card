@@ -678,54 +678,48 @@ export function renderBwIdBadgeHorizontalBackHtml({
 
   return `
     <div class="bw-badge-card bw-badge-back">
-      <!-- Top Header Bar: Solid black background with crisp white text -->
-      <div class="bw-header-banner bw-back-header">
-        <div class="bw-header-text">
-          <div class="bw-header-top">कार्यालय वरिष्ठ पुलिस अधीक्षक, जनपद अयोध्या</div>
-          <div class="bw-header-main" style="font-size: 9.5px; font-weight: 800;">ड्यूटी नियंत्रण एवं महत्वपूर्ण निर्देश</div>
-        </div>
-      </div>
+      <!-- (User Specification: No top header on Back Side. Clean white background) -->
 
       <!-- Main Sequential Fields Container -->
       <div class="bw-body-container bw-back-body">
-        <!-- 1. जोन -->
+        <!-- 1. जोन (Zone) -->
         <div class="bw-field-row">
-          <div class="bw-field-label">1. जोन:</div>
+          <div class="bw-field-label">1. जोन (Zone):</div>
           <div class="bw-field-value">${escapeHtml(cleanZone || '-')}</div>
         </div>
 
-        <!-- 2. जोनल कमान -->
+        <!-- 2. जोनल कमान / प्रभारी (Zonal Command) -->
         <div class="bw-field-row">
-          <div class="bw-field-label">2. जोनल कमान:</div>
+          <div class="bw-field-label">2. जोनल कमान / प्रभारी:</div>
           <div class="bw-field-value bold">${escapeHtml(cleanZonalIncharge || '-')}</div>
         </div>
 
-        <!-- 3. सेक्टर -->
+        <!-- 3. सेक्टर (Sector) -->
         <div class="bw-field-row">
-          <div class="bw-field-label">3. सेक्टर:</div>
+          <div class="bw-field-label">3. सेक्टर (Sector):</div>
           <div class="bw-field-value">${escapeHtml(cleanSector || '-')}</div>
         </div>
 
-        <!-- 4. सेक्टर प्रभारी -->
+        <!-- 4. सेक्टर प्रभारी व मो० (Sector Incharge & Mobile) -->
         <div class="bw-field-row">
-          <div class="bw-field-label">4. सेक्टर प्रभारी:</div>
+          <div class="bw-field-label">4. सेक्टर प्रभारी व मो०:</div>
           <div class="bw-field-value bold">${escapeHtml(cleanSectorIncharge || '-')}</div>
         </div>
 
-        <!-- 5. ड्यूटी समय -->
+        <!-- 5. ड्यूटी समय (Duty Time) -->
         <div class="bw-field-row highlight-time">
-          <div class="bw-field-label">5. ड्यूटी समय:</div>
+          <div class="bw-field-label">5. ड्यूटी समय (Duty Time):</div>
           <div class="bw-field-value">${escapeHtml(shiftTime)}</div>
         </div>
 
-        <!-- 6. विशेष नोट -->
+        <!-- 6. विशेष नोट / महत्वपूर्ण निर्देश (Special Notes) -->
         <div class="bw-note-box">
           <div class="bw-note-header">
-            <span>6. विशेष नोट:</span>
+            <span>6. 📌 विशेष नोट / महत्वपूर्ण निर्देश:</span>
             <span class="bw-compliance-tag">अनिवार्य अनुपालन</span>
           </div>
           <div class="bw-note-content">
-            ${escapeHtml(activeNote) || 'कृपया आवंटित ड्यूटी पॉइंट पर समय से रिपोर्ट करें एवं सतर्कतापूर्वक कर्तव्यों का निर्वहन करें।'}
+            ${escapeHtml(activeNote) || '14 कोसी परिक्रमा में ड्यूटीरत कर्मी 14 कोसी परिक्रमा समाप्ति के बाद दिनांक 19.11.2026 को अपना अगला ड्यूटी कार्ड मेला कार्यालय सिंचाई डाक बंगला नया घाट अयोध्या से प्राप्त करना सुनिश्चित करेंगे।'}
           </div>
         </div>
       </div>
@@ -1394,7 +1388,7 @@ export function printLegalBulk({
         <style>
           @page {
             size: ${isA4 ? 'A4 portrait' : 'legal portrait'};
-            margin: ${isIdBadge && theme === 'bw' ? '10mm' : '3mm 4mm'};
+            margin: ${isIdBadge && theme === 'bw' ? '5mm' : '3mm 4mm'};
           }
           * {
             box-sizing: border-box;
@@ -1529,17 +1523,17 @@ export function printLegalBulk({
           }
 
           /* ========================================================= */
-          /* CLEAN BLACK & WHITE THEME 4-IN-1 LEGAL PAGE (@page 10mm)  */
+          /* CLEAN BLACK & WHITE THEME 4-IN-1 LEGAL PAGE (@page 5mm)   */
           /* 4 CARDS (4 OFFICERS) PER PAGE: 4 ROWS x 2 COLS = 8 CELLS  */
           /* ========================================================= */
           .page-bw-legal-4in1 {
-            width: 195.9mm;
-            height: 335.6mm;
+            width: 205.9mm;
+            height: 345.6mm;
             display: grid;
             grid-template-columns: 1fr 1fr;
             grid-template-rows: repeat(4, 1fr);
-            gap: 2mm 3mm;
-            padding: 1mm;
+            gap: 2.5mm 3.5mm;
+            padding: 0.5mm;
             page-break-after: always;
             break-after: page;
             box-sizing: border-box;

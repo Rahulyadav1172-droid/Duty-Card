@@ -171,9 +171,9 @@ export default function LegalBwDutyCardModule({
             pdf.addPage('legal', 'portrait');
           }
 
-          // 10mm margins as per specification
-          const marginX = 10;
-          const marginY = 10;
+          // 5mm margins as per specification
+          const marginX = 5;
+          const marginY = 5;
           const printW = pdfWidth - (marginX * 2);
           const printH = (canvas.height * printW) / canvas.width;
           pdf.addImage(imgData, 'JPEG', marginX, marginY, printW, Math.min(printH, pdfHeight - (marginY * 2)));
@@ -447,31 +447,21 @@ export default function LegalBwDutyCardModule({
           overflow: 'hidden'
         }}
       >
-        {/* 1. Top Header Bar: Solid black background with crisp white text */}
-        <div style={{ backgroundColor: '#000000', color: '#ffffff', padding: isPreview ? '2.5px 5px' : '3px 6px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderBottom: '1.5px solid #000000', textAlign: 'center' }}>
-          <div>
-            <div style={{ fontSize: isPreview ? '6px' : '6.5px', fontWeight: '800', color: '#e2e8f0', letterSpacing: '0.3px', textTransform: 'uppercase' }}>
-              कार्यालय वरिष्ठ पुलिस अधीक्षक, जनपद अयोध्या
-            </div>
-            <div style={{ fontSize: isPreview ? '8.5px' : '9.5px', fontWeight: '900', color: '#ffffff', marginTop: '0.5px' }}>
-              ड्यूटी नियंत्रण एवं महत्वपूर्ण निर्देश
-            </div>
-          </div>
-        </div>
+        {/* (User Specification: No top header on Back Side. Clean white background) */}
 
-        {/* 2. Main Body Container: Sequential Fields */}
+        {/* Main Body Container: Sequential Fields */}
         <div style={{ padding: isPreview ? '3px 5px' : '4px 6px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', flex: 1, gap: '2.5px', boxSizing: 'border-box' }}>
           {/* Sequential Field 1: Zone (जोन) */}
           <div style={{ border: '1px solid #000000', borderRadius: '2px', padding: isPreview ? '1.5px 3.5px' : '2px 4px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: isPreview ? '6.5px' : '7.2px', lineHeight: 1.2 }}>
-            <span style={{ fontWeight: '900', color: '#000000', whiteSpace: 'nowrap' }}>1. जोन:</span>
+            <span style={{ fontWeight: '900', color: '#000000', whiteSpace: 'nowrap' }}>1. जोन (Zone):</span>
             <span style={{ color: '#000000', fontWeight: '700', textAlign: 'right', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '65%' }}>
               {cleanZone || '-'}
             </span>
           </div>
 
-          {/* Sequential Field 2: Zonal Command (जोनल कमान) */}
+          {/* Sequential Field 2: Zonal Command (जोनल कमान / प्रभारी) */}
           <div style={{ border: '1px solid #000000', borderRadius: '2px', padding: isPreview ? '1.5px 3.5px' : '2px 4px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: isPreview ? '6.5px' : '7.2px', lineHeight: 1.2 }}>
-            <span style={{ fontWeight: '900', color: '#000000', whiteSpace: 'nowrap' }}>2. जोनल कमान:</span>
+            <span style={{ fontWeight: '900', color: '#000000', whiteSpace: 'nowrap' }}>2. जोनल कमान / प्रभारी:</span>
             <span style={{ color: '#000000', fontWeight: '900', textAlign: 'right', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '65%' }}>
               {cleanZonalIncharge || '-'}
             </span>
@@ -479,15 +469,15 @@ export default function LegalBwDutyCardModule({
 
           {/* Sequential Field 3: Sector (सेक्टर) */}
           <div style={{ border: '1px solid #000000', borderRadius: '2px', padding: isPreview ? '1.5px 3.5px' : '2px 4px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: isPreview ? '6.5px' : '7.2px', lineHeight: 1.2 }}>
-            <span style={{ fontWeight: '900', color: '#000000', whiteSpace: 'nowrap' }}>3. सेक्टर:</span>
+            <span style={{ fontWeight: '900', color: '#000000', whiteSpace: 'nowrap' }}>3. सेक्टर (Sector):</span>
             <span style={{ color: '#000000', fontWeight: '700', textAlign: 'right', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '65%' }}>
               {cleanSector || '-'}
             </span>
           </div>
 
-          {/* Sequential Field 4: Sector Incharge with mobile (सेक्टर प्रभारी) */}
+          {/* Sequential Field 4: Sector Incharge with mobile (सेक्टर प्रभारी व मो०) */}
           <div style={{ border: '1px solid #000000', borderRadius: '2px', padding: isPreview ? '1.5px 3.5px' : '2px 4px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: isPreview ? '6.5px' : '7.2px', lineHeight: 1.2 }}>
-            <span style={{ fontWeight: '900', color: '#000000', whiteSpace: 'nowrap' }}>4. सेक्टर प्रभारी:</span>
+            <span style={{ fontWeight: '900', color: '#000000', whiteSpace: 'nowrap' }}>4. सेक्टर प्रभारी व मो०:</span>
             <span style={{ color: '#000000', fontWeight: '900', textAlign: 'right', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '65%' }}>
               {cleanSectorIncharge || '-'}
             </span>
@@ -495,20 +485,20 @@ export default function LegalBwDutyCardModule({
 
           {/* Sequential Field 5: Duty Time (ड्यूटी समय) */}
           <div style={{ border: '1.2px solid #000000', backgroundColor: '#f1f5f9', borderRadius: '2px', padding: isPreview ? '1.5px 3.5px' : '2px 4px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: isPreview ? '6.5px' : '7.2px', lineHeight: 1.2 }}>
-            <span style={{ fontWeight: '900', color: '#000000', whiteSpace: 'nowrap' }}>5. ड्यूटी समय:</span>
+            <span style={{ fontWeight: '900', color: '#000000', whiteSpace: 'nowrap' }}>5. ड्यूटी समय (Duty Time):</span>
             <span style={{ color: '#000000', fontWeight: '800', textAlign: 'right', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '65%' }}>
               {shiftTime}
             </span>
           </div>
 
-          {/* Sequential Field 6: Special Note (विशेष नोट) */}
+          {/* Sequential Field 6: Special Note (विशेष नोट / महत्वपूर्ण निर्देश) */}
           <div style={{ border: '1.2px solid #000000', borderRadius: '3px', padding: isPreview ? '2px 4px' : '2.5px 5px', fontSize: isPreview ? '6.2px' : '6.8px', lineHeight: 1.2, backgroundColor: '#ffffff' }}>
             <div style={{ fontWeight: '900', color: '#000000', borderBottom: '0.8px solid #000000', paddingBottom: '1px', marginBottom: '1.5px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span>6. विशेष नोट:</span>
+              <span>6. 📌 विशेष नोट / महत्वपूर्ण निर्देश:</span>
               <span style={{ fontSize: '5.2px', fontWeight: '900', backgroundColor: '#000000', color: '#ffffff', padding: '0.2px 3px', borderRadius: '2px' }}>अनिवार्य अनुपालन</span>
             </div>
             <div style={{ fontWeight: '600', color: '#000000' }}>
-              {activeNoteText || 'कृपया आवंटित ड्यूटी पॉइंट पर समय से रिपोर्ट करें एवं सतर्कतापूर्वक कर्तव्यों का निर्वहन करें।'}
+              {activeNoteText || '14 कोसी परिक्रमा में ड्यूटीरत कर्मी 14 कोसी परिक्रमा समाप्ति के बाद दिनांक 19.11.2026 को अपना अगला ड्यूटी कार्ड मेला कार्यालय सिंचाई डाक बंगला नया घाट अयोध्या से प्राप्त करना सुनिश्चित करेंगे।'}
             </div>
           </div>
         </div>
@@ -723,7 +713,7 @@ export default function LegalBwDutyCardModule({
 
           {/* Footer */}
           <div className="p-3 bg-slate-100 border-t border-slate-200 flex items-center justify-between text-[11px] text-slate-600">
-            <span className="font-mono font-bold">@page &#123; size: legal; margin: 10mm; &#125;</span>
+            <span className="font-mono font-bold">@page &#123; size: legal portrait; margin: 5mm; &#125;</span>
             {!isGenerating && (
               <button
                 onClick={onClose}
