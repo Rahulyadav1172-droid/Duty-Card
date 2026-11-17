@@ -40,7 +40,6 @@ export default function BulkLegalPdfModal({
 }) {
   const { language, t } = useLanguage();
   const [cardFormat, setCardFormat] = useState(initialFormat || 'id_badge');
-  const [badgeTheme, setBadgeTheme] = useState('bw'); // 'bw' (Clean Black & White Laser Theme) | 'color'
   const [badgeLayoutMode, setBadgeLayoutMode] = useState('side_by_side'); // 'side_by_side' (Front & Back side-by-side) | 'duplex'
   const [activeBatchType, setActiveBatchType] = useState('side_by_side'); // 'side_by_side' | 'front' | 'back'
   const [previewSide, setPreviewSide] = useState('front'); // 'front' | 'back'
@@ -114,8 +113,7 @@ export default function BulkLegalPdfModal({
       includeCoForce: cardFormat === 'id_badge' ? false : includeCoForce,
       includeBackSide: cardFormat === 'id_badge' ? true : includeBackSide,
       cardFormat,
-      badgeLayoutMode: cardFormat === 'id_badge' ? badgeLayoutMode : 'side_by_side',
-      theme: badgeTheme
+      badgeLayoutMode: cardFormat === 'id_badge' ? badgeLayoutMode : 'side_by_side'
     });
   };
 
@@ -616,314 +614,6 @@ export default function BulkLegalPdfModal({
     );
   };
 
-  // Helper to render Black & White Front ID Badge in React (for Canvas & Preview)
-  const renderBwIdBadgeHorizontalFrontReact = (duty, idx, isPreview = false) => {
-    if (!duty) {
-      return (
-        <div key={idx} style={{ border: '1.5px dashed #000000', borderRadius: '4px', minHeight: isPreview ? '140px' : '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '9px', fontWeight: 'bold' }}>
-          स्थान रिक्त
-        </div>
-      );
-    }
-
-    const cleanPno = (duty.pno && !String(duty.pno).toUpperCase().startsWith('DUTY-'))
-      ? String(duty.pno)
-      : (duty.id && !String(duty.id).toUpperCase().startsWith('DUTY-') && String(duty.id).length <= 12)
-        ? String(duty.id)
-        : null;
-
-    const cleanOfficerName = (duty.name || '').trim()
-      .replace(/,\s*\d{10}\b/g, '')
-      .replace(/\b\d{10}\b/g, '')
-      .replace(/[,।]?\s*नं0?[-:]?\s*$/g, '')
-      .replace(/[,।]?\s*नं\s*\(?.*$/g, '')
-      .replace(/,\s*$/, '')
-      .trim() || duty.name;
-
-    const effectiveRank = resolvePoliceRank(duty.rank, cleanOfficerName) || 'आरक्षी';
-    const displayCleanName = stripRankFromName(cleanOfficerName);
-
-    const qrData = JSON.stringify({
-      id: duty.id || 'DUTY',
-      name: duty.name || '',
-      duty_place: duty.duty_place || '',
-      mobile: duty.mobile || '',
-      auth: "AYODHYA_POLICE_SECURE_VERIFIED"
-    });
-
-    const passIdText = `ID: ${cleanPno || duty.id || 'DUTY-0001'}`;
-
-    return (
-      <div
-        key={idx}
-        style={{
-          border: '1.5px solid #000000',
-          borderRadius: '4px',
-          padding: 0,
-          backgroundColor: '#ffffff',
-          color: '#000000',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'space-between',
-          boxSizing: 'border-box',
-          fontSize: isPreview ? '8px' : '9px',
-          lineHeight: '1.15',
-          height: '100%',
-          overflow: 'hidden'
-        }}
-      >
-        {/* Top Black Header Banner */}
-        <div style={{ backgroundColor: '#000000', color: '#ffffff', padding: isPreview ? '2.5px 5px' : '3px 6px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '4px', borderBottom: '1.5px solid #000000' }}>
-          <img src="/badge.png" alt="Badge" style={{ width: isPreview ? '18px' : '22px', height: isPreview ? '18px' : '22px', objectFit: 'contain', filter: 'grayscale(100%) contrast(150%)', flexShrink: 0 }} />
-          <div style={{ textAlign: 'center', flex: 1, minWidth: 0, lineHeight: 1.1 }}>
-            <div style={{ fontSize: isPreview ? '6px' : '6.5px', fontWeight: '800', color: '#e2e8f0', letterSpacing: '0.3px', textTransform: 'uppercase' }}>
-              उत्तर प्रदेश पुलिस • जनपद अयोध्या
-            </div>
-            <div style={{ fontSize: isPreview ? '9.5px' : '11px', fontWeight: '900', color: '#ffffff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginTop: '0.5px' }}>
-              {eventTitle}
-            </div>
-            <div style={{ fontSize: isPreview ? '6.5px' : '7px', fontWeight: '800', color: '#cbd5e1' }}>
-              {eventSubtitle || 'ड्यूटी कार्ड-2026'}
-            </div>
-          </div>
-          <img src="/badge.png" alt="Badge" style={{ width: isPreview ? '18px' : '22px', height: isPreview ? '18px' : '22px', objectFit: 'contain', filter: 'grayscale(100%) contrast(150%)', flexShrink: 0 }} />
-        </div>
-
-        {/* Main Body Container */}
-        <div style={{ padding: isPreview ? '2.5px 5px' : '3.5px 6px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', flex: 1, gap: '2.5px', boxSizing: 'border-box' }}>
-          {/* Officer Strip */}
-          <div style={{ display: 'flex', alignItems: 'stretch', gap: '5px', border: '1px solid #000000', borderRadius: '3px', padding: isPreview ? '2px 4px' : '2.5px 5px', backgroundColor: '#ffffff' }}>
-            <div style={{ width: isPreview ? '26px' : '30px', height: isPreview ? '34px' : '38px', border: '1px solid #000000', borderRadius: '2px', backgroundColor: '#ffffff', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flexShrink: 0, overflow: 'hidden' }}>
-              {duty.photo ? (
-                <img src={duty.photo} alt={duty.name} style={{ width: '100%', height: '100%', objectFit: 'cover', filter: 'grayscale(100%)' }} />
-              ) : (
-                <div style={{ fontSize: '5.5px', fontWeight: '900', color: '#000000', textAlign: 'center', lineHeight: 1 }}>
-                  फोटो
-                </div>
-              )}
-            </div>
-
-            <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '3.5px', flexWrap: 'wrap' }}>
-                  <span style={{ fontSize: isPreview ? '9.5px' : '10.5px', fontWeight: '900', color: '#000000', lineHeight: 1.15 }}>
-                    {displayCleanName || duty.name}
-                  </span>
-                  <span style={{ backgroundColor: '#000000', color: '#ffffff', padding: '0.5px 3.5px', borderRadius: '2px', fontSize: isPreview ? '6px' : '6.8px', fontWeight: '900', lineHeight: 1 }}>
-                    [ {effectiveRank} ]
-                  </span>
-                </div>
-
-                <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: isPreview ? '7px' : '8px', color: '#000000', marginTop: '1px' }}>
-                  <span style={{ fontFamily: 'monospace', fontSize: isPreview ? '8px' : '9px', fontWeight: '900' }}>
-                    मो०: {duty.mobile || '-'}
-                  </span>
-                  {cleanPno && (
-                    <span style={{ fontFamily: 'monospace', fontSize: isPreview ? '6.5px' : '7.2px' }}>
-                      PNO: <strong>{cleanPno}</strong>
-                    </span>
-                  )}
-                </div>
-              </div>
-
-              <div style={{ fontSize: isPreview ? '6.2px' : '6.8px', color: '#000000', borderTop: '0.8px solid #000000', paddingTop: '1px', lineHeight: 1.1 }}>
-                मूल तैनाती: <strong>{duty.posting || duty.posting_place || duty.thana || (duty.district ? `जनपद ${duty.district}` : '-')}</strong>
-              </div>
-            </div>
-          </div>
-
-          {/* Prominent Assigned Duty Point Box */}
-          <div style={{ border: '1.5px solid #000000', borderRadius: '3px', padding: isPreview ? '2px 4px' : '2.5px 5px', textAlign: 'center', backgroundColor: '#ffffff' }}>
-            <div style={{ fontSize: isPreview ? '6px' : '6.5px', fontWeight: '900', color: '#ffffff', backgroundColor: '#000000', padding: '1px 3px', borderRadius: '1px', letterSpacing: '0.3px', textTransform: 'uppercase', marginBottom: '1px' }}>
-              🚩 कर्तव्य स्थल (ASSIGNED DUTY POINT)
-            </div>
-            <div style={{ fontSize: isPreview ? '10.5px' : '12px', fontWeight: '900', color: '#000000', lineHeight: 1.2 }}>
-              {duty.duty_place || '-'}
-            </div>
-          </div>
-
-          {/* Footer Row */}
-          <div style={{ borderTop: '1px solid #000000', paddingTop: '1.5px', marginTop: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '3px' }}>
-              <div style={{ backgroundColor: '#ffffff', border: '0.8px solid #000000', borderRadius: '2px', padding: '0.5px' }}>
-                <QRCodeSVG value={qrData} size={isPreview ? 18 : 22} level="M" fgColor="#000000" bgColor="#ffffff" />
-              </div>
-              <div>
-                <div style={{ fontSize: '5.5px', fontWeight: '900', color: '#ffffff', backgroundColor: '#000000', padding: '0.5px 3px', borderRadius: '2px', whiteSpace: 'nowrap' }}>
-                  ✓ सत्यापित पास
-                </div>
-                <div style={{ fontSize: '6px', fontFamily: 'monospace', color: '#000000', fontWeight: '900', marginTop: '0.5px' }}>
-                  {passIdText}
-                </div>
-              </div>
-            </div>
-
-            <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-              {signatureImg ? (
-                <img src={signatureImg} alt="Sign" style={{ height: isPreview ? '12px' : '15px', maxWidth: '60px', objectFit: 'contain', filter: 'grayscale(100%) contrast(150%)' }} />
-              ) : (
-                <div style={{ fontSize: '6px', fontStyle: 'italic', color: '#000000', fontWeight: 'bold' }}>(हस्ताक्षरित)</div>
-              )}
-              <div style={{ fontSize: isPreview ? '6px' : '6.5px', fontWeight: '900', color: '#000000', lineHeight: 1, marginTop: '1px' }}>
-                {signatoryText}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Bottom Black Footer */}
-        <div style={{ backgroundColor: '#000000', color: '#ffffff', textAlign: 'center', fontSize: isPreview ? '5.2px' : '5.8px', fontWeight: '900', letterSpacing: '0.6px', padding: '1.5px 4px', borderTop: '1px solid #000000', textTransform: 'uppercase' }}>
-          DESIGN AND DEVELOPED BY SMART CELL AYODHYA
-        </div>
-      </div>
-    );
-  };
-
-  // Helper to render Black & White Back ID Badge in React (for Canvas & Preview)
-  const renderBwIdBadgeHorizontalBackReact = (duty, idx, isPreview = false) => {
-    if (!duty) {
-      return (
-        <div key={idx} style={{ border: '1.5px dashed #000000', borderRadius: '4px', minHeight: isPreview ? '140px' : '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '9px', fontWeight: 'bold' }}>
-          स्थान रिक्त
-        </div>
-      );
-    }
-
-    const activeNoteText = (isNoteEnabled !== false && customNote) ? customNote : (isNoteEnabled ? (duty.note || '') : '');
-
-    let cleanZone = (duty.zone || '').trim();
-    let cleanZonalIncharge = (
-      duty.zonal_incharge || 
-      duty.zonal || 
-      duty.zonal_officer || 
-      duty.zonalOfficer || 
-      duty.zone_incharge || 
-      duty.zonal_magistrate ||
-      duty['जोनाल प्रभारी'] ||
-      duty['जोनल प्रभारी'] ||
-      ''
-    ).trim();
-    if (cleanZonalIncharge === '-') cleanZonalIncharge = '';
-
-    if (!cleanZonalIncharge && cleanZone.includes('/')) {
-      const parts = cleanZone.split('/');
-      cleanZone = parts[0].trim();
-      cleanZonalIncharge = parts.slice(1).join('/').trim();
-    }
-    if (cleanZonalIncharge && cleanZone.includes(cleanZonalIncharge)) {
-      cleanZone = cleanZone.replace(cleanZonalIncharge, '').replace(/\/+\s*$/, '').trim();
-    }
-
-    let cleanSector = (duty.sector || '').trim();
-    let cleanSectorIncharge = (
-      duty.sector_incharge || 
-      duty.sector_officer || 
-      duty.sectorOfficer || 
-      duty.sectorIncharge || 
-      duty.sector_magistrate || 
-      duty.sectorMagistrate || 
-      duty.incharge || 
-      duty['सेक्टर प्रभारी'] ||
-      duty['सेक्टर अधिकारी'] ||
-      duty['प्रभारी'] ||
-      ''
-    ).trim();
-    if (cleanSectorIncharge === '-') cleanSectorIncharge = '';
-
-    if (!cleanSectorIncharge && cleanSector.includes('/')) {
-      const parts = cleanSector.split('/');
-      cleanSector = parts[0].trim();
-      cleanSectorIncharge = parts.slice(1).join('/').trim();
-    }
-    if (cleanSectorIncharge && cleanSector.includes(cleanSectorIncharge)) {
-      cleanSector = cleanSector.replace(cleanSectorIncharge, '').replace(/\/+\s*$/, '').trim();
-    }
-
-    const shiftTime = duty.shift || 'दिनांक 16.11.2026 से 19.11.2026 (प्रथम पाली: 22:00 से 09:30 बजे तक)';
-
-    return (
-      <div
-        key={idx}
-        style={{
-          border: '1.5px solid #000000',
-          borderRadius: '4px',
-          padding: 0,
-          backgroundColor: '#ffffff',
-          color: '#000000',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'space-between',
-          boxSizing: 'border-box',
-          fontSize: isPreview ? '8px' : '9px',
-          lineHeight: '1.2',
-          height: '100%',
-          overflow: 'hidden'
-        }}
-      >
-        {/* (User Specification: No top header on Back Side. Clean white background) */}
-
-        {/* Main Body Container: Sequential Fields */}
-        <div style={{ padding: isPreview ? '3px 5px' : '4px 6px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', flex: 1, gap: '2.5px', boxSizing: 'border-box' }}>
-          {/* Sequential Field 1: Zone */}
-          <div style={{ border: '1px solid #000000', borderRadius: '2px', padding: isPreview ? '1.5px 3.5px' : '2px 4px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: isPreview ? '6.5px' : '7.2px', lineHeight: 1.2 }}>
-            <span style={{ fontWeight: '900', color: '#000000', whiteSpace: 'nowrap' }}>1. जोन (Zone):</span>
-            <span style={{ color: '#000000', fontWeight: '700', textAlign: 'right', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '65%' }}>
-              {cleanZone || '-'}
-            </span>
-          </div>
-
-          {/* Sequential Field 2: Zonal Command */}
-          <div style={{ border: '1px solid #000000', borderRadius: '2px', padding: isPreview ? '1.5px 3.5px' : '2px 4px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: isPreview ? '6.5px' : '7.2px', lineHeight: 1.2 }}>
-            <span style={{ fontWeight: '900', color: '#000000', whiteSpace: 'nowrap' }}>2. जोनल कमान / प्रभारी:</span>
-            <span style={{ color: '#000000', fontWeight: '900', textAlign: 'right', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '65%' }}>
-              {cleanZonalIncharge || '-'}
-            </span>
-          </div>
-
-          {/* Sequential Field 3: Sector */}
-          <div style={{ border: '1px solid #000000', borderRadius: '2px', padding: isPreview ? '1.5px 3.5px' : '2px 4px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: isPreview ? '6.5px' : '7.2px', lineHeight: 1.2 }}>
-            <span style={{ fontWeight: '900', color: '#000000', whiteSpace: 'nowrap' }}>3. सेक्टर (Sector):</span>
-            <span style={{ color: '#000000', fontWeight: '700', textAlign: 'right', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '65%' }}>
-              {cleanSector || '-'}
-            </span>
-          </div>
-
-          {/* Sequential Field 4: Sector Incharge */}
-          <div style={{ border: '1px solid #000000', borderRadius: '2px', padding: isPreview ? '1.5px 3.5px' : '2px 4px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: isPreview ? '6.5px' : '7.2px', lineHeight: 1.2 }}>
-            <span style={{ fontWeight: '900', color: '#000000', whiteSpace: 'nowrap' }}>4. सेक्टर प्रभारी व मो०:</span>
-            <span style={{ color: '#000000', fontWeight: '900', textAlign: 'right', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '65%' }}>
-              {cleanSectorIncharge || '-'}
-            </span>
-          </div>
-
-          {/* Sequential Field 5: Duty Time */}
-          <div style={{ border: '1.2px solid #000000', backgroundColor: '#f1f5f9', borderRadius: '2px', padding: isPreview ? '1.5px 3.5px' : '2px 4px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: isPreview ? '6.5px' : '7.2px', lineHeight: 1.2 }}>
-            <span style={{ fontWeight: '900', color: '#000000', whiteSpace: 'nowrap' }}>5. ड्यूटी समय (Duty Time):</span>
-            <span style={{ color: '#000000', fontWeight: '800', textAlign: 'right', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '65%' }}>
-              {shiftTime}
-            </span>
-          </div>
-
-          {/* Sequential Field 6: Special Note */}
-          <div style={{ border: '1.2px solid #000000', borderRadius: '3px', padding: isPreview ? '2px 4px' : '2.5px 5px', fontSize: isPreview ? '6.2px' : '6.8px', lineHeight: 1.2, backgroundColor: '#ffffff' }}>
-            <div style={{ fontWeight: '900', color: '#000000', borderBottom: '0.8px solid #000000', paddingBottom: '1px', marginBottom: '1.5px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span>6. 📌 विशेष नोट / महत्वपूर्ण निर्देश:</span>
-              <span style={{ fontSize: '5.2px', fontWeight: '900', backgroundColor: '#000000', color: '#ffffff', padding: '0.2px 3px', borderRadius: '2px' }}>अनिवार्य अनुपालन</span>
-            </div>
-            <div style={{ fontWeight: '600', color: '#000000' }}>
-              {activeNoteText || '14 कोसी परिक्रमा में ड्यूटीरत कर्मी 14 कोसी परिक्रमा समाप्ति के बाद दिनांक 19.11.2026 को अपना अगला ड्यूटी कार्ड मेला कार्यालय सिंचाई डाक बंगला नया घाट अयोध्या से प्राप्त करना सुनिश्चित करेंगे।'}
-            </div>
-          </div>
-        </div>
-
-        {/* Bottom Black Footer */}
-        <div style={{ backgroundColor: '#000000', color: '#ffffff', textAlign: 'center', fontSize: isPreview ? '5.2px' : '5.8px', fontWeight: '900', letterSpacing: '0.6px', padding: '1.5px 4px', borderTop: '1px solid #000000', textTransform: 'uppercase' }}>
-          DESIGN AND DEVELOPED BY SMART CELL AYODHYA
-        </div>
-      </div>
-    );
-  };
-
   const renderIdBadgeFrontReact = renderIdBadgeHorizontalFrontReact;
   const renderIdBadgeBackReact = renderIdBadgeHorizontalBackReact;
   const renderIdBadgeReact = renderIdBadgeHorizontalFrontReact;
@@ -933,11 +623,6 @@ export default function BulkLegalPdfModal({
     if (!duty) return <div key={idx} style={{ border: '1px dashed #cbd5e1', borderRadius: '6px' }} />;
 
     if (cardFormat === 'id_badge') {
-      if (badgeTheme === 'bw') {
-        return (idx % 2 === 0)
-          ? renderBwIdBadgeHorizontalFrontReact(duty, idx, false)
-          : renderBwIdBadgeHorizontalBackReact(duty, idx, false);
-      }
       return (idx % 2 === 0)
         ? renderIdBadgeHorizontalFrontReact(duty, idx, false)
         : renderIdBadgeHorizontalBackReact(duty, idx, false);
@@ -1382,46 +1067,15 @@ export default function BulkLegalPdfModal({
             {/* 2A. ID BADGE SPECIFIC CONTROLS & LIVE PREVIEW */}
             {cardFormat === 'id_badge' ? (
               <div className="space-y-3">
-                {/* Theme Selector (Clean B&W Laser vs Color) */}
-                <div className="flex items-center justify-between p-2.5 bg-slate-100 rounded-xl border border-slate-300">
-                  <span className="font-black text-xs text-slate-800">प्रिंट थीम (Print Theme):</span>
-                  <div className="flex items-center gap-1.5">
-                    <button
-                      type="button"
-                      onClick={() => setBadgeTheme('bw')}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
-                        badgeTheme === 'bw'
-                          ? 'bg-black text-white shadow-xs ring-2 ring-black'
-                          : 'bg-white text-slate-700 hover:bg-slate-200 border border-slate-300'
-                      }`}
-                    >
-                      <span>⬛ B&W (लेजर प्रिंट)</span>
-                      {badgeTheme === 'bw' && <Check className="w-3.5 h-3.5" />}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setBadgeTheme('color')}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
-                        badgeTheme === 'color'
-                          ? 'bg-[#0b132b] text-white shadow-xs ring-2 ring-amber-500'
-                          : 'bg-white text-slate-700 hover:bg-slate-200 border border-slate-300'
-                      }`}
-                    >
-                      <span>🎨 रंगीन (Color)</span>
-                      {badgeTheme === 'color' && <Check className="w-3.5 h-3.5" />}
-                    </button>
-                  </div>
-                </div>
-
                 {/* ID Badge Info Banner */}
-                <div className={`p-3 rounded-2xl space-y-1.5 ${badgeTheme === 'bw' ? 'bg-slate-100 border border-black text-black' : 'bg-amber-50/90 border border-amber-300/80 text-amber-950'}`}>
+                <div className="p-3 rounded-2xl space-y-1.5 bg-amber-50/90 border border-amber-300/80 text-amber-950">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2 font-black text-xs">
-                      <Sparkles className="w-4 h-4 shrink-0" />
-                      <span>{badgeTheme === 'bw' ? 'क्लीन ब्लैक एंड व्हाइट लेजर ID कार्ड' : 'विजिटिंग कार्ड / पॉलीबैग साइज ID कार्ड'} (4 कार्ड प्रति लीगल पेज)</span>
+                      <Sparkles className="w-4 h-4 shrink-0 text-amber-600" />
+                      <span>विजिटिंग कार्ड / पॉलीबैग साइज ID कार्ड (4 कार्ड प्रति लीगल पेज)</span>
                     </div>
-                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${badgeTheme === 'bw' ? 'bg-black text-white border-black' : 'bg-amber-100 text-amber-700 border-amber-300'}`}>
-                      ✓ Legal 10mm Margins
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full border bg-amber-100 text-amber-700 border-amber-300">
+                      ✓ Legal 5mm Margins
                     </span>
                   </div>
                   <div className="text-[10.5px] leading-relaxed font-medium space-y-0.5">
@@ -1429,10 +1083,10 @@ export default function BulkLegalPdfModal({
                       • <strong>1 लीगल पेज = 4 जवानों के पूरे कार्ड (8 ब्लॉक):</strong> प्रत्येक पंक्ति में बायीं ओर फ्रंट और दायीं ओर बैक पास-पास छपेंगे।
                     </div>
                     <div>
-                      • <strong>{badgeTheme === 'bw' ? '100% मोनोक्रोम लेजर फ्रेंडली:' : 'विजिटिंग कार्ड साइज (~103mm × 85mm):'}</strong> {badgeTheme === 'bw' ? 'सॉलिड ब्लैक हेडर, शार्प बॉर्डर्स, कोई ग्रे स्मज नहीं, जेरॉक्स/लेजर पर एकदम क्रिस्प।' : '3 सीधे कट लगाकर बीच से मोड़ते ही मानक लैनयार्ड पॉलीबैग में पूरी तरह फिट।'}
+                      • <strong>विजिटिंग कार्ड साइज (~101mm × 85mm):</strong> 3 सीधे कट लगाकर बीच से मोड़ते ही मानक लैनयार्ड पॉलीबैग में पूरी तरह फिट।
                     </div>
                     <div>
-                      • <strong>स्मार्ट सेल फूटर:</strong> दोनों साइड नीचे <em>"DESIGN AND DEVELOPED BY SMART CELL AYODHYA"</em> का सेंटर्ड ब्लैक बैनर।
+                      • <strong>स्मार्ट सेल फूटर:</strong> दोनों साइड नीचे <em>"DESIGN AND DEVELOPED BY SMART CELL AYODHYA"</em> का सेंटर्ड बैनर।
                     </div>
                   </div>
                 </div>
@@ -1444,30 +1098,26 @@ export default function BulkLegalPdfModal({
                       <div className="flex items-center gap-1.5">
                         <CreditCard className="w-3.5 h-3.5 text-black" />
                         <span className="font-black text-slate-800 text-xs">
-                          लाइव आईडी कार्ड नमूना ({badgeTheme === 'bw' ? 'B&W थीम' : 'कलर थीम'}):
+                          लाइव आईडी कार्ड नमूना:
                         </span>
                       </div>
-                      <span className="text-[10px] font-bold text-black bg-white px-2 py-0.5 rounded-full border border-black">
+                      <span className="text-[10px] font-bold text-amber-800 bg-amber-100 px-2 py-0.5 rounded-full border border-amber-300">
                         ✓ 4 कार्ड प्रति लीगल पेज
                       </span>
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 bg-slate-200/70 p-2 rounded-xl border border-slate-300">
                       <div className="bg-white rounded-lg shadow-xs border border-slate-300 p-1 flex flex-col">
-                        <div className="text-[9px] font-black text-white bg-black px-2 py-0.5 rounded text-center mb-1">
+                        <div className="text-[9px] font-black text-white bg-slate-900 px-2 py-0.5 rounded text-center mb-1">
                           1. मुख पृष्ठ (FRONT)
                         </div>
-                        {badgeTheme === 'bw'
-                          ? renderBwIdBadgeHorizontalFrontReact(targetRecords[0], 0, true)
-                          : renderIdBadgeHorizontalFrontReact(targetRecords[0], 0, true)}
+                        {renderIdBadgeHorizontalFrontReact(targetRecords[0], 0, true)}
                       </div>
                       <div className="bg-white rounded-lg shadow-xs border border-slate-300 p-1 flex flex-col">
-                        <div className="text-[9px] font-black text-black bg-slate-100 px-2 py-0.5 rounded text-center mb-1 border border-slate-300">
-                          2. पृष्ठ भाग (BACK - No Header)
+                        <div className="text-[9px] font-black text-slate-900 bg-slate-100 px-2 py-0.5 rounded text-center mb-1 border border-slate-300">
+                          2. पृष्ठ भाग (BACK)
                         </div>
-                        {badgeTheme === 'bw'
-                          ? renderBwIdBadgeHorizontalBackReact(targetRecords[0], 1, true)
-                          : renderIdBadgeHorizontalBackReact(targetRecords[0], 1, true)}
+                        {renderIdBadgeHorizontalBackReact(targetRecords[0], 1, true)}
                       </div>
                     </div>
                     <div className="text-[9.5px] text-center text-slate-600 font-bold">
