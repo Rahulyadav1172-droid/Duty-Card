@@ -392,7 +392,7 @@ export default function DutyCard({
       container.style.width = '740px';
       container.style.backgroundColor = '#ffffff';
       container.style.padding = '16px';
-      container.style.fontFamily = "'Noto Sans Devanagari', -apple-system, BlinkMacSystemFont, sans-serif";
+      container.style.fontFamily = "'Kokila', 'Mangal', 'Noto Sans Devanagari', -apple-system, BlinkMacSystemFont, sans-serif";
       container.innerHTML = DOMPurify.sanitize(passHtml);
 
       const passBox = container.querySelector('.pass-container') || container;

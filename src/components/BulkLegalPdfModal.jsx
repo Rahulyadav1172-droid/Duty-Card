@@ -781,18 +781,19 @@ export default function BulkLegalPdfModal({
           flexDirection: 'column',
           justifyContent: hasCoForce ? 'space-between' : 'flex-start',
           boxSizing: 'border-box',
-          fontSize: layoutMode === 2 ? '10px' : '9.5px',
-          lineHeight: '1.25'
+          fontSize: layoutMode === 2 ? '13px' : (layoutMode === 4 ? '11px' : '9.5px'),
+          lineHeight: '1.3',
+          fontFamily: "'Kokila', 'Mangal', 'Mukta', 'Noto Sans Devanagari', sans-serif"
         }}
       >
         {/* Card Top Header */}
         <div style={{ borderBottom: '2px solid #0b132b', paddingBottom: '3px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <img src="/badge.png" alt="Badge" style={{ width: layoutMode === 2 ? '36px' : '30px', height: layoutMode === 2 ? '36px' : '30px', objectFit: 'contain' }} />
           <div style={{ textAlign: 'center', flex: 1, padding: '0 4px' }}>
-            <div style={{ fontSize: layoutMode === 2 ? '13px' : '11.5px', fontWeight: '900', color: '#000000', lineHeight: '1.2' }}>
+            <div style={{ fontSize: layoutMode === 2 ? '18px' : (layoutMode === 4 ? '15px' : '11.5px'), fontWeight: '900', color: '#000000', lineHeight: '1.2' }}>
               {eventTitle}
             </div>
-            <div style={{ fontSize: layoutMode === 2 ? '9.5px' : '8.5px', fontWeight: 'bold', color: '#333333' }}>
+            <div style={{ fontSize: layoutMode === 2 ? '12px' : (layoutMode === 4 ? '10.5px' : '8.5px'), fontWeight: 'bold', color: '#333333' }}>
               {eventSubtitle}
             </div>
           </div>
@@ -813,15 +814,15 @@ export default function BulkLegalPdfModal({
 
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
             <div>
-              <div style={{ fontSize: layoutMode === 2 ? '8.5px' : '7.5px', fontWeight: 'bold', color: '#64748b' }}>अधिकारी / कर्मचारी:</div>
-              <div style={{ fontSize: layoutMode === 2 ? (hasCoForce ? '11.5px' : '13px') : '10px', fontWeight: '900', color: '#000000', lineHeight: '1.2', display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '4px', wordBreak: 'break-word' }}>
+              <div style={{ fontSize: layoutMode === 2 ? '10px' : (layoutMode === 4 ? '9px' : '7.5px'), fontWeight: 'bold', color: '#64748b' }}>अधिकारी / कर्मचारी:</div>
+              <div style={{ fontSize: layoutMode === 2 ? (hasCoForce ? '14px' : '17px') : (layoutMode === 4 ? '14px' : '10px'), fontWeight: '900', color: '#000000', lineHeight: '1.2', display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '4px', wordBreak: 'break-word' }}>
                 <span>{duty.name || duty.composite_details || cleanOfficerName || '-'}</span>
               </div>
-              <div style={{ fontSize: layoutMode === 2 ? (hasCoForce ? '9.5px' : '11px') : '8.5px', fontFamily: 'monospace', fontWeight: 'bold', color: '#1e293b' }}>
+              <div style={{ fontSize: layoutMode === 2 ? (hasCoForce ? '12px' : '14px') : (layoutMode === 4 ? '12px' : '8.5px'), fontFamily: 'monospace', fontWeight: 'bold', color: '#1e293b' }}>
                 {duty.mobile || '-'}
               </div>
             </div>
-            <div style={{ fontSize: layoutMode === 2 ? '8.5px' : '7.5px', color: '#334155', borderTop: '1px solid #cbd5e1', paddingTop: '2px', display: 'flex', justifyContent: 'space-between' }}>
+            <div style={{ fontSize: layoutMode === 2 ? '11px' : (layoutMode === 4 ? '9.5px' : '7.5px'), color: '#334155', borderTop: '1px solid #cbd5e1', paddingTop: '2px', display: 'flex', justifyContent: 'space-between' }}>
               {cleanPno ? (
                 <span>P.No: <strong>{cleanPno}</strong></span>
               ) : null}
@@ -831,61 +832,61 @@ export default function BulkLegalPdfModal({
         </div>
 
         {/* Duty Details Table */}
-        <table style={{ width: '100%', flex: hasCoForce ? 'none' : 1, borderCollapse: 'collapse', fontSize: layoutMode === 2 ? (hasCoForce ? '11px' : '12.5px') : '8.5px', border: '1.5px solid #0f172a', margin: layoutMode === 2 ? (hasCoForce ? '6px 0 4px' : '10px 0') : '2px 0', lineHeight: '1.4' }}>
+        <table style={{ width: '100%', flex: hasCoForce ? 'none' : 1, borderCollapse: 'collapse', fontSize: layoutMode === 2 ? (hasCoForce ? '13px' : '15px') : (layoutMode === 4 ? '12.5px' : '8.5px'), border: '1.5px solid #0f172a', margin: layoutMode === 2 ? (hasCoForce ? '6px 0 4px' : '10px 0') : '2px 0', lineHeight: '1.4' }}>
           <tbody>
             <tr style={{ borderBottom: '1px solid #cbd5e1' }}>
-              <td style={{ width: '28%', backgroundColor: '#f1f5f9', fontWeight: '800', color: '#0f172a', padding: layoutMode === 2 ? (hasCoForce ? '5px 8px' : '7px 10px') : '2.5px 4px', borderRight: '1.5px solid #cbd5e1', whiteSpace: 'nowrap' }}>ड्यूटी स्थल</td>
-              <td style={{ padding: layoutMode === 2 ? (hasCoForce ? '5px 8px' : '7px 10px') : '2.5px 4px', fontWeight: '900', color: '#78350f', backgroundColor: '#fef3c7', fontSize: layoutMode === 2 ? (hasCoForce ? '12.5px' : '14.5px') : '9.5px' }}>{duty.duty_place || '-'}</td>
+              <td style={{ width: '28%', backgroundColor: '#f1f5f9', fontWeight: '900', color: '#0f172a', padding: layoutMode === 2 ? (hasCoForce ? '6px 9px' : '8px 12px') : (layoutMode === 4 ? '4.5px 7px' : '2.5px 4px'), borderRight: '1.5px solid #cbd5e1', whiteSpace: 'nowrap', fontSize: layoutMode === 2 ? (hasCoForce ? '13px' : '15px') : (layoutMode === 4 ? '12.5px' : '8.5px') }}>ड्यूटी स्थल</td>
+              <td style={{ padding: layoutMode === 2 ? (hasCoForce ? '6px 9px' : '8px 12px') : (layoutMode === 4 ? '4.5px 7px' : '2.5px 4px'), fontWeight: '900', color: '#78350f', backgroundColor: '#fef3c7', fontSize: layoutMode === 2 ? (hasCoForce ? '16px' : '20px') : (layoutMode === 4 ? '16px' : '9.5px') }}>{duty.duty_place || '-'}</td>
             </tr>
             <tr style={{ borderBottom: '1px solid #cbd5e1' }}>
-              <td style={{ backgroundColor: '#f1f5f9', fontWeight: '800', color: '#0f172a', padding: layoutMode === 2 ? (hasCoForce ? '5px 8px' : '7px 10px') : '2.5px 4px', borderRight: '1.5px solid #cbd5e1', whiteSpace: 'nowrap' }}>दिनाँक व समय</td>
-              <td style={{ padding: layoutMode === 2 ? (hasCoForce ? '5px 8px' : '7px 10px') : '2.5px 4px', fontWeight: 'bold' }}>{duty.shift || '-'}</td>
+              <td style={{ backgroundColor: '#f1f5f9', fontWeight: '900', color: '#0f172a', padding: layoutMode === 2 ? (hasCoForce ? '6px 9px' : '8px 12px') : (layoutMode === 4 ? '4.5px 7px' : '2.5px 4px'), borderRight: '1.5px solid #cbd5e1', whiteSpace: 'nowrap', fontSize: layoutMode === 2 ? (hasCoForce ? '13px' : '15px') : (layoutMode === 4 ? '12.5px' : '8.5px') }}>दिनाँक व समय</td>
+              <td style={{ padding: layoutMode === 2 ? (hasCoForce ? '6px 9px' : '8px 12px') : (layoutMode === 4 ? '4.5px 7px' : '2.5px 4px'), fontWeight: 'bold', fontSize: layoutMode === 2 ? (hasCoForce ? '13px' : '15px') : (layoutMode === 4 ? '12.5px' : '8.5px') }}>{duty.shift || '-'}</td>
             </tr>
             {!hasCoForce ? (
               <>
                 <tr style={{ borderBottom: '1px solid #cbd5e1' }}>
-                  <td style={{ backgroundColor: '#f1f5f9', fontWeight: '800', color: '#0f172a', padding: layoutMode === 2 ? '7px 10px' : '2.5px 4px', borderRight: '1.5px solid #cbd5e1', whiteSpace: 'nowrap' }}>जोन</td>
-                  <td style={{ padding: layoutMode === 2 ? '7px 10px' : '2.5px 4px', fontWeight: '600' }}>{cleanZone || '-'}</td>
+                  <td style={{ backgroundColor: '#f1f5f9', fontWeight: '900', color: '#0f172a', padding: layoutMode === 2 ? '8px 12px' : (layoutMode === 4 ? '4.5px 7px' : '2.5px 4px'), borderRight: '1.5px solid #cbd5e1', whiteSpace: 'nowrap', fontSize: layoutMode === 2 ? '15px' : (layoutMode === 4 ? '12.5px' : '8.5px') }}>जोन</td>
+                  <td style={{ padding: layoutMode === 2 ? '8px 12px' : (layoutMode === 4 ? '4.5px 7px' : '2.5px 4px'), fontWeight: '700', fontSize: layoutMode === 2 ? '15px' : (layoutMode === 4 ? '12.5px' : '8.5px') }}>{cleanZone || '-'}</td>
                 </tr>
                 {cleanZonalIncharge && (
                   <tr style={{ borderBottom: '1px solid #cbd5e1' }}>
-                    <td style={{ backgroundColor: '#f8fafc', fontWeight: '800', color: '#0369a1', padding: layoutMode === 2 ? '7px 10px' : '2.5px 4px', borderRight: '1.5px solid #cbd5e1', whiteSpace: 'nowrap' }}>जोनल प्रभारी</td>
-                    <td style={{ padding: layoutMode === 2 ? '7px 10px' : '2.5px 4px', fontWeight: '900', color: '#0369a1' }}>{cleanZonalIncharge}</td>
+                    <td style={{ backgroundColor: '#f8fafc', fontWeight: '900', color: '#0369a1', padding: layoutMode === 2 ? '8px 12px' : (layoutMode === 4 ? '4.5px 7px' : '2.5px 4px'), borderRight: '1.5px solid #cbd5e1', whiteSpace: 'nowrap', fontSize: layoutMode === 2 ? '15px' : (layoutMode === 4 ? '12.5px' : '8.5px') }}>जोनल प्रभारी</td>
+                    <td style={{ padding: layoutMode === 2 ? '8px 12px' : (layoutMode === 4 ? '4.5px 7px' : '2.5px 4px'), fontWeight: '900', color: '#0369a1', fontSize: layoutMode === 2 ? '15px' : (layoutMode === 4 ? '12.5px' : '8.5px') }}>{cleanZonalIncharge}</td>
                   </tr>
                 )}
                 <tr style={{ borderBottom: '1px solid #cbd5e1' }}>
-                  <td style={{ backgroundColor: '#f1f5f9', fontWeight: '800', color: '#0f172a', padding: layoutMode === 2 ? '7px 10px' : '2.5px 4px', borderRight: '1.5px solid #cbd5e1', whiteSpace: 'nowrap' }}>सेक्टर</td>
-                  <td style={{ padding: layoutMode === 2 ? '7px 10px' : '2.5px 4px', fontWeight: '600' }}>{cleanSector || '-'}</td>
+                  <td style={{ backgroundColor: '#f1f5f9', fontWeight: '900', color: '#0f172a', padding: layoutMode === 2 ? '8px 12px' : (layoutMode === 4 ? '4.5px 7px' : '2.5px 4px'), borderRight: '1.5px solid #cbd5e1', whiteSpace: 'nowrap', fontSize: layoutMode === 2 ? '15px' : (layoutMode === 4 ? '12.5px' : '8.5px') }}>सेक्टर</td>
+                  <td style={{ padding: layoutMode === 2 ? '8px 12px' : (layoutMode === 4 ? '4.5px 7px' : '2.5px 4px'), fontWeight: '700', fontSize: layoutMode === 2 ? '15px' : (layoutMode === 4 ? '12.5px' : '8.5px') }}>{cleanSector || '-'}</td>
                 </tr>
                 {cleanSectorIncharge && (
                   <tr style={{ borderBottom: '1px solid #cbd5e1' }}>
-                    <td style={{ backgroundColor: '#f8fafc', fontWeight: '800', color: '#0369a1', padding: layoutMode === 2 ? '7px 10px' : '2.5px 4px', borderRight: '1.5px solid #cbd5e1', whiteSpace: 'nowrap' }}>सेक्टर प्रभारी</td>
-                    <td style={{ padding: layoutMode === 2 ? '7px 10px' : '2.5px 4px', fontWeight: '900', color: '#0369a1' }}>{cleanSectorIncharge}</td>
+                    <td style={{ backgroundColor: '#f8fafc', fontWeight: '900', color: '#0369a1', padding: layoutMode === 2 ? '8px 12px' : (layoutMode === 4 ? '4.5px 7px' : '2.5px 4px'), borderRight: '1.5px solid #cbd5e1', whiteSpace: 'nowrap', fontSize: layoutMode === 2 ? '15px' : (layoutMode === 4 ? '12.5px' : '8.5px') }}>सेक्टर प्रभारी</td>
+                    <td style={{ padding: layoutMode === 2 ? '8px 12px' : (layoutMode === 4 ? '4.5px 7px' : '2.5px 4px'), fontWeight: '900', color: '#0369a1', fontSize: layoutMode === 2 ? '15px' : (layoutMode === 4 ? '12.5px' : '8.5px') }}>{cleanSectorIncharge}</td>
                   </tr>
                 )}
               </>
             ) : (
               <>
                 <tr style={{ borderBottom: '1px solid #cbd5e1' }}>
-                  <td style={{ backgroundColor: '#f1f5f9', fontWeight: '800', color: '#0f172a', padding: layoutMode === 2 ? '5px 8px' : '2.5px 4px', borderRight: '1.5px solid #cbd5e1', whiteSpace: 'nowrap' }}>जोन / प्रभारी</td>
-                  <td style={{ padding: layoutMode === 2 ? '5px 8px' : '2.5px 4px' }}>{cleanZone || '-'} {cleanZonalIncharge ? ` / ${cleanZonalIncharge}` : ''}</td>
+                  <td style={{ backgroundColor: '#f1f5f9', fontWeight: '900', color: '#0f172a', padding: layoutMode === 2 ? '6px 9px' : '2.5px 4px', borderRight: '1.5px solid #cbd5e1', whiteSpace: 'nowrap', fontSize: layoutMode === 2 ? '13px' : '9.5px' }}>जोन / प्रभारी</td>
+                  <td style={{ padding: layoutMode === 2 ? '6px 9px' : '2.5px 4px', fontSize: layoutMode === 2 ? '13px' : '9.5px' }}>{cleanZone || '-'} {cleanZonalIncharge ? ` / ${cleanZonalIncharge}` : ''}</td>
                 </tr>
                 <tr style={{ borderBottom: '1px solid #cbd5e1' }}>
-                  <td style={{ backgroundColor: '#f1f5f9', fontWeight: '800', color: '#0f172a', padding: layoutMode === 2 ? '5px 8px' : '2.5px 4px', borderRight: '1.5px solid #cbd5e1', whiteSpace: 'nowrap' }}>सेक्टर / प्रभारी</td>
-                  <td style={{ padding: layoutMode === 2 ? '5px 8px' : '2.5px 4px' }}>{cleanSector || '-'} {cleanSectorIncharge ? ` / ${cleanSectorIncharge}` : ''}</td>
+                  <td style={{ backgroundColor: '#f1f5f9', fontWeight: '900', color: '#0f172a', padding: layoutMode === 2 ? '6px 9px' : '2.5px 4px', borderRight: '1.5px solid #cbd5e1', whiteSpace: 'nowrap', fontSize: layoutMode === 2 ? '13px' : '9.5px' }}>सेक्टर / प्रभारी</td>
+                  <td style={{ padding: layoutMode === 2 ? '6px 9px' : '2.5px 4px', fontSize: layoutMode === 2 ? '13px' : '9.5px' }}>{cleanSector || '-'} {cleanSectorIncharge ? ` / ${cleanSectorIncharge}` : ''}</td>
                 </tr>
               </>
             )}
             {activeBriefingText && (
               <tr style={{ borderBottom: '1px solid #cbd5e1', backgroundColor: '#f0f9ff' }}>
-                <td style={{ backgroundColor: '#e0f2fe', fontWeight: '900', color: '#075985', padding: layoutMode === 2 ? (hasCoForce ? '5px 8px' : '7px 10px') : '2.5px 4px', borderRight: '1.5px solid #cbd5e1', whiteSpace: 'nowrap' }}>ब्रीफिंग स्थल</td>
-                <td style={{ padding: layoutMode === 2 ? (hasCoForce ? '5px 8px' : '7px 10px') : '2.5px 4px', fontWeight: 'bold', color: '#0369a1' }}>{activeBriefingText}</td>
+                <td style={{ backgroundColor: '#e0f2fe', fontWeight: '900', color: '#075985', padding: layoutMode === 2 ? (hasCoForce ? '6px 9px' : '8px 12px') : (layoutMode === 4 ? '4.5px 7px' : '2.5px 4px'), borderRight: '1.5px solid #cbd5e1', whiteSpace: 'nowrap', fontSize: layoutMode === 2 ? (hasCoForce ? '13px' : '15px') : (layoutMode === 4 ? '12.5px' : '8.5px') }}>ब्रीफिंग स्थल</td>
+                <td style={{ padding: layoutMode === 2 ? (hasCoForce ? '6px 9px' : '8px 12px') : (layoutMode === 4 ? '4.5px 7px' : '2.5px 4px'), fontWeight: 'bold', color: '#0369a1', fontSize: layoutMode === 2 ? (hasCoForce ? '13px' : '15px') : (layoutMode === 4 ? '12.5px' : '8.5px') }}>{activeBriefingText}</td>
               </tr>
             )}
             {activeNoteText && (
               <tr style={{ backgroundColor: '#fffbeb' }}>
-                <td style={{ backgroundColor: '#fef3c7', fontWeight: '900', color: '#92400e', padding: layoutMode === 2 ? (hasCoForce ? '5px 8px' : '7px 10px') : '2.5px 4px', borderRight: '1.5px solid #cbd5e1', whiteSpace: 'nowrap' }}>विशेष निर्देश</td>
-                <td style={{ padding: layoutMode === 2 ? (hasCoForce ? '5px 8px' : '7px 10px') : '2.5px 4px', fontWeight: 'bold', fontSize: layoutMode === 2 ? (hasCoForce ? '10.5px' : '12px') : '7.5px', color: '#92400e' }}>{activeNoteText}</td>
+                <td style={{ backgroundColor: '#fef3c7', fontWeight: '900', color: '#92400e', padding: layoutMode === 2 ? (hasCoForce ? '6px 9px' : '8px 12px') : (layoutMode === 4 ? '4.5px 7px' : '2.5px 4px'), borderRight: '1.5px solid #cbd5e1', whiteSpace: 'nowrap', fontSize: layoutMode === 2 ? (hasCoForce ? '13px' : '15px') : (layoutMode === 4 ? '12.5px' : '8.5px') }}>विशेष निर्देश</td>
+                <td style={{ padding: layoutMode === 2 ? (hasCoForce ? '6px 9px' : '8px 12px') : (layoutMode === 4 ? '4.5px 7px' : '2.5px 4px'), fontWeight: 'bold', fontSize: layoutMode === 2 ? (hasCoForce ? '12px' : '14px') : (layoutMode === 4 ? '11.5px' : '7.5px'), color: '#92400e', lineHeight: '1.35' }}>{activeNoteText}</td>
               </tr>
             )}
           </tbody>

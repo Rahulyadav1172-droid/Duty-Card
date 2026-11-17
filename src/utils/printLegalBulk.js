@@ -1050,6 +1050,18 @@ export function printLegalBulk({
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
         <link href="https://fonts.googleapis.com/css2?family=Mukta:wght@400;500;600;700;800;900&family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
         <style>
+          @font-face {
+            font-family: 'Kokila';
+            src: local('Kokila'), local('Kokila-Regular'), local('kokila');
+            font-weight: 400;
+            font-style: normal;
+          }
+          @font-face {
+            font-family: 'Kokila';
+            src: local('Kokila Bold'), local('Kokila-Bold'), local('kokilab');
+            font-weight: 700 900;
+            font-style: normal;
+          }
           @page {
             size: ${isIdBadge ? 'legal portrait' : (isA4 ? 'A4 portrait' : 'legal portrait')};
             margin: ${isIdBadge ? '3mm 3mm' : '4mm 4mm'};
@@ -1058,9 +1070,10 @@ export function printLegalBulk({
             box-sizing: border-box;
             margin: 0;
             padding: 0;
+            font-family: 'Kokila', 'Mangal', 'Mukta', 'Noto Sans Devanagari', sans-serif !important;
           }
           body {
-            font-family: 'Kokila', 'Mangal', 'Mukta', 'Noto Sans Devanagari', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-family: 'Kokila', 'Mangal', 'Mukta', 'Noto Sans Devanagari', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
             background: #ffffff;
             color: #020617;
             -webkit-print-color-adjust: exact;
@@ -1425,22 +1438,22 @@ export function printLegalBulk({
             height: ${is2In1 ? '72px' : (is4In1 ? '58px' : '42px')};
           }
           .duty-card.no-co-force .officer-name {
-            font-size: ${is2In1 ? '14px' : (is4In1 ? '11.5px' : '9px')};
+            font-size: ${is2In1 ? '18px' : (is4In1 ? '14px' : '10.5px')};
           }
           .duty-card.no-co-force .officer-mobile {
-            font-size: ${is2In1 ? '12.5px' : (is4In1 ? '10px' : '8px')};
+            font-size: ${is2In1 ? '15px' : (is4In1 ? '12px' : '9px')};
           }
           .duty-card.no-co-force .table-container {
             flex: 1;
-            margin-top: ${is2In1 ? '12px' : (is4In1 ? '8px' : '4px')};
-            margin-bottom: ${is2In1 ? '12px' : (is4In1 ? '8px' : '4px')};
+            margin-top: ${is2In1 ? '10px' : (is4In1 ? '6px' : '3px')};
+            margin-bottom: ${is2In1 ? '10px' : (is4In1 ? '6px' : '3px')};
             display: flex;
             flex-direction: column;
             border: 2px solid #0f172a;
           }
           .duty-card.no-co-force .card-table {
             height: 100%;
-            font-size: ${is2In1 ? '13px' : (is4In1 ? '10px' : '8px')};
+            font-size: ${is2In1 ? '15px' : (is4In1 ? '12.5px' : '9.5px')};
           }
           .duty-card.no-co-force .card-table tbody {
             display: flex;
@@ -1457,20 +1470,27 @@ export function printLegalBulk({
             width: 28%;
             display: flex;
             align-items: center;
-            font-size: ${is2In1 ? '12.5px' : (is4In1 ? '10px' : '7.5px')};
+            font-size: ${is2In1 ? '15px' : (is4In1 ? '12.5px' : '9.5px')};
             padding: ${is2In1 ? '8px 12px' : (is4In1 ? '5px 8px' : '3px 5px')};
+            font-weight: 900;
           }
           .duty-card.no-co-force .td-val {
             flex: 1;
             display: flex;
             align-items: center;
-            font-size: ${is2In1 ? '12.5px' : (is4In1 ? '10px' : '7.5px')};
+            font-size: ${is2In1 ? '16px' : (is4In1 ? '13px' : '10px')};
             padding: ${is2In1 ? '8px 12px' : (is4In1 ? '5px 8px' : '3px 5px')};
             line-height: 1.4;
+            font-weight: 700;
           }
           .duty-card.no-co-force .td-duty-val {
-            font-size: ${is2In1 ? '15px' : (is4In1 ? '11.5px' : '9px')};
+            font-size: ${is2In1 ? '20px' : (is4In1 ? '16px' : '12px')};
             font-weight: 900;
+          }
+          .duty-card.no-co-force .note-val {
+            font-size: ${is2In1 ? '14px' : (is4In1 ? '11.5px' : '9px')};
+            font-weight: 700;
+            line-height: 1.4;
           }
           .duty-card.no-co-force .card-footer {
             margin-top: auto;
@@ -1512,7 +1532,7 @@ export function printLegalBulk({
             min-width: 0;
           }
           .title-main {
-            font-size: ${is2In1 ? '16px' : (is4In1 ? '13px' : '10px')};
+            font-size: ${is2In1 ? '19px' : (is4In1 ? '15px' : '11px')};
             font-weight: 900;
             color: #000000;
             line-height: 1.15;
@@ -1521,7 +1541,7 @@ export function printLegalBulk({
             text-overflow: ellipsis;
           }
           .title-sub {
-            font-size: ${is2In1 ? '12px' : (is4In1 ? '9.5px' : '7.5px')};
+            font-size: ${is2In1 ? '13px' : (is4In1 ? '11px' : '8.5px')};
             font-weight: 700;
             color: #1e293b;
             margin-top: 1px;
@@ -1590,7 +1610,7 @@ export function printLegalBulk({
             font-weight: bold;
           }
           .officer-name {
-            font-size: ${is2In1 ? '13px' : (is4In1 ? '10.5px' : '8.5px')};
+            font-size: ${is2In1 ? '17px' : (is4In1 ? '14px' : '10px')};
             font-weight: 900;
             color: #000000;
             line-height: 1.25;
@@ -1603,7 +1623,7 @@ export function printLegalBulk({
             gap: 4px;
           }
           .rank-tag {
-            font-size: ${is2In1 ? '9px' : (is4In1 ? '7.5px' : '6.5px')};
+            font-size: ${is2In1 ? '11px' : (is4In1 ? '9px' : '7.5px')};
             background: #fef3c7;
             color: #78350f;
             border: 1px solid #fde68a;
@@ -1613,7 +1633,7 @@ export function printLegalBulk({
             display: inline-block;
           }
           .officer-mobile {
-            font-size: ${is2In1 ? '11.5px' : (is4In1 ? '9.5px' : '7.5px')};
+            font-size: ${is2In1 ? '14px' : (is4In1 ? '12px' : '9px')};
             font-family: monospace;
             font-weight: bold;
             color: #0f172a;
@@ -1630,7 +1650,7 @@ export function printLegalBulk({
             border-top: 1px solid #e2e8f0;
             padding-top: 2px;
             margin-top: 2px;
-            font-size: ${is2In1 ? '9px' : (is4In1 ? '7.5px' : '6px')};
+            font-size: ${is2In1 ? '12px' : (is4In1 ? '10px' : '8px')};
             color: #334155;
             word-break: break-word;
           }
@@ -1668,8 +1688,8 @@ export function printLegalBulk({
           .card-table {
             width: 100%;
             border-collapse: collapse;
-            font-size: ${is2In1 ? '11.5px' : (is4In1 ? '9.5px' : '7.5px')};
-            line-height: 1.35;
+            font-size: ${is2In1 ? '15px' : (is4In1 ? '12.5px' : '9.5px')};
+            line-height: 1.4;
           }
           .card-table tr {
             border-bottom: 1px solid #cbd5e1;
@@ -1680,32 +1700,32 @@ export function printLegalBulk({
           .td-lbl {
             width: 28%;
             background: #f1f5f9;
-            font-weight: 800;
+            font-weight: 900;
             color: #0f172a;
-            padding: ${is2In1 ? '5px 8px' : (is4In1 ? '3.5px 6px' : '2px 4px')};
+            padding: ${is2In1 ? '7px 10px' : (is4In1 ? '4.5px 7px' : '3px 5px')};
             border-right: 1.5px solid #cbd5e1;
             white-space: nowrap;
-            font-size: ${is2In1 ? '11.5px' : (is4In1 ? '9px' : '7px')};
+            font-size: ${is2In1 ? '15px' : (is4In1 ? '12.5px' : '9.5px')};
           }
           .td-val {
-            padding: ${is2In1 ? '5px 8px' : (is4In1 ? '3.5px 6px' : '2px 4px')};
+            padding: ${is2In1 ? '7px 10px' : (is4In1 ? '4.5px 7px' : '3px 5px')};
             color: #020617;
-            font-weight: 600;
-            font-size: ${is2In1 ? '11.5px' : (is4In1 ? '9px' : '7px')};
+            font-weight: 700;
+            font-size: ${is2In1 ? '16px' : (is4In1 ? '13px' : '10px')};
             word-break: break-word;
-            line-height: 1.35;
+            line-height: 1.4;
           }
           .td-duty-val {
             font-weight: 900;
             color: #78350f;
             background: #fef3c7;
-            font-size: ${is2In1 ? '13px' : (is4In1 ? '10px' : '8px')};
+            font-size: ${is2In1 ? '20px' : (is4In1 ? '16px' : '12px')};
             letter-spacing: 0.2px;
           }
           .row-incharge .td-lbl {
             background: #f8fafc;
             color: #0369a1;
-            font-weight: 800;
+            font-weight: 900;
           }
           .row-incharge .incharge-val {
             color: #0369a1;
@@ -1718,6 +1738,7 @@ export function printLegalBulk({
           .row-briefing .td-lbl {
             background: #e0f2fe;
             color: #075985;
+            font-weight: 900;
           }
           .row-note td {
             background: #fffbeb;
@@ -1726,9 +1747,12 @@ export function printLegalBulk({
           .row-note .td-lbl {
             background: #fef3c7;
             color: #92400e;
+            font-weight: 900;
           }
           .note-val {
-            font-size: ${is2In1 ? '10.5px' : (is4In1 ? '8.5px' : '6.5px')};
+            font-size: ${is2In1 ? '14px' : (is4In1 ? '11.5px' : '9px')};
+            font-weight: 700;
+            line-height: 1.4;
           }
 
           /* 4. Co-deployed Force Section (सहयोगार्थ पुलिस बल - 2 Column Grid, Zero Scrollbars) */
@@ -1865,7 +1889,7 @@ export function printLegalBulk({
             background: #dcfce7;
             border: 1px solid #86efac;
             border-radius: 4px;
-            font-size: ${is2In1 ? '8.5px' : (is4In1 ? '7px' : '5.5px')};
+            font-size: ${is2In1 ? '10.5px' : (is4In1 ? '9px' : '7px')};
             font-weight: 900;
             color: #14532d;
             white-space: nowrap;
@@ -1875,7 +1899,7 @@ export function printLegalBulk({
             font-size: 6px;
           }
           .auth-code {
-            font-size: ${is2In1 ? '8px' : (is4In1 ? '6.5px' : '5.5px')};
+            font-size: ${is2In1 ? '10px' : (is4In1 ? '8.5px' : '7px')};
             font-family: monospace;
             font-weight: bold;
             color: #475569;
@@ -1894,11 +1918,11 @@ export function printLegalBulk({
           }
           .sign-text {
             font-style: italic;
-            font-size: ${is2In1 ? '9.5px' : (is4In1 ? '7px' : '5.5px')};
+            font-size: ${is2In1 ? '11px' : (is4In1 ? '9px' : '7px')};
             color: #475569;
           }
           .signatory-title {
-            font-size: ${is2In1 ? '10.5px' : (is4In1 ? '8px' : '6px')};
+            font-size: ${is2In1 ? '13px' : (is4In1 ? '11px' : '8px')};
             font-weight: 900;
             color: #020617;
             margin-top: 1px;
@@ -2306,6 +2330,18 @@ export function generateIndividualPassHtml({
       <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
       <link href="https://fonts.googleapis.com/css2?family=Mukta:wght@400;500;600;700;800;900&family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
       <style>
+        @font-face {
+          font-family: 'Kokila';
+          src: local('Kokila'), local('Kokila-Regular'), local('kokila');
+          font-weight: 400;
+          font-style: normal;
+        }
+        @font-face {
+          font-family: 'Kokila';
+          src: local('Kokila Bold'), local('Kokila-Bold'), local('kokilab');
+          font-weight: 700 900;
+          font-style: normal;
+        }
         @page {
           size: A4 portrait;
           margin: 8mm 10mm;
@@ -2314,9 +2350,10 @@ export function generateIndividualPassHtml({
           box-sizing: border-box;
           margin: 0;
           padding: 0;
+          font-family: 'Kokila', 'Mangal', 'Mukta', 'Noto Sans Devanagari', sans-serif !important;
         }
         body {
-          font-family: 'Mukta', 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+          font-family: 'Kokila', 'Mangal', 'Mukta', 'Noto Sans Devanagari', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
           background: #ffffff;
           color: #0f172a;
           -webkit-print-color-adjust: exact;
