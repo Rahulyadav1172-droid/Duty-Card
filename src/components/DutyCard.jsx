@@ -77,7 +77,7 @@ export default function DutyCard({
     sector: customLabels?.sector?.trim() || 'सेक्टर',
     sector_incharge: customLabels?.sector_incharge?.trim() || 'सेक्टर प्रभारी',
     briefing: customLabels?.briefing?.trim() || 'ब्रीफिंग स्थान',
-    note: customLabels?.note?.trim() || 'विशेष नोट'
+    note: customLabels?.note?.trim() || 'विशेष निर्देश'
   };
 
   // 1. Resolve Zone & Zonal Incharge
@@ -602,9 +602,8 @@ export default function DutyCard({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {/* Zone */}
             <div className="bg-white border border-slate-300 rounded-xl p-3 space-y-1">
-              <div className="text-xs font-black text-slate-900 border-b border-slate-200 pb-1 flex items-center gap-1.5">
-                <span>🏢</span>
-                <span>जोन / जोनल कमान</span>
+              <div className="text-xs font-black text-slate-900 border-b border-slate-200 pb-1">
+                जोन / प्रभारी
               </div>
               <div className="text-xs text-slate-700">
                 <span className="font-bold">जोन:</span> <strong className="text-slate-950">{effectiveZone || '-'}</strong>
@@ -618,9 +617,8 @@ export default function DutyCard({
 
             {/* Sector */}
             <div className="bg-white border border-slate-300 rounded-xl p-3 space-y-1">
-              <div className="text-xs font-black text-slate-900 border-b border-slate-200 pb-1 flex items-center gap-1.5">
-                <span>🛡️</span>
-                <span>सेक्टर / सेक्टर कमान</span>
+              <div className="text-xs font-black text-slate-900 border-b border-slate-200 pb-1">
+                सेक्टर / प्रभारी
               </div>
               <div className="text-xs text-slate-700">
                 <span className="font-bold">सेक्टर:</span> <strong className="text-slate-950">{effectiveSector || '-'}</strong>
@@ -635,9 +633,8 @@ export default function DutyCard({
 
           {/* Duty Time */}
           <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3 flex justify-between items-center text-xs">
-            <span className="font-black text-emerald-900 flex items-center gap-1.5">
-              <span>⏰</span>
-              <span>ड्यूटी दिनाँक व समय:</span>
+            <span className="font-black text-emerald-900">
+              दिनाँक व समय:
             </span>
             <span className="font-black text-slate-900">
               {duty.shift || 'प्रातः 09:00 से समाप्ति तक'}
@@ -646,7 +643,7 @@ export default function DutyCard({
 
           {/* Special Note */}
           <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs space-y-1">
-            <div className="font-black text-amber-950">📌 विशेष नोट:</div>
+            <div className="font-black text-amber-950">विशेष निर्देश:</div>
             <div className="text-slate-800 font-medium leading-relaxed">
               {activeNote || 'आवंटित कर्तव्य स्थल पर समय से उपस्थिति सुनिश्चित करें एवं उच्चाधिकारियों के निर्देशों का अक्षरशः पालन करें।'}
             </div>

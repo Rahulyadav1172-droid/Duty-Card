@@ -380,21 +380,20 @@ export default function BulkLegalPdfModal({
             </div>
           </div>
 
-          {/* HERO BANNER: 🚩 कर्तव्य स्थल (DUTY PLACE) - Full Width */}
+          {/* HERO BANNER: ड्यूटी स्थल - Full Width */}
           <div style={{ background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)', border: '1.5px solid #d97706', borderRadius: '4px', padding: isPreview ? '2.5px 5px' : '4px 6px', textAlign: 'center' }}>
-            <div style={{ fontSize: isPreview ? '7px' : '9.5px', fontWeight: '900', color: '#92400e', letterSpacing: '0.5px', textTransform: 'uppercase' }}>
-              🚩 कर्तव्य स्थल (ASSIGNED DUTY POINT)
+            <div style={{ fontSize: isPreview ? '7.5px' : '10px', fontWeight: '900', color: '#92400e', letterSpacing: '0.5px' }}>
+              ड्यूटी स्थल
             </div>
             <div style={{ fontSize: dpFontSize, fontWeight: '900', color: '#78350f', lineHeight: 1.2, margin: '1.5px 0' }}>
               {dpText}
             </div>
           </div>
 
-          {/* DUTY TIMING / SHIFT BANNER - Full Width (No Truncation) */}
+          {/* दिनाँक व समय - Full Width (No Truncation) */}
           <div style={{ backgroundColor: '#f0fdf4', border: '1.2px solid #86efac', borderRadius: '4px', padding: isPreview ? '2px 5px' : '3.5px 7px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: isPreview ? '8px' : '10.5px' }}>
-            <span style={{ fontWeight: '900', color: '#166534', display: 'flex', alignItems: 'center', gap: '3px' }}>
-              <span>⏰</span>
-              <span>ड्यूटी दिनाँक व समय:</span>
+            <span style={{ fontWeight: '900', color: '#166534' }}>
+              दिनाँक व समय:
             </span>
             <span style={{ fontWeight: '900', color: '#0f172a' }}>
               {duty.shift || 'प्रातः 09:00 से समाप्ति तक'}
@@ -561,8 +560,8 @@ export default function BulkLegalPdfModal({
         <div style={{ padding: isPreview ? '3px 5px' : '5px 8px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', flex: 1, gap: isPreview ? '3px' : '4px', boxSizing: 'border-box' }}>
           {/* 1. Zone Hierarchy Box (Full Width) */}
           <div style={{ backgroundColor: '#ffffff', border: '1.2px solid #cbd5e1', borderRadius: '4px', padding: isPreview ? '2.5px 5px' : '4px 7px', fontSize: isPreview ? '8px' : '10px', lineHeight: 1.35 }}>
-            <div style={{ fontWeight: '900', color: '#0f172a', borderBottom: '0.8px solid #e2e8f0', paddingBottom: '1.5px', marginBottom: '2px', display: 'flex', alignItems: 'center', gap: '3px', fontSize: isPreview ? '8.5px' : '10.5px' }}>
-              <span>🏢</span><span>जोन / जोनल कमान</span>
+            <div style={{ fontWeight: '900', color: '#0f172a', borderBottom: '0.8px solid #e2e8f0', paddingBottom: '1.5px', marginBottom: '2px', fontSize: isPreview ? '8.5px' : '11px' }}>
+              जोन / प्रभारी
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5px' }}>
               <div><span style={{ color: '#64748b', fontWeight: '700' }}>जोन:</span> <strong style={{ color: '#0f172a', fontWeight: '900', fontSize: isPreview ? '9px' : '11.5px' }}>{cleanZone || '-'}</strong></div>
@@ -572,8 +571,8 @@ export default function BulkLegalPdfModal({
 
           {/* 2. Sector Hierarchy Box (Full Width Below Zone) */}
           <div style={{ backgroundColor: '#ffffff', border: '1.2px solid #cbd5e1', borderRadius: '4px', padding: isPreview ? '2.5px 5px' : '4px 7px', fontSize: isPreview ? '8px' : '10px', lineHeight: 1.35 }}>
-            <div style={{ fontWeight: '900', color: '#0f172a', borderBottom: '0.8px solid #e2e8f0', paddingBottom: '1.5px', marginBottom: '2px', display: 'flex', alignItems: 'center', gap: '3px', fontSize: isPreview ? '8.5px' : '10.5px' }}>
-              <span>🛡️</span><span>सेक्टर / सेक्टर कमान</span>
+            <div style={{ fontWeight: '900', color: '#0f172a', borderBottom: '0.8px solid #e2e8f0', paddingBottom: '1.5px', marginBottom: '2px', fontSize: isPreview ? '8.5px' : '11px' }}>
+              सेक्टर / प्रभारी
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5px' }}>
               <div><span style={{ color: '#64748b', fontWeight: '700' }}>सेक्टर:</span> <strong style={{ color: '#0f172a', fontWeight: '900', fontSize: isPreview ? '9px' : '11.5px' }}>{cleanSector || '-'}</strong></div>
@@ -581,15 +580,15 @@ export default function BulkLegalPdfModal({
             </div>
           </div>
 
-          {/* 3. Duty Time */}
+          {/* 3. दिनाँक व समय */}
           <div style={{ backgroundColor: '#f0fdf4', border: '1.2px solid #86efac', borderRadius: '4px', padding: isPreview ? '2px 5px' : '3.5px 7px', fontSize: isPreview ? '8px' : '10.5px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontWeight: '900', color: '#166534' }}>⏰ ड्यूटी समय:</span>
+            <span style={{ fontWeight: '900', color: '#166534' }}>दिनाँक व समय:</span>
             <span style={{ fontWeight: '900', color: '#0f172a' }}>{duty.shift || 'प्रातः 09:00 से समाप्ति तक'}</span>
           </div>
 
-          {/* 4. Special Note */}
+          {/* 4. विशेष निर्देश */}
           <div style={{ backgroundColor: '#fffbeb', border: '1.2px solid #fde68a', borderRadius: '4px', padding: isPreview ? '2.5px 5px' : '4px 7px', fontSize: isPreview ? '7.5px' : '10px', lineHeight: 1.35 }}>
-            <span style={{ fontWeight: '900', color: '#92400e' }}>📌 विशेष नोट: </span>
+            <span style={{ fontWeight: '900', color: '#92400e' }}>विशेष निर्देश: </span>
             <span style={{ color: '#78350f', fontWeight: '700' }}>
               {activeNoteText ? activeNoteText : 'आवंटित ड्यूटी पॉइंट पर समय से उपस्थित रहें व उच्चाधिकारियों के निर्देशों का पालन करें।'}
             </span>

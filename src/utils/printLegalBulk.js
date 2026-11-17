@@ -137,21 +137,20 @@ export function renderIdBadgeHorizontalFrontHtml({
           </div>
         </div>
 
-        <!-- 3. HERO BANNER: 🚩 कर्तव्य स्थल (DUTY PLACE) - Full Width -->
+        <!-- 3. HERO BANNER: ड्यूटी स्थल - Full Width -->
         <div style="background:linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);border:1.5px solid #d97706;border-radius:4px;padding:4px 6px;text-align:center;">
-          <div style="font-size:9.5px;font-weight:900;color:#92400e;letter-spacing:0.5px;text-transform:uppercase;">
-            🚩 कर्तव्य स्थल (ASSIGNED DUTY POINT)
+          <div style="font-size:10px;font-weight:900;color:#92400e;letter-spacing:0.5px;">
+            ड्यूटी स्थल
           </div>
           <div style="font-size:${dutyPlaceFontSize};font-weight:900;color:#78350f;line-height:1.2;margin-top:1.5px;">
             ${escapeHtml(cleanDutyPlace)}
           </div>
         </div>
 
-        <!-- 4. DUTY TIMING / SHIFT BANNER - Full Width (No Truncation) -->
+        <!-- 4. दिनाँक व समय - Full Width (No Truncation) -->
         <div style="background:#f0fdf4;border:1.2px solid #86efac;border-radius:4px;padding:3.5px 7px;display:flex;justify-content:space-between;align-items:center;font-size:10.5px;">
-          <span style="font-weight:900;color:#166534;display:flex;align-items:center;gap:3px;">
-            <span>⏰</span>
-            <span>ड्यूटी दिनाँक व समय:</span>
+          <span style="font-weight:900;color:#166534;">
+            दिनाँक व समय:
           </span>
           <span style="font-weight:900;color:#0f172a;">
             ${escapeHtml(duty.shift || 'प्रातः 09:00 से समाप्ति तक')}
@@ -381,8 +380,8 @@ export function renderIdBadgeHorizontalBackHtml({
       <div style="padding:5px 8px;display:flex;flex-direction:column;justify-content:space-between;flex:1;gap:4px;box-sizing:border-box;">
         <!-- 2. Zone Hierarchy Box (Full Width) -->
         <div style="background:#ffffff;border:1.2px solid #cbd5e1;border-radius:4px;padding:4px 7px;font-size:10px;line-height:1.35;">
-          <div style="font-weight:900;color:#0f172a;border-bottom:0.8px solid #e2e8f0;padding-bottom:1.5px;margin-bottom:2px;display:flex;align-items:center;gap:3px;font-size:10.5px;">
-            <span>🏢</span><span>जोन / जोनल कमान</span>
+          <div style="font-weight:900;color:#0f172a;border-bottom:0.8px solid #e2e8f0;padding-bottom:1.5px;margin-bottom:2px;font-size:11px;">
+            जोन / प्रभारी
           </div>
           <div style="display:flex;flex-direction:column;gap:1.5px;">
             <div><span style="color:#64748b;font-weight:700;">जोन:</span> <strong style="color:#0f172a;font-weight:900;font-size:11.5px;">${escapeHtml(cleanZone || '-')}</strong></div>
@@ -392,8 +391,8 @@ export function renderIdBadgeHorizontalBackHtml({
 
         <!-- 3. Sector Hierarchy Box (Full Width Below Zone) -->
         <div style="background:#ffffff;border:1.2px solid #cbd5e1;border-radius:4px;padding:4px 7px;font-size:10px;line-height:1.35;">
-          <div style="font-weight:900;color:#0f172a;border-bottom:0.8px solid #e2e8f0;padding-bottom:1.5px;margin-bottom:2px;display:flex;align-items:center;gap:3px;font-size:10.5px;">
-            <span>🛡️</span><span>सेक्टर / सेक्टर कमान</span>
+          <div style="font-weight:900;color:#0f172a;border-bottom:0.8px solid #e2e8f0;padding-bottom:1.5px;margin-bottom:2px;font-size:11px;">
+            सेक्टर / प्रभारी
           </div>
           <div style="display:flex;flex-direction:column;gap:1.5px;">
             <div><span style="color:#64748b;font-weight:700;">सेक्टर:</span> <strong style="color:#0f172a;font-weight:900;font-size:11.5px;">${escapeHtml(cleanSector || '-')}</strong></div>
@@ -401,15 +400,15 @@ export function renderIdBadgeHorizontalBackHtml({
           </div>
         </div>
 
-        <!-- 4. Duty Time -->
+        <!-- 4. दिनाँक व समय -->
         <div style="background:#f0fdf4;border:1.2px solid #86efac;border-radius:4px;padding:3.5px 7px;font-size:10.5px;display:flex;justify-content:space-between;align-items:center;">
-          <span style="font-weight:900;color:#166534;">⏰ ड्यूटी समय:</span>
+          <span style="font-weight:900;color:#166534;">दिनाँक व समय:</span>
           <span style="font-weight:900;color:#0f172a;">${escapeHtml(duty.shift || 'प्रातः 09:00 से समाप्ति तक')}</span>
         </div>
 
-        <!-- 5. Special Note -->
+        <!-- 5. विशेष निर्देश -->
         <div style="background:#fffbeb;border:1.2px solid #fde68a;border-radius:4px;padding:4px 7px;font-size:10px;line-height:1.35;">
-          <span style="font-weight:900;color:#92400e;">📌 विशेष नोट: </span>
+          <span style="font-weight:900;color:#92400e;">विशेष निर्देश: </span>
           <span style="color:#78350f;font-weight:700;">
             ${escapeHtml(activeNote) ? escapeHtml(activeNote) : 'आवंटित ड्यूटी पॉइंट पर समय से उपस्थित रहें व उच्चाधिकारियों के निर्देशों का पालन करें।'}
           </span>
