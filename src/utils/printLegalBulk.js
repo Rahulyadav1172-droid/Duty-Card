@@ -738,69 +738,198 @@ export function printLegalBulk({
           }
         }
 
-        // 2-Column Compact Format for Co-deployed Force (Zero scrollbars, max 5 rows)
+        // Co-deployed Force logic (2-in-1: Dual sections for Police & Home Guard, max 10 each | Other formats: Single section, max 5)
         let coForceHtml = '';
         if (includeCoForce && coForceList.length > 0) {
-          const maxVisible = 5;
-          const displayedCoForce = coForceList.slice(0, maxVisible);
-          const remainingCount = coForceList.length - displayedCoForce.length;
+          const isHomeGuardRecord = (r) => {
+            if (!r) return false;
+            const combined = `${r.rank || ''} ${r.designation || ''} ${r.name || ''} ${r.composite_details || ''} ${r.posting || ''} ${r.posting_place || ''} ${r.force_type || ''} ${r.category || ''} ${r.dept || ''}`.toLowerCase();
+            return (
+              combined.includes('होमगार्ड') || 
+              combined.includes('हो०गा') || 
+              combined.includes('हो0गा') || 
+              combined.includes('होगा') || 
+              combined.includes('पीआरडी') || 
+              combined.includes('prd') || 
+              /\bhg\b/i.test(combined) || 
+              /\bhome\s*guard\b/i.test(combined) ||
+              /ह[0०.]?गा[0०.]?/i.test(combined) ||
+              /हो[0०.]?गा[0०.]?/i.test(combined)
+            );
+          };
 
-          const coRows = displayedCoForce.map((colleague, cIdx) => {
-            let cleanColleagueName = (colleague.name || '').trim()
-              .replace(/,\s*\d{10}\b/g, '')
-              .replace(/\b\d{10}\b/g, '')
-              .replace(/[,।]?\s*नं0?[-:]?\s*$/g, '')
-              .replace(/[,।]?\s*नं\s*\(?.*$/g, '')
-              .replace(/,\s*$/, '')
-              .trim();
+          if (is2In1) {
+            // =========================================================================
+            // 2-IN-1 FORMAT ONLY: TWO DUAL SECTIONS (POLICE & HOMEGUARD), MAX 10 EACH
+            // =========================================================================
+            const policeList = coForceList.filter(r => !isHomeGuardRecord(r));
+            const hgList = coForceList.filter(r => isHomeGuardRecord(r));
 
-            const postingStr = (colleague.posting || colleague.posting_place || colleague.thana || '').trim();
-            const districtStr = (colleague.district || '').trim();
-            let fullPosting = postingStr;
-            if (districtStr && !fullPosting.includes(districtStr)) {
-              fullPosting = fullPosting ? `${fullPosting} (${districtStr})` : districtStr;
-            }
-            if (!fullPosting) fullPosting = '-';
+            const maxVisible2in1 = 10;
+            const dispPolice = policeList.slice(0, maxVisible2in1);
+            const remPolice = policeList.length - dispPolice.length;
 
-            return `
-              <tr>
-                <td class="co-td-idx">${cIdx + 1}</td>
-                <td class="co-td-name"><strong>${escapeHtml(cleanColleagueName || '-')}</strong></td>
-                <td class="co-td-mob font-mono">${phoneSvg}<span>${escapeHtml(colleague.mobile || '-')}</span></td>
-                <td class="co-td-post">${escapeHtml(fullPosting)}</td>
-              </tr>
-            `;
-          }).join('');
+            const dispHg = hgList.slice(0, maxVisible2in1);
+            const remHg = hgList.length - dispHg.length;
 
-          coForceHtml = `
-            <div class="co-force-container">
-              <div class="co-force-header">
-                <div class="co-hdr-title">
-                  ${usersSvg}
-                  <span>सहयोगार्थ पुलिस बल (उसी पॉइंट पर तैनात साथी):</span>
-                </div>
-                <span class="co-count font-mono">कुल: ${coForceList.length} जवान</span>
-              </div>
-              <table class="co-force-table">
-                <thead>
+            const renderCoRows = (list, isHgTable = false) => {
+              if (!list || list.length === 0) {
+                return `<tr><td colspan="4" style="text-align:center;padding:7px 4px;color:#64748b;font-style:italic;font-size:10.5px;">इस पॉइंट पर ${isHgTable ? 'होमगार्ड' : 'पुलिस'} बल तैनात नहीं है</td></tr>`;
+              }
+              return list.map((colleague, cIdx) => {
+                let cleanColleagueName = (colleague.name || '').trim()
+                  .replace(/,\s*\d{10}\b/g, '')
+                  .replace(/\b\d{10}\b/g, '')
+                  .replace(/[,।]?\s*नं0?[-:]?\s*$/g, '')
+                  .replace(/[,।]?\s*नं\s*\(?.*$/g, '')
+                  .replace(/,\s*$/, '')
+                  .trim();
+
+                const postingStr = (colleague.posting || colleague.posting_place || colleague.thana || '').trim();
+                const districtStr = (colleague.district || '').trim();
+                let fullPosting = postingStr;
+                if (districtStr && !fullPosting.includes(districtStr)) {
+                  fullPosting = fullPosting ? `${fullPosting} (${districtStr})` : districtStr;
+                }
+                if (!fullPosting) fullPosting = '-';
+
+                return `
                   <tr>
-                    <th style="width:24px;text-align:center;">क्र०</th>
-                    <th>पद व नाम</th>
-                    <th style="width:105px;">मोबाइल नंबर</th>
-                    <th>मूल तैनाती (जनपद)</th>
+                    <td class="co-td-idx" style="width:20px;text-align:center;">${cIdx + 1}</td>
+                    <td class="co-td-name"><strong>${escapeHtml(cleanColleagueName || '-')}</strong></td>
+                    <td class="co-td-mob font-mono">${phoneSvg}<span>${escapeHtml(colleague.mobile || '-')}</span></td>
+                    <td class="co-td-post">${escapeHtml(fullPosting)}</td>
                   </tr>
-                </thead>
-                <tbody>
-                  ${coRows}
-                </tbody>
-              </table>
-              ${remainingCount > 0 ? `
-                <div class="co-more-note">
-                  और भी सहयोगार्थ हैं......
+                `;
+              }).join('');
+            };
+
+            coForceHtml = `
+              <div class="co-force-dual-grid">
+                <!-- 1. सहयोगार्थ पुलिस बल (अधिकतम 10) -->
+                <div class="co-force-container">
+                  <div class="co-force-header">
+                    <div class="co-hdr-title">
+                      ${usersSvg}
+                      <span>सहयोगार्थ पुलिस बल:</span>
+                    </div>
+                    <span class="co-count font-mono">कुल: ${policeList.length} जवान</span>
+                  </div>
+                  <table class="co-force-table">
+                    <thead>
+                      <tr>
+                        <th style="width:20px;text-align:center;">क्र०</th>
+                        <th>पद व नाम</th>
+                        <th style="width:95px;">मोबाइल नंबर</th>
+                        <th>मूल तैनाती (जनपद)</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      ${renderCoRows(dispPolice, false)}
+                    </tbody>
+                  </table>
+                  ${remPolice > 0 ? `
+                    <div class="co-more-note">
+                      और भी सहयोगार्थ हैं......
+                    </div>
+                  ` : ''}
                 </div>
-              ` : ''}
-            </div>
-          `;
+
+                <!-- 2. सहयोगार्थ होमगार्ड बल (अधिकतम 10) -->
+                <div class="co-force-container">
+                  <div class="co-force-header" style="background:#fef3c7;border-bottom-color:#fde68a;">
+                    <div class="co-hdr-title" style="color:#92400e;">
+                      ${usersSvg}
+                      <span>सहयोगार्थ होमगार्ड बल:</span>
+                    </div>
+                    <span class="co-count font-mono" style="color:#b45309;">कुल: ${hgList.length} जवान</span>
+                  </div>
+                  <table class="co-force-table">
+                    <thead>
+                      <tr>
+                        <th style="width:20px;text-align:center;">क्र०</th>
+                        <th>पद व नाम</th>
+                        <th style="width:95px;">मोबाइल नंबर</th>
+                        <th>मूल तैनाती (जनपद)</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      ${renderCoRows(dispHg, true)}
+                    </tbody>
+                  </table>
+                  ${remHg > 0 ? `
+                    <div class="co-more-note">
+                      और भी सहयोगार्थ हैं......
+                    </div>
+                  ` : ''}
+                </div>
+              </div>
+            `;
+          } else {
+            // =========================================================================
+            // STANDARD FORMAT (4-in-1, 6-in-1, id_badge): SINGLE TABLE (MAX 5)
+            // =========================================================================
+            const maxVisible = 5;
+            const displayedCoForce = coForceList.slice(0, maxVisible);
+            const remainingCount = coForceList.length - displayedCoForce.length;
+
+            const coRows = displayedCoForce.map((colleague, cIdx) => {
+              let cleanColleagueName = (colleague.name || '').trim()
+                .replace(/,\s*\d{10}\b/g, '')
+                .replace(/\b\d{10}\b/g, '')
+                .replace(/[,।]?\s*नं0?[-:]?\s*$/g, '')
+                .replace(/[,।]?\s*नं\s*\(?.*$/g, '')
+                .replace(/,\s*$/, '')
+                .trim();
+
+              const postingStr = (colleague.posting || colleague.posting_place || colleague.thana || '').trim();
+              const districtStr = (colleague.district || '').trim();
+              let fullPosting = postingStr;
+              if (districtStr && !fullPosting.includes(districtStr)) {
+                fullPosting = fullPosting ? `${fullPosting} (${districtStr})` : districtStr;
+              }
+              if (!fullPosting) fullPosting = '-';
+
+              return `
+                <tr>
+                  <td class="co-td-idx">${cIdx + 1}</td>
+                  <td class="co-td-name"><strong>${escapeHtml(cleanColleagueName || '-')}</strong></td>
+                  <td class="co-td-mob font-mono">${phoneSvg}<span>${escapeHtml(colleague.mobile || '-')}</span></td>
+                  <td class="co-td-post">${escapeHtml(fullPosting)}</td>
+                </tr>
+              `;
+            }).join('');
+
+            coForceHtml = `
+              <div class="co-force-container">
+                <div class="co-force-header">
+                  <div class="co-hdr-title">
+                    ${usersSvg}
+                    <span>सहयोगार्थ पुलिस बल (उसी पॉइंट पर तैनात साथी):</span>
+                  </div>
+                  <span class="co-count font-mono">कुल: ${coForceList.length} जवान</span>
+                </div>
+                <table class="co-force-table">
+                  <thead>
+                    <tr>
+                      <th style="width:24px;text-align:center;">क्र०</th>
+                      <th>पद व नाम</th>
+                      <th style="width:105px;">मोबाइल नंबर</th>
+                      <th>मूल तैनाती (जनपद)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${coRows}
+                  </tbody>
+                </table>
+                ${remainingCount > 0 ? `
+                  <div class="co-more-note">
+                    और भी सहयोगार्थ हैं......
+                  </div>
+                ` : ''}
+              </div>
+            `;
+          }
         }
 
         cardsHtml += `
@@ -1532,25 +1661,33 @@ export function printLegalBulk({
             font-size: ${is2In1 ? '10.5px' : (is4In1 ? '9.5px' : '7.5px')};
           }
           .duty-card.has-co-force .officer-card {
-            padding: ${is2In1 ? '3px 6px' : '2px 5px'};
-            margin-top: 2px;
-            gap: 5px;
+            padding: ${is2In1 ? '6px 12px' : '2.5px 5px'};
+            margin-top: ${is2In1 ? '5px' : '2px'};
+            gap: ${is2In1 ? '12px' : '5px'};
           }
           .duty-card.has-co-force .photo-frame {
-            width: ${is2In1 ? '38px' : '32px'};
-            height: ${is2In1 ? '46px' : '40px'};
+            width: ${is2In1 ? '54px' : '34px'};
+            height: ${is2In1 ? '68px' : '42px'};
           }
           .duty-card.has-co-force .officer-name {
-            font-size: ${is2In1 ? '13.5px' : (is4In1 ? '12.5px' : '9.5px')};
-            line-height: 1.2;
+            font-size: ${is2In1 ? '22px' : (is4In1 ? '12.5px' : '9.5px')};
+            line-height: 1.25;
+            font-weight: 900;
           }
           .duty-card.has-co-force .officer-mobile {
-            font-size: ${is2In1 ? '11.5px' : '10.5px'};
+            font-size: ${is2In1 ? '16px' : (is4In1 ? '11px' : '9px')};
           }
           .duty-card.has-co-force .officer-sub-bar {
-            font-size: ${is2In1 ? '10.5px' : '9px'};
-            padding-top: 1px;
-            margin-top: 1px;
+            font-size: ${is2In1 ? '13px' : (is4In1 ? '9.5px' : '7.5px')};
+            padding-top: 2px;
+            margin-top: 2px;
+          }
+          .co-force-dual-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-top: ${is2In1 ? '4px' : '2px'};
+            margin-bottom: 2px;
           }
           .duty-card.has-co-force .table-container {
             margin-top: ${is2In1 ? '3px' : '2px'};
@@ -1727,7 +1864,7 @@ export function printLegalBulk({
             font-weight: bold;
           }
           .officer-name {
-            font-size: ${is2In1 ? '17px' : (is4In1 ? '14px' : '10px')};
+            font-size: ${is2In1 ? '22px' : (is4In1 ? '14px' : '10px')};
             font-weight: 900;
             color: #000000;
             line-height: 1.25;
@@ -1750,7 +1887,7 @@ export function printLegalBulk({
             display: inline-block;
           }
           .officer-mobile {
-            font-size: ${is2In1 ? '14px' : (is4In1 ? '12px' : '9px')};
+            font-size: ${is2In1 ? '16px' : (is4In1 ? '12px' : '9px')};
             font-family: monospace;
             font-weight: bold;
             color: #0f172a;

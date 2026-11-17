@@ -801,8 +801,8 @@ export default function BulkLegalPdfModal({
         </div>
 
         {/* Officer Photo & Info Row */}
-        <div style={{ display: 'flex', gap: '5px', border: '1px solid #94a3b8', padding: hasCoForce ? '2.5px 5px' : (layoutMode === 2 && !hasCoForce ? '6px 8px' : '4px'), borderRadius: '6px', backgroundColor: '#f8fafc', margin: hasCoForce ? '2px 0' : (layoutMode === 2 && !hasCoForce ? '8px 0 6px' : '3px 0') }}>
-          <div style={{ width: hasCoForce ? '38px' : (layoutMode === 2 ? (hasCoForce ? '48px' : '56px') : '44px'), height: hasCoForce ? '46px' : (layoutMode === 2 ? (hasCoForce ? '60px' : '70px') : '56px'), border: '1px dashed #64748b', borderRadius: '4px', backgroundColor: '#ffffff', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', flexShrink: 0, overflow: 'hidden' }}>
+        <div style={{ display: 'flex', gap: layoutMode === 2 ? '10px' : '5px', border: '1px solid #94a3b8', padding: layoutMode === 2 ? '6px 10px' : (hasCoForce ? '2.5px 5px' : '4px'), borderRadius: '6px', backgroundColor: '#f8fafc', margin: layoutMode === 2 ? '5px 0' : (hasCoForce ? '2px 0' : '3px 0') }}>
+          <div style={{ width: layoutMode === 2 ? '54px' : (hasCoForce ? '38px' : '44px'), height: layoutMode === 2 ? '68px' : (hasCoForce ? '46px' : '56px'), border: '1px dashed #64748b', borderRadius: '4px', backgroundColor: '#ffffff', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', flexShrink: 0, overflow: 'hidden' }}>
             {duty.photo ? (
               <img src={duty.photo} alt={duty.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             ) : (
@@ -814,15 +814,15 @@ export default function BulkLegalPdfModal({
 
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
             <div>
-              <div style={{ fontSize: layoutMode === 2 ? '10px' : (layoutMode === 4 ? '9px' : '7.5px'), fontWeight: 'bold', color: '#64748b' }}>अधिकारी / कर्मचारी:</div>
-              <div style={{ fontSize: hasCoForce ? '13px' : (layoutMode === 2 ? (hasCoForce ? '14px' : '17px') : (layoutMode === 4 ? '14px' : '10px')), fontWeight: '900', color: '#000000', lineHeight: '1.2', display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '4px', wordBreak: 'break-word' }}>
+              <div style={{ fontSize: layoutMode === 2 ? '11px' : (layoutMode === 4 ? '9px' : '7.5px'), fontWeight: 'bold', color: '#64748b' }}>अधिकारी / कर्मचारी:</div>
+              <div style={{ fontSize: layoutMode === 2 ? '22px' : (hasCoForce ? '13px' : (layoutMode === 4 ? '14px' : '10px')), fontWeight: '900', color: '#000000', lineHeight: '1.2', display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '4px', wordBreak: 'break-word' }}>
                 <span>{duty.name || duty.composite_details || cleanOfficerName || '-'}</span>
               </div>
-              <div style={{ fontSize: hasCoForce ? '11px' : (layoutMode === 2 ? (hasCoForce ? '12px' : '14px') : (layoutMode === 4 ? '12px' : '8.5px')), fontFamily: 'monospace', fontWeight: 'bold', color: '#1e293b' }}>
+              <div style={{ fontSize: layoutMode === 2 ? '16px' : (hasCoForce ? '11px' : (layoutMode === 4 ? '12px' : '8.5px')), fontFamily: 'monospace', fontWeight: 'bold', color: '#1e293b' }}>
                 {duty.mobile || '-'}
               </div>
             </div>
-            <div style={{ fontSize: hasCoForce ? '9.5px' : (layoutMode === 2 ? '11px' : (layoutMode === 4 ? '9.5px' : '7.5px')), color: '#334155', borderTop: '1px solid #cbd5e1', paddingTop: '1px', display: 'flex', justifyContent: 'space-between' }}>
+            <div style={{ fontSize: layoutMode === 2 ? '13px' : (hasCoForce ? '9.5px' : (layoutMode === 4 ? '9.5px' : '7.5px')), color: '#334155', borderTop: '1px solid #cbd5e1', paddingTop: '1px', display: 'flex', justifyContent: 'space-between' }}>
               {cleanPno ? (
                 <span>P.No: <strong>{cleanPno}</strong></span>
               ) : null}
@@ -892,8 +892,109 @@ export default function BulkLegalPdfModal({
           </tbody>
         </table>
 
-        {/* Co-deployed Force (Gated by includeCoForce, max 5 limit) */}
+        {/* Co-deployed Force (2-in-1: Dual sections for Police & Home Guard, max 10 each | Other formats: Single section, max 5) */}
         {includeCoForce && coForceList.length > 0 && (() => {
+          const isHomeGuardRecord = (r) => {
+            if (!r) return false;
+            const combined = `${r.rank || ''} ${r.designation || ''} ${r.name || ''} ${r.composite_details || ''} ${r.posting || ''} ${r.posting_place || ''} ${r.force_type || ''} ${r.category || ''} ${r.dept || ''}`.toLowerCase();
+            return (
+              combined.includes('होमगार्ड') || 
+              combined.includes('हो०गा') || 
+              combined.includes('हो0गा') || 
+              combined.includes('होगा') || 
+              combined.includes('पीआरडी') || 
+              combined.includes('prd') || 
+              /\bhg\b/i.test(combined) || 
+              /\bhome\s*guard\b/i.test(combined) ||
+              /ह[0०.]?गा[0०.]?/i.test(combined) ||
+              /हो[0०.]?गा[0०.]?/i.test(combined)
+            );
+          };
+
+          if (layoutMode === 2) {
+            const policeList = coForceList.filter(r => !isHomeGuardRecord(r));
+            const hgList = coForceList.filter(r => isHomeGuardRecord(r));
+
+            const maxVisible2in1 = 10;
+            const dispPolice = policeList.slice(0, maxVisible2in1);
+            const remPolice = policeList.length - dispPolice.length;
+
+            const dispHg = hgList.slice(0, maxVisible2in1);
+            const remHg = hgList.length - dispHg.length;
+
+            const renderTable = (list, isHg = false) => (
+              <div style={{ border: '1.5px solid #0b132b', borderRadius: '6px', overflow: 'hidden', backgroundColor: '#ffffff', flex: 1, minWidth: 0 }}>
+                <div style={{ backgroundColor: isHg ? '#fef3c7' : '#f1f5f9', fontWeight: '900', padding: '2px 5px', borderBottom: `1.5px solid ${isHg ? '#fde68a' : '#cbd5e1'}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: '11px', color: isHg ? '#92400e' : '#0f172a' }}>👥 {isHg ? 'सहयोगार्थ होमगार्ड बल:' : 'सहयोगार्थ पुलिस बल:'}</span>
+                  <span style={{ color: isHg ? '#b45309' : '#0369a1', fontFamily: 'monospace', fontWeight: 'bold', fontSize: '10px' }}>कुल: {list.length} जवान</span>
+                </div>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '10.5px', backgroundColor: '#ffffff', lineHeight: '1.25' }}>
+                  <thead>
+                    <tr style={{ backgroundColor: '#f8fafc', color: '#0f172a' }}>
+                      <th style={{ width: '20px', textAlign: 'center', padding: '2px 4px', border: '1px solid #cbd5e1', fontWeight: '900' }}>क्र०</th>
+                      <th style={{ padding: '2px 5px', border: '1px solid #cbd5e1', textAlign: 'left', fontWeight: '900' }}>पद व नाम</th>
+                      <th style={{ width: '95px', padding: '2px 5px', border: '1px solid #cbd5e1', textAlign: 'left', fontWeight: '900' }}>मोबाइल नंबर</th>
+                      <th style={{ padding: '2px 5px', border: '1px solid #cbd5e1', textAlign: 'left', fontWeight: '900' }}>मूल तैनाती (जनपद)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {list.length === 0 ? (
+                      <tr>
+                        <td colSpan={4} style={{ textAlign: 'center', padding: '7px 4px', color: '#64748b', fontStyle: 'italic', fontSize: '10px' }}>
+                          इस पॉइंट पर {isHg ? 'होमगार्ड' : 'पुलिस'} बल तैनात नहीं है
+                        </td>
+                      </tr>
+                    ) : (
+                      list.map((colleague, cIdx) => {
+                        let cleanName = (colleague.name || '').trim()
+                          .replace(/,\s*\d{10}\b/g, '')
+                          .replace(/\b\d{10}\b/g, '')
+                          .replace(/[,।]?\s*नं0?[-:]?\s*$/g, '')
+                          .replace(/[,।]?\s*नं\s*\(?.*$/g, '')
+                          .replace(/,\s*$/, '')
+                          .trim();
+
+                        if (cleanName.includes(',')) {
+                          cleanName = cleanName.split(',')[0].trim();
+                        }
+
+                        const postingStr = (colleague.posting || colleague.posting_place || colleague.thana || '').trim();
+                        const districtStr = (colleague.district || '').trim();
+                        let fullPosting = postingStr;
+                        if (districtStr && !fullPosting.includes(districtStr)) {
+                          fullPosting = fullPosting ? `${fullPosting} (${districtStr})` : districtStr;
+                        }
+                        if (!fullPosting) fullPosting = '-';
+
+                        return (
+                          <tr key={cIdx} style={{ backgroundColor: cIdx % 2 === 1 ? '#f8fafc' : '#ffffff' }}>
+                            <td style={{ textAlign: 'center', fontWeight: 'bold', color: '#64748b', border: '1px solid #e2e8f0', padding: '2px 4px' }}>{cIdx + 1}</td>
+                            <td style={{ fontWeight: '800', color: '#0f172a', border: '1px solid #e2e8f0', padding: '2px 5px' }}>{cleanName || '-'}</td>
+                            <td style={{ fontFamily: 'monospace', fontWeight: 'bold', color: '#0369a1', border: '1px solid #e2e8f0', padding: '2px 5px', whiteSpace: 'nowrap' }}>📞 {colleague.mobile || '-'}</td>
+                            <td style={{ color: '#334155', fontWeight: '600', border: '1px solid #e2e8f0', padding: '2px 5px' }}>{fullPosting}</td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
+                {(isHg ? remHg : remPolice) > 0 && (
+                  <div style={{ backgroundColor: '#fffbeb', borderTop: '1px solid #fde68a', padding: '1.5px 4px', textAlign: 'center', fontSize: '9.5px', fontWeight: '900', color: '#92400e' }}>
+                    और भी सहयोगार्थ हैं......
+                  </div>
+                )}
+              </div>
+            );
+
+            return (
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', margin: '4px 0 2px' }}>
+                {renderTable(dispPolice, false)}
+                {renderTable(dispHg, true)}
+              </div>
+            );
+          }
+
+          // Otherwise, Standard Format (4-in-1, 6-in-1): Single table, max 5 limit
           const maxVisible = 5;
           const displayedList = coForceList.slice(0, maxVisible);
           const remainingCount = coForceList.length - displayedList.length;
