@@ -821,9 +821,10 @@ export default function App() {
     }
   };
 
-  // Search in active event records
+  // Search in active event records (Optimized with min query length to prevent UI churn)
   useEffect(() => {
-    if (!searchQuery.trim()) {
+    const trimmed = searchQuery.trim();
+    if (!trimmed || trimmed.length < 2) {
       setActiveDuty(null);
       setSearchResults([]);
       setSearchAttempted(false);

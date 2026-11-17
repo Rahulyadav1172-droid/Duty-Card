@@ -57,21 +57,18 @@ export function sha256(ascii) {
   return result;
 }
 
-// Default pre-computed SHA-256 hashes (never store raw passwords!)
-// 'admin123' -> 240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9
-// 'senior123' -> ee80be534e65b40ffea3747d7c18251e3914a8aa5d1cfba80e4b855a909be4d7
-// 'UPPOLICE@2026' -> c000e309cb87889a71ca9d2fb56e890c4c4787d5516fc4d6323cfc2d5806c59b
-export const DEFAULT_MASTER_RECOVERY_PIN_HASH = sha256('UPPOLICE@2026');
+// Default pre-computed SHA-256 cryptographic hashes
+export const DEFAULT_MASTER_RECOVERY_PIN_HASH = 'c000e309cb87889a71ca9d2fb56e890c4c4787d5516fc4d6323cfc2d5806c59b';
 
 const DEFAULT_AUTH = {
   admin: {
     username: 'admin',
-    passwordHash: sha256('admin123'),
+    passwordHash: '240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9',
     updatedAt: new Date().toISOString()
   },
   senior: {
     username: 'senior',
-    passwordHash: sha256('senior123'),
+    passwordHash: 'ee80be534e65b40ffea3747d7c18251e3914a8aa5d1cfba80e4b855a909be4d7',
     updatedAt: new Date().toISOString()
   },
   masterRecoveryPinHash: DEFAULT_MASTER_RECOVERY_PIN_HASH

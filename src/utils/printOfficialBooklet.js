@@ -44,6 +44,16 @@ function formatDisplayDate(rawDate) {
   return rawDate;
 }
 
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
 export function printOfficialBookletDocument({
   records = [],
   eventTitle = '',
@@ -104,11 +114,11 @@ export function printOfficialBookletDocument({
         <div class="matrix-page-header">
           <div class="matrix-page-heading">कार्यालय वरिष्ठ पुलिस अधीक्षक, जनपद अयोध्या</div>
           <div class="matrix-page-subheading">
-            ${eventTitle} — 🛡️ ज़ोन-वार तैनात पुलिस बल विवरण
+            ${escapeHtml(eventTitle)} — 🛡️ ज़ोन-वार तैनात पुलिस बल विवरण
           </div>
           <div class="matrix-page-meta">
-            <span>पत्रांक: <strong>${patrank || 'सुरक्षा-2026/ड्यूटी-आदेश'}</strong></span>
-            <span>दिनांक: <strong>${displayDate}</strong></span>
+            <span>पत्रांक: <strong>${escapeHtml(patrank || 'सुरक्षा-2026/ड्यूटी-आदेश')}</strong></span>
+            <span>दिनांक: <strong>${escapeHtml(displayDate)}</strong></span>
           </div>
         </div>
 
@@ -131,7 +141,7 @@ export function printOfficialBookletDocument({
             <tbody>
               ${matrixRows.map(r => `
                 <tr>
-                  <td style="text-align:left; font-weight:bold; font-size:13px;">${r.zone}</td>
+                  <td style="text-align:left; font-weight:bold; font-size:13px;">${escapeHtml(r.zone)}</td>
                   <td style="font-weight:bold; color:#b45309;">${r.insp || '—'}</td>
                   <td style="font-weight:bold;">${r.si || '—'}</td>
                   <td style="color:#7e22ce; font-weight:bold;">${r.wsi || '—'}</td>
@@ -911,6 +921,8 @@ export function printOfficialBookletDocument({
       overflow: hidden;
       margin-bottom: 8px;
       background: #fff;
+      page-break-inside: avoid;
+      break-inside: avoid;
     }
     .point-header {
       background: #e2e8f0;

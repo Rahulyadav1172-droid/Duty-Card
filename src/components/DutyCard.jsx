@@ -22,6 +22,7 @@ import {
 import { QRCodeSVG } from 'qrcode.react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
+import DOMPurify from 'dompurify';
 import VerifyModal from './VerifyModal';
 import { useLanguage } from '../context/LanguageContext';
 import { printIndividualPass, generateIndividualPassHtml, cleanOfficerNameAndTitle, formatCleanPosting } from '../utils/printLegalBulk';
@@ -392,7 +393,7 @@ export default function DutyCard({
       container.style.backgroundColor = '#ffffff';
       container.style.padding = '16px';
       container.style.fontFamily = "'Noto Sans Devanagari', -apple-system, BlinkMacSystemFont, sans-serif";
-      container.innerHTML = passHtml;
+      container.innerHTML = DOMPurify.sanitize(passHtml);
 
       const passBox = container.querySelector('.pass-container') || container;
       document.body.appendChild(container);
