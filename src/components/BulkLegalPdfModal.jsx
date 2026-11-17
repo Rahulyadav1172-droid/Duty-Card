@@ -767,6 +767,15 @@ export default function BulkLegalPdfModal({
       }
     }
 
+    cleanZone = cleanZone.replace(/\/+\s*$/, '').trim();
+    cleanSector = cleanSector.replace(/\/+\s*$/, '').trim();
+    if (cleanZonalIncharge && cleanZone.includes(cleanZonalIncharge)) {
+      cleanZone = cleanZone.replace(cleanZonalIncharge, '').replace(/\/+\s*$/, '').trim();
+    }
+    if (cleanSectorIncharge && cleanSector.includes(cleanSectorIncharge)) {
+      cleanSector = cleanSector.replace(cleanSectorIncharge, '').replace(/\/+\s*$/, '').trim();
+    }
+
     return (
       <div
         key={idx}
@@ -869,11 +878,29 @@ export default function BulkLegalPdfModal({
               <>
                 <tr style={{ borderBottom: '1px solid #cbd5e1', ...(layoutMode === 4 ? { display: 'flex', alignItems: 'stretch', flex: 1, minHeight: 0 } : {}) }}>
                   <td style={{ width: '28%', backgroundColor: '#f1f5f9', fontWeight: '900', color: '#0f172a', padding: layoutMode === 2 ? '6px 9px' : (layoutMode === 4 ? '2.5px 6px' : '2px 4px'), borderRight: '1.5px solid #cbd5e1', whiteSpace: 'nowrap', fontSize: layoutMode === 2 ? '13px' : (layoutMode === 4 ? '11px' : '8.5px'), ...(layoutMode === 4 ? { display: 'flex', alignItems: 'center' } : {}) }}>जोन / प्रभारी</td>
-                  <td style={{ padding: layoutMode === 2 ? '6px 9px' : (layoutMode === 4 ? '2.5px 6px' : '2px 4px'), fontSize: layoutMode === 2 ? '13px' : (layoutMode === 4 ? '11.5px' : '8.5px'), ...(layoutMode === 4 ? { flex: 1, display: 'flex', alignItems: 'center' } : {}) }}>{cleanZone || '-'} {cleanZonalIncharge ? ` / ${cleanZonalIncharge}` : ''}</td>
+                  <td style={{ padding: layoutMode === 2 ? '6px 9px' : (layoutMode === 4 ? '2.5px 6px' : '2px 4px'), fontSize: layoutMode === 2 ? '13px' : (layoutMode === 4 ? '11.5px' : '8.5px'), ...(layoutMode === 4 ? { flex: 1, display: 'flex', alignItems: 'center' } : {}) }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', width: '100%', gap: '1.5px' }}>
+                      <div style={{ fontWeight: 700, color: '#0f172a', lineHeight: 1.25 }}>{cleanZone || '-'}</div>
+                      {cleanZonalIncharge ? (
+                        <div style={{ color: '#0369a1', fontWeight: 800, fontSize: layoutMode === 4 ? '10.5px' : '11px', lineHeight: 1.2, borderTop: '1px dashed #cbd5e1', paddingTop: '1.5px', marginTop: '1px' }}>
+                          <span style={{ color: '#475569', fontWeight: 700 }}>प्रभारी:</span> <strong>{cleanZonalIncharge}</strong>
+                        </div>
+                      ) : null}
+                    </div>
+                  </td>
                 </tr>
                 <tr style={{ borderBottom: '1px solid #cbd5e1', ...(layoutMode === 4 ? { display: 'flex', alignItems: 'stretch', flex: 1, minHeight: 0 } : {}) }}>
                   <td style={{ width: '28%', backgroundColor: '#f1f5f9', fontWeight: '900', color: '#0f172a', padding: layoutMode === 2 ? '6px 9px' : (layoutMode === 4 ? '2.5px 6px' : '2px 4px'), borderRight: '1.5px solid #cbd5e1', whiteSpace: 'nowrap', fontSize: layoutMode === 2 ? '13px' : (layoutMode === 4 ? '11px' : '8.5px'), ...(layoutMode === 4 ? { display: 'flex', alignItems: 'center' } : {}) }}>सेक्टर / प्रभारी</td>
-                  <td style={{ padding: layoutMode === 2 ? '6px 9px' : (layoutMode === 4 ? '2.5px 6px' : '2px 4px'), fontSize: layoutMode === 2 ? '13px' : (layoutMode === 4 ? '11.5px' : '8.5px'), ...(layoutMode === 4 ? { flex: 1, display: 'flex', alignItems: 'center' } : {}) }}>{cleanSector || '-'} {cleanSectorIncharge ? ` / ${cleanSectorIncharge}` : ''}</td>
+                  <td style={{ padding: layoutMode === 2 ? '6px 9px' : (layoutMode === 4 ? '2.5px 6px' : '2px 4px'), fontSize: layoutMode === 2 ? '13px' : (layoutMode === 4 ? '11.5px' : '8.5px'), ...(layoutMode === 4 ? { flex: 1, display: 'flex', alignItems: 'center' } : {}) }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', width: '100%', gap: '1.5px' }}>
+                      <div style={{ fontWeight: 700, color: '#0f172a', lineHeight: 1.25 }}>{cleanSector || '-'}</div>
+                      {cleanSectorIncharge ? (
+                        <div style={{ color: '#0369a1', fontWeight: 800, fontSize: layoutMode === 4 ? '10.5px' : '11px', lineHeight: 1.2, borderTop: '1px dashed #cbd5e1', paddingTop: '1.5px', marginTop: '1px' }}>
+                          <span style={{ color: '#475569', fontWeight: 700 }}>प्रभारी:</span> <strong>{cleanSectorIncharge}</strong>
+                        </div>
+                      ) : null}
+                    </div>
+                  </td>
                 </tr>
               </>
             )}

@@ -738,6 +738,15 @@ export function printLegalBulk({
           }
         }
 
+        cleanZone = cleanZone.replace(/\/+\s*$/, '').trim();
+        cleanSector = cleanSector.replace(/\/+\s*$/, '').trim();
+        if (cleanZonalIncharge && cleanZone.includes(cleanZonalIncharge)) {
+          cleanZone = cleanZone.replace(cleanZonalIncharge, '').replace(/\/+\s*$/, '').trim();
+        }
+        if (cleanSectorIncharge && cleanSector.includes(cleanSectorIncharge)) {
+          cleanSector = cleanSector.replace(cleanSectorIncharge, '').replace(/\/+\s*$/, '').trim();
+        }
+
         // Co-deployed Force logic (2-in-1: Dual sections for Police & Home Guard, max 10 each | Other formats: Single section, max 5)
         let coForceHtml = '';
         if (includeCoForce && coForceList.length > 0) {
@@ -1030,15 +1039,27 @@ export function printLegalBulk({
                   <tr>
                     <td class="td-lbl">जोन / प्रभारी</td>
                     <td class="td-val">
-                      ${escapeHtml(cleanZone || '-')}
-                      ${cleanZonalIncharge ? ` / <strong>${escapeHtml(cleanZonalIncharge)}</strong>` : ''}
+                      <div style="display:flex; flex-direction:column; width:100%; gap:1.5px;">
+                        <div style="font-weight:700; color:#0f172a; line-height:1.25;">${escapeHtml(cleanZone || '-')}</div>
+                        ${cleanZonalIncharge ? `
+                          <div style="color:#0369a1; font-weight:800; font-size:11px; line-height:1.2; border-top:1px dashed #cbd5e1; padding-top:1.5px; margin-top:1px;">
+                            <span style="color:#475569; font-weight:700;">प्रभारी:</span> <strong>${escapeHtml(cleanZonalIncharge)}</strong>
+                          </div>
+                        ` : ''}
+                      </div>
                     </td>
                   </tr>
                   <tr>
                     <td class="td-lbl">सेक्टर / प्रभारी</td>
                     <td class="td-val">
-                      ${escapeHtml(cleanSector || '-')}
-                      ${cleanSectorIncharge ? ` / <strong>${escapeHtml(cleanSectorIncharge)}</strong>` : ''}
+                      <div style="display:flex; flex-direction:column; width:100%; gap:1.5px;">
+                        <div style="font-weight:700; color:#0f172a; line-height:1.25;">${escapeHtml(cleanSector || '-')}</div>
+                        ${cleanSectorIncharge ? `
+                          <div style="color:#0369a1; font-weight:800; font-size:11px; line-height:1.2; border-top:1px dashed #cbd5e1; padding-top:1.5px; margin-top:1px;">
+                            <span style="color:#475569; font-weight:700;">प्रभारी:</span> <strong>${escapeHtml(cleanSectorIncharge)}</strong>
+                          </div>
+                        ` : ''}
+                      </div>
                     </td>
                   </tr>
                   `}
@@ -2499,6 +2520,15 @@ export function generateIndividualPassHtml({
         ''
       ).trim();
     }
+  }
+
+  cleanZone = cleanZone.replace(/\/+\s*$/, '').trim();
+  cleanSector = cleanSector.replace(/\/+\s*$/, '').trim();
+  if (cleanZonalIncharge && cleanZone.includes(cleanZonalIncharge)) {
+    cleanZone = cleanZone.replace(cleanZonalIncharge, '').replace(/\/+\s*$/, '').trim();
+  }
+  if (cleanSectorIncharge && cleanSector.includes(cleanSectorIncharge)) {
+    cleanSector = cleanSector.replace(cleanSectorIncharge, '').replace(/\/+\s*$/, '').trim();
   }
 
   // Find co-deployed force at the exact same duty place
