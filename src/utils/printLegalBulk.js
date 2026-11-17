@@ -741,7 +741,7 @@ export function printLegalBulk({
         // 2-Column Compact Format for Co-deployed Force (Zero scrollbars)
         let coForceHtml = '';
         if (includeCoForce && coForceList.length > 0) {
-          const maxVisible = is2In1 ? 36 : 28;
+          const maxVisible = is2In1 ? 12 : (is4In1 ? 8 : 5);
           const displayedCoForce = coForceList.slice(0, maxVisible);
           const remainingCount = coForceList.length - displayedCoForce.length;
 
@@ -749,23 +749,26 @@ export function printLegalBulk({
             let cleanColleagueName = (colleague.name || '').trim()
               .replace(/,\s*\d{10}\b/g, '')
               .replace(/\b\d{10}\b/g, '')
-              .replace(/।\s*नं\s*\(?.*$/g, '')
+              .replace(/[,।]?\s*नं0?[-:]?\s*$/g, '')
+              .replace(/[,।]?\s*नं\s*\(?.*$/g, '')
               .replace(/,\s*$/, '')
               .trim();
 
-            // If name has trailing unit/posting separated by comma (e.g. "श्री नागेन्द्र..., कॉवड सेल..."),
-            // keep the officer name so it fits cleanly without ellipsis in 2-column grid
-            if (cleanColleagueName.includes(',')) {
-              cleanColleagueName = cleanColleagueName.split(',')[0].trim();
+            const postingStr = (colleague.posting || colleague.posting_place || colleague.thana || '').trim();
+            const districtStr = (colleague.district || '').trim();
+            let fullPosting = postingStr;
+            if (districtStr && !fullPosting.includes(districtStr)) {
+              fullPosting = fullPosting ? `${fullPosting} (${districtStr})` : districtStr;
             }
+            if (!fullPosting) fullPosting = '-';
 
             return `
-              <div class="co-item">
-                <span class="co-idx">${cIdx + 1}.</span>
-                <span class="co-name" title="${escapeHtml(cleanColleagueName)}"><strong>${escapeHtml(cleanColleagueName)}</strong></span>
-                <span class="co-mob">${phoneSvg}<span>${escapeHtml(colleague.mobile || '-')}</span></span>
-                ${colleague.district ? `<span class="co-dist">(${escapeHtml(colleague.district)})</span>` : ''}
-              </div>
+              <tr>
+                <td class="co-td-idx">${cIdx + 1}</td>
+                <td class="co-td-name"><strong>${escapeHtml(cleanColleagueName || '-')}</strong></td>
+                <td class="co-td-mob font-mono">${phoneSvg}<span>${escapeHtml(colleague.mobile || '-')}</span></td>
+                <td class="co-td-post">${escapeHtml(fullPosting)}</td>
+              </tr>
             `;
           }).join('');
 
@@ -778,9 +781,19 @@ export function printLegalBulk({
                 </div>
                 <span class="co-count font-mono">कुल: ${coForceList.length} जवान</span>
               </div>
-              <div class="co-force-grid">
-                ${coRows}
-              </div>
+              <table class="co-force-table">
+                <thead>
+                  <tr>
+                    <th style="width:26px;text-align:center;">क्र०</th>
+                    <th>पद व नाम</th>
+                    <th style="width:115px;">मोबाइल नंबर</th>
+                    <th>मूल तैनाती (जनपद)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${coRows}
+                </tbody>
+              </table>
               ${remainingCount > 0 ? `
                 <div class="co-more-note">
                   + ${remainingCount} अन्य पुलिस बल (देखें संपूर्ण ड्यूटी बुकलेट)
@@ -1052,13 +1065,15 @@ export function printLegalBulk({
         <style>
           @font-face {
             font-family: 'Kokila';
-            src: local('Kokila'), local('Kokila-Regular'), local('kokila');
+            src: url('/fonts/kokila.ttf') format('truetype'),
+                 local('Kokila'), local('Kokila-Regular'), local('kokila');
             font-weight: 400;
             font-style: normal;
           }
           @font-face {
             font-family: 'Kokila';
-            src: local('Kokila Bold'), local('Kokila-Bold'), local('kokilab');
+            src: url('/fonts/kokilab.ttf') format('truetype'),
+                 local('Kokila Bold'), local('Kokila-Bold'), local('kokilab');
             font-weight: 700 900;
             font-style: normal;
           }
@@ -1780,65 +1795,56 @@ export function printLegalBulk({
           .co-hdr-title {
             display: flex;
             align-items: center;
-            font-size: ${is2In1 ? '10.5px' : (is4In1 ? '8.5px' : '7px')};
+            font-size: ${is2In1 ? '12px' : (is4In1 ? '10px' : '8px')};
+            font-weight: 900;
           }
           .co-count {
             color: #0369a1;
             font-weight: bold;
             font-family: monospace;
-            font-size: ${is2In1 ? '10px' : (is4In1 ? '8px' : '6.5px')};
+            font-size: ${is2In1 ? '11px' : (is4In1 ? '9.5px' : '7.5px')};
           }
-          .co-force-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            column-gap: ${is2In1 ? '8px' : '5px'};
-            row-gap: ${is2In1 ? '2.5px' : '1.5px'};
-            padding: ${is2In1 ? '4px 6px' : '2.5px 4px'};
+          .co-force-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: ${is2In1 ? '12px' : (is4In1 ? '10px' : '7.5px')};
             background: #ffffff;
-            overflow: hidden !important;
+            line-height: 1.35;
           }
-          .co-item {
-            display: flex;
-            align-items: center;
-            gap: 3px;
-            padding: ${is2In1 ? '2px 4px' : '1px 3px'};
-            border-radius: 3px;
-            background: #f8fafc;
+          .co-force-table th {
+            background: #f1f5f9;
+            color: #0f172a;
+            font-weight: 900;
+            padding: ${is2In1 ? '4px 6px' : (is4In1 ? '2.5px 5px' : '1.5px 3px')};
+            border: 1px solid #cbd5e1;
+            text-align: left;
+            font-size: ${is2In1 ? '11.5px' : (is4In1 ? '9.5px' : '7px')};
+          }
+          .co-force-table td {
+            padding: ${is2In1 ? '3.5px 6px' : (is4In1 ? '2.5px 5px' : '1.5px 3px')};
             border: 1px solid #e2e8f0;
-            font-size: ${is2In1 ? '8.5px' : (is4In1 ? '7.5px' : '6.5px')};
-            line-height: 1.25;
-            white-space: nowrap;
-            overflow: hidden;
           }
-          .co-idx {
+          .co-force-table tr:nth-child(even) {
+            background: #f8fafc;
+          }
+          .co-td-idx {
+            text-align: center;
             font-weight: bold;
             color: #64748b;
             font-family: monospace;
-            font-size: ${is2In1 ? '8px' : (is4In1 ? '7px' : '6px')};
-            flex-shrink: 0;
           }
-          .co-name {
-            font-weight: 900;
+          .co-td-name {
+            font-weight: 800;
             color: #0f172a;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-            flex: 1;
-            min-width: 0;
           }
-          .co-mob {
-            font-family: monospace;
+          .co-td-mob {
             font-weight: bold;
             color: #0369a1;
-            display: flex;
-            align-items: center;
-            flex-shrink: 0;
-            margin-left: auto;
+            white-space: nowrap;
           }
-          .co-dist {
-            color: #64748b;
-            font-size: ${is2In1 ? '7.5px' : (is4In1 ? '6.5px' : '5.5px')};
-            flex-shrink: 0;
+          .co-td-post {
+            color: #334155;
+            font-weight: 600;
           }
           .co-more-note {
             background: #f1f5f9;
@@ -2303,9 +2309,9 @@ export function generateIndividualPassHtml({
           </div>
           <span style="font-size:10.5px;font-weight:bold;color:#f8fafc;background:#334155;padding:2px 8px;border-radius:12px;font-family:monospace;">कुल: ${coForceList.length} जवान</span>
         </div>
-        <table style="width:100%;border-collapse:collapse;font-size:11px;text-align:left;">
+        <table style="width:100%;border-collapse:collapse;font-size:12.5px;text-align:left;">
           <thead>
-            <tr style="background:#f1f5f9;color:#334155;font-weight:800;font-size:10.5px;">
+            <tr style="background:#f1f5f9;color:#334155;font-weight:800;font-size:12px;">
               <th style="padding:6px 8px;border:1px solid #cbd5e1;width:35px;text-align:center;">क्र०</th>
               <th style="padding:6px 8px;border:1px solid #cbd5e1;">पद व नाम</th>
               <th style="padding:6px 8px;border:1px solid #cbd5e1;width:125px;">मोबाइल नंबर</th>
@@ -2332,13 +2338,15 @@ export function generateIndividualPassHtml({
       <style>
         @font-face {
           font-family: 'Kokila';
-          src: local('Kokila'), local('Kokila-Regular'), local('kokila');
+          src: url('/fonts/kokila.ttf') format('truetype'),
+               local('Kokila'), local('Kokila-Regular'), local('kokila');
           font-weight: 400;
           font-style: normal;
         }
         @font-face {
           font-family: 'Kokila';
-          src: local('Kokila Bold'), local('Kokila-Bold'), local('kokilab');
+          src: url('/fonts/kokilab.ttf') format('truetype'),
+               local('Kokila Bold'), local('Kokila-Bold'), local('kokilab');
           font-weight: 700 900;
           font-style: normal;
         }
@@ -2451,11 +2459,11 @@ export function generateIndividualPassHtml({
           border: 1.5px solid #0f172a;
           border-radius: 6px;
           overflow: hidden;
-          font-size: 12px;
+          font-size: 14px;
           background: #ffffff;
         }
         .duty-table td {
-          padding: 6px 10px;
+          padding: 7px 12px;
           border-bottom: 1px solid #cbd5e1;
           border-right: 1px solid #cbd5e1;
         }
@@ -2463,20 +2471,23 @@ export function generateIndividualPassHtml({
           border-bottom: none;
         }
         .duty-table .lbl-td {
-          width: 30%;
+          width: 28%;
           background: #f1f5f9;
           font-weight: 900;
           color: #0f172a;
+          font-size: 14px;
           border-right: 1.5px solid #cbd5e1;
         }
         .duty-table .val-td {
           font-weight: 700;
           color: #0f172a;
+          font-size: 14px;
         }
         .duty-place-val {
-          font-size: 14px;
+          font-size: 17px;
           font-weight: 900;
-          color: #0f172a;
+          color: #78350f;
+          background: #fef3c7;
         }
         .footer-bar {
           display: flex;

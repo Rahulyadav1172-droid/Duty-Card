@@ -4,13 +4,15 @@
 
 @font-face {
   font-family: 'Kokila';
-  src: local('Kokila'), local('Kokila-Regular'), local('kokila');
+  src: url('/fonts/kokila.ttf') format('truetype'),
+       local('Kokila'), local('Kokila-Regular'), local('kokila');
   font-weight: 400;
   font-style: normal;
 }
 @font-face {
   font-family: 'Kokila';
-  src: local('Kokila Bold'), local('Kokila-Bold'), local('kokilab');
+  src: url('/fonts/kokilab.ttf') format('truetype'),
+       local('Kokila Bold'), local('Kokila-Bold'), local('kokilab');
   font-weight: 700 900;
   font-style: normal;
 }

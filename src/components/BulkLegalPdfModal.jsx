@@ -894,40 +894,60 @@ export default function BulkLegalPdfModal({
 
         {/* Co-deployed Force (Gated by includeCoForce) */}
         {includeCoForce && coForceList.length > 0 && (() => {
-          const maxVisible = layoutMode === 2 ? 36 : 28;
+          const maxVisible = layoutMode === 2 ? 12 : (layoutMode === 4 ? 8 : 5);
           const displayedList = coForceList.slice(0, maxVisible);
           const remainingCount = coForceList.length - displayedList.length;
 
           return (
-            <div style={{ border: '1.5px solid #0b132b', borderRadius: '6px', overflow: 'hidden', margin: layoutMode === 2 ? '5px 0 4px' : '3px 0', fontSize: layoutMode === 2 ? '8.5px' : '7.5px' }}>
-              <div style={{ backgroundColor: '#f1f5f9', fontWeight: '900', padding: layoutMode === 2 ? '3px 8px' : '2px 5px', borderBottom: '1.5px solid #cbd5e1', display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ fontSize: layoutMode === 2 ? '10px' : '8.5px', color: '#0f172a' }}>सहयोगार्थ पुलिस बल:</span>
-                <span style={{ color: '#0369a1', fontFamily: 'monospace', fontWeight: 'bold' }}>कुल: {coForceList.length} जवान</span>
+            <div style={{ border: '1.5px solid #0b132b', borderRadius: '6px', overflow: 'hidden', margin: layoutMode === 2 ? '6px 0 4px' : '3px 0', fontSize: layoutMode === 2 ? '11px' : (layoutMode === 4 ? '10px' : '7.5px') }}>
+              <div style={{ backgroundColor: '#f1f5f9', fontWeight: '900', padding: layoutMode === 2 ? '4px 8px' : '2px 5px', borderBottom: '1.5px solid #cbd5e1', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: layoutMode === 2 ? '12px' : '10px', color: '#0f172a' }}>👥 सहयोगार्थ पुलिस बल (उसी पॉइंट पर तैनात साथी):</span>
+                <span style={{ color: '#0369a1', fontFamily: 'monospace', fontWeight: 'bold', fontSize: layoutMode === 2 ? '11px' : '9.5px' }}>कुल: {coForceList.length} जवान</span>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', columnGap: layoutMode === 2 ? '8px' : '5px', rowGap: layoutMode === 2 ? '2.5px' : '1.5px', padding: layoutMode === 2 ? '4px 6px' : '2.5px 4px', overflow: 'hidden' }}>
-                {displayedList.map((colleague, cIdx) => {
-                  let cleanName = (colleague.name || '').trim()
-                    .replace(/,\s*\d{10}\b/g, '')
-                    .replace(/\b\d{10}\b/g, '')
-                    .replace(/।\s*नं\s*\(?.*$/g, '')
-                    .replace(/,\s*$/, '')
-                    .trim();
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: layoutMode === 2 ? '11px' : (layoutMode === 4 ? '9.5px' : '7.5px'), backgroundColor: '#ffffff', lineHeight: '1.3' }}>
+                <thead>
+                  <tr style={{ backgroundColor: '#f8fafc', color: '#0f172a' }}>
+                    <th style={{ width: '28px', textAlign: 'center', padding: '3px 4px', border: '1px solid #cbd5e1', fontWeight: '900' }}>क्र०</th>
+                    <th style={{ padding: '3px 6px', border: '1px solid #cbd5e1', textAlign: 'left', fontWeight: '900' }}>पद व नाम</th>
+                    <th style={{ width: layoutMode === 2 ? '115px' : '95px', padding: '3px 6px', border: '1px solid #cbd5e1', textAlign: 'left', fontWeight: '900' }}>मोबाइल नंबर</th>
+                    <th style={{ padding: '3px 6px', border: '1px solid #cbd5e1', textAlign: 'left', fontWeight: '900' }}>मूल तैनाती (जनपद)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {displayedList.map((colleague, cIdx) => {
+                    let cleanName = (colleague.name || '').trim()
+                      .replace(/,\s*\d{10}\b/g, '')
+                      .replace(/\b\d{10}\b/g, '')
+                      .replace(/[,।]?\s*नं0?[-:]?\s*$/g, '')
+                      .replace(/[,।]?\s*नं\s*\(?.*$/g, '')
+                      .replace(/,\s*$/, '')
+                      .trim();
 
-                  if (cleanName.includes(',')) {
-                    cleanName = cleanName.split(',')[0].trim();
-                  }
+                    if (cleanName.includes(',')) {
+                      cleanName = cleanName.split(',')[0].trim();
+                    }
 
-                  return (
-                    <div key={cIdx} style={{ display: 'flex', alignItems: 'center', gap: '3px', padding: layoutMode === 2 ? '2px 4px' : '1px 3px', border: '1px solid #e2e8f0', borderRadius: '3px', backgroundColor: '#f8fafc', whiteSpace: 'nowrap', overflow: 'hidden' }}>
-                      <span style={{ fontWeight: 'bold', color: '#64748b', fontFamily: 'monospace', fontSize: layoutMode === 2 ? '8px' : '6.5px' }}>{cIdx + 1}.</span>
-                      <span style={{ fontWeight: '900', color: '#0f172a', overflow: 'hidden', textOverflow: 'ellipsis', flex: 1 }}>{cleanName}</span>
-                      <span style={{ fontFamily: 'monospace', fontWeight: 'bold', color: '#0369a1', marginLeft: 'auto' }}>{colleague.mobile || '-'}</span>
-                    </div>
-                  );
-                })}
-              </div>
+                    const postingStr = (colleague.posting || colleague.posting_place || colleague.thana || '').trim();
+                    const districtStr = (colleague.district || '').trim();
+                    let fullPosting = postingStr;
+                    if (districtStr && !fullPosting.includes(districtStr)) {
+                      fullPosting = fullPosting ? `${fullPosting} (${districtStr})` : districtStr;
+                    }
+                    if (!fullPosting) fullPosting = '-';
+
+                    return (
+                      <tr key={cIdx} style={{ backgroundColor: cIdx % 2 === 1 ? '#f8fafc' : '#ffffff' }}>
+                        <td style={{ textAlign: 'center', fontWeight: 'bold', color: '#64748b', border: '1px solid #e2e8f0', padding: '2.5px 4px' }}>{cIdx + 1}</td>
+                        <td style={{ fontWeight: '800', color: '#0f172a', border: '1px solid #e2e8f0', padding: '2.5px 6px' }}>{cleanName || '-'}</td>
+                        <td style={{ fontFamily: 'monospace', fontWeight: 'bold', color: '#0369a1', border: '1px solid #e2e8f0', padding: '2.5px 6px', whiteSpace: 'nowrap' }}>📞 {colleague.mobile || '-'}</td>
+                        <td style={{ color: '#334155', fontWeight: '600', border: '1px solid #e2e8f0', padding: '2.5px 6px' }}>{fullPosting}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
               {remainingCount > 0 && (
-                <div style={{ backgroundColor: '#f1f5f9', borderTop: '1px solid #e2e8f0', padding: '2px 4px', textAlign: 'center', fontSize: layoutMode === 2 ? '8px' : '7px', fontWeight: 'bold', color: '#475569' }}>
+                <div style={{ backgroundColor: '#f1f5f9', borderTop: '1px solid #e2e8f0', padding: '2px 4px', textAlign: 'center', fontSize: layoutMode === 2 ? '9.5px' : '8px', fontWeight: 'bold', color: '#475569' }}>
                   + {remainingCount} अन्य पुलिस बल (देखें संपूर्ण ड्यूटी बुकलेट)
                 </div>
               )}
