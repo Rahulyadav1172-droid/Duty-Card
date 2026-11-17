@@ -738,10 +738,10 @@ export function printLegalBulk({
           }
         }
 
-        // 2-Column Compact Format for Co-deployed Force (Zero scrollbars)
+        // 2-Column Compact Format for Co-deployed Force (Zero scrollbars, max 5 rows)
         let coForceHtml = '';
         if (includeCoForce && coForceList.length > 0) {
-          const maxVisible = is2In1 ? 12 : (is4In1 ? 8 : 5);
+          const maxVisible = 5;
           const displayedCoForce = coForceList.slice(0, maxVisible);
           const remainingCount = coForceList.length - displayedCoForce.length;
 
@@ -784,9 +784,9 @@ export function printLegalBulk({
               <table class="co-force-table">
                 <thead>
                   <tr>
-                    <th style="width:26px;text-align:center;">क्र०</th>
+                    <th style="width:24px;text-align:center;">क्र०</th>
                     <th>पद व नाम</th>
-                    <th style="width:115px;">मोबाइल नंबर</th>
+                    <th style="width:105px;">मोबाइल नंबर</th>
                     <th>मूल तैनाती (जनपद)</th>
                   </tr>
                 </thead>
@@ -796,7 +796,7 @@ export function printLegalBulk({
               </table>
               ${remainingCount > 0 ? `
                 <div class="co-more-note">
-                  + ${remainingCount} अन्य पुलिस बल (देखें संपूर्ण ड्यूटी बुकलेट)
+                  और भी सहयोगार्थ हैं......
                 </div>
               ` : ''}
             </div>
@@ -804,7 +804,7 @@ export function printLegalBulk({
         }
 
         cardsHtml += `
-          <div class="duty-card ${is2In1 ? 'card-2in1' : ''} ${!coForceHtml ? 'no-co-force' : ''}">
+          <div class="duty-card ${is2In1 ? 'card-2in1' : ''} ${!coForceHtml ? 'no-co-force' : 'has-co-force'}">
             <!-- 1. Header Section -->
             <div class="card-header">
               <img src="/badge.png" class="badge-icon" alt="UP Police" />
@@ -1510,6 +1510,108 @@ export function printLegalBulk({
           .duty-card.no-co-force .card-footer {
             margin-top: auto;
             padding-top: ${is2In1 ? '8px' : (is4In1 ? '4px' : '2px')};
+          }
+
+          /* Optimized spacing when Co-force table is included (Guarantees all 5 jawans fit with zero cut-off) */
+          .duty-card.has-co-force {
+            padding: ${is2In1 ? '7px 10px' : (is4In1 ? '4.5px 7px' : '3.5px 5px')};
+            justify-content: space-between;
+          }
+          .duty-card.has-co-force .card-header {
+            padding-bottom: 2px;
+          }
+          .duty-card.has-co-force .badge-icon {
+            width: ${is2In1 ? '32px' : '26px'};
+            height: ${is2In1 ? '32px' : '26px'};
+          }
+          .duty-card.has-co-force .title-main {
+            font-size: ${is2In1 ? '16px' : (is4In1 ? '13.5px' : '10.5px')};
+            line-height: 1.15;
+          }
+          .duty-card.has-co-force .title-sub {
+            font-size: ${is2In1 ? '10.5px' : (is4In1 ? '9.5px' : '7.5px')};
+          }
+          .duty-card.has-co-force .officer-card {
+            padding: ${is2In1 ? '3px 6px' : '2px 5px'};
+            margin-top: 2px;
+            gap: 5px;
+          }
+          .duty-card.has-co-force .photo-frame {
+            width: ${is2In1 ? '38px' : '32px'};
+            height: ${is2In1 ? '46px' : '40px'};
+          }
+          .duty-card.has-co-force .officer-name {
+            font-size: ${is2In1 ? '13.5px' : (is4In1 ? '12.5px' : '9.5px')};
+            line-height: 1.2;
+          }
+          .duty-card.has-co-force .officer-mobile {
+            font-size: ${is2In1 ? '11.5px' : '10.5px'};
+          }
+          .duty-card.has-co-force .officer-sub-bar {
+            font-size: ${is2In1 ? '10.5px' : '9px'};
+            padding-top: 1px;
+            margin-top: 1px;
+          }
+          .duty-card.has-co-force .table-container {
+            margin-top: ${is2In1 ? '3px' : '2px'};
+            margin-bottom: ${is2In1 ? '3px' : '2px'};
+          }
+          .duty-card.has-co-force .card-table {
+            font-size: ${is2In1 ? '11.5px' : (is4In1 ? '10.5px' : '8px')};
+            line-height: 1.25;
+          }
+          .duty-card.has-co-force .td-lbl {
+            padding: ${is2In1 ? '2.5px 6px' : '2px 4px'};
+            font-size: ${is2In1 ? '11.5px' : (is4In1 ? '10.5px' : '8px')};
+          }
+          .duty-card.has-co-force .td-val {
+            padding: ${is2In1 ? '2.5px 6px' : '2px 4px'};
+            font-size: ${is2In1 ? '11.5px' : (is4In1 ? '10.5px' : '8px')};
+            line-height: 1.25;
+          }
+          .duty-card.has-co-force .td-duty-val {
+            font-size: ${is2In1 ? '14px' : (is4In1 ? '13px' : '9.5px')};
+            font-weight: 900;
+          }
+          .duty-card.has-co-force .note-val {
+            font-size: ${is2In1 ? '10.5px' : (is4In1 ? '9.5px' : '7.5px')};
+            line-height: 1.25;
+          }
+          .duty-card.has-co-force .co-force-container {
+            margin-top: ${is2In1 ? '3px' : '2px'};
+            margin-bottom: ${is2In1 ? '2px' : '1.5px'};
+          }
+          .duty-card.has-co-force .co-force-header {
+            padding: ${is2In1 ? '2.5px 6px' : '2px 5px'};
+          }
+          .duty-card.has-co-force .co-hdr-title {
+            font-size: ${is2In1 ? '11px' : (is4In1 ? '10px' : '7.5px')};
+          }
+          .duty-card.has-co-force .co-count {
+            font-size: ${is2In1 ? '10.5px' : (is4In1 ? '9.5px' : '7px')};
+          }
+          .duty-card.has-co-force .co-force-table {
+            font-size: ${is2In1 ? '11px' : (is4In1 ? '10px' : '7.5px')};
+            line-height: 1.25;
+          }
+          .duty-card.has-co-force .co-force-table th {
+            padding: ${is2In1 ? '2.5px 5px' : '2px 4px'};
+            font-size: ${is2In1 ? '10.5px' : (is4In1 ? '9.5px' : '7px')};
+          }
+          .duty-card.has-co-force .co-force-table td {
+            padding: ${is2In1 ? '2.5px 5px' : '2px 4px'};
+          }
+          .duty-card.has-co-force .co-more-note {
+            background: #fffbeb;
+            border-top: 1px solid #fde68a;
+            padding: 1.5px 4px;
+            text-align: center;
+            font-size: ${is2In1 ? '9.5px' : (is4In1 ? '8.5px' : '7px')};
+            font-weight: 900;
+            color: #92400e;
+          }
+          .duty-card.has-co-force .card-footer {
+            padding-top: ${is2In1 ? '4px' : '2.5px'};
           }
 
           .empty-slot {
@@ -2286,7 +2388,11 @@ export function generateIndividualPassHtml({
 
   let coForceHtml = '';
   if (coForceList.length > 0) {
-    const coRows = coForceList.map((colleague, cIdx) => {
+    const maxVisible = 5;
+    const displayedCoForce = coForceList.slice(0, maxVisible);
+    const remainingCount = coForceList.length - displayedCoForce.length;
+
+    const coRows = displayedCoForce.map((colleague, cIdx) => {
       const cleanColleagueName = cleanOfficerNameAndTitle(colleague.name, colleague.posting, colleague.district, colleague.mobile);
       const cleanColleaguePosting = formatCleanPosting(colleague.posting, colleague.district);
 
@@ -2322,6 +2428,11 @@ export function generateIndividualPassHtml({
             ${coRows}
           </tbody>
         </table>
+        ${remainingCount > 0 ? `
+          <div style="background:#fffbeb;border-top:1px solid #fde68a;padding:4px;text-align:center;font-size:11px;font-weight:900;color:#92400e;">
+            और भी सहयोगार्थ हैं......
+          </div>
+        ` : ''}
       </div>
     `;
   }
