@@ -400,10 +400,10 @@ export function renderIdBadgeHorizontalBackHtml({
           </div>
         </div>
 
-        <!-- 4. दिनाँक व समय -->
-        <div style="background:#f0fdf4;border:1.2px solid #86efac;border-radius:4px;padding:3.5px 7px;font-size:10.5px;display:flex;justify-content:space-between;align-items:center;">
-          <span style="font-weight:900;color:#166534;">दिनाँक व समय:</span>
-          <span style="font-weight:900;color:#0f172a;">${escapeHtml(duty.shift || 'प्रातः 09:00 से समाप्ति तक')}</span>
+        <!-- 4. ब्रीफिंग स्थल -->
+        <div style="background:#f0f9ff;border:1.2px solid #bae6fd;border-radius:4px;padding:3.5px 7px;font-size:10.5px;display:flex;align-items:flex-start;gap:6px;line-height:1.3;">
+          <span style="font-weight:900;color:#0369a1;white-space:nowrap;">ब्रीफिंग स्थल:</span>
+          <span style="font-weight:800;color:#0f172a;">${escapeHtml(activeBriefing || duty.briefing_place || customBriefing || '-')}</span>
         </div>
 
         <!-- 5. विशेष निर्देश -->
@@ -534,12 +534,7 @@ export function printLegalBulk({
 
         pagesHtml += `
           <div class="legal-page page-id-badge-4in1">
-            <div class="cut-line-v-center">
-              <span class="fold-badge-v fold-badge-v-1">📄 बीच से मोड़ें (Fold)</span>
-              <span class="fold-badge-v fold-badge-v-2">📄 बीच से मोड़ें (Fold)</span>
-              <span class="fold-badge-v fold-badge-v-3">📄 बीच से मोड़ें (Fold)</span>
-              <span class="fold-badge-v fold-badge-v-4">📄 बीच से मोड़ें (Fold)</span>
-            </div>
+            <div class="cut-line-v-center"></div>
             <div class="cut-line-h cut-line-h-1">
               <span class="cut-badge-h">✂️ यहां से काटें (Cut across)</span>
             </div>

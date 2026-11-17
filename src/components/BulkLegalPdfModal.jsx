@@ -580,10 +580,10 @@ export default function BulkLegalPdfModal({
             </div>
           </div>
 
-          {/* 3. दिनाँक व समय */}
-          <div style={{ backgroundColor: '#f0fdf4', border: '1.2px solid #86efac', borderRadius: '4px', padding: isPreview ? '2px 5px' : '3.5px 7px', fontSize: isPreview ? '8px' : '10.5px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontWeight: '900', color: '#166534' }}>दिनाँक व समय:</span>
-            <span style={{ fontWeight: '900', color: '#0f172a' }}>{duty.shift || 'प्रातः 09:00 से समाप्ति तक'}</span>
+          {/* 3. ब्रीफिंग स्थल */}
+          <div style={{ backgroundColor: '#f0f9ff', border: '1.2px solid #bae6fd', borderRadius: '4px', padding: isPreview ? '2px 5px' : '3.5px 7px', fontSize: isPreview ? '8px' : '10.5px', display: 'flex', alignItems: 'flex-start', gap: '6px', lineHeight: 1.3 }}>
+            <span style={{ fontWeight: '900', color: '#0369a1', whiteSpace: 'nowrap' }}>ब्रीफिंग स्थल:</span>
+            <span style={{ fontWeight: '800', color: '#0f172a' }}>{activeBriefingText || duty.briefing_place || customBriefing || '-'}</span>
           </div>
 
           {/* 4. विशेष निर्देश */}

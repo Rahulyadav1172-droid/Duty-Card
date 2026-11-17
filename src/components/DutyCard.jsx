@@ -631,13 +631,13 @@ export default function DutyCard({
             </div>
           </div>
 
-          {/* Duty Time */}
-          <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3 flex justify-between items-center text-xs">
-            <span className="font-black text-emerald-900">
-              दिनाँक व समय:
+          {/* Briefing Place */}
+          <div className="bg-sky-50 border border-sky-200 rounded-xl p-3 flex justify-between items-start text-xs gap-3">
+            <span className="font-black text-sky-900 shrink-0">
+              ब्रीफिंग स्थल:
             </span>
-            <span className="font-black text-slate-900">
-              {duty.shift || 'प्रातः 09:00 से समाप्ति तक'}
+            <span className="font-black text-slate-900 text-right">
+              {activeBriefingPlace || duty.briefing_place || customBriefing || '-'}
             </span>
           </div>
 
