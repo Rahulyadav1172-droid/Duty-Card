@@ -735,8 +735,13 @@ export default function DutyCard({
           <div className="flex-1 flex flex-col justify-between text-slate-900 py-0.5 min-w-0">
             <div>
               <span className="text-[10px] sm:text-[11px] font-bold text-slate-500">अधिकारी / कर्मचारी:</span>
-              <div className="text-sm sm:text-lg font-black text-slate-950 mt-0.5 break-words">
+              <div className="text-sm sm:text-lg font-black text-slate-950 mt-0.5 break-words flex items-center gap-1.5 flex-wrap">
                 <span>{cleanOfficerName || duty.name || duty.composite_details || '-'}</span>
+                {effectiveRank && (
+                  <span className="px-1.5 py-0.5 rounded bg-amber-100 text-amber-900 border border-amber-300 text-[10px] font-black shrink-0">
+                    {effectiveRank}
+                  </span>
+                )}
               </div>
               <div className="text-xs font-mono font-bold text-slate-800 mt-1 flex items-center gap-1.5">
                 <Phone className="w-3.5 h-3.5 text-slate-500" />

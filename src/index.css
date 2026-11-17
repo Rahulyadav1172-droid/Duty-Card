@@ -253,7 +253,7 @@ input[type="file"] {
   }
 
   @page {
-    size: A4 portrait;
-    margin: 10mm 8mm 10mm 8mm;
+    size: auto;
+    margin: 6mm 6mm;
   }
 }

@@ -1059,7 +1059,7 @@ export function printLegalBulk({
         <style>
           @page {
             size: ${isA4 ? 'A4 portrait' : 'legal portrait'};
-            margin: 3mm 4mm;
+            margin: 4mm 4mm;
           }
           * {
             box-sizing: border-box;
@@ -1078,7 +1078,7 @@ export function printLegalBulk({
           /* Responsive Page Dimensions (A4: 210x297mm vs Legal: 215.9x355.6mm) */
           .legal-page {
             width: ${isA4 ? '202mm' : '207.9mm'};
-            height: ${isA4 ? '290mm' : '349.6mm'};
+            height: ${isA4 ? '289mm' : '347.6mm'};
             display: grid;
             grid-template-columns: ${is2In1 ? '1fr' : '1fr 1fr'};
             grid-template-rows: ${is2In1 ? '1fr 1fr' : is4In1 ? '1fr 1fr' : '1fr 1fr 1fr'};
