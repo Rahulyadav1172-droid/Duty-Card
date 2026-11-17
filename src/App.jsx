@@ -1,30 +1,18 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import {
-  Search,
-  FileSpreadsheet,
-  Smartphone,
   AlertTriangle,
-  Printer,
-  Shield,
-  BookOpen,
-  Lock,
   LogOut,
   KeyRound,
-  MapPin,
   UserCheck,
   Users,
   LogIn,
-  Calendar,
-  Layers,
   Menu,
   ChevronDown,
   ShieldCheck,
   Globe,
   History,
   Phone,
-  QrCode,
-  WifiOff,
-  Sparkles
+  QrCode
 } from 'lucide-react';
 
 import { useLanguage } from './context/LanguageContext';
@@ -782,12 +770,14 @@ export default function App() {
       setIsScanModalOpen(true);
       return;
     }
-    if ((tabName === 'force' || tabName === 'upload' || tabName === 'events') && userRole !== 'admin') {
+    const adminOnlyTabs = ['force', 'upload', 'events', 'aamad', 'allocation', 'law_order', 'election_duty'];
+    if (adminOnlyTabs.includes(tabName) && userRole !== 'admin') {
       setPendingTab(tabName);
       setIsLoginModalOpen(true);
       return;
     }
-    if ((tabName === 'filter' || tabName === 'booklet') && userRole === 'guest') {
+    const authRequiredTabs = ['filter', 'booklet'];
+    if (authRequiredTabs.includes(tabName) && (userRole === 'guest' || !userRole)) {
       setPendingTab(tabName);
       setIsLoginModalOpen(true);
       return;
@@ -1381,7 +1371,7 @@ export default function App() {
         )}
 
         {/* ADMIN ONLY: MULTI-EVENT MANAGER */}
-        {activeTab === 'events' && (
+        {activeTab === 'events' && userRole === 'admin' && (
           <EventManager
             events={events}
             activeEventId={activeEventId}
@@ -1396,7 +1386,7 @@ export default function App() {
         )}
 
         {/* SENIOR OFFICER / ADMIN: DUTY POINT FILTER */}
-        {activeTab === 'filter' && (
+        {activeTab === 'filter' && (userRole === 'admin' || userRole === 'senior') && (
           <DutyPointFilterSection
             records={currentEvent.records || []}
             events={events}
@@ -1412,7 +1402,7 @@ export default function App() {
         )}
 
         {/* SENIOR OFFICER / ADMIN: DUTY BOOKLET PDF */}
-        {activeTab === 'booklet' && (
+        {activeTab === 'booklet' && (userRole === 'admin' || userRole === 'senior') && (
           <BookletSection
             records={currentEvent.records || []}
             isAdminAuthenticated={userRole === 'admin'}
@@ -1431,7 +1421,7 @@ export default function App() {
         )}
 
         {/* ADMIN ONLY: FORCE AAMAD REGISTER */}
-        {activeTab === 'aamad' && (
+        {activeTab === 'aamad' && userRole === 'admin' && (
           <ForceAamadManager
             forceRecords={forceRecords}
             onUpdateForce={handleUpdateForce}
@@ -1439,7 +1429,7 @@ export default function App() {
         )}
 
         {/* ADMIN ONLY: MASTER FORCE REGISTER */}
-        {activeTab === 'force' && (
+        {activeTab === 'force' && userRole === 'admin' && (
           <MasterForceManager
             forceRecords={forceRecords}
             onUpdateForce={handleUpdateForce}
@@ -1447,7 +1437,7 @@ export default function App() {
         )}
 
         {/* ADMIN ONLY: EVENT-SCOPED BULK EXCEL UPLOAD & SETTINGS */}
-        {activeTab === 'upload' && (
+        {activeTab === 'upload' && userRole === 'admin' && (
           <AdminUpload
             records={currentEvent.records || []}
             onUpdateRecords={handleUpdateActiveEventRecords}

@@ -1273,6 +1273,8 @@ export function printLegalBulk({
             padding: 1mm;
             page-break-after: always;
             break-after: page;
+            page-break-inside: avoid;
+            break-inside: avoid;
             box-sizing: border-box;
             position: relative;
             background: #ffffff;
@@ -1351,24 +1353,6 @@ export function printLegalBulk({
           .cut-line-h-1 { top: 25%; }
           .cut-line-h-2 { top: 50%; }
           .cut-line-h-3 { top: 75%; }
-
-          .fold-badge-v {
-            position: absolute;
-            left: 0;
-            transform: translate(-50%, -50%);
-            background: #ffffff;
-            padding: 1px 5px;
-            border: 1px solid #d97706;
-            border-radius: 3px;
-            font-size: 6.5px;
-            font-weight: 800;
-            color: #92400e;
-            white-space: nowrap;
-          }
-          .fold-badge-v-1 { top: 12.5%; }
-          .fold-badge-v-2 { top: 37.5%; }
-          .fold-badge-v-3 { top: 62.5%; }
-          .fold-badge-v-4 { top: 87.5%; }
 
           .cut-badge-h {
             position: absolute;
@@ -2701,6 +2685,8 @@ export function generateIndividualPassHtml({
           border-radius: 10px;
           padding: 16px 20px;
           background: #ffffff;
+          page-break-inside: avoid;
+          break-inside: avoid;
         }
         .header-bar {
           display: flex;

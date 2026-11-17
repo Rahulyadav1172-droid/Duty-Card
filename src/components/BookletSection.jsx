@@ -5,18 +5,10 @@ import {
   Download,
   Search,
   BookOpen,
-  Phone,
-  Shield,
-  MapPin,
-  Clock,
-  UserCheck,
   Trash2,
   ExternalLink,
   Eye,
   CheckCircle2,
-  AlertCircle,
-  Layers,
-  PlusCircle,
   Files
 } from 'lucide-react';
 import { saveBookletPDF, getAllBookletPDFs, deleteBookletPDFById, subscribeToCloudPDFs } from '../utils/pdfStorage';

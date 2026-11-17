@@ -193,14 +193,20 @@ input[type="file"] {
     border-color: #000000 !important;
   }
 
-  /* 4-in-1 Bulk Legal Print Pages */
+  /* Legal Bulk Print Pages */
+  .legal-page,
+  .page-id-badge-4in1,
   .bulk-legal-print-page {
     display: grid !important;
     visibility: visible !important;
     page-break-after: always !important;
     break-after: page !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
   }
 
+  .legal-page *,
+  .page-id-badge-4in1 *,
   .bulk-legal-print-page * {
     visibility: visible !important;
   }

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Download, Smartphone, Share, PlusSquare, X, Check, Shield } from 'lucide-react';
+import { Download, Smartphone, Share, PlusSquare, X } from 'lucide-react';
 
 export default function InstallPwaModal() {
   const [deferredPrompt, setDeferredPrompt] = useState(null);

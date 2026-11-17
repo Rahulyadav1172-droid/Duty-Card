@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Shield, Users, Layers, Award, Printer } from 'lucide-react';
+import { Shield, Users } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 
 /**

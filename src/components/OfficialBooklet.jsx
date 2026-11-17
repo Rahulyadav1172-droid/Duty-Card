@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Printer, ArrowLeft, Shield, Calendar, Clock, MapPin, Users, Edit3, Plus, Trash2, FileText, Check, X, AlertCircle, RefreshCw } from 'lucide-react';
+import { Printer, ArrowLeft, Shield, Calendar, Clock, MapPin, Edit3, Plus, Trash2, FileText, Check, X, RefreshCw } from 'lucide-react';
 import ForceDeploymentMatrix from './ForceDeploymentMatrix';
 import { printOfficialBookletDocument } from '../utils/printOfficialBooklet';
 import DutyReplacementModal from './DutyReplacementModal';

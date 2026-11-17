@@ -2,19 +2,14 @@ import React, { useState, useRef } from 'react';
 import {
   Printer,
   ShieldCheck,
-  MapPin,
-  Calendar,
-  Clock,
   Phone,
   Share2,
-  Download,
   CheckCircle2,
   FileDown,
   User,
   Camera,
   Layers,
   Users,
-  Award,
   Edit3,
   Check,
   X
@@ -24,10 +19,7 @@ import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import DOMPurify from 'dompurify';
 import VerifyModal from './VerifyModal';
-import { useLanguage } from '../context/LanguageContext';
 import { printIndividualPass, generateIndividualPassHtml, cleanOfficerNameAndTitle, formatCleanPosting } from '../utils/printLegalBulk';
-import { resolvePoliceRank, stripRankFromName } from '../utils/rankResolver';
-import { ELECTION_DUTY_CARD_INSTRUCTIONS, ELECTION_CUG_DIRECTORY } from '../data/electionStandardData';
 
 export default function DutyCard({
   duty,
@@ -50,7 +42,6 @@ export default function DutyCard({
   isOffline = false,
   eventId = ''
 }) {
-  const { language, t } = useLanguage();
   const [isDownloadingPDF, setIsDownloadingPDF] = useState(false);
   const [showBackSide, setShowBackSide] = useState(false);
   const [isVerifyModalOpen, setIsVerifyModalOpen] = useState(false);
@@ -227,6 +218,10 @@ export default function DutyCard({
   const activeBriefingPlace = (isBriefingEnabled !== false && customBriefing) ? customBriefing : (isBriefingEnabled ? (duty.briefing_place || '') : '');
 
   const handlePhotoUpload = (e) => {
+    if (userRole !== 'admin' && userRole !== 'senior') {
+      alert('पासपोर्ट फोटो अपलोड करने की अनुमति केवल अधिकृत अधिकारियों को है।');
+      return;
+    }
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -456,7 +451,6 @@ export default function DutyCard({
     sector: duty.sector
   });
 
-  const effectiveRank = resolvePoliceRank(duty?.rank, duty?.name);
   const cleanOfficerName = cleanOfficerNameAndTitle(duty?.name, duty?.posting, duty?.district, duty?.mobile);
 
   return (
@@ -469,8 +463,8 @@ export default function DutyCard({
         onChange={handlePhotoUpload}
         className="hidden"
       />
-      {/* Action Toolbar (Perfect for all mobile screen sizes) */}
-      <div className="bg-white p-2.5 sm:p-4 rounded-xl sm:rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 no-print">
+      {/* Action Toolbar (Responsive for tablet and desktop) */}
+      <div className="bg-white p-2.5 sm:p-4 rounded-xl sm:rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row items-stretch md:items-center justify-between gap-2.5 no-print">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-600 shrink-0">
             <ShieldCheck className="w-4 h-4 sm:w-6 sm:h-6" />
@@ -493,7 +487,7 @@ export default function DutyCard({
         </div>
 
         {/* Desktop Action Buttons: Streamlined Bar */}
-        <div className="hidden sm:flex sm:flex-wrap sm:items-center gap-2 w-full sm:w-auto">
+        <div className="hidden md:flex md:flex-wrap md:items-center gap-2 w-full md:w-auto">
           {/* Edit Duty Details Button (Admin / Senior Officer Only - Hidden from Public View) */}
           {(userRole === 'admin' || userRole === 'senior') && (
             <button
@@ -701,11 +695,21 @@ export default function DutyCard({
               if (duty.photo) {
                 setIsPhotoZoomOpen(true);
               } else {
+                if (userRole !== 'admin' && userRole !== 'senior') {
+                  if (onRequestAuth) {
+                    onRequestAuth(() => {
+                      photoInputRef.current?.click();
+                    });
+                  } else {
+                    alert('पासपोर्ट फोटो अपलोड करने के लिए एडमिन या वरिष्ठ अधिकारी लॉगिन आवश्यक है।');
+                  }
+                  return;
+                }
                 photoInputRef.current?.click();
               }
             }}
             className="w-18 h-24 sm:w-24 sm:h-28 border-2 border-dashed border-slate-400 hover:border-slate-600 rounded-lg bg-white overflow-hidden flex flex-col items-center justify-center text-center shrink-0 relative group cursor-pointer transition shadow-inner"
-            title={duty.photo ? "पासपोर्ट फोटो देखने / ज़ूम करने के लिए क्लिक करें" : "फोटो अपलोड/बदलने के लिए क्लिक करें"}
+            title={duty.photo ? "पासपोर्ट फोटो देखने / ज़ूम करने के लिए क्लिक करें" : "फोटो अपलोड करने के लिए क्लिक करें"}
           >
             {duty.photo ? (
               <img
@@ -1046,7 +1050,7 @@ export default function DutyCard({
             </div>
 
             <div className="flex items-center gap-2 pt-1">
-              {(userRole === 'admin' || userRole === 'superadmin') && (
+              {(userRole === 'admin' || userRole === 'senior') && (
                 <button
                   type="button"
                   onClick={() => {

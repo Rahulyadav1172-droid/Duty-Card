@@ -2,7 +2,6 @@ import React, { useState, useMemo, useRef, useEffect } from 'react';
 import {
   Users,
   MapPin,
-  Clock,
   Shield,
   Search,
   CheckCircle2,
@@ -18,24 +17,15 @@ import {
   Layers,
   Sparkles,
   UserPlus,
-  Sliders,
-  FolderCheck,
-  Info,
-  MoveRight,
   ArrowLeftRight,
   Edit,
-  Grid,
   Upload,
   FileSpreadsheet,
   FileDown,
   Building,
-  Flag,
   FolderTree,
-  Eye,
   SlidersHorizontal,
-  ChevronRight,
-  Printer,
-  FileText
+  Printer
 } from 'lucide-react';
 import { parseDutyFile } from '../utils/fileParser';
 import * as XLSX from 'xlsx';

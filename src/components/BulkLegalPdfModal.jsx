@@ -7,8 +7,6 @@ import {
   CheckCircle2,
   Layers,
   Loader2,
-  Sparkles,
-  Zap,
   Filter,
   Check,
   Grid,
@@ -20,7 +18,6 @@ import { QRCodeSVG } from 'qrcode.react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { printLegalBulk } from '../utils/printLegalBulk';
-import { useLanguage } from '../context/LanguageContext';
 import ToggleSwitch from './ToggleSwitch';
 import { resolvePoliceRank, stripRankFromName } from '../utils/rankResolver';
 
@@ -38,11 +35,8 @@ export default function BulkLegalPdfModal({
   isBriefingEnabled = true,
   initialFormat = 'id_badge'
 }) {
-  const { language, t } = useLanguage();
   const [cardFormat, setCardFormat] = useState(initialFormat || 'id_badge');
   const [badgeLayoutMode, setBadgeLayoutMode] = useState('side_by_side'); // 'side_by_side' (Front & Back side-by-side) | 'duplex'
-  const [activeBatchType, setActiveBatchType] = useState('side_by_side'); // 'side_by_side' | 'front' | 'back'
-  const [previewSide, setPreviewSide] = useState('front'); // 'front' | 'back'
   const [isGenerating, setIsGenerating] = useState(false);
   const [progress, setProgress] = useState({ current: 0, total: 0, page: 0, totalPages: 0 });
   const [selectedPointFilter, setSelectedPointFilter] = useState('ALL');
@@ -617,10 +611,6 @@ export default function BulkLegalPdfModal({
       </div>
     );
   };
-
-  const renderIdBadgeFrontReact = renderIdBadgeHorizontalFrontReact;
-  const renderIdBadgeBackReact = renderIdBadgeHorizontalBackReact;
-  const renderIdBadgeReact = renderIdBadgeHorizontalFrontReact;
 
   // Helper to render individual card for background canvas
   const renderSingleCard = (duty, idx) => {
@@ -1522,18 +1512,6 @@ export default function BulkLegalPdfModal({
                 </button>
               </div>
             </div>
-          </div>
-
-          {/* Footer Actions */}
-          <div className="p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-end gap-2">
-            {!isGenerating && (
-              <button
-                onClick={onClose}
-                className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs cursor-pointer transition"
-              >
-                बंद करें
-              </button>
-            )}
           </div>
         </div>
       </div>

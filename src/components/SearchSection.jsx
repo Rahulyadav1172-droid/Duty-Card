@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import { Search, Smartphone, ShieldCheck, X, Calendar, ChevronDown, CheckCircle2 } from 'lucide-react';
+import { Smartphone, X, Calendar, ChevronDown } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 
 export default function SearchSection({

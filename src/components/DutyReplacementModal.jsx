@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { RefreshCw, UserCheck, UserPlus, Shield, MapPin, Search, Check, AlertCircle, X, Clock, ArrowRight } from 'lucide-react';
+import { RefreshCw, UserCheck, UserPlus, Shield, Search, Check, X } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 
 export default function DutyReplacementModal({

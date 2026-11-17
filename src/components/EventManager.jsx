@@ -7,8 +7,6 @@ import {
   CheckCircle2,
   Archive,
   ArrowRight,
-  Shield,
-  Users,
   Check,
   X,
   AlertTriangle,

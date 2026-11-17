@@ -17,7 +17,6 @@ import {
   Edit,
   X,
   FileDown,
-  FileUp,
   UserCheck,
   Type,
   PenTool,
@@ -27,7 +26,6 @@ import {
   Calendar,
   Layers,
   Phone,
-  Sparkles,
   ShieldCheck,
   CreditCard
 } from 'lucide-react';

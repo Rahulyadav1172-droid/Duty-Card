@@ -3,15 +3,7 @@ import {
   Printer,
   FileDown,
   X,
-  Calendar,
-  ShieldCheck,
-  MapPin,
-  Clock,
-  UserCheck,
-  CheckCircle2,
-  Filter,
-  Layers,
-  FileSpreadsheet
+  ShieldCheck
 } from 'lucide-react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';

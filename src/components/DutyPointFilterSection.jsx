@@ -12,11 +12,8 @@ import {
   XCircle,
   Clock,
   UserCheck,
-  AlertCircle,
   Calendar,
-  FileText,
-  FileDown,
-  Printer
+  FileText
 } from 'lucide-react';
 import CheckingReportModal from './CheckingReportModal';
 import { resolvePoliceRank, stripRankFromName } from '../utils/rankResolver';

@@ -1,5 +1,5 @@
 import React from 'react';
-import { ShieldCheck, CheckCircle2, MapPin, Calendar, Clock, Phone, X, Shield, Award } from 'lucide-react';
+import { ShieldCheck, CheckCircle2, X } from 'lucide-react';
 
 export default function VerifyModal({
   duty,

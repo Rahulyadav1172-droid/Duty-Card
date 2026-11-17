@@ -8,11 +8,7 @@ import {
   Calendar,
   Layers,
   UploadCloud,
-  ChevronLeft,
-  ChevronRight,
   X,
-  Shield,
-  Sparkles,
   QrCode,
   Vote
 } from 'lucide-react';
