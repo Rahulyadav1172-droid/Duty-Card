@@ -27,7 +27,6 @@ import {
   Calendar,
   Layers,
   Phone,
-  HelpCircle,
   Sparkles,
   ShieldCheck,
   CreditCard
@@ -115,7 +114,6 @@ export default function AdminUpload({
   // Bulk Legal PDF Modal State
   const [isBulkPdfModalOpen, setIsBulkPdfModalOpen] = useState(false);
   const [bulkModalInitialFormat, setBulkModalInitialFormat] = useState('id_badge');
-  const [showTemplateGuide, setShowTemplateGuide] = useState(false);
 
   // Duty Edit/Add Modal State
   const [isDutyModalOpen, setIsDutyModalOpen] = useState(false);
@@ -568,76 +566,6 @@ export default function AdminUpload({
       }
     ];
 
-    // 2. Sheet 2: Comprehensive Guidelines & Rules Sheet
-    const instructionsData = [
-      {
-        "कॉलम शीर्षक (Column Header)": "zone",
-        "अनिवार्यता (Requirement)": "अनुशंसित (Recommended)",
-        "नियम व विवरण (Instructions & Guidelines)": "ड्यूटी जोन का नाम या संख्या (उदा० जोन-01 (मंदिर परिसर))।",
-        "मानक उदाहरण (Sample Value)": "जोन-01 (मंदिर परिसर)"
-      },
-      {
-        "कॉलम शीर्षक (Column Header)": "zonal",
-        "अनिवार्यता (Requirement)": "अनुशंसित (Recommended)",
-        "नियम व विवरण (Instructions & Guidelines)": "जोनल अधिकारी का पद, नाम व सीयूजी नंबर। यदि जोन के किसी 1 जवान के सामने भी भर देंगे तो बाकी सभी जवानों में स्वतः जुड़ जाएगा।",
-        "मानक उदाहरण (Sample Value)": "क्षेत्राधिकारी नगर, अयोध्या (9454402648)"
-      },
-      {
-        "कॉलम शीर्षक (Column Header)": "sector",
-        "अनिवार्यता (Requirement)": "अनुशंसित (Recommended)",
-        "नियम व विवरण (Instructions & Guidelines)": "ड्यूटी सेक्टर का नाम या संख्या (उदा० सेक्टर-01 (मुख्य प्रवेश द्वार))।",
-        "मानक उदाहरण (Sample Value)": "सेक्टर-01 (मुख्य प्रवेश द्वार)"
-      },
-      {
-        "कॉलम शीर्षक (Column Header)": "sector incharge",
-        "अनिवार्यता (Requirement)": "अत्यंत महत्वपूर्ण (CRITICAL)",
-        "नियम व विवरण (Instructions & Guidelines)": "सेक्टर प्रभारी का पद, नाम व मोबाइल नंबर। यदि एक सेक्टर में केवल 1 पंक्ति में भर देंगे तो उस सेक्टर के सभी जवानों के कार्ड में सेक्टर प्रभारी स्वतः प्रिंट होगा!",
-        "मानक उदाहरण (Sample Value)": "निरीक्षक कोतवाली, अयोध्या (9454402655)"
-      },
-      {
-        "कॉलम शीर्षक (Column Header)": "duty place",
-        "अनिवार्यता (Requirement)": "अनिवार्य (MANDATORY)",
-        "नियम व विवरण (Instructions & Guidelines)": "ड्यूटी प्वाइंट का स्पष्ट नाम जहां जवान तैनात रहेगा।",
-        "मानक उदाहरण (Sample Value)": "राम जन्मभूमि परिसर - मुख्य द्वार बैरियर-A"
-      },
-      {
-        "कॉलम शीर्षक (Column Header)": "name",
-        "अनिवार्यता (Requirement)": "अनिवार्य (MANDATORY)",
-        "नियम व विवरण (Instructions & Guidelines)": "पुलिसकर्मी का पूरा नाम (पदनाम सहित अथवा बिना पदनाम के)। यदि अलग से नाम नहीं है तो 'name posting dist mob' कॉलम से स्वतः भर जाएगा।",
-        "मानक उदाहरण (Sample Value)": "उ0नि0 हरिशंकर यादव"
-      },
-      {
-        "कॉलम शीर्षक (Column Header)": "mob",
-        "अनिवार्यता (Requirement)": "अनिवार्य (MANDATORY)",
-        "नियम व विवरण (Instructions & Guidelines)": "10 अंकों का मोबाइल नंबर। जवान इसी नंबर से अपना ड्यूटी पास खोजते हैं।",
-        "मानक उदाहरण (Sample Value)": "9918971186"
-      },
-      {
-        "कॉलम शीर्षक (Column Header)": "posting",
-        "अनिवार्यता (Requirement)": "अनुशंसित (Recommended)",
-        "नियम व विवरण (Instructions & Guidelines)": "जवान का गृह थाना, पुलिस लाइन या वर्तमान तैनाती स्थान।",
-        "मानक उदाहरण (Sample Value)": "थाना कोतवाली"
-      },
-      {
-        "कॉलम शीर्षक (Column Header)": "dist",
-        "अनिवार्यता (Requirement)": "अनुशंसित (Recommended)",
-        "नियम व विवरण (Instructions & Guidelines)": "जवान का गृह जनपद अथवा वर्तमान पोस्टिंग जिला।",
-        "मानक उदाहरण (Sample Value)": "बाराबंकी"
-      },
-      {
-        "कॉलम शीर्षक (Column Header)": "name posting dist mob",
-        "अनिवार्यता (Requirement)": "विशेष संयुक्त कॉलम (Merged Cell Feature)",
-        "नियम व विवरण (Instructions & Guidelines)": "यदि एक्सेल में नाम, मोबाइल, थाना व जनपद एक ही सेल में लिखे हैं (उदा० उ0नि0 हरिशंकर यादव 9918971186 थाना कोतवाली बाराबंकी), तो सिस्टम इसमें से सभी विवरण स्वतः अलग करके कार्ड में भर देता है।",
-        "मानक उदाहरण (Sample Value)": "उ0नि0 हरिशंकर यादव 9918971186 थाना कोतवाली बाराबंकी"
-      },
-      {
-        "कॉलम शीर्षक (Column Header)": "time",
-        "अनिवार्यता (Requirement)": "अनुशंसित (Recommended)",
-        "नियम व विवरण (Instructions & Guidelines)": "ड्यूटी की पाली अथवा समय (उदा० प्रातः 06:00 से दोपहर 02:00)।",
-        "मानक उदाहरण (Sample Value)": "प्रातः 06:00 बजे से दोपहर 02:00 बजे तक"
-      }
-    ];
-
     const wb = XLSX.utils.book_new();
 
     // Sheet 1: Duty_Roster
@@ -657,18 +585,8 @@ export default function AdminUpload({
     ];
     XLSX.utils.book_append_sheet(wb, ws, "Duty_Roster");
 
-    // Sheet 2: Instructions_निर्देश
-    const wsInstructions = XLSX.utils.json_to_sheet(instructionsData);
-    wsInstructions['!cols'] = [
-      { wch: 26 }, // कॉलम शीर्षक
-      { wch: 20 }, // अनिवार्यता
-      { wch: 65 }, // नियम व विवरण
-      { wch: 36 }  // मानक उदाहरण
-    ];
-    XLSX.utils.book_append_sheet(wb, wsInstructions, "Instructions_निर्देश");
-
     XLSX.writeFile(wb, "Police_Duty_Roster_Standard_Template.xlsx");
-    setStatusMsg({ type: 'success', text: 'मानक पुलिस ड्यूटी एक्सेल टेम्पलेट (Police_Duty_Roster_Standard_Template.xlsx) 2 शीट्स सहित सफलतापूर्वक डाउनलोड हो गया है।' });
+    setStatusMsg({ type: 'success', text: 'मानक पुलिस ड्यूटी एक्सेल टेम्पलेट (Police_Duty_Roster_Standard_Template.xlsx) सफलतापूर्वक डाउनलोड हो गया है।' });
   };
 
   const handleClearData = () => {
@@ -829,134 +747,7 @@ export default function AdminUpload({
             <Download className="w-4 h-4" />
             <span>मानक Excel टेम्पलेट डाउनलोड</span>
           </button>
-
-          <button
-            type="button"
-            onClick={() => setShowTemplateGuide(!showTemplateGuide)}
-            className="px-4 py-2.5 bg-white hover:bg-slate-50 text-slate-800 font-bold text-xs sm:text-sm rounded-xl border border-slate-300 flex items-center gap-1.5 transition cursor-pointer shadow-xs"
-          >
-            <HelpCircle className="w-4 h-4 text-amber-600" />
-            <span>शीट प्रारूप गाइड {showTemplateGuide ? '▲' : '▼'}</span>
-          </button>
         </div>
-
-        {/* Collapsible Excel Format Guidelines Section */}
-        {showTemplateGuide && (
-          <div className="mt-4 p-4 sm:p-5 bg-gradient-to-br from-slate-50 to-amber-50/40 rounded-2xl border border-amber-200/80 shadow-xs text-left space-y-4">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 border-b border-amber-200/60 pb-3">
-              <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-xl bg-amber-500/20 text-amber-800 flex items-center justify-center font-black shrink-0">
-                  <FileSpreadsheet className="w-5 h-5" />
-                </div>
-                <div>
-                  <h4 className="text-sm sm:text-base font-black text-slate-900">
-                    📋 मानक पुलिस ड्यूटी एक्सेल प्रारूप गाइड (Excel Template Guidelines)
-                  </h4>
-                  <p className="text-xs text-slate-600 font-medium">
-                    इस प्रारूप का उपयोग करने से कभी भी सेक्टर प्रभारी, ड्यूटी स्थल या मोबाइल नंबर की समस्या नहीं आएगी।
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Feature Highlights Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-2xs space-y-1">
-                <div className="flex items-center gap-1.5 text-emerald-800 font-black text-xs">
-                  <Sparkles className="w-4 h-4 text-emerald-600 shrink-0" />
-                  <span>1. ऑटो सेक्टर प्रभारी लिंक</span>
-                </div>
-                <p className="text-[11px] text-slate-600 leading-relaxed font-medium">
-                  एक सेक्टर में सिर्फ 1 जवान के आगे सेक्टर प्रभारी लिख देने से उस सेक्टर के बाकी सभी जवानों के ड्यूटी कार्ड में सेक्टर प्रभारी स्वतः जुड़ जाता है।
-                </p>
-              </div>
-
-              <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-2xs space-y-1">
-                <div className="flex items-center gap-1.5 text-blue-800 font-black text-xs">
-                  <ShieldCheck className="w-4 h-4 text-blue-600 shrink-0" />
-                  <span>2. स्लैश (/) ऑटो-स्प्लिट</span>
-                </div>
-                <p className="text-[11px] text-slate-600 leading-relaxed font-medium">
-                  यदि सेक्टर कॉलम में <code className="bg-slate-100 px-1 py-0.5 rounded text-slate-800">सेक्टर-1 / उ0नि0 राम प्रकाश (9454402655)</code> एक साथ लिखा है, तो सिस्टम सेक्टर व प्रभारी को अपने आप अलग कर लेता है।
-                </p>
-              </div>
-
-              <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-2xs space-y-1">
-                <div className="flex items-center gap-1.5 text-amber-800 font-black text-xs">
-                  <Phone className="w-4 h-4 text-amber-600 shrink-0" />
-                  <span>3. PNO व 10-अंक मोबाइल</span>
-                </div>
-                <p className="text-[11px] text-slate-600 leading-relaxed font-medium">
-                  जवान PNO या मोबाइल से कार्ड सर्च करते हैं। वैज्ञानिक संख्या प्रारूप (उदा० 9.45E+09) को सिस्टम स्वतः सामान्य नंबर में बदल देता है।
-                </p>
-              </div>
-            </div>
-
-            {/* Column Reference Table */}
-            <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-2xs">
-              <table className="w-full text-left text-xs">
-                <thead className="bg-slate-100/90 text-slate-800 font-black border-b border-slate-200">
-                  <tr>
-                    <th className="p-2.5">कॉलम नाम</th>
-                    <th className="p-2.5">स्थिति</th>
-                    <th className="p-2.5">विवरण व सुझाव</th>
-                    <th className="p-2.5">उदाहरण</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 text-slate-700">
-                  <tr className="hover:bg-slate-50/50">
-                    <td className="p-2.5 font-bold text-slate-900">नाम (Name)</td>
-                    <td className="p-2.5"><span className="px-2 py-0.5 rounded text-[10px] font-black bg-rose-100 text-rose-800 border border-rose-200">अनिवार्य</span></td>
-                    <td className="p-2.5">जवान/अधिकारी का नाम</td>
-                    <td className="p-2.5 font-mono text-[11px]">अमित कुमार</td>
-                  </tr>
-                  <tr className="hover:bg-slate-50/50">
-                    <td className="p-2.5 font-bold text-slate-900">मोबाइल (Mobile)</td>
-                    <td className="p-2.5"><span className="px-2 py-0.5 rounded text-[10px] font-black bg-rose-100 text-rose-800 border border-rose-200">अनिवार्य</span></td>
-                    <td className="p-2.5">10 अंकों का फोन नंबर (सर्च व व्हाट्सएप हेतु)</td>
-                    <td className="p-2.5 font-mono text-[11px]">9454400001</td>
-                  </tr>
-                  <tr className="hover:bg-slate-50/50">
-                    <td className="p-2.5 font-bold text-slate-900">ड्यूटी स्थल (Duty Point)</td>
-                    <td className="p-2.5"><span className="px-2 py-0.5 rounded text-[10px] font-black bg-rose-100 text-rose-800 border border-rose-200">अनिवार्य</span></td>
-                    <td className="p-2.5">तैनाती का सटीक प्वाइंट / बैरियर</td>
-                    <td className="p-2.5 font-mono text-[11px]">राम जन्मभूमि - मुख्य द्वार</td>
-                  </tr>
-                  <tr className="hover:bg-amber-50/60 bg-amber-50/30">
-                    <td className="p-2.5 font-bold text-slate-900">सेक्टर प्रभारी (Sector Incharge)</td>
-                    <td className="p-2.5"><span className="px-2 py-0.5 rounded text-[10px] font-black bg-amber-100 text-amber-900 border border-amber-300">अत्यंत महत्वपूर्ण</span></td>
-                    <td className="p-2.5">सेक्टर अधिकारी का पद, नाम व सीयूजी (1 सेक्टर में 1 बार भी काफी है)</td>
-                    <td className="p-2.5 font-mono text-[11px]">निरीक्षक कोतवाली (9454402655)</td>
-                  </tr>
-                  <tr className="hover:bg-slate-50/50">
-                    <td className="p-2.5 font-bold text-slate-900">सेक्टर (Sector)</td>
-                    <td className="p-2.5"><span className="px-2 py-0.5 rounded text-[10px] font-black bg-blue-100 text-blue-800 border border-blue-200">अनुशंसित</span></td>
-                    <td className="p-2.5">सेक्टर का नाम या नंबर</td>
-                    <td className="p-2.5 font-mono text-[11px]">सेक्टर-01 (मंदिर क्षेत्र)</td>
-                  </tr>
-                  <tr className="hover:bg-slate-50/50">
-                    <td className="p-2.5 font-bold text-slate-900">जोन व जोनल प्रभारी</td>
-                    <td className="p-2.5"><span className="px-2 py-0.5 rounded text-[10px] font-black bg-blue-100 text-blue-800 border border-blue-200">अनुशंसित</span></td>
-                    <td className="p-2.5">जोन व जोनल अधिकारी विवरण</td>
-                    <td className="p-2.5 font-mono text-[11px]">जोन-01 / क्षेत्राधिकारी नगर</td>
-                  </tr>
-                  <tr className="hover:bg-slate-50/50">
-                    <td className="p-2.5 font-bold text-slate-900">पीएनओ व पद (PNO & Rank)</td>
-                    <td className="p-2.5"><span className="px-2 py-0.5 rounded text-[10px] font-black bg-blue-100 text-blue-800 border border-blue-200">अनुशंसित</span></td>
-                    <td className="p-2.5">PNO संख्या व पदनाम (उ0नि0, का0 आदि)</td>
-                    <td className="p-2.5 font-mono text-[11px]">182340202 | उ0नि0</td>
-                  </tr>
-                  <tr className="hover:bg-slate-50/50">
-                    <td className="p-2.5 font-bold text-slate-900">मूल तैनाती, समय, शस्त्र, ब्रीफिंग</td>
-                    <td className="p-2.5"><span className="px-2 py-0.5 rounded text-[10px] font-black bg-slate-100 text-slate-700 border border-slate-200">वैकल्पिक</span></td>
-                    <td className="p-2.5">थाना, ड्यूटी समय/शिफ्ट, शस्त्र स्थिति व ब्रीफिंग स्थल</td>
-                    <td className="p-2.5 font-mono text-[11px]">थाना कैंट | 06:00-14:00 | लाठी</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
       </div>
 
       {statusMsg && (

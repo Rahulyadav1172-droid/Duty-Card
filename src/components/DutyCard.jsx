@@ -561,115 +561,122 @@ export default function DutyCard({
           }`}
         >
           <Layers className="w-4 h-4 text-amber-300" />
-          <span>पृष्ठ भाग (16 निर्देश व CUG डायरेक्टरी)</span>
+          <span>पृष्ठ भाग (ड्यूटी विवरण)</span>
         </button>
       </div>
 
       {showBackSide ? (
         <div
           id="printable-duty-card-back"
-          className="bg-white text-slate-900 p-4 sm:p-6 rounded-xl sm:rounded-2xl border-[2.5px] border-[#0b132b] shadow-xl ring-2 ring-amber-500/80 ring-offset-2 space-y-4"
+          className="bg-white text-slate-900 p-4 sm:p-6 rounded-xl sm:rounded-2xl border-2 border-slate-900 shadow-md space-y-4"
         >
           {/* Header */}
           <div className="border-b-2 border-slate-900 pb-2.5 flex items-center justify-between gap-2">
             <img src="/badge.png" alt="Police Badge Left" className="w-10 h-10 sm:w-12 sm:h-12 object-contain shrink-0" />
             <div className="flex-1 text-center">
               <h2 className="text-sm sm:text-lg font-black text-slate-950 uppercase tracking-wide">
-                उत्तर प्रदेश पुलिस • निर्वाचन ड्यूटी निर्देश एवं सीयूजी डायरेक्टरी
+                उत्तर प्रदेश पुलिस • जनपद अयोध्या
               </h2>
               <div className="text-[10px] sm:text-xs font-bold text-amber-900 mt-0.5">
-                (ड्यूटी कार्ड का पृष्ठ भाग • प्रत्येक पुलिस कर्मी हेतु अनिवार्य निर्देश)
+                (ड्यूटी कार्ड — पृष्ठ भाग)
               </div>
             </div>
             <img src="/badge.png" alt="Police Badge Right" className="w-10 h-10 sm:w-12 sm:h-12 object-contain shrink-0" />
           </div>
 
-          {/* 16 Standard Police Instructions */}
-          <div className="bg-amber-50/50 border border-amber-200 rounded-xl p-3 sm:p-4 space-y-2">
-            <h3 className="text-xs sm:text-sm font-black text-slate-950 flex items-center gap-2 border-b border-amber-200 pb-1.5">
-              <span className="w-2 h-2 rounded-full bg-amber-600"></span>
-              निर्वाचन ड्यूटी सम्बन्धी महत्वपूर्ण निर्देश (16 बिंदु)
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-1.5 text-[11px] sm:text-xs text-slate-800 leading-snug">
-              {ELECTION_DUTY_CARD_INSTRUCTIONS.map((inst, idx) => (
-                <div key={idx} className="flex items-start gap-1.5 p-1 rounded hover:bg-amber-100/40 transition">
-                  <span className="font-bold text-amber-900 shrink-0">✓</span>
-                  <span>{inst.replace(/^\d+\.\s*/, '')}</span>
-                </div>
-              ))}
+          {/* Officer Details Info */}
+          <div className="bg-slate-50 border border-slate-200 p-3 rounded-xl flex items-center justify-between flex-wrap gap-2 text-xs font-bold">
+            <div>
+              <span className="text-slate-500 text-[11px]">अधिकारी / कर्मचारी:</span>
+              <div className="font-black text-slate-950 text-sm mt-0.5 flex items-center gap-1.5">
+                <span>{cleanOfficerName || duty.name}</span>
+                {effectiveRank && (
+                  <span className="px-1.5 py-0.2 rounded bg-amber-100 text-amber-900 border border-amber-300 text-[9px] font-black">
+                    {effectiveRank}
+                  </span>
+                )}
+              </div>
+            </div>
+            <div className="text-right">
+              <div className="font-mono text-blue-900 font-bold">📞 {duty.mobile || '-'}</div>
+              {cleanPno && <div className="text-[10px] text-slate-500 font-mono">PNO: {cleanPno}</div>}
             </div>
           </div>
 
-          {/* CUG Directory */}
-          <div className="space-y-3 pt-1">
-            <h3 className="text-xs sm:text-sm font-black text-slate-950 flex items-center gap-2 border-b border-slate-300 pb-1.5">
-              <Phone className="w-4 h-4 text-emerald-600" />
-              महत्वपूर्ण सी०यू०जी० दूरभाष नम्बर (CUG DIRECTORY)
-            </h3>
-
-            {/* Higher Officers & Control Room */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <div className="border border-slate-200 rounded-lg p-2.5 bg-slate-50/60">
-                <div className="text-[11px] font-black text-slate-900 border-b border-slate-200 pb-1 mb-1.5 text-amber-900">
-                  उच्चाधिकारीगण
-                </div>
-                <div className="space-y-1 text-[11px]">
-                  {ELECTION_CUG_DIRECTORY.higher_officers.map((off, i) => (
-                    <div key={i} className="flex justify-between items-center py-0.5 border-b border-slate-100 last:border-0">
-                      <span className="text-slate-800 font-medium">{off.designation}</span>
-                      <a href={`tel:${off.mobile}`} className="font-mono font-bold text-emerald-700 hover:underline">{off.mobile}</a>
-                    </div>
-                  ))}
-                </div>
+          {/* Zone & Sector Details Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {/* Zone */}
+            <div className="bg-white border border-slate-300 rounded-xl p-3 space-y-1">
+              <div className="text-xs font-black text-slate-900 border-b border-slate-200 pb-1 flex items-center gap-1.5">
+                <span>🏢</span>
+                <span>जोन / जोनल कमान</span>
               </div>
-
-              <div className="space-y-3">
-                {/* Control Rooms */}
-                <div className="border border-slate-200 rounded-lg p-2.5 bg-slate-50/60">
-                  <div className="text-[11px] font-black text-slate-900 border-b border-slate-200 pb-1 mb-1.5 text-amber-900">
-                    कन्ट्रोल रूम
-                  </div>
-                  <div className="space-y-1 text-[11px]">
-                    {ELECTION_CUG_DIRECTORY.control_rooms.map((cr, i) => (
-                      <div key={i} className="flex justify-between items-center py-0.5 border-b border-slate-100 last:border-0">
-                        <span className="text-slate-800 font-medium">{cr.name}</span>
-                        <a href={`tel:${cr.mobile}`} className="font-mono font-bold text-emerald-700 hover:underline">{cr.mobile}</a>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* SDMs & COs */}
-                <div className="border border-slate-200 rounded-lg p-2.5 bg-slate-50/60">
-                  <div className="text-[11px] font-black text-slate-900 border-b border-slate-200 pb-1 mb-1.5 text-amber-900">
-                    उपजिलाधिकारी व क्षेत्राधिकारी
-                  </div>
-                  <div className="space-y-1 text-[11px] max-h-40 overflow-y-auto pr-1">
-                    {ELECTION_CUG_DIRECTORY.sdm_and_co.map((sc, i) => (
-                      <div key={i} className="flex justify-between items-center py-0.5 border-b border-slate-100 last:border-0">
-                        <span className="text-slate-800 font-medium">{sc.designation}</span>
-                        <a href={`tel:${sc.mobile}`} className="font-mono font-bold text-emerald-700 hover:underline">{sc.mobile}</a>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+              <div className="text-xs text-slate-700">
+                <span className="font-bold">जोन:</span> <strong className="text-slate-950">{effectiveZone || '-'}</strong>
               </div>
+              {effectiveZonalIncharge && (
+                <div className="text-xs text-slate-700">
+                  <span className="font-bold">प्रभारी:</span> <strong className="text-blue-900">{effectiveZonalIncharge}</strong>
+                </div>
+              )}
             </div>
 
-            {/* Thanas */}
-            <div className="border border-slate-200 rounded-lg p-2.5 bg-slate-50/60">
-              <div className="text-[11px] font-black text-slate-900 border-b border-slate-200 pb-1 mb-1.5 text-amber-900">
-                समस्त 18 थाना प्रभारी (CUG)
+            {/* Sector */}
+            <div className="bg-white border border-slate-300 rounded-xl p-3 space-y-1">
+              <div className="text-xs font-black text-slate-900 border-b border-slate-200 pb-1 flex items-center gap-1.5">
+                <span>🛡️</span>
+                <span>सेक्टर / सेक्टर कमान</span>
               </div>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-3 gap-y-1 text-[10px] sm:text-[11px]">
-                {ELECTION_CUG_DIRECTORY.thanas.map((th, i) => (
-                  <div key={i} className="flex justify-between items-center py-0.5 border-b border-slate-100">
-                    <span className="text-slate-800 truncate pr-1">{th.thana}</span>
-                    <a href={`tel:${th.mobile}`} className="font-mono font-bold text-emerald-700 hover:underline shrink-0">{th.mobile}</a>
-                  </div>
-                ))}
+              <div className="text-xs text-slate-700">
+                <span className="font-bold">सेक्टर:</span> <strong className="text-slate-950">{effectiveSector || '-'}</strong>
+              </div>
+              {effectiveSectorIncharge && (
+                <div className="text-xs text-slate-700">
+                  <span className="font-bold">प्रभारी:</span> <strong className="text-blue-900">{effectiveSectorIncharge}</strong>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Duty Time */}
+          <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3 flex justify-between items-center text-xs">
+            <span className="font-black text-emerald-900 flex items-center gap-1.5">
+              <span>⏰</span>
+              <span>ड्यूटी दिनाँक व समय:</span>
+            </span>
+            <span className="font-black text-slate-900">
+              {duty.shift || 'प्रातः 09:00 से समाप्ति तक'}
+            </span>
+          </div>
+
+          {/* Special Note */}
+          <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs space-y-1">
+            <div className="font-black text-amber-950">📌 विशेष नोट:</div>
+            <div className="text-slate-800 font-medium leading-relaxed">
+              {activeNote || 'आवंटित कर्तव्य स्थल पर समय से उपस्थिति सुनिश्चित करें एवं उच्चाधिकारियों के निर्देशों का अक्षरशः पालन करें।'}
+            </div>
+          </div>
+
+          {/* Signatory Footer */}
+          <div className="pt-2 border-t border-slate-200 flex justify-between items-center text-xs">
+            <div className="text-[11px] font-bold text-slate-500">
+              अयोध्या पुलिस • सुरक्षा सेवा निष्ठा
+            </div>
+            <div className="text-right">
+              {signatureImg ? (
+                <img src={signatureImg} alt="Signature" className="h-8 max-w-[100px] object-contain ml-auto" />
+              ) : (
+                <div className="text-[10px] italic text-slate-500">(हस्ताक्षरित)</div>
+              )}
+              <div className="font-black text-slate-900 text-xs mt-0.5">
+                {signatoryText}
               </div>
             </div>
+          </div>
+
+          {/* Smart Cell Ayodhya Footer */}
+          <div className="bg-[#0b132b] text-white text-[9px] font-black tracking-widest text-center py-1.5 rounded-lg uppercase">
+            DESIGN AND DEVELOPED BY SMART CELL AYODHYA
           </div>
         </div>
       ) : (
@@ -1256,10 +1263,10 @@ export default function DutyCard({
               ? 'bg-amber-600 text-white'
               : 'bg-slate-800 hover:bg-slate-700 text-white border border-slate-700/80'
           }`}
-          title={showBackSide ? 'मुख पृष्ठ देखें' : 'महत्वपूर्ण निर्देश व CUG देखें'}
+          title={showBackSide ? 'मुख पृष्ठ देखें' : 'पृष्ठ भाग देखें'}
         >
           <Layers className="w-4 h-4 text-amber-400" />
-          <span className="text-[10px] truncate max-w-full">{showBackSide ? 'मुख पृष्ठ' : 'निर्देश/CUG'}</span>
+          <span className="text-[10px] truncate max-w-full">{showBackSide ? 'मुख पृष्ठ' : 'पृष्ठ भाग'}</span>
         </button>
       </div>
     </div>

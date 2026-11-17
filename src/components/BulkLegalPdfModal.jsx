@@ -438,6 +438,11 @@ export default function BulkLegalPdfModal({
               </div>
             </div>
           </div>
+
+          {/* Smart Cell Centered Footer Banner */}
+          <div style={{ backgroundColor: '#0b132b', color: '#ffffff', fontSize: isPreview ? '5.5px' : '6.5px', fontWeight: '900', letterSpacing: '0.8px', textAlign: 'center', padding: isPreview ? '1.5px 0' : '2px 0', marginTop: '2px', textTransform: 'uppercase' }}>
+            DESIGN AND DEVELOPED BY SMART CELL AYODHYA
+          </div>
         </div>
       </div>
     );
@@ -542,28 +547,18 @@ export default function BulkLegalPdfModal({
           boxShadow: '0 1px 3px rgba(0,0,0,0.06)'
         }}
       >
-        {/* Flush Top Navy Header */}
-        <div style={{ backgroundColor: '#0b132b', color: '#ffffff', padding: isPreview ? '3px 5px' : '3.5px 6px', borderBottom: '2px solid #1e3a8a', textAlign: 'center' }}>
-          <div style={{ fontSize: isPreview ? '6px' : '6.5px', fontWeight: '800', color: '#94a3b8', lineHeight: 1, letterSpacing: '0.3px' }}>
-            कार्यालय वरिष्ठ पुलिस अधीक्षक, जनपद अयोध्या
-          </div>
-          <div style={{ fontSize: isPreview ? '8.5px' : '9.5px', fontWeight: '900', color: '#ffffff', marginTop: '0.5px', lineHeight: 1.15 }}>
-            ड्यूटी नियंत्रण एवं महत्वपूर्ण निर्देश (पृष्ठ भाग)
-          </div>
-        </div>
-
         {/* Main Body Container */}
-        <div style={{ padding: isPreview ? '3px 5px' : '4px 6px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', flex: 1, gap: '3px', boxSizing: 'border-box' }}>
+        <div style={{ padding: isPreview ? '4px 6px' : '5px 7px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', flex: 1, gap: isPreview ? '3px' : '4px', boxSizing: 'border-box' }}>
           {/* Officer Mini Strip */}
-          <div style={{ backgroundColor: '#f1f5f9', border: '0.8px solid #cbd5e1', borderRadius: '3px', padding: isPreview ? '1.5px 5px' : '2px 6px', fontSize: isPreview ? '6.8px' : '7.2px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span>अधिकारी: <strong style={{ color: '#0f172a' }}>{displayCleanName || duty.name}</strong> {effectiveRank && <span style={{ backgroundColor: '#b45309', color: '#fff', fontSize: '6px', padding: '0.2px 3.5px', borderRadius: '2px', fontWeight: 'bold' }}>{effectiveRank}</span>}</span>
+          <div style={{ backgroundColor: '#f1f5f9', border: '0.8px solid #cbd5e1', borderRadius: '3px', padding: isPreview ? '2px 5px' : '2.5px 6px', fontSize: isPreview ? '7px' : '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span>अधिकारी: <strong style={{ color: '#0f172a' }}>{displayCleanName || duty.name}</strong> {effectiveRank && <span style={{ backgroundColor: '#b45309', color: '#fff', fontSize: isPreview ? '6px' : '7px', padding: '0.2px 3.5px', borderRadius: '2px', fontWeight: 'bold' }}>{effectiveRank}</span>}</span>
             <span>मो०: <strong style={{ fontFamily: 'monospace', color: '#0369a1' }}>{duty.mobile || '-'}</strong> {cleanPno && `| PNO: ${cleanPno}`}</span>
           </div>
 
           {/* Zone & Sector 2-Column Grid */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: isPreview ? '3px' : '4px' }}>
             {/* Zone */}
-            <div style={{ backgroundColor: '#ffffff', border: '1px solid #cbd5e1', borderRadius: '4px', padding: isPreview ? '2px 3.5px' : '2.5px 4px', fontSize: isPreview ? '6.5px' : '6.8px', lineHeight: 1.25 }}>
+            <div style={{ backgroundColor: '#ffffff', border: '1px solid #cbd5e1', borderRadius: '4px', padding: isPreview ? '2.5px 4px' : '3.5px 5px', fontSize: isPreview ? '7px' : '8px', lineHeight: 1.3 }}>
               <div style={{ fontWeight: '900', color: '#0f172a', borderBottom: '0.8px solid #e2e8f0', paddingBottom: '1px', marginBottom: '1.5px', display: 'flex', alignItems: 'center', gap: '2px' }}>
                 <span>🏢</span><span>जोन / जोनल कमान</span>
               </div>
@@ -572,7 +567,7 @@ export default function BulkLegalPdfModal({
             </div>
 
             {/* Sector */}
-            <div style={{ backgroundColor: '#ffffff', border: '1px solid #cbd5e1', borderRadius: '4px', padding: isPreview ? '2px 3.5px' : '2.5px 4px', fontSize: isPreview ? '6.5px' : '6.8px', lineHeight: 1.25 }}>
+            <div style={{ backgroundColor: '#ffffff', border: '1px solid #cbd5e1', borderRadius: '4px', padding: isPreview ? '2.5px 4px' : '3.5px 5px', fontSize: isPreview ? '7px' : '8px', lineHeight: 1.3 }}>
               <div style={{ fontWeight: '900', color: '#0f172a', borderBottom: '0.8px solid #e2e8f0', paddingBottom: '1px', marginBottom: '1.5px', display: 'flex', alignItems: 'center', gap: '2px' }}>
                 <span>🛡️</span><span>सेक्टर / सेक्टर कमान</span>
               </div>
@@ -581,33 +576,28 @@ export default function BulkLegalPdfModal({
             </div>
           </div>
 
-          {/* Briefing */}
-          <div style={{ backgroundColor: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '3px', padding: isPreview ? '1.5px 4px' : '2px 5px', fontSize: isPreview ? '6.5px' : '6.8px', lineHeight: 1.2 }}>
-            <span style={{ fontWeight: '900', color: '#1e40af' }}>📢 ब्रीफिंग स्थल व समय: </span>
-            <span style={{ color: '#0f172a', fontWeight: '800' }}>{activeBriefingText || 'पुलिस लाइन्स आर०टी०सी० सभागार जनपद अयोध्या'}</span>
+          {/* Duty Time */}
+          <div style={{ backgroundColor: '#f0fdf4', border: '1px solid #86efac', borderRadius: '3px', padding: isPreview ? '2px 5px' : '2.5px 6px', fontSize: isPreview ? '7px' : '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontWeight: '900', color: '#166534' }}>⏰ ड्यूटी समय:</span>
+            <span style={{ fontWeight: '900', color: '#0f172a' }}>{duty.shift || 'प्रातः 09:00 से समाप्ति तक'}</span>
           </div>
 
-          {/* 📌 विशेष नोट / निर्देश (THE NOTE!) */}
-          <div style={{ backgroundColor: '#fffbeb', border: '1.2px solid #fde68a', borderRadius: '4px', padding: isPreview ? '2px 4px' : '3px 5px', fontSize: isPreview ? '6.5px' : '6.8px', lineHeight: 1.25 }}>
-            <div style={{ fontWeight: '900', color: '#92400e', display: 'flex', justifyContent: 'space-between', marginBottom: '1px' }}>
-              <span>📌 विशेष नोट / महत्वपूर्ण निर्देश:</span>
-              <span style={{ fontSize: '5.5px', color: '#b45309', backgroundColor: '#fef3c7', border: '0.5px solid #fde68a', padding: '0.2px 3px', borderRadius: '2px' }}>अनिवार्य अनुपालन</span>
-            </div>
-            <div style={{ color: '#78350f', fontWeight: '700' }}>
-              {activeNoteText ? activeNoteText : '14 कोसी परिक्रमा में ड्यूटीरत कर्मी 14 कोसी परिक्रमा समाप्ति के बाद दिनांक 19.11.2026 को अपना अगला ड्यूटी कार्ड मेला कार्यालय सिंचाई डाक बंगला नया घाट अयोध्या से प्राप्त करना सुनिश्चित करेंगे।'}
-            </div>
+          {/* Special Note */}
+          <div style={{ backgroundColor: '#fffbeb', border: '1px solid #fde68a', borderRadius: '4px', padding: isPreview ? '2.5px 4px' : '3.5px 6px', fontSize: isPreview ? '6.8px' : '7.8px', lineHeight: 1.3 }}>
+            <span style={{ fontWeight: '900', color: '#92400e' }}>📌 विशेष नोट: </span>
+            <span style={{ color: '#78350f', fontWeight: '700' }}>
+              {activeNoteText ? activeNoteText : 'आवंटित ड्यूटी पॉइंट पर समय से उपस्थित रहें व उच्चाधिकारियों के निर्देशों का पालन करें।'}
+            </span>
           </div>
 
-          {/* 24x7 Emergency CUG / Helpline */}
-          <div style={{ backgroundColor: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '3px', padding: isPreview ? '1.5px 4px' : '2px 5px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: isPreview ? '6.2px' : '6.8px' }}>
-            <span>📞 पुलिस कंट्रोल: <strong style={{ fontFamily: 'monospace', color: '#0f172a' }}>9454402648</strong></span>
-            <span>🎪 मेला कंट्रोल: <strong style={{ fontFamily: 'monospace', color: '#0f172a' }}>9454402655</strong></span>
-            <span style={{ backgroundColor: '#fee2e2', color: '#991b1b', border: '0.5px solid #fca5a5', padding: '0.5px 3px', borderRadius: '2px', fontWeight: '900' }}>🚨 आपातकाल: 112</span>
+          {/* Authority Signatory */}
+          <div style={{ textAlign: 'right', fontSize: isPreview ? '6.5px' : '7.5px', fontWeight: '900', color: '#0f172a', paddingRight: '4px' }}>
+            {signatoryText}
           </div>
 
-          {/* Bottom Sign-off */}
-          <div style={{ textAlign: 'center', fontSize: isPreview ? '6.8px' : '7.2px', fontWeight: '900', color: '#0f172a', borderTop: '1px solid #0f172a', paddingTop: '1.5px', marginTop: 'auto' }}>
-            ( वरिष्ठ पुलिस अधीक्षक, जनपद अयोध्या )
+          {/* Smart Cell Ayodhya Centered Banner */}
+          <div style={{ backgroundColor: '#0b132b', color: '#ffffff', fontSize: isPreview ? '5.5px' : '6.5px', fontWeight: '900', letterSpacing: '0.8px', textAlign: 'center', padding: isPreview ? '1.5px 0' : '2px 0', marginTop: 'auto', textTransform: 'uppercase' }}>
+            DESIGN AND DEVELOPED BY SMART CELL AYODHYA
           </div>
         </div>
       </div>
@@ -1067,30 +1057,6 @@ export default function BulkLegalPdfModal({
             {/* 2A. ID BADGE SPECIFIC CONTROLS & LIVE PREVIEW */}
             {cardFormat === 'id_badge' ? (
               <div className="space-y-3">
-                {/* ID Badge Info Banner */}
-                <div className="p-3 rounded-2xl space-y-1.5 bg-amber-50/90 border border-amber-300/80 text-amber-950">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 font-black text-xs">
-                      <Sparkles className="w-4 h-4 shrink-0 text-amber-600" />
-                      <span>विजिटिंग कार्ड / पॉलीबैग साइज ID कार्ड (4 कार्ड प्रति लीगल पेज)</span>
-                    </div>
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full border bg-amber-100 text-amber-700 border-amber-300">
-                      ✓ Legal 5mm Margins
-                    </span>
-                  </div>
-                  <div className="text-[10.5px] leading-relaxed font-medium space-y-0.5">
-                    <div>
-                      • <strong>1 लीगल पेज = 4 जवानों के पूरे कार्ड (8 ब्लॉक):</strong> प्रत्येक पंक्ति में बायीं ओर फ्रंट और दायीं ओर बैक पास-पास छपेंगे।
-                    </div>
-                    <div>
-                      • <strong>विजिटिंग कार्ड साइज (~101mm × 85mm):</strong> 3 सीधे कट लगाकर बीच से मोड़ते ही मानक लैनयार्ड पॉलीबैग में पूरी तरह फिट।
-                    </div>
-                    <div>
-                      • <strong>स्मार्ट सेल फूटर:</strong> दोनों साइड नीचे <em>"DESIGN AND DEVELOPED BY SMART CELL AYODHYA"</em> का सेंटर्ड बैनर।
-                    </div>
-                  </div>
-                </div>
-
                 {/* Live Sample Badge Preview (Front & Back Side-by-Side) */}
                 {targetRecords[0] && (
                   <div className="bg-slate-100 border border-slate-300 rounded-2xl p-3 space-y-2">
@@ -1098,7 +1064,7 @@ export default function BulkLegalPdfModal({
                       <div className="flex items-center gap-1.5">
                         <CreditCard className="w-3.5 h-3.5 text-black" />
                         <span className="font-black text-slate-800 text-xs">
-                          लाइव आईडी कार्ड नमूना:
+                          आईडी कार्ड पूर्वावलोकन (Front & Back):
                         </span>
                       </div>
                       <span className="text-[10px] font-bold text-amber-800 bg-amber-100 px-2 py-0.5 rounded-full border border-amber-300">
@@ -1109,19 +1075,16 @@ export default function BulkLegalPdfModal({
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 bg-slate-200/70 p-2 rounded-xl border border-slate-300">
                       <div className="bg-white rounded-lg shadow-xs border border-slate-300 p-1 flex flex-col">
                         <div className="text-[9px] font-black text-white bg-slate-900 px-2 py-0.5 rounded text-center mb-1">
-                          1. मुख पृष्ठ (FRONT)
+                          मुख पृष्ठ (FRONT)
                         </div>
                         {renderIdBadgeHorizontalFrontReact(targetRecords[0], 0, true)}
                       </div>
                       <div className="bg-white rounded-lg shadow-xs border border-slate-300 p-1 flex flex-col">
                         <div className="text-[9px] font-black text-slate-900 bg-slate-100 px-2 py-0.5 rounded text-center mb-1 border border-slate-300">
-                          2. पृष्ठ भाग (BACK)
+                          पृष्ठ भाग (BACK)
                         </div>
                         {renderIdBadgeHorizontalBackReact(targetRecords[0], 1, true)}
                       </div>
-                    </div>
-                    <div className="text-[9.5px] text-center text-slate-600 font-bold">
-                      ✂️ 3 सीधे कट लगाएं और 📄 बीच से मोड़कर गले के पॉलीबैग / पाउच में रखें
                     </div>
                   </div>
                 )}
@@ -1234,7 +1197,7 @@ export default function BulkLegalPdfModal({
                   />
                 </div>
 
-                {/* TOGGLE OPTION: INCLUDE ELECTION BACK SIDE (16 INSTRUCTIONS & CUG DIRECTORY) */}
+                {/* TOGGLE OPTION: INCLUDE BACK SIDE */}
                 <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 flex items-center justify-between shadow-xs">
                   <div className="flex items-center gap-2.5">
                     <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${includeBackSide ? 'bg-indigo-100 text-indigo-800' : 'bg-slate-200 text-slate-500'}`}>
@@ -1242,12 +1205,12 @@ export default function BulkLegalPdfModal({
                     </div>
                     <div>
                       <div className="text-xs font-black text-slate-900">
-                        कार्ड बैक-साइड (16 पुलिस निर्देश + सीयूजी डायरेक्टरी)
+                        कार्ड पृष्ठ भाग (Back Side)
                       </div>
                       <div className="text-[10px] text-slate-500 font-medium mt-0.5">
                         {includeBackSide
-                          ? 'ड्यूटी कार्ड के पीछे 16 आचार संहिता निर्देश व CUG फोन छपेंगे'
-                          : 'केवल फ्रंट पास प्रिंट होगा (सिंगल साइडेड)'}
+                          ? 'दोनों साइड प्रिंट करें (Front + Back Duplex)'
+                          : 'केवल मुख पृष्ठ (Front Side Only)'}
                       </div>
                     </div>
                   </div>
