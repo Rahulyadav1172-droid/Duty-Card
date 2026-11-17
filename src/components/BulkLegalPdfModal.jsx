@@ -301,9 +301,9 @@ export default function BulkLegalPdfModal({
     ].join('\n');
 
     const dpText = (duty.duty_place || '-').trim();
-    const dpFontSize = dpText.length > 35 ? (isPreview ? '9px' : '11px') : (dpText.length > 20 ? (isPreview ? '10.5px' : '13px') : (isPreview ? '11.5px' : '15px'));
+    const dpFontSize = dpText.length > 35 ? (isPreview ? '10px' : '13px') : (dpText.length > 20 ? (isPreview ? '11.5px' : '15px') : (isPreview ? '13px' : '17px'));
     const cleanOfficerDisplay = displayCleanName || duty.name || '';
-    const officerNameFontSize = cleanOfficerDisplay.length > 25 ? (isPreview ? '9px' : '11px') : (isPreview ? '10px' : '13px');
+    const officerNameFontSize = cleanOfficerDisplay.length > 25 ? (isPreview ? '10px' : '13px') : (isPreview ? '12px' : '15.5px');
 
     return (
       <div
@@ -326,31 +326,29 @@ export default function BulkLegalPdfModal({
           fontFamily: "'Kokila', 'Mangal', 'Mukta', 'Noto Sans Devanagari', sans-serif"
         }}
       >
-        {/* Flush Top Navy Header */}
-        <div style={{ backgroundColor: '#0b132b', color: '#ffffff', padding: isPreview ? '3px 5px' : '4px 6px', borderBottom: '2px solid #b45309', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '4px' }}>
-          <img src="/badge.png" alt="Badge" style={{ width: isPreview ? '20px' : '24px', height: isPreview ? '20px' : '24px', objectFit: 'contain', flexShrink: 0 }} />
+        {/* Top Header Matching Standard Duty Cards */}
+        <div style={{ backgroundColor: '#ffffff', color: '#000000', padding: isPreview ? '3px 6px' : '3.5px 8px', borderBottom: '2px solid #0b132b', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '6px' }}>
+          <img src="/badge.png" alt="Badge" style={{ width: isPreview ? '22px' : '30px', height: isPreview ? '22px' : '30px', objectFit: 'contain', flexShrink: 0 }} />
           <div style={{ textAlign: 'center', flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: isPreview ? '11px' : '14px', fontWeight: '900', color: '#ffffff', lineHeight: 1.2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', letterSpacing: '0.4px' }}>
+            <div style={{ fontSize: isPreview ? '12px' : '16px', fontWeight: '900', color: '#000000', lineHeight: 1.2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               {eventTitle || 'मेला चौदह कोसी परिक्रमा'}
             </div>
-            {eventSubtitle && (
-              <div style={{ fontSize: isPreview ? '6.5px' : '7.5px', fontWeight: '800', color: '#fde047', lineHeight: 1, marginTop: '1px' }}>
-                {eventSubtitle}
-              </div>
-            )}
+            <div style={{ fontSize: isPreview ? '7.5px' : '10.5px', fontWeight: '800', color: '#333333', lineHeight: 1.1, marginTop: '1px' }}>
+              {eventSubtitle || 'ड्यूटी कार्ड अयोध्या-2026'}
+            </div>
           </div>
-          <img src="/badge.png" alt="Badge" style={{ width: isPreview ? '20px' : '24px', height: isPreview ? '20px' : '24px', objectFit: 'contain', flexShrink: 0 }} />
+          <img src="/badge.png" alt="Badge" style={{ width: isPreview ? '22px' : '30px', height: isPreview ? '22px' : '30px', objectFit: 'contain', flexShrink: 0 }} />
         </div>
 
         {/* Main Body Container */}
-        <div style={{ padding: isPreview ? '3px 5px' : '4px 6px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', flex: 1, gap: '3px', boxSizing: 'border-box' }}>
+        <div style={{ padding: isPreview ? '3px 5px' : '5px 8px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', flex: 1, gap: isPreview ? '3px' : '4px', boxSizing: 'border-box' }}>
           {/* Officer Details Strip (Horizontal Layout) */}
-          <div style={{ display: 'flex', alignItems: 'stretch', gap: '6px', backgroundColor: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '4px', padding: isPreview ? '2px 4px' : '3px 5px' }}>
-            <div style={{ width: isPreview ? '28px' : '32px', height: isPreview ? '36px' : '40px', border: '1px solid #94a3b8', borderRadius: '3px', backgroundColor: '#ffffff', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flexShrink: 0, overflow: 'hidden' }}>
+          <div style={{ display: 'flex', alignItems: 'stretch', gap: isPreview ? '5px' : '7px', backgroundColor: '#f8fafc', border: '1.2px solid #cbd5e1', borderRadius: '4px', padding: isPreview ? '2.5px 4px' : '4px 6px' }}>
+            <div style={{ width: isPreview ? '30px' : '42px', height: isPreview ? '38px' : '52px', border: '1.2px dashed #64748b', borderRadius: '4px', backgroundColor: '#ffffff', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flexShrink: 0, overflow: 'hidden' }}>
               {duty.photo ? (
                 <img src={duty.photo} alt={duty.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
               ) : (
-                <div style={{ fontSize: '5.5px', fontWeight: 'bold', color: '#64748b', textAlign: 'center', lineHeight: 1 }}>
+                <div style={{ fontSize: isPreview ? '5.5px' : '6.5px', fontWeight: 'bold', color: '#64748b', textAlign: 'center', lineHeight: 1 }}>
                   पासपोर्ट<br />फोटो
                 </div>
               )}
@@ -364,80 +362,80 @@ export default function BulkLegalPdfModal({
                   </span>
                 </div>
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: isPreview ? '7.5px' : '9px', fontWeight: '800', color: '#1e3a8a', marginTop: '1.5px' }}>
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '2px', fontFamily: 'monospace', fontSize: isPreview ? '8.5px' : '10px', fontWeight: '900' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: isPreview ? '8.5px' : '11.5px', fontWeight: '800', color: '#1e3a8a', marginTop: '2px' }}>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '2px', fontFamily: 'monospace', fontSize: isPreview ? '9px' : '12px', fontWeight: '900' }}>
                     📞 {duty.mobile || '-'}
                   </span>
                   {cleanPno && (
-                    <span style={{ color: '#475569', fontFamily: 'monospace', fontSize: isPreview ? '7px' : '8px' }}>
+                    <span style={{ color: '#475569', fontFamily: 'monospace', fontSize: isPreview ? '7.5px' : '10px' }}>
                       PNO: <strong>{cleanPno}</strong>
                     </span>
                   )}
                 </div>
               </div>
 
-              <div style={{ fontSize: isPreview ? '6.5px' : '8px', color: '#334155', borderTop: '0.8px solid #cbd5e1', paddingTop: '1px', marginTop: '1.5px', lineHeight: 1.1 }}>
+              <div style={{ fontSize: isPreview ? '7.5px' : '10.5px', color: '#334155', borderTop: '1px solid #cbd5e1', paddingTop: '2px', marginTop: '2px', lineHeight: 1.15 }}>
                 मूल तैनाती: <strong style={{ color: '#0f172a' }}>{duty.posting || duty.posting_place || duty.thana || (duty.district ? `जनपद ${duty.district}` : '-')}</strong>
               </div>
             </div>
           </div>
 
           {/* HERO BANNER: 🚩 कर्तव्य स्थल (DUTY PLACE) - Full Width */}
-          <div style={{ background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)', border: '1.4px solid #d97706', borderRadius: '4px', padding: isPreview ? '2px 5px' : '3px 6px', textAlign: 'center', boxShadow: '0 1px 2px rgba(180,83,9,0.08)' }}>
-            <div style={{ fontSize: isPreview ? '6.5px' : '7.5px', fontWeight: '900', color: '#92400e', letterSpacing: '0.4px', textTransform: 'uppercase' }}>
+          <div style={{ background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)', border: '1.5px solid #d97706', borderRadius: '4px', padding: isPreview ? '2.5px 5px' : '4px 6px', textAlign: 'center' }}>
+            <div style={{ fontSize: isPreview ? '7px' : '9.5px', fontWeight: '900', color: '#92400e', letterSpacing: '0.5px', textTransform: 'uppercase' }}>
               🚩 कर्तव्य स्थल (ASSIGNED DUTY POINT)
             </div>
-            <div style={{ fontSize: dpFontSize, fontWeight: '900', color: '#78350f', lineHeight: 1.2, marginTop: '1px' }}>
+            <div style={{ fontSize: dpFontSize, fontWeight: '900', color: '#78350f', lineHeight: 1.2, margin: '1.5px 0' }}>
               {dpText}
             </div>
           </div>
 
           {/* DUTY TIMING / SHIFT BANNER - Full Width (No Truncation) */}
-          <div style={{ backgroundColor: '#f0fdf4', border: '1px solid #86efac', borderRadius: '3px', padding: isPreview ? '1.5px 5px' : '2px 6px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: isPreview ? '6.8px' : '8px' }}>
+          <div style={{ backgroundColor: '#f0fdf4', border: '1.2px solid #86efac', borderRadius: '4px', padding: isPreview ? '2px 5px' : '3.5px 7px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: isPreview ? '8px' : '10.5px' }}>
             <span style={{ fontWeight: '900', color: '#166534', display: 'flex', alignItems: 'center', gap: '3px' }}>
               <span>⏰</span>
               <span>ड्यूटी दिनाँक व समय:</span>
             </span>
-            <span style={{ fontWeight: '800', color: '#0f172a' }}>
+            <span style={{ fontWeight: '900', color: '#0f172a' }}>
               {duty.shift || 'प्रातः 09:00 से समाप्ति तक'}
             </span>
           </div>
 
           {/* Security & Signature Footer */}
-          <div style={{ borderTop: '1.2px solid #0f172a', paddingTop: '2px', marginTop: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-              <div style={{ width: isPreview ? '26px' : '34px', height: isPreview ? '26px' : '34px', backgroundColor: '#ffffff', border: '1px solid #94a3b8', borderRadius: '3px', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5px', boxSizing: 'border-box', flexShrink: 0, overflow: 'hidden' }}>
-                <QRCodeSVG value={qrData} size={isPreview ? 22 : 28} level="M" style={{ width: '100%', height: '100%', display: 'block' }} />
+          <div style={{ borderTop: '1.5px solid #0f172a', paddingTop: '3px', marginTop: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+              <div style={{ width: isPreview ? '28px' : '36px', height: isPreview ? '28px' : '36px', backgroundColor: '#ffffff', border: '1px solid #94a3b8', borderRadius: '3px', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1px', boxSizing: 'border-box', flexShrink: 0, overflow: 'hidden' }}>
+                <QRCodeSVG value={qrData} size={isPreview ? 24 : 32} level="M" style={{ width: '100%', height: '100%', display: 'block' }} />
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '1.5px' }}>
-                <div style={{ fontSize: isPreview ? '5.5px' : '6.8px', fontWeight: '900', color: '#166534', backgroundColor: '#dcfce7', border: '0.8px solid #86efac', padding: '1px 4px', borderRadius: '2px', whiteSpace: 'nowrap', lineHeight: 1 }}>
+                <div style={{ fontSize: isPreview ? '6.5px' : '8.5px', fontWeight: '900', color: '#166534', backgroundColor: '#dcfce7', border: '0.8px solid #86efac', padding: '1px 4px', borderRadius: '2px', whiteSpace: 'nowrap', lineHeight: 1 }}>
                   ✓ अधिकृत पास
                 </div>
-                <div style={{ fontSize: isPreview ? '6px' : '7.2px', fontFamily: 'monospace', color: '#1e293b', fontWeight: '800', marginTop: '1px', lineHeight: 1 }}>
+                <div style={{ fontSize: isPreview ? '7px' : '8.5px', fontFamily: 'monospace', color: '#1e293b', fontWeight: '800', marginTop: '1px', lineHeight: 1 }}>
                   ID: {cleanPno || duty.id || '-'}
                 </div>
               </div>
             </div>
 
-            <div style={{ textAlign: 'center', lineHeight: 1 }}>
-              <div style={{ fontSize: isPreview ? '6.5px' : '7.5px', fontWeight: '900', color: '#64748b', letterSpacing: '0.5px' }}>अयोध्या पुलिस</div>
-              <div style={{ fontSize: isPreview ? '5px' : '6px', fontWeight: '800', color: '#94a3b8', letterSpacing: '0.8px' }}>AYODHYA POLICE</div>
+            <div style={{ textAlign: 'center', lineHeight: 1.1 }}>
+              <div style={{ fontSize: isPreview ? '7.5px' : '9.5px', fontWeight: '900', color: '#475569', letterSpacing: '0.5px' }}>अयोध्या पुलिस</div>
+              <div style={{ fontSize: isPreview ? '6px' : '7.5px', fontWeight: '800', color: '#94a3b8', letterSpacing: '0.8px' }}>AYODHYA POLICE</div>
             </div>
 
             <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
               {signatureImg ? (
-                <img src={signatureImg} alt="Sign" style={{ height: isPreview ? '14px' : '16px', maxWidth: '65px', objectFit: 'contain' }} />
+                <img src={signatureImg} alt="Sign" style={{ height: isPreview ? '16px' : '22px', maxWidth: '75px', objectFit: 'contain' }} />
               ) : (
-                <div style={{ fontSize: '6px', fontStyle: 'italic', color: '#475569' }}>(हस्ताक्षरित)</div>
+                <div style={{ fontSize: '6.5px', fontStyle: 'italic', color: '#475569' }}>(हस्ताक्षरित)</div>
               )}
-              <div style={{ fontSize: isPreview ? '6.5px' : '7.5px', fontWeight: '900', color: '#020617', lineHeight: 1, marginTop: '1px' }}>
-                {signatoryText}
+              <div style={{ fontSize: isPreview ? '7.5px' : '10px', fontWeight: '900', color: '#020617', lineHeight: 1.1, marginTop: '1px' }}>
+                {signatoryText || 'वरिष्ठ पुलिस अधीक्षक, अयोध्या'}
               </div>
             </div>
           </div>
 
           {/* Smart Cell Centered Footer Banner */}
-          <div style={{ border: '1px solid #0f172a', borderRadius: '2px', backgroundColor: '#ffffff', color: '#000000', fontSize: isPreview ? '6px' : '7.2px', fontWeight: '900', letterSpacing: '0.8px', textAlign: 'center', padding: '1.5px 0', marginTop: '2px', textTransform: 'uppercase' }}>
+          <div style={{ border: '1px solid #0f172a', borderRadius: '3px', backgroundColor: '#ffffff', color: '#000000', fontSize: isPreview ? '6.5px' : '8px', fontWeight: '900', letterSpacing: '0.8px', textAlign: 'center', padding: isPreview ? '1.5px 0' : '2px 0', marginTop: '2px', textTransform: 'uppercase' }}>
             DESIGN AND DEVELOPED BY SMART CELL AYODHYA
           </div>
         </div>
@@ -545,38 +543,52 @@ export default function BulkLegalPdfModal({
           fontFamily: "'Kokila', 'Mangal', 'Mukta', 'Noto Sans Devanagari', sans-serif"
         }}
       >
+        {/* Top Header Matching Front Face & Standard Cards */}
+        <div style={{ backgroundColor: '#ffffff', color: '#000000', padding: isPreview ? '3px 6px' : '3.5px 8px', borderBottom: '2px solid #0b132b', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '6px' }}>
+          <img src="/badge.png" alt="Badge" style={{ width: isPreview ? '22px' : '30px', height: isPreview ? '22px' : '30px', objectFit: 'contain', flexShrink: 0 }} />
+          <div style={{ textAlign: 'center', flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: isPreview ? '12px' : '16px', fontWeight: '900', color: '#000000', lineHeight: 1.2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {eventTitle || 'मेला चौदह कोसी परिक्रमा'}
+            </div>
+            <div style={{ fontSize: isPreview ? '7.5px' : '10.5px', fontWeight: '800', color: '#333333', lineHeight: 1.1, marginTop: '1px' }}>
+              {eventSubtitle || 'ड्यूटी कार्ड अयोध्या-2026'}
+            </div>
+          </div>
+          <img src="/badge.png" alt="Badge" style={{ width: isPreview ? '22px' : '30px', height: isPreview ? '22px' : '30px', objectFit: 'contain', flexShrink: 0 }} />
+        </div>
+
         {/* Main Body Container */}
-        <div style={{ padding: isPreview ? '4px 6px' : '6px 8px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', flex: 1, gap: isPreview ? '3px' : '4px', boxSizing: 'border-box' }}>
+        <div style={{ padding: isPreview ? '3px 5px' : '5px 8px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', flex: 1, gap: isPreview ? '3px' : '4px', boxSizing: 'border-box' }}>
           {/* 1. Zone Hierarchy Box (Full Width) */}
-          <div style={{ backgroundColor: '#ffffff', border: '1.2px solid #cbd5e1', borderRadius: '4px', padding: isPreview ? '2.5px 5px' : '3.5px 6px', fontSize: isPreview ? '7.5px' : '8.5px', lineHeight: 1.35 }}>
-            <div style={{ fontWeight: '900', color: '#0f172a', borderBottom: '0.8px solid #e2e8f0', paddingBottom: '1px', marginBottom: '2px', display: 'flex', alignItems: 'center', gap: '3px' }}>
+          <div style={{ backgroundColor: '#ffffff', border: '1.2px solid #cbd5e1', borderRadius: '4px', padding: isPreview ? '2.5px 5px' : '4px 7px', fontSize: isPreview ? '8px' : '10px', lineHeight: 1.35 }}>
+            <div style={{ fontWeight: '900', color: '#0f172a', borderBottom: '0.8px solid #e2e8f0', paddingBottom: '1.5px', marginBottom: '2px', display: 'flex', alignItems: 'center', gap: '3px', fontSize: isPreview ? '8.5px' : '10.5px' }}>
               <span>🏢</span><span>जोन / जोनल कमान</span>
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1px' }}>
-              <div><span style={{ color: '#64748b', fontWeight: '700' }}>जोन:</span> <strong style={{ color: '#0f172a', fontWeight: '900' }}>{cleanZone || '-'}</strong></div>
-              {cleanZonalIncharge && <div><span style={{ color: '#64748b', fontWeight: '700' }}>प्रभारी:</span> <strong style={{ color: '#0369a1', fontWeight: '900' }}>{cleanZonalIncharge}</strong></div>}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5px' }}>
+              <div><span style={{ color: '#64748b', fontWeight: '700' }}>जोन:</span> <strong style={{ color: '#0f172a', fontWeight: '900', fontSize: isPreview ? '9px' : '11.5px' }}>{cleanZone || '-'}</strong></div>
+              {cleanZonalIncharge && <div><span style={{ color: '#64748b', fontWeight: '700' }}>प्रभारी:</span> <strong style={{ color: '#0369a1', fontWeight: '900', fontSize: isPreview ? '8.5px' : '11px' }}>{cleanZonalIncharge}</strong></div>}
             </div>
           </div>
 
           {/* 2. Sector Hierarchy Box (Full Width Below Zone) */}
-          <div style={{ backgroundColor: '#ffffff', border: '1.2px solid #cbd5e1', borderRadius: '4px', padding: isPreview ? '2.5px 5px' : '3.5px 6px', fontSize: isPreview ? '7.5px' : '8.5px', lineHeight: 1.35 }}>
-            <div style={{ fontWeight: '900', color: '#0f172a', borderBottom: '0.8px solid #e2e8f0', paddingBottom: '1px', marginBottom: '2px', display: 'flex', alignItems: 'center', gap: '3px' }}>
+          <div style={{ backgroundColor: '#ffffff', border: '1.2px solid #cbd5e1', borderRadius: '4px', padding: isPreview ? '2.5px 5px' : '4px 7px', fontSize: isPreview ? '8px' : '10px', lineHeight: 1.35 }}>
+            <div style={{ fontWeight: '900', color: '#0f172a', borderBottom: '0.8px solid #e2e8f0', paddingBottom: '1.5px', marginBottom: '2px', display: 'flex', alignItems: 'center', gap: '3px', fontSize: isPreview ? '8.5px' : '10.5px' }}>
               <span>🛡️</span><span>सेक्टर / सेक्टर कमान</span>
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1px' }}>
-              <div><span style={{ color: '#64748b', fontWeight: '700' }}>सेक्टर:</span> <strong style={{ color: '#0f172a', fontWeight: '900' }}>{cleanSector || '-'}</strong></div>
-              {cleanSectorIncharge && <div><span style={{ color: '#64748b', fontWeight: '700' }}>प्रभारी:</span> <strong style={{ color: '#0369a1', fontWeight: '900' }}>{cleanSectorIncharge}</strong></div>}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5px' }}>
+              <div><span style={{ color: '#64748b', fontWeight: '700' }}>सेक्टर:</span> <strong style={{ color: '#0f172a', fontWeight: '900', fontSize: isPreview ? '9px' : '11.5px' }}>{cleanSector || '-'}</strong></div>
+              {cleanSectorIncharge && <div><span style={{ color: '#64748b', fontWeight: '700' }}>प्रभारी:</span> <strong style={{ color: '#0369a1', fontWeight: '900', fontSize: isPreview ? '8.5px' : '11px' }}>{cleanSectorIncharge}</strong></div>}
             </div>
           </div>
 
           {/* 3. Duty Time */}
-          <div style={{ backgroundColor: '#f0fdf4', border: '1px solid #86efac', borderRadius: '3px', padding: isPreview ? '2px 5px' : '2.5px 6px', fontSize: isPreview ? '7px' : '8.5px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ backgroundColor: '#f0fdf4', border: '1.2px solid #86efac', borderRadius: '4px', padding: isPreview ? '2px 5px' : '3.5px 7px', fontSize: isPreview ? '8px' : '10.5px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span style={{ fontWeight: '900', color: '#166534' }}>⏰ ड्यूटी समय:</span>
             <span style={{ fontWeight: '900', color: '#0f172a' }}>{duty.shift || 'प्रातः 09:00 से समाप्ति तक'}</span>
           </div>
 
           {/* 4. Special Note */}
-          <div style={{ backgroundColor: '#fffbeb', border: '1px solid #fde68a', borderRadius: '4px', padding: isPreview ? '2.5px 5px' : '3.5px 6px', fontSize: isPreview ? '7px' : '8px', lineHeight: 1.35 }}>
+          <div style={{ backgroundColor: '#fffbeb', border: '1.2px solid #fde68a', borderRadius: '4px', padding: isPreview ? '2.5px 5px' : '4px 7px', fontSize: isPreview ? '7.5px' : '10px', lineHeight: 1.35 }}>
             <span style={{ fontWeight: '900', color: '#92400e' }}>📌 विशेष नोट: </span>
             <span style={{ color: '#78350f', fontWeight: '700' }}>
               {activeNoteText ? activeNoteText : 'आवंटित ड्यूटी पॉइंट पर समय से उपस्थित रहें व उच्चाधिकारियों के निर्देशों का पालन करें।'}
@@ -584,12 +596,22 @@ export default function BulkLegalPdfModal({
           </div>
 
           {/* 5. Authority Signatory */}
-          <div style={{ textAlign: 'right', fontSize: isPreview ? '7px' : '8px', fontWeight: '900', color: '#0f172a', paddingRight: '4px' }}>
-            {signatoryText}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', borderTop: '1px dashed #cbd5e1', paddingTop: '2px' }}>
+            <div style={{ fontSize: isPreview ? '7.5px' : '9.5px', fontWeight: '800', color: '#64748b' }}>अयोध्या पुलिस</div>
+            <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+              {signatureImg ? (
+                <img src={signatureImg} alt="Sign" style={{ height: isPreview ? '14px' : '20px', maxWidth: '70px', objectFit: 'contain' }} />
+              ) : (
+                <div style={{ fontSize: '6px', fontStyle: 'italic', color: '#475569' }}>(हस्ताक्षरित)</div>
+              )}
+              <div style={{ fontSize: isPreview ? '8px' : '10.5px', fontWeight: '900', color: '#0f172a', lineHeight: 1.1, marginTop: '1px' }}>
+                {signatoryText || 'वरिष्ठ पुलिस अधीक्षक, अयोध्या'}
+              </div>
+            </div>
           </div>
 
           {/* 6. Centered Smart Cell Ayodhya Footer Box */}
-          <div style={{ border: '1px solid #0f172a', borderRadius: '2px', backgroundColor: '#ffffff', color: '#000000', fontSize: isPreview ? '6px' : '7.2px', fontWeight: '900', letterSpacing: '0.8px', textAlign: 'center', padding: '1.5px 0', marginTop: 'auto', textTransform: 'uppercase' }}>
+          <div style={{ border: '1px solid #0f172a', borderRadius: '3px', backgroundColor: '#ffffff', color: '#000000', fontSize: isPreview ? '6.5px' : '8px', fontWeight: '900', letterSpacing: '0.8px', textAlign: 'center', padding: isPreview ? '1.5px 0' : '2px 0', marginTop: '2px', textTransform: 'uppercase' }}>
             DESIGN AND DEVELOPED BY SMART CELL AYODHYA
           </div>
         </div>
