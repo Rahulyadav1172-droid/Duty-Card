@@ -1643,42 +1643,42 @@ export function printLegalBulk({
 
           /* Optimized spacing when Co-force table is included (Guarantees all 5 jawans fit with zero cut-off) */
           .duty-card.has-co-force {
-            padding: ${is2In1 ? '7px 10px' : (is4In1 ? '4.5px 7px' : '3.5px 5px')};
+            padding: ${is2In1 ? '7px 10px' : (is4In1 ? '8px 12px' : '3.5px 5px')};
             justify-content: space-between;
           }
           .duty-card.has-co-force .card-header {
-            padding-bottom: 2px;
+            padding-bottom: ${is4In1 ? '4px' : '2px'};
           }
           .duty-card.has-co-force .badge-icon {
-            width: ${is2In1 ? '32px' : '26px'};
-            height: ${is2In1 ? '32px' : '26px'};
+            width: ${is2In1 ? '32px' : (is4In1 ? '38px' : '26px')};
+            height: ${is2In1 ? '32px' : (is4In1 ? '38px' : '26px')};
           }
           .duty-card.has-co-force .title-main {
-            font-size: ${is2In1 ? '16px' : (is4In1 ? '13.5px' : '10.5px')};
+            font-size: ${is2In1 ? '16px' : (is4In1 ? '17px' : '10.5px')};
             line-height: 1.15;
           }
           .duty-card.has-co-force .title-sub {
-            font-size: ${is2In1 ? '10.5px' : (is4In1 ? '9.5px' : '7.5px')};
+            font-size: ${is2In1 ? '10.5px' : (is4In1 ? '11.5px' : '7.5px')};
           }
           .duty-card.has-co-force .officer-card {
-            padding: ${is2In1 ? '6px 12px' : '2.5px 5px'};
-            margin-top: ${is2In1 ? '5px' : '2px'};
-            gap: ${is2In1 ? '12px' : '5px'};
+            padding: ${is2In1 ? '6px 12px' : (is4In1 ? '5px 8px' : '2.5px 5px')};
+            margin-top: ${is2In1 ? '5px' : (is4In1 ? '5px' : '2px')};
+            gap: ${is2In1 ? '12px' : (is4In1 ? '8px' : '5px')};
           }
           .duty-card.has-co-force .photo-frame {
-            width: ${is2In1 ? '54px' : '34px'};
-            height: ${is2In1 ? '68px' : '42px'};
+            width: ${is2In1 ? '54px' : (is4In1 ? '46px' : '34px')};
+            height: ${is2In1 ? '68px' : (is4In1 ? '58px' : '42px')};
           }
           .duty-card.has-co-force .officer-name {
-            font-size: ${is2In1 ? '22px' : (is4In1 ? '12.5px' : '9.5px')};
+            font-size: ${is2In1 ? '22px' : (is4In1 ? '16.5px' : '9.5px')};
             line-height: 1.25;
             font-weight: 900;
           }
           .duty-card.has-co-force .officer-mobile {
-            font-size: ${is2In1 ? '16px' : (is4In1 ? '11px' : '9px')};
+            font-size: ${is2In1 ? '16px' : (is4In1 ? '13px' : '9px')};
           }
           .duty-card.has-co-force .officer-sub-bar {
-            font-size: ${is2In1 ? '13px' : (is4In1 ? '9.5px' : '7.5px')};
+            font-size: ${is2In1 ? '13px' : (is4In1 ? '11px' : '7.5px')};
             padding-top: 2px;
             margin-top: 2px;
           }
@@ -1690,65 +1690,65 @@ export function printLegalBulk({
             margin-bottom: 2px;
           }
           .duty-card.has-co-force .table-container {
-            margin-top: ${is2In1 ? '3px' : '2px'};
-            margin-bottom: ${is2In1 ? '3px' : '2px'};
+            margin-top: ${is2In1 ? '3px' : (is4In1 ? '6px' : '2px')};
+            margin-bottom: ${is2In1 ? '3px' : (is4In1 ? '5px' : '2px')};
           }
           .duty-card.has-co-force .card-table {
-            font-size: ${is2In1 ? '11.5px' : (is4In1 ? '10.5px' : '8px')};
-            line-height: 1.25;
+            font-size: ${is2In1 ? '11.5px' : (is4In1 ? '13.5px' : '8px')};
+            line-height: 1.35;
           }
           .duty-card.has-co-force .td-lbl {
-            padding: ${is2In1 ? '2.5px 6px' : '2px 4px'};
-            font-size: ${is2In1 ? '11.5px' : (is4In1 ? '10.5px' : '8px')};
+            padding: ${is2In1 ? '2.5px 6px' : (is4In1 ? '4.5px 7px' : '2px 4px')};
+            font-size: ${is2In1 ? '11.5px' : (is4In1 ? '13.5px' : '8px')};
           }
           .duty-card.has-co-force .td-val {
-            padding: ${is2In1 ? '2.5px 6px' : '2px 4px'};
-            font-size: ${is2In1 ? '11.5px' : (is4In1 ? '10.5px' : '8px')};
-            line-height: 1.25;
+            padding: ${is2In1 ? '2.5px 6px' : (is4In1 ? '4.5px 7px' : '2px 4px')};
+            font-size: ${is2In1 ? '11.5px' : (is4In1 ? '13.5px' : '8px')};
+            line-height: 1.35;
           }
           .duty-card.has-co-force .td-duty-val {
-            font-size: ${is2In1 ? '14px' : (is4In1 ? '13px' : '9.5px')};
+            font-size: ${is2In1 ? '14px' : (is4In1 ? '17px' : '9.5px')};
             font-weight: 900;
           }
           .duty-card.has-co-force .note-val {
-            font-size: ${is2In1 ? '10.5px' : (is4In1 ? '9.5px' : '7.5px')};
-            line-height: 1.25;
+            font-size: ${is2In1 ? '10.5px' : (is4In1 ? '12px' : '7.5px')};
+            line-height: 1.35;
           }
           .duty-card.has-co-force .co-force-container {
-            margin-top: ${is2In1 ? '3px' : '2px'};
-            margin-bottom: ${is2In1 ? '2px' : '1.5px'};
+            margin-top: ${is2In1 ? '3px' : (is4In1 ? '5px' : '2px')};
+            margin-bottom: ${is2In1 ? '2px' : (is4In1 ? '4px' : '1.5px')};
           }
           .duty-card.has-co-force .co-force-header {
-            padding: ${is2In1 ? '2.5px 6px' : '2px 5px'};
+            padding: ${is2In1 ? '2.5px 6px' : (is4In1 ? '3.5px 7px' : '2px 5px')};
           }
           .duty-card.has-co-force .co-hdr-title {
-            font-size: ${is2In1 ? '11px' : (is4In1 ? '10px' : '7.5px')};
+            font-size: ${is2In1 ? '11px' : (is4In1 ? '11.5px' : '7.5px')};
           }
           .duty-card.has-co-force .co-count {
-            font-size: ${is2In1 ? '10.5px' : (is4In1 ? '9.5px' : '7px')};
+            font-size: ${is2In1 ? '10.5px' : (is4In1 ? '11px' : '7px')};
           }
           .duty-card.has-co-force .co-force-table {
-            font-size: ${is2In1 ? '11px' : (is4In1 ? '10px' : '7.5px')};
-            line-height: 1.25;
+            font-size: ${is2In1 ? '11px' : (is4In1 ? '11.5px' : '7.5px')};
+            line-height: 1.3;
           }
           .duty-card.has-co-force .co-force-table th {
-            padding: ${is2In1 ? '2.5px 5px' : '2px 4px'};
-            font-size: ${is2In1 ? '10.5px' : (is4In1 ? '9.5px' : '7px')};
+            padding: ${is2In1 ? '2.5px 5px' : (is4In1 ? '3px 5px' : '2px 4px')};
+            font-size: ${is2In1 ? '10.5px' : (is4In1 ? '11px' : '7px')};
           }
           .duty-card.has-co-force .co-force-table td {
-            padding: ${is2In1 ? '2.5px 5px' : '2px 4px'};
+            padding: ${is2In1 ? '2.5px 5px' : (is4In1 ? '3px 5px' : '2px 4px')};
           }
           .duty-card.has-co-force .co-more-note {
             background: #fffbeb;
             border-top: 1px solid #fde68a;
-            padding: 1.5px 4px;
+            padding: ${is4In1 ? '2.5px 5px' : '1.5px 4px'};
             text-align: center;
-            font-size: ${is2In1 ? '9.5px' : (is4In1 ? '8.5px' : '7px')};
+            font-size: ${is2In1 ? '9.5px' : (is4In1 ? '10px' : '7px')};
             font-weight: 900;
             color: #92400e;
           }
           .duty-card.has-co-force .card-footer {
-            padding-top: ${is2In1 ? '4px' : '2.5px'};
+            padding-top: ${is2In1 ? '4px' : (is4In1 ? '5px' : '2.5px')};
           }
 
           .empty-slot {
