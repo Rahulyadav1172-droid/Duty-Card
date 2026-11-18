@@ -32,6 +32,8 @@ import * as XLSX from 'xlsx';
 import DutyReplacementModal from './DutyReplacementModal';
 import { logReplacementToAuditTrail } from '../utils/aamadSync';
 import { ELECTION_2D_BOOTH_NORMS, ELECTION_LAW_ORDER_MANAK } from '../data/electionStandardData';
+import { unmergeAndFillWorksheet } from '../utils/fileParser';
+import { convertKrutiToUnicode } from '../utils/kruti2unicode';
 
 // Standard UP Police & ECI Default Norms by Category
 const DEFAULT_CATEGORY_NORMS = {
@@ -886,23 +888,73 @@ export default function ElectionBoothDutyHub({
         const bstr = evt.target.result;
         const wb = XLSX.read(bstr, { type: 'binary' });
         const wsname = wb.SheetNames[0];
-        const ws = wb.Sheets[wsname];
-        const data = XLSX.utils.sheet_to_json(ws);
+        const rawWs = wb.Sheets[wsname];
+        const ws = unmergeAndFillWorksheet(rawWs);
+        const rawRows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
 
-        if (!data || data.length === 0) {
+        if (!rawRows || rawRows.length === 0) {
           alert('एक्सेल फाइल में कोई डेटा प्राप्त नहीं हुआ।');
           return;
         }
 
-        const parsedBooths = data.map((row, idx) => {
-          const vs = row['विधानसभा_क्षेत्र'] || row['विधानसभा'] || row['विधान सभा'] || row['assembly'] || '134-अयोध्या';
-          const sec = row['सेक्टर_संख्या'] || row['सेक्टर'] || row['सेक्टर सं0'] || row['sector'] || 'सेक्टर 01';
-          const so = row['सेक्टर_प्रभारी'] || row['sector_officer'] || row['प्रभारी'] || row['थाना'] || '';
-          const sm = row['सेक्टर_मोबाइल'] || row['sector_mobile'] || row['मोबाइल'] || '';
-          const center = row['मतदान_केंद्र_का_नाम'] || row['मतदान_केंद्र'] || row['मतदान केन्द्र का नाम व संख्या'] || row['मतदान केन्द्र का नाम'] || row['center'] || row['station'] || `मतदान केंद्र ${idx + 1}`;
-          const bno = String(row['मतदेय_स्थल_संख्या'] || row['मतदेय स्थल की संख्या'] || row['बूथ_संख्या'] || row['बूथ सं०'] || row['booth'] || row['booth_no'] || row['क्र0सं0/मतदान केन्द्र नं0'] || idx + 1);
-          const vehicleNo = String(row['वा0 सं0'] || row['वाहन सं०'] || row['वाहन_संख्या'] || row['बस नं०'] || row['bus_no'] || '').trim();
-          let cat = String(row['बूथ_श्रेणी'] || row['श्रेणी'] || row['category'] || row['क्रिटिकल / सामान्य'] || 'सामान्य').trim();
+        // Detect real header row, skipping title banners with only 1-2 unique values
+        let headerRowIndex = 0;
+        for (let r = 0; r < Math.min(rawRows.length, 10); r++) {
+          const nonBlank = rawRows[r].filter(c => String(c).trim().length > 0);
+          const unique = new Set(nonBlank);
+          if (unique.size < 3) continue;
+          headerRowIndex = r;
+          break;
+        }
+
+        const headers = rawRows[headerRowIndex].map(c => String(c || '').trim().toLowerCase().replace(/[\s\_\-\.]+/g, ' '));
+
+        const colVs = headers.findIndex(h => h.includes('विधानसभा') || h.includes('विधान सभा') || h.includes('assembly'));
+        const colSec = headers.findIndex(h => h.includes('जोन/ से0') || h.includes('सेक्टर') || h.includes('sector'));
+        const colSo = headers.findIndex(h => (h.includes('सेक्टर') && h.includes('प्रभारी')) || h.includes('sector_officer') || h.includes('थाना'));
+        const colSm = headers.findIndex(h => (h.includes('सेक्टर') && h.includes('मोबाइल')) || h.includes('sector_mobile'));
+        const colCenter = headers.findIndex(h => 
+          (h.includes('मतदान केन्द्र का नाम') || h.includes('मतदान केंद्र का नाम') || (h.includes('नाम') && (h.includes('केन्द्र') || h.includes('केंद्र'))) || h.includes('center') || h.includes('station')) &&
+          !h.includes('क्र0सं0') && !h.includes('स्थलों की संख्या')
+        );
+        const colBooth = headers.findIndex(h => 
+          (h.includes('बूथ क्रमांक') || h.includes('बूथ संख्या') || h.includes('बूथ सं') || h.includes('बूथ') || h.includes('booth')) &&
+          !h.includes('स्थलों की संख्या')
+        );
+        const colVehicle = headers.findIndex(h => h.includes('वा0 सं0') || h.includes('वाहन') || h.includes('bus'));
+        const colCat = headers.findIndex(h => h.includes('श्रेणी') || h.includes('category') || h.includes('क्रिटिकल / सामान्य'));
+
+        const parsedBooths = [];
+        let currentCenter = '';
+        let currentSec = '';
+        let currentVs = '134-अयोध्या';
+        let currentSo = '';
+        let currentSm = '';
+
+        for (let r = headerRowIndex + 1; r < rawRows.length; r++) {
+          const row = rawRows[r];
+          if (!row || row.length === 0) continue;
+
+          const rawVs = colVs !== -1 ? convertKrutiToUnicode(String(row[colVs] || '').trim()) : '';
+          const rawSec = colSec !== -1 ? String(row[colSec] || '').trim() : '';
+          const rawSo = colSo !== -1 ? convertKrutiToUnicode(String(row[colSo] || '').trim()) : '';
+          const rawSm = colSm !== -1 ? String(row[colSm] || '').trim() : '';
+          const rawCenter = colCenter !== -1 ? convertKrutiToUnicode(String(row[colCenter] || '').trim()) : '';
+          const rawBooth = colBooth !== -1 ? convertKrutiToUnicode(String(row[colBooth] || '').trim()) : '';
+          const vehicleNo = colVehicle !== -1 ? String(row[colVehicle] || '').trim() : '';
+          let cat = colCat !== -1 ? String(row[colCat] || 'सामान्य').trim() : 'सामान्य';
+
+          // Forward-fill state
+          if (rawCenter) currentCenter = rawCenter;
+          if (rawSec) currentSec = rawSec;
+          if (rawVs) currentVs = rawVs;
+          if (rawSo) currentSo = rawSo;
+          if (rawSm) currentSm = rawSm;
+
+          const finalCenter = rawCenter || currentCenter;
+          const finalSec = rawSec || currentSec;
+
+          if (!finalCenter && !rawBooth) continue;
 
           if (!allCategories.includes(cat)) {
             if (cat.includes('अति')) cat = 'अति-संवेदनशील';
@@ -912,19 +964,31 @@ export default function ElectionBoothDutyHub({
             else cat = 'सामान्य';
           }
 
-          return {
-            id: `EB-IMP-${Date.now()}-${idx + 1}`,
-            vidhanSabha: String(vs).trim(),
-            sector: String(sec).trim(),
-            sectorOfficer: String(so).trim(),
-            sectorMobile: String(sm).trim(),
-            centerName: String(center).trim(),
-            boothNo: String(bno).trim(),
+          let displaySec = finalSec;
+          if (displaySec.includes('/')) {
+            displaySec = `सेक्टर ${displaySec.split('/')[1].trim()}`;
+          } else if (displaySec && !displaySec.toLowerCase().includes('sector') && !displaySec.includes('सेक्टर')) {
+            displaySec = `सेक्टर ${displaySec}`;
+          }
+
+          parsedBooths.push({
+            id: `EB-IMP-${Date.now()}-${parsedBooths.length + 1}`,
+            vidhanSabha: rawVs || currentVs,
+            sector: displaySec || 'सेक्टर 01',
+            sectorOfficer: rawSo || currentSo,
+            sectorMobile: rawSm || currentSm,
+            centerName: finalCenter || `मतदान केंद्र ${parsedBooths.length + 1}`,
+            boothNo: rawBooth || String(parsedBooths.length + 1),
             vehicleNo: vehicleNo,
             category: cat,
             shift: 'मतदान दिवस (प्रातः 05:30 बजे से मतदान समाप्ति तक)'
-          };
-        });
+          });
+        }
+
+        if (parsedBooths.length === 0) {
+          alert('एक्सेल फाइल में कोई मान्य बूथ रिकॉर्ड प्राप्त नहीं हुआ।');
+          return;
+        }
 
         saveBooths(parsedBooths);
         setActiveSubTab('booths');
