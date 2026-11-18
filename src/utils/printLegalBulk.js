@@ -83,7 +83,7 @@ export function renderIdBadgeHorizontalFrontHtml({
   }
 
   const cleanDutyPlace = (duty.duty_place || '-').trim();
-  const dutyPlaceFontSize = cleanDutyPlace.length > 35 ? '13px' : (cleanDutyPlace.length > 20 ? '15px' : '17px');
+  const dutyPlaceFontSize = cleanDutyPlace.length > 35 ? '13.5px' : (cleanDutyPlace.length > 20 ? '16px' : '18px');
   const cleanOfficerDisplay = displayCleanName || duty.name || '';
   const officerNameFontSize = cleanOfficerDisplay.length > 25 ? '13px' : '15.5px';
 
@@ -137,18 +137,18 @@ export function renderIdBadgeHorizontalFrontHtml({
           </div>
         </div>
 
-        <!-- 3. HERO BANNER: ड्यूटी स्थल - Full Width -->
-        <div style="background:linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);border:1.5px solid #d97706;border-radius:4px;padding:3px 6px;text-align:center;">
-          <div style="font-size:9.5px;font-weight:900;color:#92400e;letter-spacing:0.5px;">
+        <!-- 3. HERO BANNER: ड्यूटी स्थल - Full Width (More Prominent Space) -->
+        <div style="background:linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);border:1.5px solid #d97706;border-radius:4px;padding:3.5px 7px;text-align:center;">
+          <div style="font-size:10px;font-weight:900;color:#92400e;letter-spacing:0.5px;">
             ड्यूटी स्थल
           </div>
-          <div style="font-size:${dutyPlaceFontSize};font-weight:900;color:#78350f;line-height:1.2;margin-top:1px;">
+          <div style="font-size:${dutyPlaceFontSize};font-weight:900;color:#78350f;line-height:1.25;margin-top:1.5px;">
             ${escapeHtml(cleanDutyPlace)}
           </div>
         </div>
 
         <!-- 4. दिनाँक व समय - Full Width (No Truncation) -->
-        <div style="background:#f0fdf4;border:1.2px solid #86efac;border-radius:4px;padding:2.5px 6px;display:flex;justify-content:space-between;align-items:center;font-size:10px;">
+        <div style="background:#f0fdf4;border:1.2px solid #86efac;border-radius:4px;padding:3px 7px;display:flex;justify-content:space-between;align-items:center;font-size:10.5px;">
           <span style="font-weight:900;color:#166534;">
             दिनाँक व समय:
           </span>
@@ -158,37 +158,32 @@ export function renderIdBadgeHorizontalFrontHtml({
         </div>
 
         <!-- 5. SECURITY & SIGNATURE FOOTER -->
-        <div style="border-top:1.5px solid #0f172a;padding-top:2px;display:flex;align-items:center;justify-content:space-between;">
+        <div style="border-top:1.5px solid #0f172a;padding-top:3px;margin-top:auto;display:flex;align-items:center;justify-content:space-between;">
           <div style="display:flex;align-items:center;gap:5px;">
-            <div style="width:34px;height:34px;border:1px solid #94a3b8;border-radius:3px;background:#ffffff;display:flex;align-items:center;justify-content:center;padding:1px;box-sizing:border-box;flex-shrink:0;overflow:hidden;">
+            <div style="width:36px;height:36px;border:1px solid #94a3b8;border-radius:3px;background:#ffffff;display:flex;align-items:center;justify-content:center;padding:1px;box-sizing:border-box;flex-shrink:0;overflow:hidden;">
               ${qrSvgHtml}
             </div>
-            <div style="display:flex;flex-direction:column;justify-content:center;gap:1px;">
-              <div style="font-size:8px;font-weight:900;color:#166534;background:#dcfce7;border:0.8px solid #86efac;padding:1px 3.5px;border-radius:2px;white-space:nowrap;line-height:1;">
+            <div style="display:flex;flex-direction:column;justify-content:center;gap:1.5px;">
+              <div style="font-size:8.5px;font-weight:900;color:#166534;background:#dcfce7;border:0.8px solid #86efac;padding:1px 4px;border-radius:2px;white-space:nowrap;line-height:1;">
                 ✓ अधिकृत पास
               </div>
-              <div style="font-size:8px;font-family:monospace;color:#1e293b;font-weight:800;line-height:1;margin-top:1px;">
+              <div style="font-size:8.5px;font-family:monospace;color:#1e293b;font-weight:800;line-height:1;margin-top:1px;">
                 ID: ${escapeHtml(cleanPno || duty.id || '-')}
               </div>
             </div>
           </div>
 
-          <div style="text-align:center;line-height:1.1;">
-            <div style="font-size:9px;font-weight:900;color:#475569;letter-spacing:0.5px;">अयोध्या पुलिस</div>
-            <div style="font-size:7px;font-weight:800;color:#94a3b8;letter-spacing:0.8px;">AYODHYA POLICE</div>
+          <div style="text-align:center;line-height:1.15;">
+            <div style="font-size:9.5px;font-weight:900;color:#475569;letter-spacing:0.5px;">अयोध्या पुलिस</div>
+            <div style="font-size:7.5px;font-weight:800;color:#94a3b8;letter-spacing:0.8px;">AYODHYA POLICE</div>
           </div>
 
           <div style="text-align:right;display:flex;flex-direction:column;align-items:flex-end;">
             ${signHtml}
-            <div style="font-size:9.5px;font-weight:900;color:#020617;line-height:1.1;margin-top:1px;">
+            <div style="font-size:10px;font-weight:900;color:#020617;line-height:1.1;margin-top:1px;">
               ${escapeHtml(signatoryText || 'वरिष्ठ पुलिस अधीक्षक, अयोध्या')}
             </div>
           </div>
-        </div>
-
-        <!-- 6. SMART CELL FOOTER BANNER -->
-        <div style="border:1px solid #0f172a;border-radius:3px;background:#ffffff;color:#000000;font-size:7.5px;font-weight:900;letter-spacing:0.8px;text-align:center;padding:1.5px 0;margin-top:1.5px;text-transform:uppercase;">
-          DESIGN AND DEVELOPED BY SMART CELL AYODHYA
         </div>
       </div>
     </div>
