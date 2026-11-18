@@ -2592,20 +2592,20 @@ export function generateIndividualPassHtml({
     }).join('');
 
     coForceHtml = `
-      <div style="border:1.5px solid #0f172a;border-radius:6px;overflow:hidden;margin-top:8px;background:#ffffff;">
-        <div style="background:#1e293b;padding:4px 8px;display:flex;align-items:center;justify-content:space-between;">
-          <div style="font-weight:800;color:#ffffff;font-size:11.5px;">
+      <div style="border:1.5px solid #0f172a;border-radius:4px;overflow:hidden;margin-top:10px;background:#ffffff;">
+        <div style="background:#0f172a;padding:5px 10px;display:flex;align-items:center;justify-content:space-between;">
+          <div style="font-weight:700;color:#ffffff;font-size:12.5px;">
             <span>सहयोगार्थ पुलिस बल (उसी स्थल पर तैनात अन्य पुलिसकर्मी):</span>
           </div>
-          <span style="font-size:10px;font-weight:bold;color:#f8fafc;background:#334155;padding:1.5px 6px;border-radius:10px;font-family:monospace;">कुल: ${coForceList.length} जवान</span>
+          <span style="font-size:11px;font-weight:700;color:#f8fafc;background:#334155;padding:2px 8px;border-radius:4px;font-family:monospace;">कुल: ${coForceList.length} जवान</span>
         </div>
-        <table style="width:100%;border-collapse:collapse;font-size:12px;text-align:left;">
+        <table style="width:100%;border-collapse:collapse;font-size:12.5px;text-align:left;">
           <thead>
-            <tr style="background:#f1f5f9;color:#334155;font-weight:800;font-size:11px;">
-              <th style="padding:4px 6px;border:1px solid #cbd5e1;width:30px;text-align:center;">क्र०</th>
-              <th style="padding:4px 6px;border:1px solid #cbd5e1;">पद व नाम</th>
-              <th style="padding:4px 6px;border:1px solid #cbd5e1;width:110px;">मोबाइल नंबर</th>
-              <th style="padding:4px 6px;border:1px solid #cbd5e1;width:150px;">मूल तैनाती (जनपद)</th>
+            <tr style="background:#f1f5f9;color:#0f172a;font-weight:700;font-size:11.5px;">
+              <th style="padding:4.5px 8px;border:1px solid #cbd5e1;width:34px;text-align:center;">क्र०</th>
+              <th style="padding:4.5px 8px;border:1px solid #cbd5e1;">पद व नाम</th>
+              <th style="padding:4.5px 8px;border:1px solid #cbd5e1;width:115px;">मोबाइल नंबर</th>
+              <th style="padding:4.5px 8px;border:1px solid #cbd5e1;width:160px;">मूल तैनाती (जनपद)</th>
             </tr>
           </thead>
           <tbody>
@@ -2613,7 +2613,7 @@ export function generateIndividualPassHtml({
           </tbody>
         </table>
         ${remainingCount > 0 ? `
-          <div style="background:#fffbeb;border-top:1px solid #fde68a;padding:2px 4px;text-align:center;font-size:10px;font-weight:800;color:#92400e;">
+          <div style="background:#fffbeb;border-top:1px solid #fde68a;padding:3px 6px;text-align:center;font-size:10.5px;font-weight:700;color:#92400e;">
             और भी सहयोगार्थ हैं (${remainingCount} अन्य)...
           </div>
         ` : ''}
@@ -2665,11 +2665,11 @@ export function generateIndividualPassHtml({
           word-spacing: normal !important;
         }
         .pass-container {
-          max-width: 680px;
+          width: 100%;
+          max-width: 720px;
           margin: 0 auto;
-          border: 2px solid #0f172a;
-          border-radius: 8px;
-          padding: 12px 16px;
+          border: 3px double #0f172a;
+          padding: 16px 20px;
           background: #ffffff;
           page-break-inside: avoid;
           break-inside: avoid;
@@ -2680,14 +2680,14 @@ export function generateIndividualPassHtml({
           align-items: center;
           justify-content: space-between;
           border-bottom: 2px solid #0f172a;
-          padding-bottom: 6px;
-          margin-bottom: 8px;
+          padding-bottom: 8px;
+          margin-bottom: 10px;
         }
         .badge-img {
-          width: 44px;
-          height: 44px;
-          max-width: 44px;
-          max-height: 44px;
+          width: 46px;
+          height: 46px;
+          max-width: 46px;
+          max-height: 46px;
           object-fit: contain;
           flex-shrink: 0;
         }
@@ -2697,35 +2697,35 @@ export function generateIndividualPassHtml({
           padding: 0 8px;
         }
         .main-title {
-          font-size: 19.5px;
+          font-size: 21px;
           font-weight: 700;
           color: #0f172a;
           line-height: 1.25;
           margin: 0;
         }
         .sub-title {
-          font-size: 13.5px;
+          font-size: 14px;
           font-weight: 700;
-          color: #475569;
+          color: #334155;
           margin: 2px 0 0 0;
         }
         .officer-box {
           display: flex;
           align-items: center;
-          gap: 10px;
-          border: 1.5px solid #cbd5e1;
-          border-radius: 6px;
-          padding: 7px 12px;
+          gap: 12px;
+          border: 1.5px solid #0f172a;
+          border-radius: 4px;
+          padding: 9px 14px;
           background: #f8fafc;
-          margin-bottom: 8px;
+          margin-bottom: 10px;
           width: 100%;
           box-sizing: border-box;
         }
         .photo-slot {
-          width: 64px;
-          height: 78px;
-          border: 1.5px solid #94a3b8;
-          border-radius: 4px;
+          width: 68px;
+          height: 82px;
+          border: 1.5px solid #64748b;
+          border-radius: 2px;
           background: #ffffff;
           display: flex;
           align-items: center;
@@ -2738,36 +2738,36 @@ export function generateIndividualPassHtml({
           min-width: 0;
         }
         .officer-name {
-          font-size: 19px;
+          font-size: 20px;
           font-weight: 700;
           color: #0f172a;
           line-height: 1.25;
         }
         .officer-meta {
-          font-size: 13px;
-          color: #475569;
-          margin-top: 2px;
+          font-size: 13.5px;
+          color: #334155;
+          margin-top: 3px;
           font-weight: 400;
         }
         .officer-mob {
           font-family: 'Kokila', monospace;
-          font-size: 15px;
+          font-size: 15.5px;
           font-weight: 700;
           color: #1e3a8a;
-          margin-top: 2px;
+          margin-top: 3px;
         }
         .duty-table {
           width: 100%;
           border-collapse: collapse;
           border: 1.5px solid #0f172a;
-          border-radius: 6px;
+          border-radius: 4px;
           overflow: hidden;
-          font-size: 14px;
+          font-size: 14.5px;
           background: #ffffff;
-          margin-bottom: 8px;
+          margin-bottom: 10px;
         }
         .duty-table td {
-          padding: 4.5px 8px;
+          padding: 5.5px 10px;
           border-bottom: 1px solid #cbd5e1;
           border-right: 1px solid #cbd5e1;
         }
@@ -2779,16 +2779,16 @@ export function generateIndividualPassHtml({
           background: #f1f5f9;
           font-weight: 700;
           color: #0f172a;
-          font-size: 14px;
+          font-size: 14.5px;
           border-right: 1.5px solid #cbd5e1;
         }
         .duty-table .val-td {
           font-weight: 400;
           color: #0f172a;
-          font-size: 14px;
+          font-size: 14.5px;
         }
         .duty-place-val {
-          font-size: 16.5px;
+          font-size: 17px;
           font-weight: 700;
           color: #78350f;
           background: #fef3c7;
@@ -2798,131 +2798,130 @@ export function generateIndividualPassHtml({
           align-items: flex-end;
           justify-content: space-between;
           border-top: 1.5px solid #0f172a;
-          padding-top: 6px;
-          margin-top: 8px;
+          padding-top: 8px;
+          margin-top: 10px;
           width: 100%;
         }
         .verified-badge {
-          display: inline-flex;
-          align-items: center;
-          gap: 4px;
-          background: #f0fdf4;
-          color: #166534;
-          border: 1px solid #bbf7d0;
-          padding: 2px 7px;
-          border-radius: 16px;
-          font-size: 11px;
+          display: inline-block;
+          background: #ecfdf5;
+          color: #065f46;
+          border: 1.5px solid #059669;
+          padding: 3px 10px;
+          border-radius: 4px;
+          font-size: 11.5px;
           font-weight: 700;
+          line-height: 1.2;
         }
         .sign-title {
-          font-size: 13.5px;
+          font-size: 14px;
           font-weight: 700;
           color: #0f172a;
           text-align: right;
-          margin-top: 1px;
+          margin-top: 2px;
         }
       </style>
     </head>
     <body>
-      <div class="pass-container" style="max-width:680px; margin:0 auto; border:2px solid #0f172a; border-radius:8px; padding:12px 16px; background:#ffffff; box-sizing:border-box;">
+      <div class="pass-container" style="width:100%; max-width:720px; margin:0 auto; border:3px double #0f172a; padding:16px 20px; background:#ffffff; box-sizing:border-box;">
         <!-- 1. Header -->
-        <div class="header-bar" style="display:flex; align-items:center; justify-content:space-between; border-bottom:2px solid #0f172a; padding-bottom:6px; margin-bottom:8px; width:100%;">
-          <img src="/badge.png" class="badge-img" style="width:44px; height:44px; max-width:44px; max-height:44px; object-fit:contain; flex-shrink:0;" alt="UP Police" />
+        <div class="header-bar" style="display:flex; align-items:center; justify-content:space-between; border-bottom:2px solid #0f172a; padding-bottom:8px; margin-bottom:10px; width:100%;">
+          <img src="/badge.png" class="badge-img" style="width:46px; height:46px; max-width:46px; max-height:46px; object-fit:contain; flex-shrink:0;" alt="UP Police" />
           <div class="title-box" style="text-align:center; flex:1; padding:0 8px;">
-            <h1 class="main-title" style="font-size:19.5px; font-weight:700; color:#0f172a; line-height:1.25; margin:0;">${escapeHtml(eventTitle || 'उत्तर प्रदेश पुलिस')}</h1>
-            <p class="sub-title" style="font-size:13.5px; font-weight:700; color:#475569; margin:2px 0 0 0;">${escapeHtml(eventSubtitle || 'डिजिटल ड्यूटी पास')}</p>
+            <h1 class="main-title" style="font-size:21px; font-weight:700; color:#0f172a; line-height:1.25; margin:0;">${escapeHtml(eventTitle || 'उत्तर प्रदेश पुलिस')}</h1>
+            <p class="sub-title" style="font-size:14px; font-weight:700; color:#334155; margin:2px 0 0 0;">${escapeHtml(eventSubtitle || 'डिजिटल ड्यूटी पास')}</p>
           </div>
-          <img src="/badge.png" class="badge-img" style="width:44px; height:44px; max-width:44px; max-height:44px; object-fit:contain; flex-shrink:0;" alt="UP Police" />
+          <img src="/badge.png" class="badge-img" style="width:46px; height:46px; max-width:46px; max-height:46px; object-fit:contain; flex-shrink:0;" alt="UP Police" />
         </div>
 
         <!-- 2. Officer Bar -->
-        <div class="officer-box" style="display:flex; align-items:center; gap:10px; border:1.5px solid #cbd5e1; border-radius:6px; padding:7px 12px; background:#f8fafc; margin-bottom:8px; width:100%; box-sizing:border-box;">
-          <div class="photo-slot" style="width:64px; height:78px; border:1.5px solid #94a3b8; border-radius:4px; background:#ffffff; display:flex; align-items:center; justify-content:center; overflow:hidden; flex-shrink:0;">
+        <div class="officer-box" style="display:flex; align-items:center; gap:12px; border:1.5px solid #0f172a; border-radius:4px; padding:9px 14px; background:#f8fafc; margin-bottom:10px; width:100%; box-sizing:border-box;">
+          <div class="photo-slot" style="width:68px; height:82px; border:1.5px solid #64748b; border-radius:2px; background:#ffffff; display:flex; align-items:center; justify-content:center; overflow:hidden; flex-shrink:0;">
             ${photoHtml}
           </div>
           <div class="officer-details" style="flex:1; min-width:0;">
-            <div class="officer-name" style="font-size:19px; font-weight:700; color:#0f172a; line-height:1.25;">
+            <div class="officer-name" style="font-size:20px; font-weight:700; color:#0f172a; line-height:1.25;">
               <span>${escapeHtml(cleanMainOfficerName || '-')}</span>
             </div>
-            <div class="officer-mob" style="font-family:'Kokila', monospace; font-size:15px; font-weight:700; color:#1e3a8a; margin-top:2px;">
+            <div class="officer-mob" style="font-family:'Kokila', monospace; font-size:15.5px; font-weight:700; color:#1e3a8a; margin-top:3px;">
               ${duty.mobile ? `मो० ${escapeHtml(duty.mobile)}` : '-'}
             </div>
-            <div class="officer-meta" style="font-size:13px; color:#475569; margin-top:2px; font-weight:400;">
+            <div class="officer-meta" style="font-size:13.5px; color:#334155; margin-top:3px; font-weight:400;">
               ${cleanPnoText ? `PNO: <strong style="font-family:'Kokila', monospace; font-weight:700; color:#0f172a;">${escapeHtml(cleanPnoText)}</strong> | ` : ''}मूल तैनाती: <strong style="color:#0f172a; font-weight:700;">${escapeHtml(cleanMainPosting)}</strong>
             </div>
           </div>
-          <div style="text-align:center; padding:3px 5px; background:#ffffff; border:1px solid #cbd5e1; border-radius:4px; flex-shrink:0;">
+          <div style="text-align:center; padding:4px 6px; background:#ffffff; border:1px solid #94a3b8; border-radius:3px; flex-shrink:0;">
             ${qrSvgHtml}
-            <div style="font-size:9.5px; font-weight:700; color:#475569; margin-top:1px;">स्कैन सत्यापन</div>
+            <div style="font-size:10px; font-weight:700; color:#475569; margin-top:2px;">स्कैन सत्यापन</div>
           </div>
         </div>
 
         <!-- 3. Duty Table -->
-        <table class="duty-table" style="width:100%; border-collapse:collapse; border:1.5px solid #0f172a; border-radius:6px; overflow:hidden; font-size:14px; background:#ffffff; margin-bottom:8px;">
+        <table class="duty-table" style="width:100%; border-collapse:collapse; border:1.5px solid #0f172a; border-radius:4px; overflow:hidden; font-size:14.5px; background:#ffffff; margin-bottom:10px;">
           <tbody>
             <tr>
-              <td class="lbl-td" style="width:25%; background:#f1f5f9; font-weight:700; color:#0f172a; padding:5px 8px; border-bottom:1px solid #cbd5e1; border-right:1.5px solid #cbd5e1;">
+              <td class="lbl-td" style="width:25%; background:#f1f5f9; font-weight:700; color:#0f172a; padding:6px 10px; border-bottom:1px solid #cbd5e1; border-right:1.5px solid #cbd5e1;">
                 ड्यूटी का स्थान
               </td>
-              <td class="val-td duty-place-val" style="font-size:16.5px; font-weight:700; color:#78350f; background:#fef3c7; padding:5px 8px; border-bottom:1px solid #cbd5e1;">
+              <td class="val-td duty-place-val" style="font-size:17px; font-weight:700; color:#78350f; background:#fef3c7; padding:6px 10px; border-bottom:1px solid #cbd5e1;">
                 ${escapeHtml(duty.duty_place || '-')}
               </td>
             </tr>
             ${duty.booth_no ? `
             <tr>
-              <td class="lbl-td" style="width:25%; background:#f1f5f9; font-weight:700; color:#0f172a; padding:4px 8px; border-bottom:1px solid #cbd5e1; border-right:1.5px solid #cbd5e1;">
+              <td class="lbl-td" style="width:25%; background:#f1f5f9; font-weight:700; color:#0f172a; padding:5.5px 10px; border-bottom:1px solid #cbd5e1; border-right:1.5px solid #cbd5e1;">
                 बूथ सं० / श्रेणी
               </td>
-              <td class="val-td" style="padding:4px 8px; border-bottom:1px solid #cbd5e1; color:#0f172a; font-weight:700;">
+              <td class="val-td" style="padding:5.5px 10px; border-bottom:1px solid #cbd5e1; color:#0f172a; font-weight:700;">
                 बूथ सं० <strong>${escapeHtml(duty.booth_no)}</strong> ${duty.category ? `(${escapeHtml(duty.category)})` : ''}
               </td>
             </tr>` : ''}
             ${(duty.vehicle_no || duty.bus_no) ? `
             <tr>
-              <td class="lbl-td" style="width:25%; background:#f1f5f9; font-weight:700; color:#0f172a; padding:4px 8px; border-bottom:1px solid #cbd5e1; border-right:1.5px solid #cbd5e1;">
+              <td class="lbl-td" style="width:25%; background:#f1f5f9; font-weight:700; color:#0f172a; padding:5.5px 10px; border-bottom:1px solid #cbd5e1; border-right:1.5px solid #cbd5e1;">
                 वाहन संख्या
               </td>
-              <td class="val-td" style="padding:4px 8px; border-bottom:1px solid #cbd5e1; color:#0f172a; font-weight:700; font-family:'Kokila', monospace;">
+              <td class="val-td" style="padding:5.5px 10px; border-bottom:1px solid #cbd5e1; color:#0f172a; font-weight:700; font-family:'Kokila', monospace;">
                 वाहन सं० <strong>${escapeHtml(duty.vehicle_no || duty.bus_no)}</strong>
               </td>
             </tr>` : ''}
             ${(duty.weapon || duty.duty_type || duty.weapon_type) ? `
             <tr>
-              <td class="lbl-td" style="width:25%; background:#f1f5f9; font-weight:700; color:#0f172a; padding:4px 8px; border-bottom:1px solid #cbd5e1; border-right:1.5px solid #cbd5e1;">
+              <td class="lbl-td" style="width:25%; background:#f1f5f9; font-weight:700; color:#0f172a; padding:5.5px 10px; border-bottom:1px solid #cbd5e1; border-right:1.5px solid #cbd5e1;">
                 शस्त्र स्थिति
               </td>
-              <td class="val-td" style="padding:4px 8px; border-bottom:1px solid #cbd5e1; color:#0f172a; font-weight:700;">
+              <td class="val-td" style="padding:5.5px 10px; border-bottom:1px solid #cbd5e1; color:#0f172a; font-weight:700;">
                 ${escapeHtml(duty.weapon || duty.duty_type || duty.weapon_type)}
               </td>
             </tr>` : ''}
             ${(duty.capf || duty.pac) ? `
             <tr>
-              <td class="lbl-td" style="width:25%; background:#f1f5f9; font-weight:700; color:#0f172a; padding:4px 8px; border-bottom:1px solid #cbd5e1; border-right:1.5px solid #cbd5e1;">
+              <td class="lbl-td" style="width:25%; background:#f1f5f9; font-weight:700; color:#0f172a; padding:5.5px 10px; border-bottom:1px solid #cbd5e1; border-right:1.5px solid #cbd5e1;">
                 सीएपीएफ/पीएसी
               </td>
-              <td class="val-td" style="padding:4px 8px; border-bottom:1px solid #cbd5e1; color:#0f172a; font-weight:700;">
+              <td class="val-td" style="padding:5.5px 10px; border-bottom:1px solid #cbd5e1; color:#0f172a; font-weight:700;">
                 ${escapeHtml(duty.capf || duty.pac)}
               </td>
             </tr>` : ''}
             <tr>
-              <td class="lbl-td" style="width:25%; background:#f1f5f9; font-weight:700; color:#0f172a; padding:4px 8px; border-bottom:1px solid #cbd5e1; border-right:1.5px solid #cbd5e1;">
+              <td class="lbl-td" style="width:25%; background:#f1f5f9; font-weight:700; color:#0f172a; padding:5.5px 10px; border-bottom:1px solid #cbd5e1; border-right:1.5px solid #cbd5e1;">
                 दिनाँक व समय
               </td>
-              <td class="val-td" style="padding:4px 8px; border-bottom:1px solid #cbd5e1; font-weight:400; color:#0f172a;">
+              <td class="val-td" style="padding:5.5px 10px; border-bottom:1px solid #cbd5e1; font-weight:400; color:#0f172a;">
                 ${escapeHtml(duty.shift || '-')}
               </td>
             </tr>
             <tr>
-              <td class="lbl-td" style="width:25%; background:#f1f5f9; font-weight:700; color:#0f172a; padding:4px 8px; border-bottom:1px solid #cbd5e1; border-right:1.5px solid #cbd5e1;">
+              <td class="lbl-td" style="width:25%; background:#f1f5f9; font-weight:700; color:#0f172a; padding:5.5px 10px; border-bottom:1px solid #cbd5e1; border-right:1.5px solid #cbd5e1;">
                 जोन / जोनल प्रभारी
               </td>
-              <td class="val-td" style="padding:4px 8px; border-bottom:1px solid #cbd5e1;">
-                <div style="display:flex; flex-direction:column; gap:1px;">
-                  <div style="font-weight:700; color:#0f172a; ${cleanZonalIncharge ? 'padding-bottom:1px; border-bottom:1px dotted #94a3b8;' : ''}">
+              <td class="val-td" style="padding:5.5px 10px; border-bottom:1px solid #cbd5e1;">
+                <div style="display:flex; flex-direction:column; gap:2px;">
+                  <div style="font-weight:700; color:#0f172a; ${cleanZonalIncharge ? 'padding-bottom:2px; border-bottom:1px dotted #94a3b8;' : ''}">
                     <span style="color:#64748b; font-weight:400;">जोन:</span> ${escapeHtml(cleanZone || '-')}
                   </div>
                   ${cleanZonalIncharge ? `
-                    <div style="padding-top:1px; font-weight:700; color:#1e3a8a;">
+                    <div style="padding-top:2px; font-weight:700; color:#1e3a8a;">
                       <span style="color:#64748b; font-weight:400;">जोनल प्रभारी:</span> ${escapeHtml(cleanZonalIncharge)}
                     </div>
                   ` : ''}
@@ -2930,16 +2929,16 @@ export function generateIndividualPassHtml({
               </td>
             </tr>
             <tr>
-              <td class="lbl-td" style="width:25%; background:#f1f5f9; font-weight:700; color:#0f172a; padding:4px 8px; border-bottom:1px solid #cbd5e1; border-right:1.5px solid #cbd5e1;">
+              <td class="lbl-td" style="width:25%; background:#f1f5f9; font-weight:700; color:#0f172a; padding:5.5px 10px; border-bottom:1px solid #cbd5e1; border-right:1.5px solid #cbd5e1;">
                 सेक्टर / सेक्टर प्रभारी
               </td>
-              <td class="val-td" style="padding:4px 8px; border-bottom:1px solid #cbd5e1;">
-                <div style="display:flex; flex-direction:column; gap:1px;">
-                  <div style="font-weight:700; color:#0f172a; ${cleanSectorIncharge ? 'padding-bottom:1px; border-bottom:1px dotted #94a3b8;' : ''}">
+              <td class="val-td" style="padding:5.5px 10px; border-bottom:1px solid #cbd5e1;">
+                <div style="display:flex; flex-direction:column; gap:2px;">
+                  <div style="font-weight:700; color:#0f172a; ${cleanSectorIncharge ? 'padding-bottom:2px; border-bottom:1px dotted #94a3b8;' : ''}">
                     <span style="color:#64748b; font-weight:400;">सेक्टर:</span> ${escapeHtml(cleanSector || '-')}
                   </div>
                   ${cleanSectorIncharge ? `
-                    <div style="padding-top:1px; font-weight:700; color:#1e3a8a;">
+                    <div style="padding-top:2px; font-weight:700; color:#1e3a8a;">
                       <span style="color:#64748b; font-weight:400;">सेक्टर प्रभारी:</span> ${escapeHtml(cleanSectorIncharge)}
                     </div>
                   ` : ''}
@@ -2948,19 +2947,19 @@ export function generateIndividualPassHtml({
             </tr>
             ${activeBriefing ? `
             <tr>
-              <td class="lbl-td" style="width:25%; background:#f1f5f9; font-weight:700; color:#0f172a; padding:4px 8px; border-bottom:1px solid #cbd5e1; border-right:1.5px solid #cbd5e1;">
+              <td class="lbl-td" style="width:25%; background:#f1f5f9; font-weight:700; color:#0f172a; padding:5.5px 10px; border-bottom:1px solid #cbd5e1; border-right:1.5px solid #cbd5e1;">
                 ब्रीफिंग स्थान
               </td>
-              <td class="val-td" style="padding:4px 8px; border-bottom:1px solid #cbd5e1; font-weight:700; color:#0f172a;">
+              <td class="val-td" style="padding:5.5px 10px; border-bottom:1px solid #cbd5e1; font-weight:700; color:#0f172a;">
                 ${escapeHtml(activeBriefing)}
               </td>
             </tr>` : ''}
             ${activeNote ? `
             <tr>
-              <td class="lbl-td" style="width:25%; background:#f1f5f9; font-weight:700; color:#0f172a; padding:4px 8px; border-bottom:1px solid #cbd5e1; border-right:1.5px solid #cbd5e1;">
+              <td class="lbl-td" style="width:25%; background:#f1f5f9; font-weight:700; color:#0f172a; padding:5.5px 10px; border-bottom:1px solid #cbd5e1; border-right:1.5px solid #cbd5e1;">
                 विशेष निर्देश
               </td>
-              <td class="val-td" style="padding:4px 8px; border-bottom:1px solid #cbd5e1; color:#334155; font-size:12.5px; line-height:1.35;">
+              <td class="val-td" style="padding:5.5px 10px; border-bottom:1px solid #cbd5e1; color:#334155; font-size:12.5px; line-height:1.4;">
                 ${escapeHtml(activeNote)}
               </td>
             </tr>` : ''}
@@ -2971,32 +2970,31 @@ export function generateIndividualPassHtml({
         ${coForceHtml}
 
         <!-- 5. Footer -->
-        <div class="footer-bar" style="display:flex; align-items:flex-end; justify-content:space-between; border-top:1.5px solid #0f172a; padding-top:6px; margin-top:8px; width:100%;">
+        <div class="footer-bar" style="display:flex; align-items:flex-end; justify-content:space-between; border-top:1.5px solid #0f172a; padding-top:8px; margin-top:10px; width:100%;">
           <div>
-            <div class="verified-badge" style="display:inline-flex; align-items:center; gap:4px; background:#f0fdf4; color:#166534; border:1px solid #bbf7d0; padding:2px 7px; border-radius:16px; font-size:11px; font-weight:700;">
-              <span style="color:#16a34a; font-size:10px;">●</span>
-              <span>डिजिटल सत्यापित पास (UP POLICE)</span>
+            <div class="verified-badge" style="display:inline-block; background:#ecfdf5; color:#065f46; border:1.5px solid #059669; padding:3px 10px; border-radius:4px; font-size:11.5px; font-weight:700; line-height:1.2;">
+              &#x2714; अधिकृत डिजिटल सत्यापित पास (UP POLICE)
             </div>
-            <div style="font-size:11px; color:#475569; font-weight:400; margin-top:2px;">
+            <div style="font-size:11.5px; color:#475569; font-weight:400; margin-top:3px;">
               कार्यालय वरिष्ठ पुलिस अधीक्षक, जनपद अयोध्या
             </div>
           </div>
 
           <div style="text-align:right;">
             ${signHtml}
-            <div class="sign-title" style="font-size:13.5px; font-weight:700; color:#0f172a; text-align:right; margin-top:1px;">${escapeHtml(signatoryText)}</div>
+            <div class="sign-title" style="font-size:14px; font-weight:700; color:#0f172a; text-align:right; margin-top:2px;">${escapeHtml(signatoryText)}</div>
           </div>
         </div>
 
         <!-- Smart Cell Ayodhya Footer -->
-        <div style="background:#0b132b; color:#ffffff; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size:8.5px; font-weight:800; letter-spacing:0.8px; text-align:center; padding:3px 0; border-radius:3px; margin-top:6px; text-transform:uppercase;">
+        <div style="background:#0f172a; color:#ffffff; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size:9px; font-weight:700; letter-spacing:1px; text-align:center; padding:4px 0; border-radius:2px; margin-top:8px; text-transform:uppercase;">
           DESIGN AND DEVELOPED BY SMART CELL AYODHYA
         </div>
       </div>
 
       ${includeBackSide ? `
       <!-- ================= PAGE 2: OFFICIAL BACK SIDE ================= -->
-      <div class="pass-container" style="page-break-before:always; break-before:page; margin-top:16px;">
+      <div class="pass-container" style="width:100%; max-width:720px; margin:0 auto; border:3px double #0f172a; padding:16px 20px; background:#ffffff; box-sizing:border-box; page-break-before:always; break-before:page; margin-top:16px;">
         <div style="border-bottom:2px solid #0f172a; padding-bottom:5px; margin-bottom:8px; text-align:center;">
           <div style="font-size:17.5px; font-weight:700; color:#0f172a;">
             पुलिस कर्मियों हेतु 16 महत्वपूर्ण निर्देश (आदर्श आचार संहिता व कर्तव्य)

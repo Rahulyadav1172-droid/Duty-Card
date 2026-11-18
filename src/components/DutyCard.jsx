@@ -393,7 +393,7 @@ export default function DutyCard({
       container.style.position = 'fixed';
       container.style.top = '0px';
       container.style.left = '-9999px';
-      container.style.width = '740px';
+      container.style.width = '720px';
       container.style.backgroundColor = '#ffffff';
       container.style.zIndex = '-9999';
       container.innerHTML = passHtml;
@@ -425,7 +425,7 @@ export default function DutyCard({
 
         const targetEl = targets[i];
         const canvas = await html2canvas(targetEl, {
-          scale: 2.5,
+          scale: 3.2,
           useCORS: true,
           backgroundColor: '#ffffff',
           logging: false,
@@ -437,7 +437,8 @@ export default function DutyCard({
           y: 0
         });
 
-        const imgData = canvas.toDataURL('image/jpeg', 0.95);
+        // Use lossless PNG instead of lossy JPEG to guarantee zero compression noise & razor-sharp typography
+        const imgData = canvas.toDataURL('image/png');
         let renderWidth = availWidth;
         let renderHeight = (canvas.height * availWidth) / canvas.width;
 
@@ -447,11 +448,11 @@ export default function DutyCard({
           renderWidth = (canvas.width * availHeight) / canvas.height;
         }
 
-        // Center horizontally on page
+        // Center both horizontally AND vertically on A4 page for a balanced, prestigious official certificate appearance
         const offsetX = margin + (availWidth - renderWidth) / 2;
-        const offsetY = margin;
+        const offsetY = Math.max(margin, margin + (availHeight - renderHeight) / 2);
 
-        pdf.addImage(imgData, 'JPEG', offsetX, offsetY, renderWidth, renderHeight);
+        pdf.addImage(imgData, 'PNG', offsetX, offsetY, renderWidth, renderHeight, undefined, 'FAST');
       }
 
       document.body.removeChild(container);
