@@ -379,10 +379,10 @@ export default function DutyCard({
       // Create isolated offscreen iframe so all CSS styles, fonts, and images render 100% cleanly
       const iframe = document.createElement('iframe');
       iframe.style.position = 'fixed';
-      iframe.style.top = '-9999px';
+      iframe.style.top = '0px';
       iframe.style.left = '-9999px';
       iframe.style.width = '780px';
-      iframe.style.height = '1200px';
+      iframe.style.height = '2400px';
       iframe.style.border = 'none';
       iframe.style.backgroundColor = '#ffffff';
       document.body.appendChild(iframe);
@@ -411,7 +411,8 @@ export default function DutyCard({
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = pdf.internal.pageSize.getHeight();
       const margin = 8;
-      const printWidth = pdfWidth - (margin * 2);
+      const availWidth = pdfWidth - (margin * 2);
+      const availHeight = pdfHeight - (margin * 2);
 
       for (let i = 0; i < targets.length; i++) {
         if (i > 0) {
@@ -423,12 +424,32 @@ export default function DutyCard({
           scale: 2.5,
           useCORS: true,
           backgroundColor: '#ffffff',
-          logging: false
+          logging: false,
+          width: targetEl.offsetWidth,
+          height: targetEl.offsetHeight,
+          windowWidth: targetEl.scrollWidth || 800,
+          windowHeight: targetEl.scrollHeight || 2000,
+          scrollX: 0,
+          scrollY: 0,
+          x: 0,
+          y: 0
         });
 
         const imgData = canvas.toDataURL('image/jpeg', 0.95);
-        const printHeight = (canvas.height * printWidth) / canvas.width;
-        pdf.addImage(imgData, 'JPEG', margin, margin, printWidth, Math.min(printHeight, pdfHeight - (margin * 2)));
+        let renderWidth = availWidth;
+        let renderHeight = (canvas.height * availWidth) / canvas.width;
+
+        // If rendered height exceeds single A4 printable page, scale down proportionally so NOTHING is ever cut off!
+        if (renderHeight > availHeight) {
+          renderHeight = availHeight;
+          renderWidth = (canvas.width * availHeight) / canvas.height;
+        }
+
+        // Center horizontally on page
+        const offsetX = margin + (availWidth - renderWidth) / 2;
+        const offsetY = margin;
+
+        pdf.addImage(imgData, 'JPEG', offsetX, offsetY, renderWidth, renderHeight);
       }
 
       document.body.removeChild(iframe);
@@ -603,7 +624,7 @@ export default function DutyCard({
               </div>
             </div>
             <div className="text-right">
-              <div className="font-mono text-blue-900 font-bold">📞 {duty.mobile || '-'}</div>
+              <div className="font-mono text-blue-900 font-bold">{duty.mobile ? `मो० ${duty.mobile}` : '-'}</div>
               {cleanPno && <div className="text-[10px] text-slate-500 font-mono">PNO: {cleanPno}</div>}
             </div>
           </div>

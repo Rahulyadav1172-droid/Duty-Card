@@ -358,7 +358,7 @@ export default function BulkLegalPdfModal({
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: isPreview ? '8px' : '11px', fontWeight: '800', color: '#1e3a8a', marginTop: '1.5px' }}>
                   <span style={{ display: 'flex', alignItems: 'center', gap: '2px', fontFamily: 'monospace', fontSize: isPreview ? '8.5px' : '11.5px', fontWeight: '900' }}>
-                    📞 {duty.mobile || '-'}
+                    {duty.mobile ? `मो० ${duty.mobile}` : '-'}
                   </span>
                   {cleanPno && (
                     <span style={{ color: '#475569', fontFamily: 'monospace', fontSize: isPreview ? '7px' : '9.5px' }}>
@@ -1004,7 +1004,7 @@ export default function BulkLegalPdfModal({
                           <tr key={cIdx} style={{ backgroundColor: cIdx % 2 === 1 ? '#f8fafc' : '#ffffff' }}>
                             <td style={{ textAlign: 'center', fontWeight: 'bold', color: '#64748b', border: '1px solid #e2e8f0', padding: '2px 4px' }}>{cIdx + 1}</td>
                             <td style={{ fontWeight: '800', color: '#0f172a', border: '1px solid #e2e8f0', padding: '2px 5px' }}>{cleanName || '-'}</td>
-                            <td style={{ fontFamily: 'monospace', fontWeight: 'bold', color: '#0369a1', border: '1px solid #e2e8f0', padding: '2px 5px', whiteSpace: 'nowrap' }}>📞 {colleague.mobile || '-'}</td>
+                            <td style={{ fontFamily: 'monospace', fontWeight: 'bold', color: '#0369a1', border: '1px solid #e2e8f0', padding: '2px 5px', whiteSpace: 'nowrap' }}>{colleague.mobile || '-'}</td>
                             <td style={{ color: '#334155', fontWeight: '600', border: '1px solid #e2e8f0', padding: '2px 5px' }}>{fullPosting}</td>
                           </tr>
                         );
@@ -1036,7 +1036,7 @@ export default function BulkLegalPdfModal({
           return (
             <div style={{ border: '1.5px solid #0b132b', borderRadius: '6px', overflow: 'hidden', margin: layoutMode === 4 ? '3px 0 2px' : '2px 0', fontSize: layoutMode === 4 ? '10.5px' : '11px', backgroundColor: '#ffffff', flexShrink: 0 }}>
               <div style={{ backgroundColor: '#f1f5f9', fontWeight: '900', padding: layoutMode === 4 ? '2px 6px' : '2px 5px', borderBottom: '1.5px solid #cbd5e1', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: layoutMode === 4 ? '10.5px' : '11px', color: '#0f172a' }}>👥 सहयोगार्थ पुलिस बल (उसी पॉइंट पर तैनात साथी):</span>
+                <span style={{ fontSize: layoutMode === 4 ? '10.5px' : '11px', color: '#0f172a' }}>सहयोगार्थ पुलिस बल (उसी पॉइंट पर तैनात साथी):</span>
                 <span style={{ color: '#0369a1', fontFamily: 'monospace', fontWeight: 'bold', fontSize: layoutMode === 4 ? '10px' : '10px' }}>कुल: {coForceList.length} जवान</span>
               </div>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: layoutMode === 4 ? '10.5px' : '10.5px', backgroundColor: '#ffffff', lineHeight: layoutMode === 4 ? '1.22' : '1.25' }}>
@@ -1074,7 +1074,7 @@ export default function BulkLegalPdfModal({
                       <tr key={cIdx} style={{ backgroundColor: cIdx % 2 === 1 ? '#f8fafc' : '#ffffff' }}>
                         <td style={{ textAlign: 'center', fontWeight: 'bold', color: '#64748b', border: '1px solid #e2e8f0', padding: layoutMode === 4 ? '2px 4px' : '2px 4px' }}>{cIdx + 1}</td>
                         <td style={{ fontWeight: '800', color: '#0f172a', border: '1px solid #e2e8f0', padding: layoutMode === 4 ? '2px 4px' : '2px 4px' }}>{cleanName || '-'}</td>
-                        <td style={{ fontFamily: 'monospace', fontWeight: 'bold', color: '#0369a1', border: '1px solid #e2e8f0', padding: layoutMode === 4 ? '2px 4px' : '2px 4px', whiteSpace: 'nowrap' }}>📞 {colleague.mobile || '-'}</td>
+                        <td style={{ fontFamily: 'monospace', fontWeight: 'bold', color: '#0369a1', border: '1px solid #e2e8f0', padding: layoutMode === 4 ? '2px 4px' : '2px 4px', whiteSpace: 'nowrap' }}>{colleague.mobile || '-'}</td>
                         <td style={{ color: '#334155', fontWeight: '600', border: '1px solid #e2e8f0', padding: layoutMode === 4 ? '2px 4px' : '2px 4px' }}>{fullPosting}</td>
                       </tr>
                     );
