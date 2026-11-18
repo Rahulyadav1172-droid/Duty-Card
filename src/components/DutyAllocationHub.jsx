@@ -35,7 +35,9 @@ import { logReplacementToAuditTrail } from '../utils/aamadSync';
 import {
   ELECTION_OUTER_BARRIERS,
   ELECTION_INTER_BARRIERS,
-  ELECTION_LAW_ORDER_MANAK
+  ELECTION_LAW_ORDER_MANAK,
+  ELECTION_SECTOR_ZONE_MASTER,
+  AYODHYA_VIDHAN_SABHAS
 } from '../data/electionStandardData';
 
 function DutyAllocationHub({
@@ -738,6 +740,49 @@ function DutyAllocationHub({
     setMasterSubTab('points');
     setSuccessToast(`सफलतापूर्वक ${ELECTION_LAW_ORDER_MANAK.length} निर्वाचन कानून-व्यवस्था मानक पॉइंट्स लोड हो गए!`);
     setTimeout(() => setSuccessToast(null), 4000);
+  };
+
+  const handleLoadElectionMasterSectors = () => {
+    if (!window.confirm(`क्या आप निर्वाचन 2024 के सभी ${ELECTION_SECTOR_ZONE_MASTER.length} आधिकारिक सेक्टर-ज़ोन मास्टर चार्ट (5 विधानसभाएं, 193 सेक्टर व जोनल अधिकारी) को लोड करना चाहते हैं?`)) return;
+
+    const newZones = [...masterZones];
+    const seenZoneNames = new Set(newZones.map(z => z.name));
+
+    const newSectors = [...masterSectors];
+    const seenSecNames = new Set(newSectors.map(s => s.name));
+
+    ELECTION_SECTOR_ZONE_MASTER.forEach((sec, idx) => {
+      const zName = `${sec.vidhanSabha} - ${sec.zone}`;
+      if (!seenZoneNames.has(zName)) {
+        seenZoneNames.add(zName);
+        newZones.push({
+          id: `Z-OFF-${idx + 1}`,
+          name: zName,
+          incharge: sec.zonalOfficer || 'ज़ोनल पुलिस अधिकारी',
+          mobile: '',
+          vidhanSabha: sec.vidhanSabha
+        });
+      }
+
+      if (!seenSecNames.has(sec.sectorName)) {
+        seenSecNames.add(sec.sectorName);
+        newSectors.push({
+          id: sec.id || `S-OFF-${idx + 1}`,
+          name: sec.sectorName,
+          zone: zName,
+          incharge: sec.policeOfficer || 'सेक्टर पुलिस अधिकारी',
+          mobile: sec.mobile || '',
+          vidhanSabha: sec.vidhanSabha,
+          hq: sec.sectorHq || ''
+        });
+      }
+    });
+
+    saveZones(newZones);
+    saveSectors(newSectors);
+    setMasterSubTab('sectors');
+    setSuccessToast(`सफलतापूर्वक 5 विधानसभाओं के 193 सेक्टर व जोनल चार्ट लोड हो गए!`);
+    setTimeout(() => setSuccessToast(null), 4500);
   };
 
   // Relocate Handlers
@@ -1996,6 +2041,16 @@ function DutyAllocationHub({
               >
                 <span className="text-amber-400 font-mono font-black">18</span>
                 <span>कानून-व्यवस्था मानक</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleLoadElectionMasterSectors}
+                className="px-3 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white font-bold rounded-xl flex items-center gap-1.5 transition active:scale-95 cursor-pointer shadow-xs"
+                title="5 विधानसभाओं के 193 आधिकारिक सेक्टर एवं जोनल अधिकारी लोड करें"
+              >
+                <span className="text-emerald-200 font-mono font-black">193</span>
+                <span>सेक्टर-ज़ोन चार्ट</span>
               </button>
             </div>
           </div>

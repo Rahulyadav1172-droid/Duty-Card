@@ -254,6 +254,7 @@ function processObjectRows(rows) {
   let currentBooth = '';
   let currentTime = '';
   let currentBriefing = '';
+  let currentVidhanSabha = '';
 
   rows.forEach((row, idx) => {
     // 1. Prioritize composite column "name thana district mob" or "name posting dist mob" for Officer Name & Details
@@ -394,6 +395,9 @@ function processObjectRows(rows) {
       'बूथ क्रमांक', 'बूथ संख्या', 'बूथ सं', 'booth', 'booth no', 'बूथ', 'बूथ सं', 'बूथ संख्या', 'booth_no', 'मतदेय स्थल'
     ], ['स्थलों की संख्या']);
     const vehicleCol = getRowValueByPattern(row, ['vehicle', 'vehicle no', 'bus no', 'वा0 सं0', 'वाहन', 'गाड़ी सं', 'वाहन सं', 'vehicle_no', 'बस सं']);
+    const vidhanSabhaCol = getRowValueByPattern(row, [
+      'विधानसभा', 'विधान सभा', 'विधानसभा क्षेत्र', 'विधानसभा_क्षेत्र', 'वि0स0', 'assembly', 'ac', 'ac_name', 'vidhansabha'
+    ]);
 
     if (!nameCol && !compositeCol && !mobCol && !dutyPlace && !hgNameCol) return;
 
@@ -473,10 +477,12 @@ function processObjectRows(rows) {
     if (cleanSectorIncharge) currentSectorIncharge = cleanSectorIncharge;
     if (timeCol) currentTime = timeCol;
     if (briefingCol) currentBriefing = briefingCol;
+    if (vidhanSabhaCol) currentVidhanSabha = vidhanSabhaCol;
 
     const assignedPlace = dutyPlace || currentDutyPlace;
     const assignedThana = finalPosting || currentThana;
-    const assignedZone = cleanZone || currentZone;
+    const assignedVidhanSabha = vidhanSabhaCol || currentVidhanSabha;
+    const assignedZone = cleanZone || currentZone || assignedVidhanSabha;
     const assignedZonalInc = cleanZonalIncharge || currentZonalIncharge;
     const assignedSector = cleanSector || currentSector;
     const assignedSectorInc = cleanSectorIncharge || currentSectorIncharge;
@@ -509,6 +515,7 @@ function processObjectRows(rows) {
         posting: assignedThana,
         district: finalDistrict,
         duty_place: assignedPlace,
+        vidhan_sabha: assignedVidhanSabha || '',
         zone: assignedZone,
         zonal_incharge: assignedZonalInc,
         sector: assignedSector,
@@ -537,6 +544,7 @@ function processObjectRows(rows) {
         posting: hgPostingCol || assignedThana,
         district: extractDistrictFromText(hgPostingCol) || finalDistrict,
         duty_place: assignedPlace,
+        vidhan_sabha: assignedVidhanSabha || '',
         zone: assignedZone,
         zonal_incharge: assignedZonalInc,
         sector: assignedSector,
@@ -684,6 +692,9 @@ function processRawRows(rawRows) {
     idx > colHgName && (h.includes('नियुक्ति') || h.includes('नियुति') || h.includes('posting') || h.includes('थाना'))
   );
 
+  const colVidhanSabha = headers.findIndex(h => 
+    h === 'विधानसभा' || h === 'विधान सभा' || h === 'वि0स0' || h === 'ac' || h.includes('विधानसभा') || h.includes('vidhansabha') || h.includes('assembly')
+  );
   const colZoneSector = headers.findIndex(h => 
     h.includes('जोन/ से0') || h.includes('जोन/सेक्टर') || h.includes('जोन / सेक्टर') || h.includes('zone/sector')
   );
@@ -752,6 +763,7 @@ function processRawRows(rawRows) {
   const startRow = headerRowIndex !== -1 ? headerRowIndex + 1 : 0;
 
   const records = [];
+  let currentVidhanSabha = "";
   let currentDutyPlace = "";
   let currentThana = "";
   let currentZone = "";
@@ -822,6 +834,10 @@ function processRawRows(rawRows) {
     }
 
     // Forward-fill state update
+    const rawVidhanSabha = colVidhanSabha !== -1 ? convertKrutiToUnicode(cells[colVidhanSabha] || '') : '';
+    if (rawVidhanSabha) currentVidhanSabha = rawVidhanSabha;
+    const assignedVidhanSabha = rawVidhanSabha || currentVidhanSabha;
+
     if (zoneVal) currentZone = zoneVal;
     if (zonalVal) currentZonal = zonalVal;
     if (sectorVal) currentSector = sectorVal;
@@ -903,6 +919,8 @@ function processRawRows(rawRows) {
         mobile: mobNumber,
         posting: assignedThana,
         district: finalDist,
+        vidhansabha: assignedVidhanSabha || '',
+        vidhan_sabha: assignedVidhanSabha || '',
         duty_place: assignedPlace,
         zone: assignedZone,
         zonal_incharge: assignedZonalInc,
@@ -931,6 +949,8 @@ function processRawRows(rawRows) {
         mobile: rawHgMob,
         posting: rawHgPosting || assignedThana,
         district: extractDistrictFromText(rawHgPosting) || finalDist,
+        vidhansabha: assignedVidhanSabha || '',
+        vidhan_sabha: assignedVidhanSabha || '',
         duty_place: assignedPlace,
         zone: assignedZone,
         zonal_incharge: assignedZonalInc,

@@ -31,7 +31,13 @@ import {
 import * as XLSX from 'xlsx';
 import DutyReplacementModal from './DutyReplacementModal';
 import { logReplacementToAuditTrail } from '../utils/aamadSync';
-import { ELECTION_2D_BOOTH_NORMS, ELECTION_LAW_ORDER_MANAK } from '../data/electionStandardData';
+import {
+  ELECTION_2D_BOOTH_NORMS,
+  ELECTION_LAW_ORDER_MANAK,
+  AYODHYA_VIDHAN_SABHAS,
+  OFFICIAL_ELECTION_BOOTHS_MASTER,
+  ELECTION_SECTOR_ZONE_MASTER
+} from '../data/electionStandardData';
 import { unmergeAndFillWorksheet } from '../utils/fileParser';
 import { convertKrutiToUnicode } from '../utils/kruti2unicode';
 
@@ -44,13 +50,14 @@ const DEFAULT_CATEGORY_NORMS = {
   'पिंक': { si: 1, hc: 1, cp: 2, wcp: 2, hg: 2, capf: 0, label: 'पिंक बूथ (All-Women Station)', color: 'pink', desc: 'मानक: 1 महिला उ०नि० + 1 महिला हे०का० + 2 महिला का० + 2 महिला होमगार्ड' }
 };
 
-// Default sample booths for fresh start
+// Default sample booths representing all 5 Assembly Constituencies of Ayodhya
 const DEFAULT_SAMPLE_BOOTHS = [
-  { id: 'EB-1', vidhanSabha: '134-अयोध्या', sector: 'सेक्टर 01 (कोतवाली)', sectorOfficer: 'उ०नि० रमेश कुमार यादव', sectorMobile: '9454401201', centerName: 'प्राथमिक विद्यालय सआदतगंज', boothNo: '141', category: 'सामान्य' },
-  { id: 'EB-2', vidhanSabha: '134-अयोध्या', sector: 'सेक्टर 01 (कोतवाली)', sectorOfficer: 'उ०नि० रमेश कुमार यादव', sectorMobile: '9454401201', centerName: 'प्राथमिक विद्यालय सआदतगंज', boothNo: '142', category: 'संवेदनशील' },
-  { id: 'EB-3', vidhanSabha: '134-अयोध्या', sector: 'सेक्टर 01 (कोतवाली)', sectorOfficer: 'उ०नि० रमेश कुमार यादव', sectorMobile: '9454401201', centerName: 'राजकीय इंटर कॉलेज फैजाबाद', boothNo: '143', category: 'पिंक' },
-  { id: 'EB-4', vidhanSabha: '134-अयोध्या', sector: 'सेक्टर 02 (कैंट)', sectorOfficer: 'उ०नि० दिनेश प्रताप सिंह', sectorMobile: '9454401202', centerName: 'कन्या पूर्व माध्यमिक विद्यालय नाका', boothNo: '144', category: 'अति-संवेदनशील' },
-  { id: 'EB-5', vidhanSabha: '134-अयोध्या', sector: 'सेक्टर 02 (कैंट)', sectorOfficer: 'उ०नि० दिनेश प्रताप सिंह', sectorMobile: '9454401202', centerName: 'कन्या पूर्व माध्यमिक विद्यालय नाका', boothNo: '145', category: 'क्रिटिकल' }
+  { id: 'EB-1', vidhanSabha: '275-अयोध्या', phase: 'पंचम चरण (Phase 5)', thana: 'कोतवाली नगर', sector: 'सेक्टर 01 (कोतवाली)', sectorOfficer: 'उ०नि० रमेश कुमार यादव', sectorMobile: '9454401201', centerName: 'प्राथमिक विद्यालय सआदतगंज', boothNo: '141', category: 'सामान्य', shift: 'मतदान दिवस (प्रातः 05:30 बजे से मतदान समाप्ति तक)' },
+  { id: 'EB-2', vidhanSabha: '275-अयोध्या', phase: 'पंचम चरण (Phase 5)', thana: 'कोतवाली नगर', sector: 'सेक्टर 01 (कोतवाली)', sectorOfficer: 'उ०नि० रमेश कुमार यादव', sectorMobile: '9454401201', centerName: 'राजकीय इंटर कॉलेज फैजाबाद', boothNo: '143', category: 'पिंक', shift: 'मतदान दिवस (प्रातः 05:30 बजे से मतदान समाप्ति तक)' },
+  { id: 'EB-3', vidhanSabha: '271-रूदौली', phase: 'पंचम चरण (Phase 5)', thana: 'कोतवाली रूदौली', sector: 'सेक्टर 05 (रूदौली)', sectorOfficer: 'उ०नि० अशोक कुमार वर्मा', sectorMobile: '9454401205', centerName: 'कन्या पूर्व माध्यमिक विद्यालय रूदौली', boothNo: '105', category: 'संवेदनशील', shift: 'मतदान दिवस (प्रातः 05:30 बजे से मतदान समाप्ति तक)' },
+  { id: 'EB-4', vidhanSabha: '273-मिल्कीपुर (अ०जा०)', phase: 'पंचम चरण (Phase 5)', thana: 'इनायतनगर', sector: 'सेक्टर 03 (मिल्कीपुर)', sectorOfficer: 'उ०नि० राम सिंह यादव', sectorMobile: '9454401215', centerName: 'प्राथमिक विद्यालय हैरिंग्टनगंज', boothNo: '78', category: 'अति-संवेदनशील', shift: 'मतदान दिवस (प्रातः 05:30 बजे से मतदान समाप्ति तक)' },
+  { id: 'EB-5', vidhanSabha: '274-बीकापुर', phase: 'पंचम चरण (Phase 5)', thana: 'कोतवाली बीकापुर', sector: 'सेक्टर 02 (बीकापुर)', sectorOfficer: 'उ०नि० शिव प्रसाद', sectorMobile: '9454401222', centerName: 'पूर्व माध्यमिक विद्यालय चौरे बाजार', boothNo: '210', category: 'सामान्य', shift: 'मतदान दिवस (प्रातः 05:30 बजे से मतदान समाप्ति तक)' },
+  { id: 'EB-6', vidhanSabha: '276-गोशाईगंज', phase: 'षष्ठम चरण (Phase 6)', thana: 'थाना गोशाईगंज', sector: 'सेक्टर 04 (गोशाईगंज)', sectorOfficer: 'उ०नि० विनोद कुमार मिश्र', sectorMobile: '9454401230', centerName: 'प्राथमिक विद्यालय महबूबगंज', boothNo: '315', category: 'क्रिटिकल', criticalReason: 'राजनैतिक प्रतिद्वन्दिता/वल्नरेबल', shift: 'मतदान दिवस (प्रातः 05:30 बजे से मतदान समाप्ति तक)' }
 ];
 
 export default function ElectionBoothDutyHub({
@@ -65,6 +72,8 @@ export default function ElectionBoothDutyHub({
 }) {
   const [activeSubTab, setActiveSubTab] = useState('booths'); // 'booths' | 'norms' | 'allocate' | 'upload'
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedVidhanSabhaFilter, setSelectedVidhanSabhaFilter] = useState('ALL');
+  const [selectedPhaseFilter, setSelectedPhaseFilter] = useState('ALL');
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState('ALL');
   const [selectedSectorFilter, setSelectedSectorFilter] = useState('ALL');
   const [autoStrategy, setAutoStrategy] = useState('vacancies_only'); // 'vacancies_only' | 'fresh_reallocate'
@@ -153,13 +162,16 @@ export default function ElectionBoothDutyHub({
 
   // Form State for Add/Edit Booth
   const [boothForm, setBoothForm] = useState({
-    vidhanSabha: '134-अयोध्या',
+    vidhanSabha: '275-अयोध्या',
+    phase: 'पंचम चरण (Phase 5)',
+    thana: '',
     sector: 'सेक्टर 01',
     sectorOfficer: '',
     sectorMobile: '',
     centerName: '',
     boothNo: '',
     category: 'सामान्य',
+    criticalReason: '',
     shift: 'मतदान दिवस (प्रातः 05:30 बजे से मतदान समाप्ति तक)'
   });
 
@@ -378,6 +390,17 @@ export default function ElectionBoothDutyHub({
     };
   }, [booths]);
 
+  // Unique Vidhan Sabhas from booths + standard 5
+  const allVidhanSabhas = useMemo(() => {
+    const list = [...AYODHYA_VIDHAN_SABHAS.map(v => v.code)];
+    booths.forEach(b => {
+      if (b.vidhanSabha && !list.includes(b.vidhanSabha)) {
+        list.push(b.vidhanSabha);
+      }
+    });
+    return list;
+  }, [booths]);
+
   // Unique sectors for filtering
   const allSectors = useMemo(() => {
     return Array.from(new Set(booths.map(b => b.sector).filter(Boolean)));
@@ -386,16 +409,36 @@ export default function ElectionBoothDutyHub({
   // Filtered Booths
   const filteredBooths = useMemo(() => {
     return booths.filter(b => {
+      // Phase Filter
+      if (selectedPhaseFilter !== 'ALL') {
+        const bPhase = String(b.phase || '');
+        const bPhaseNo = b.phaseNo ? String(b.phaseNo) : '';
+        const vsInfo = AYODHYA_VIDHAN_SABHAS.find(v => (b.vidhanSabha && (b.vidhanSabha.includes(v.id) || b.vidhanSabha.includes(v.name))));
+        const effectivePhaseNo = bPhaseNo || (vsInfo ? String(vsInfo.phaseNo) : (bPhase.includes('5') || bPhase.includes('पंचम') ? '5' : (bPhase.includes('6') || bPhase.includes('षष्ठम') ? '6' : '')));
+        if (effectivePhaseNo !== selectedPhaseFilter) return false;
+      }
+
+      // Vidhan Sabha Filter
+      if (selectedVidhanSabhaFilter !== 'ALL') {
+        const bVS = (b.vidhanSabha || '').trim();
+        if (bVS !== selectedVidhanSabhaFilter && !bVS.includes(selectedVidhanSabhaFilter)) return false;
+      }
+
+      // Category Filter
       if (selectedCategoryFilter !== 'ALL' && b.category !== selectedCategoryFilter) return false;
+
+      // Sector Filter
       if (selectedSectorFilter !== 'ALL' && b.sector !== selectedSectorFilter) return false;
+
+      // Search Query
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase().trim();
-        const matchText = `${b.centerName} ${b.boothNo} ${b.sector} ${b.vidhanSabha} ${b.category}`.toLowerCase();
+        const matchText = `${b.centerName} ${b.boothNo} ${b.sector} ${b.vidhanSabha} ${b.category} ${b.thana || ''} ${b.criticalReason || ''}`.toLowerCase();
         if (!matchText.includes(q)) return false;
       }
       return true;
     });
-  }, [booths, selectedCategoryFilter, selectedSectorFilter, searchQuery]);
+  }, [booths, selectedPhaseFilter, selectedVidhanSabhaFilter, selectedCategoryFilter, selectedSectorFilter, searchQuery]);
 
   // =========================================================
   // MULTI-SELECTION HANDLERS FOR BULK ACTIONS
@@ -826,7 +869,8 @@ export default function ElectionBoothDutyHub({
   const handleDownloadSampleTemplate = () => {
     const sampleData = [
       {
-        'विधानसभा_क्षेत्र': '134-अयोध्या',
+        'विधानसभा_क्षेत्र': '275-अयोध्या',
+        'थाना': 'कोतवाली नगर',
         'सेक्टर_संख्या': 'सेक्टर 01',
         'सेक्टर_प्रभारी': 'उ०नि० रमेश कुमार यादव',
         'सेक्टर_मोबाइल': '9454401201',
@@ -835,39 +879,43 @@ export default function ElectionBoothDutyHub({
         'बूथ_श्रेणी': 'सामान्य'
       },
       {
-        'विधानसभा_क्षेत्र': '134-अयोध्या',
+        'विधानसभा_क्षेत्र': '275-अयोध्या',
+        'थाना': 'कोतवाली नगर',
         'सेक्टर_संख्या': 'सेक्टर 01',
         'सेक्टर_प्रभारी': 'उ०नि० रमेश कुमार यादव',
         'सेक्टर_मोबाइल': '9454401201',
-        'मतदान_केंद्र_का_नाम': 'प्राथमिक विद्यालय सआदतगंज',
-        'मतदेय_स्थल_संख्या': '142',
-        'बूथ_श्रेणी': 'संवेदनशील'
-      },
-      {
-        'विधानसभा_क्षेत्र': '134-अयोध्या',
-        'सेक्टर_संख्या': 'सेक्टर 02',
-        'सेक्टर_प्रभारी': 'उ०नि० दिनेश प्रताप सिंह',
-        'सेक्टर_मोबाइल': '9454401202',
         'मतदान_केंद्र_का_नाम': 'राजकीय इंटर कॉलेज फैजाबाद',
         'मतदेय_स्थल_संख्या': '143',
         'बूथ_श्रेणी': 'पिंक'
       },
       {
-        'विधानसभा_क्षेत्र': '134-अयोध्या',
-        'सेक्टर_संख्या': 'सेक्टर 02',
-        'सेक्टर_प्रभारी': 'उ०नि० दिनेश प्रताप सिंह',
-        'सेक्टर_मोबाइल': '9454401202',
-        'मतदान_केंद्र_का_नाम': 'कन्या पूर्व माध्यमिक विद्यालय नाका',
-        'मतदेय_स्थल_संख्या': '144',
+        'विधानसभा_क्षेत्र': '271-रूदौली',
+        'थाना': 'कोतवाली रूदौली',
+        'सेक्टर_संख्या': 'सेक्टर 05',
+        'सेक्टर_प्रभारी': 'उ०नि० अशोक वर्मा',
+        'सेक्टर_मोबाइल': '9454401205',
+        'मतदान_केंद्र_का_नाम': 'कन्या पूर्व माध्यमिक विद्यालय रूदौली',
+        'मतदेय_स्थल_संख्या': '105',
+        'बूथ_श्रेणी': 'संवेदनशील'
+      },
+      {
+        'विधानसभा_क्षेत्र': '273-मिल्कीपुर (अ०जा०)',
+        'थाना': 'इनायतनगर',
+        'सेक्टर_संख्या': 'सेक्टर 03',
+        'सेक्टर_प्रभारी': 'उ०नि० राम सिंह',
+        'सेक्टर_मोबाइल': '9454401215',
+        'मतदान_केंद्र_का_नाम': 'प्राथमिक विद्यालय हैरिंग्टनगंज',
+        'मतदेय_स्थल_संख्या': '78',
         'बूथ_श्रेणी': 'अति-संवेदनशील'
       },
       {
-        'विधानसभा_क्षेत्र': '134-अयोध्या',
-        'सेक्टर_संख्या': 'सेक्टर 03',
-        'सेक्टर_प्रभारी': 'उ०नि० सुनील तिवारी',
-        'सेक्टर_मोबाइल': '9454401203',
-        'मतदान_केंद्र_का_नाम': 'कन्या पूर्व माध्यमिक विद्यालय नाका',
-        'मतदेय_स्थल_संख्या': '145',
+        'विधानसभा_क्षेत्र': '276-गोशाईगंज',
+        'थाना': 'थाना गोशाईगंज',
+        'सेक्टर_संख्या': 'सेक्टर 04',
+        'सेक्टर_प्रभारी': 'उ०नि० विनोद कुमार मिश्र',
+        'सेक्टर_मोबाइल': '9454401230',
+        'मतदान_केंद्र_का_नाम': 'प्राथमिक विद्यालय महबूबगंज',
+        'मतदेय_स्थल_संख्या': '315',
         'बूथ_श्रेणी': 'क्रिटिकल'
       }
     ];
@@ -927,7 +975,7 @@ export default function ElectionBoothDutyHub({
         const parsedBooths = [];
         let currentCenter = '';
         let currentSec = '';
-        let currentVs = '134-अयोध्या';
+        let currentVs = '275-अयोध्या';
         let currentSo = '';
         let currentSm = '';
 
@@ -1024,13 +1072,16 @@ export default function ElectionBoothDutyHub({
 
     setIsAddBoothOpen(false);
     setBoothForm({
-      vidhanSabha: '134-अयोध्या',
+      vidhanSabha: '275-अयोध्या',
+      phase: 'पंचम चरण (Phase 5)',
+      thana: '',
       sector: 'सेक्टर 01',
       sectorOfficer: '',
       sectorMobile: '',
       centerName: '',
       boothNo: '',
       category: 'सामान्य',
+      criticalReason: '',
       shift: 'मतदान दिवस (प्रातः 05:30 बजे से मतदान समाप्ति तक)'
     });
   };
@@ -1070,10 +1121,18 @@ export default function ElectionBoothDutyHub({
   };
 
   const handleResetSampleBooths = () => {
-    if (!window.confirm('क्या आप डिफ़ॉल्ट सैंपल बूथ (5 आदर्श मतदेय स्थल) लोड करना चाहते हैं?')) return;
+    if (!window.confirm('क्या आप डिफ़ॉल्ट सैंपल बूथ (5 विधानसभाओं के 6 आदर्श मतदेय स्थल) लोड करना चाहते हैं?')) return;
     saveBooths(DEFAULT_SAMPLE_BOOTHS);
-    setSuccessToast('डिफ़ॉल्ट सैंपल बूथ सफलतापूर्वक लोड किए गए।');
+    setSuccessToast('डिफ़ॉल्ट 5 विधानसभाओं के सैंपल बूथ सफलतापूर्वक लोड किए गए।');
     setTimeout(() => setSuccessToast(null), 4000);
+  };
+
+  const handleLoadOfficialMasterBooths = () => {
+    const totalCount = OFFICIAL_ELECTION_BOOTHS_MASTER.length;
+    if (!window.confirm(`क्या आप निर्वाचन 2024 के सभी ${totalCount} आधिकारिक मतदेय स्थलों (अयोध्या जनपद की 5 विधानसभाएं: 271-रूदौली, 273-मिल्कीपुर, 274-बीकापुर, 275-अयोध्या, 276-गोशाईगंज) का संपूर्ण डेटा लोड करना चाहते हैं?`)) return;
+    saveBooths(OFFICIAL_ELECTION_BOOTHS_MASTER);
+    setSuccessToast(`सफलतापूर्वक 5 विधानसभाओं के कुल ${totalCount} आधिकारिक मतदेय स्थल लोड हो गए।`);
+    setTimeout(() => setSuccessToast(null), 5000);
   };
 
   const handleExportFullAllocationToExcel = () => {
@@ -1082,19 +1141,100 @@ export default function ElectionBoothDutyHub({
       return;
     }
 
-    const exportRows = [];
+    const workbook = XLSX.utils.book_new();
+
+    // 1. Sheet 1: समस्त जनपद सारांश (Summary by Vidhan Sabha)
+    const vsSummary = [];
+    const vsList = Array.from(new Set(booths.map(b => b.vidhanSabha || 'अन्य / अनिर्दिष्ट'))).sort();
+    
+    let grandTotalBooths = 0;
+    let grandNormal = 0;
+    let grandSensitive = 0;
+    let grandHyperSensitive = 0;
+    let grandCritical = 0;
+    let grandPink = 0;
+    let grandDeployed = 0;
+    let grandVacant = 0;
+
+    vsList.forEach((vs, idx) => {
+      const vsBooths = booths.filter(b => (b.vidhanSabha || 'अन्य / अनिर्दिष्ट') === vs);
+      const normalCount = vsBooths.filter(b => b.category === 'सामान्य').length;
+      const sensCount = vsBooths.filter(b => b.category === 'संवेदनशील').length;
+      const hyperCount = vsBooths.filter(b => b.category === 'अति-संवेदनशील').length;
+      const critCount = vsBooths.filter(b => b.category === 'क्रिटिकल').length;
+      const pinkCount = vsBooths.filter(b => b.category === 'पिंक').length;
+
+      let vsDeployed = 0;
+      let vsVacant = 0;
+      vsBooths.forEach(b => {
+        const assigned = deployedByBooth.get(b.id) || [];
+        vsDeployed += assigned.length;
+        if (assigned.length === 0) vsVacant++;
+      });
+
+      grandTotalBooths += vsBooths.length;
+      grandNormal += normalCount;
+      grandSensitive += sensCount;
+      grandHyperSensitive += hyperCount;
+      grandCritical += critCount;
+      grandPink += pinkCount;
+      grandDeployed += vsDeployed;
+      grandVacant += vsVacant;
+
+      const vsMeta = AYODHYA_VIDHAN_SABHAS.find(v => v.code === vs || vs.includes(v.id));
+
+      vsSummary.push({
+        'क्र०सं०': idx + 1,
+        'विधानसभा क्षेत्र': vs,
+        'निर्वाचन चरण': vsMeta?.phase || (vs.includes('276') ? 'षष्ठम चरण (Phase 6)' : 'पंचम चरण (Phase 5)'),
+        'लोकसभा क्षेत्र': vsMeta?.pc || (vs.includes('276') ? '55-अम्बेडकर नगर' : '54-फैज़ाबाद'),
+        'कुल मतदेय स्थल (बूथ)': vsBooths.length,
+        'सामान्य बूथ': normalCount,
+        'संवेदनशील बूथ': sensCount,
+        'अति-संवेदनशील बूथ': hyperCount,
+        'क्रिटिकल बूथ': critCount,
+        'पिंक बूथ': pinkCount,
+        'तैनात कुल पुलिस बल': vsDeployed,
+        'रिक्त बूथ संख्या': vsVacant
+      });
+    });
+
+    // Add Grand Total row
+    vsSummary.push({
+      'क्र०सं०': 'कुल योग',
+      'विधानसभा क्षेत्र': 'समस्त जनपद अयोध्या',
+      'निर्वाचन चरण': 'Phase 5 & 6',
+      'लोकसभा क्षेत्र': '54-फैज़ाबाद / 55-अम्बेडकर नगर',
+      'कुल मतदेय स्थल (बूथ)': grandTotalBooths,
+      'सामान्य बूथ': grandNormal,
+      'संवेदनशील बूथ': grandSensitive,
+      'अति-संवेदनशील बूथ': grandHyperSensitive,
+      'क्रिटिकल बूथ': grandCritical,
+      'पिंक बूथ': grandPink,
+      'तैनात कुल पुलिस बल': grandDeployed,
+      'रिक्त बूथ संख्या': grandVacant
+    });
+
+    const summarySheet = XLSX.utils.json_to_sheet(vsSummary);
+    XLSX.utils.book_append_sheet(workbook, summarySheet, 'समस्त_जनपद_सारांश');
+
+    // 2. Sheet 2: सम्पूर्ण जनपद का रोस्टर (All Booths)
+    const allRows = [];
     booths.forEach((booth, bIdx) => {
       const assigned = deployedByBooth.get(booth.id) || [];
       if (assigned.length === 0) {
-        exportRows.push({
+        allRows.push({
           'क्रमांक': bIdx + 1,
           'विधानसभा': booth.vidhanSabha || '',
+          'चरण': booth.phase || '',
+          'थाना': booth.thana || '',
           'सेक्टर': booth.sector || '',
           'सेक्टर प्रभारी': booth.sectorOfficer || '',
           'सेक्टर मोबाइल': booth.sectorMobile || '',
           'मतदान केंद्र': booth.centerName || '',
           'मतदेय स्थल (बूथ सं०)': booth.boothNo || '',
           'बूथ श्रेणी': booth.category || 'सामान्य',
+          'क्रिटिकल कारण': booth.criticalReason || '',
           'तैनात जवान का नाम': '— रिक्त (कोई जवान नहीं) —',
           'पद (Rank)': '',
           'PNO': '',
@@ -1105,15 +1245,18 @@ export default function ElectionBoothDutyHub({
         });
       } else {
         assigned.forEach((officer) => {
-          exportRows.push({
+          allRows.push({
             'क्रमांक': bIdx + 1,
             'विधानसभा': booth.vidhanSabha || '',
+            'चरण': booth.phase || '',
+            'थाना': booth.thana || '',
             'सेक्टर': booth.sector || '',
             'सेक्टर प्रभारी': booth.sectorOfficer || '',
             'सेक्टर मोबाइल': booth.sectorMobile || '',
             'मतदान केंद्र': booth.centerName || '',
             'मतदेय स्थल (बूथ सं०)': booth.boothNo || '',
             'बूथ श्रेणी': booth.category || 'सामान्य',
+            'क्रिटिकल कारण': booth.criticalReason || '',
             'तैनात जवान का नाम': officer.name || '',
             'पद (Rank)': officer.rank || '',
             'PNO': officer.pno || '',
@@ -1126,11 +1269,63 @@ export default function ElectionBoothDutyHub({
       }
     });
 
-    const worksheet = XLSX.utils.json_to_sheet(exportRows);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Election_Booth_Deployment');
-    const safeTitle = (activeEvent?.title || activeEvent?.name || 'Election_Duty').replace(/[^a-zA-Z0-9\u0900-\u097F]/g, '_');
-    XLSX.writeFile(workbook, `${safeTitle}_Booth_Deployment_Roster.xlsx`);
+    const allSheet = XLSX.utils.json_to_sheet(allRows);
+    XLSX.utils.book_append_sheet(workbook, allSheet, 'समस्त_बूथ_आवंटन');
+
+    // 3. Separate Sheet for each Vidhan Sabha
+    vsList.forEach((vs) => {
+      const vsBooths = booths.filter(b => (b.vidhanSabha || 'अन्य / अनिर्दिष्ट') === vs);
+      const vsRows = [];
+      vsBooths.forEach((booth, bIdx) => {
+        const assigned = deployedByBooth.get(booth.id) || [];
+        if (assigned.length === 0) {
+          vsRows.push({
+            'क्रमांक': bIdx + 1,
+            'थाना': booth.thana || '',
+            'सेक्टर': booth.sector || '',
+            'सेक्टर प्रभारी': booth.sectorOfficer || '',
+            'सेक्टर मोबाइल': booth.sectorMobile || '',
+            'मतदान केंद्र': booth.centerName || '',
+            'मतदेय स्थल (बूथ सं०)': booth.boothNo || '',
+            'बूथ श्रेणी': booth.category || 'सामान्य',
+            'क्रिटिकल कारण': booth.criticalReason || '',
+            'तैनात जवान का नाम': '— रिक्त —',
+            'पद (Rank)': '',
+            'PNO': '',
+            'मोबाइल': '',
+            'आवंटित दायित्व': '',
+            'मूल तैनाती': ''
+          });
+        } else {
+          assigned.forEach((officer) => {
+            vsRows.push({
+              'क्रमांक': bIdx + 1,
+              'थाना': booth.thana || '',
+              'सेक्टर': booth.sector || '',
+              'सेक्टर प्रभारी': booth.sectorOfficer || '',
+              'सेक्टर मोबाइल': booth.sectorMobile || '',
+              'मतदान केंद्र': booth.centerName || '',
+              'मतदेय स्थल (बूथ सं०)': booth.boothNo || '',
+              'बूथ श्रेणी': booth.category || 'सामान्य',
+              'क्रिटिकल कारण': booth.criticalReason || '',
+              'तैनात जवान का नाम': officer.name || '',
+              'पद (Rank)': officer.rank || '',
+              'PNO': officer.pno || '',
+              'मोबाइल': officer.mobile || '',
+              'आवंटित दायित्व': officer.role || 'मतदेय स्थल सुरक्षा',
+              'मूल तैनाती': officer.posting || ''
+            });
+          });
+        }
+      });
+
+      const safeSheetName = vs.replace(/[:\\/?*\[\]]/g, '_').substring(0, 31);
+      const vsSheet = XLSX.utils.json_to_sheet(vsRows);
+      XLSX.utils.book_append_sheet(workbook, vsSheet, safeSheetName);
+    });
+
+    const safeTitle = (activeEvent?.title || activeEvent?.name || 'Ayodhya_Election_Duty').replace(/[^a-zA-Z0-9\u0900-\u097F]/g, '_');
+    XLSX.writeFile(workbook, `${safeTitle}_VidhanSabha_Wise_Roster.xlsx`);
   };
 
   // Helper for category badge styling
@@ -1182,13 +1377,16 @@ export default function ElectionBoothDutyHub({
               onClick={() => {
                 setEditingBooth(null);
                 setBoothForm({
-                  vidhanSabha: '134-अयोध्या',
+                  vidhanSabha: '275-अयोध्या',
+                  phase: 'पंचम चरण (Phase 5)',
+                  thana: '',
                   sector: 'सेक्टर 01',
                   sectorOfficer: '',
                   sectorMobile: '',
                   centerName: '',
                   boothNo: '',
                   category: 'सामान्य',
+                  criticalReason: '',
                   shift: 'मतदान दिवस (प्रातः 05:30 बजे से मतदान समाप्ति तक)'
                 });
                 setIsAddBoothOpen(true);
@@ -1319,18 +1517,85 @@ export default function ElectionBoothDutyHub({
         <div className="space-y-4">
           {/* Filters & Actions Bar */}
           <div className="bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-xs space-y-3">
+            {/* Phase Selector & Master Loader Quick Row */}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 pb-2.5 border-b border-slate-100 text-xs">
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <span className="text-slate-500 font-semibold mr-1">निर्वाचन चरण:</span>
+                <button
+                  type="button"
+                  onClick={() => setSelectedPhaseFilter('ALL')}
+                  className={`px-3 py-1 rounded-lg font-bold transition cursor-pointer text-xs ${
+                    selectedPhaseFilter === 'ALL'
+                      ? 'bg-slate-900 text-white shadow-xs'
+                      : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+                  }`}
+                >
+                  सभी चरण ({booths.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSelectedPhaseFilter('5')}
+                  className={`px-3 py-1 rounded-lg font-bold transition cursor-pointer text-xs flex items-center gap-1 ${
+                    selectedPhaseFilter === '5'
+                      ? 'bg-blue-600 text-white shadow-xs'
+                      : 'bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200'
+                  }`}
+                >
+                  <span>पंचम चरण (Phase 5 - 4 वि०स०)</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSelectedPhaseFilter('6')}
+                  className={`px-3 py-1 rounded-lg font-bold transition cursor-pointer text-xs flex items-center gap-1 ${
+                    selectedPhaseFilter === '6'
+                      ? 'bg-purple-600 text-white shadow-xs'
+                      : 'bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200'
+                  }`}
+                >
+                  <span>षष्ठम चरण (Phase 6 - गोशाईगंज)</span>
+                </button>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleLoadOfficialMasterBooths}
+                  className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold flex items-center gap-1.5 transition cursor-pointer text-xs shadow-xs"
+                  title="अयोध्या जनपद की 5 विधानसभाओं के 387 आधिकारिक मतदेय स्थल लोड करें"
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-emerald-200" />
+                  <span>5 वि०स० आधिकारिक मास्टर डेटा लोड करें (387 बूथ)</span>
+                </button>
+              </div>
+            </div>
+
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 text-xs">
               <div className="flex items-center gap-2 flex-wrap flex-1">
-                <div className="relative min-w-[200px] flex-1">
+                <div className="relative min-w-[180px] flex-1">
                   <Search className="w-3.5 h-3.5 absolute left-3 top-2.5 text-slate-400" />
                   <input
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="मतदान केंद्र, बूथ संख्या या सेक्टर खोजें..."
+                    placeholder="मतदान केंद्र, बूथ सं०, सेक्टर, विधानसभा खोजें..."
                     className="w-full h-8 pl-8 pr-3 rounded-lg border border-slate-200 bg-white text-slate-900 text-xs focus:outline-none focus:border-slate-400"
                   />
                 </div>
+
+                {/* Vidhan Sabha Filter Dropdown */}
+                <select
+                  value={selectedVidhanSabhaFilter}
+                  onChange={(e) => setSelectedVidhanSabhaFilter(e.target.value)}
+                  className="h-8 px-2.5 bg-slate-50 font-medium border border-slate-200 rounded-lg text-slate-800 text-xs cursor-pointer focus:outline-none focus:border-slate-400"
+                >
+                  <option value="ALL">समस्त 5 विधानसभाएं ({booths.length})</option>
+                  {allVidhanSabhas.map(vs => {
+                    const count = booths.filter(b => (b.vidhanSabha || '') === vs || (b.vidhanSabha || '').includes(vs)).length;
+                    return (
+                      <option key={vs} value={vs}>{vs} ({count})</option>
+                    );
+                  })}
+                </select>
 
                 <select
                   value={selectedCategoryFilter}
@@ -1347,7 +1612,7 @@ export default function ElectionBoothDutyHub({
                   <select
                     value={selectedSectorFilter}
                     onChange={(e) => setSelectedSectorFilter(e.target.value)}
-                    className="h-8 px-2.5 bg-white border border-slate-200 rounded-lg text-slate-700 text-xs cursor-pointer focus:outline-none focus:border-slate-400"
+                    className="h-8 px-2.5 bg-white border border-slate-200 rounded-lg text-slate-700 text-xs cursor-pointer focus:outline-none focus:border-slate-400 max-w-[160px]"
                   >
                     <option value="ALL">सभी सेक्टर ({allSectors.length})</option>
                     {allSectors.map(sec => (
@@ -2599,16 +2864,42 @@ export default function ElectionBoothDutyHub({
             </div>
 
             <form onSubmit={handleSaveBoothForm} className="space-y-4 text-xs font-bold">
-              <div>
-                <label className="text-slate-700">विधानसभा क्षेत्र:</label>
-                <input
-                  type="text"
-                  value={boothForm.vidhanSabha}
-                  onChange={(e) => setBoothForm({ ...boothForm, vidhanSabha: e.target.value })}
-                  className="w-full h-10 px-3 bg-slate-50 border border-slate-300 rounded-xl mt-1 text-slate-900"
-                  placeholder="उदा. 134-अयोध्या"
-                  required
-                />
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-slate-700">विधानसभा क्षेत्र:</label>
+                  <select
+                    value={boothForm.vidhanSabha}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      const vsInfo = AYODHYA_VIDHAN_SABHAS.find(v => v.code === val);
+                      setBoothForm({
+                        ...boothForm,
+                        vidhanSabha: val,
+                        phase: vsInfo?.phase || boothForm.phase || 'पंचम चरण (Phase 5)'
+                      });
+                    }}
+                    className="w-full h-10 px-3 bg-slate-50 border border-slate-300 rounded-xl mt-1 text-slate-900 cursor-pointer"
+                    required
+                  >
+                    {AYODHYA_VIDHAN_SABHAS.map(v => (
+                      <option key={v.code} value={v.code}>{v.code} ({v.phase})</option>
+                    ))}
+                    {!AYODHYA_VIDHAN_SABHAS.some(v => v.code === boothForm.vidhanSabha) && boothForm.vidhanSabha && (
+                      <option value={boothForm.vidhanSabha}>{boothForm.vidhanSabha}</option>
+                    )}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="text-slate-700">संबंधित थाना:</label>
+                  <input
+                    type="text"
+                    value={boothForm.thana || ''}
+                    onChange={(e) => setBoothForm({ ...boothForm, thana: e.target.value })}
+                    className="w-full h-10 px-3 bg-slate-50 border border-slate-300 rounded-xl mt-1 text-slate-900"
+                    placeholder="उदा. कोतवाली नगर, पटरंगा"
+                  />
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">

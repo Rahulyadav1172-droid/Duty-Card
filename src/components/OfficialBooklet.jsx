@@ -13,7 +13,8 @@ import {
   ELECTION_INTER_BARRIERS,
   ELECTION_DUTY_CARD_INSTRUCTIONS,
   ELECTION_CUG_DIRECTORY,
-  ELECTION_LAW_ORDER_MANAK
+  ELECTION_LAW_ORDER_MANAK,
+  AYODHYA_VIDHAN_SABHAS
 } from '../data/electionStandardData';
 
 /**
@@ -576,6 +577,42 @@ function stripNumbering(rawText = '') {
                       </div>
                     ))}
                   </div>
+                </div>
+
+                {/* 5 Vidhan Sabhas Overview */}
+                <div className="border border-black rounded-lg overflow-hidden md:col-span-2 mt-2">
+                  <div className="bg-slate-900 text-white font-black text-xs py-1.5 px-3 flex items-center justify-between">
+                    <span>जनपद अयोध्या: 5 विधानसभा क्षेत्रवार निर्वाचन चरण एवं लोकसभा क्षेत्र विवरण</span>
+                    <span className="text-amber-300 font-mono text-[11px]">ECI मानक / UP Police 2024</span>
+                  </div>
+                  <table className="w-full text-xs border-collapse">
+                    <thead>
+                      <tr className="bg-slate-100 font-bold border-b border-gray-300">
+                        <th className="py-1.5 px-2 text-center w-12">क्र०</th>
+                        <th className="py-1.5 px-3 text-left">विधानसभा क्षेत्र (Assembly)</th>
+                        <th className="py-1.5 px-3 text-left">निर्वाचन चरण (Phase)</th>
+                        <th className="py-1.5 px-3 text-left">संसदीय निर्वाचन क्षेत्र (PC)</th>
+                        <th className="py-1.5 px-2 text-center">मतदान तिथि</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {AYODHYA_VIDHAN_SABHAS.map((vs, idx) => (
+                        <tr key={vs.id} className="border-b border-gray-200 hover:bg-slate-50 font-semibold">
+                          <td className="py-1.5 px-2 text-center font-mono font-bold bg-slate-50">{idx + 1}</td>
+                          <td className="py-1.5 px-3 font-bold text-black">{vs.code}</td>
+                          <td className="py-1.5 px-3">
+                            <span className={`px-2 py-0.5 rounded text-[11px] font-bold ${vs.phaseNo === 5 ? 'bg-blue-100 text-blue-900' : 'bg-purple-100 text-purple-900'}`}>
+                              {vs.phase}
+                            </span>
+                          </td>
+                          <td className="py-1.5 px-3 text-gray-800 font-medium">{vs.pc}</td>
+                          <td className="py-1.5 px-2 text-center font-mono font-bold text-slate-900">
+                            {vs.phaseNo === 5 ? '20.05.2024' : '25.05.2024'}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               </div>
             </div>
