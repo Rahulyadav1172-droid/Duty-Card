@@ -376,30 +376,34 @@ export default function DutyCard({
         autoPrint: false
       });
 
-      // Create isolated offscreen iframe so all CSS styles, fonts, and images render 100% cleanly
-      const iframe = document.createElement('iframe');
-      iframe.style.position = 'fixed';
-      iframe.style.top = '0px';
-      iframe.style.left = '-9999px';
-      iframe.style.width = '780px';
-      iframe.style.height = '2400px';
-      iframe.style.border = 'none';
-      iframe.style.backgroundColor = '#ffffff';
-      document.body.appendChild(iframe);
-
-      const iframeDoc = iframe.contentWindow.document;
-      iframeDoc.open();
-      iframeDoc.write(passHtml);
-      iframeDoc.close();
-
-      // Wait for fonts and images to load inside iframe
-      if (iframe.contentWindow.document.fonts) {
-        await iframe.contentWindow.document.fonts.ready;
+      // Ensure Kokila font is loaded in host document
+      if (document.fonts) {
+        try {
+          await document.fonts.load('16px Kokila');
+          await document.fonts.load('bold 16px Kokila');
+          await document.fonts.ready;
+        } catch (e) {
+          console.warn('Font load warning:', e);
+        }
       }
-      await new Promise(resolve => setTimeout(resolve, 350));
 
-      const passContainers = iframeDoc.querySelectorAll('.pass-container');
-      const targets = passContainers.length > 0 ? Array.from(passContainers) : [iframeDoc.body];
+      // Create temporary offscreen container directly in document.body
+      // This ensures html2canvas renders in the active document where Kokila is loaded with full glyph and space metrics
+      const container = document.createElement('div');
+      container.style.position = 'fixed';
+      container.style.top = '0px';
+      container.style.left = '-9999px';
+      container.style.width = '740px';
+      container.style.backgroundColor = '#ffffff';
+      container.style.zIndex = '-9999';
+      container.innerHTML = passHtml;
+      document.body.appendChild(container);
+
+      // Allow browser layout engine to render styles
+      await new Promise(resolve => setTimeout(resolve, 200));
+
+      const passContainers = container.querySelectorAll('.pass-container');
+      const targets = passContainers.length > 0 ? Array.from(passContainers) : [container];
 
       const pdf = new jsPDF({
         orientation: 'portrait',
@@ -427,8 +431,6 @@ export default function DutyCard({
           logging: false,
           width: targetEl.offsetWidth,
           height: targetEl.offsetHeight,
-          windowWidth: targetEl.scrollWidth || 800,
-          windowHeight: targetEl.scrollHeight || 2000,
           scrollX: 0,
           scrollY: 0,
           x: 0,
@@ -452,7 +454,7 @@ export default function DutyCard({
         pdf.addImage(imgData, 'JPEG', offsetX, offsetY, renderWidth, renderHeight);
       }
 
-      document.body.removeChild(iframe);
+      document.body.removeChild(container);
 
       const safeName = (duty.name || 'DutyPass').replace(/\s+/g, '_');
       pdf.save(`Duty_Card_${duty.id || 'Pass'}_${safeName}.pdf`);
