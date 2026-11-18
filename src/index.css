@@ -195,6 +195,7 @@ input[type="file"] {
 
   /* Legal Bulk Print Pages */
   .legal-page,
+  .page-id-badge-5in1,
   .page-id-badge-4in1,
   .bulk-legal-print-page {
     display: grid !important;
@@ -206,6 +207,7 @@ input[type="file"] {
   }
 
   .legal-page *,
+  .page-id-badge-5in1 *,
   .page-id-badge-4in1 *,
   .bulk-legal-print-page * {
     visibility: visible !important;

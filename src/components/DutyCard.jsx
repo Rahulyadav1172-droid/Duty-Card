@@ -597,14 +597,14 @@ export default function DutyCard({
             {/* Zone */}
             <div className="bg-white border border-slate-300 rounded-xl p-3 space-y-1">
               <div className="text-xs font-black text-slate-900 border-b border-slate-200 pb-1">
-                जोन / प्रभारी
+                जोन / जोनल प्रभारी
               </div>
-              <div className="text-xs text-slate-700">
+              <div className="text-xs text-slate-700 pb-1 border-b border-dotted border-slate-300">
                 <span className="font-bold">जोन:</span> <strong className="text-slate-950">{effectiveZone || '-'}</strong>
               </div>
               {effectiveZonalIncharge && (
-                <div className="text-xs text-slate-700">
-                  <span className="font-bold">प्रभारी:</span> <strong className="text-blue-900">{effectiveZonalIncharge}</strong>
+                <div className="text-xs text-slate-700 pt-1">
+                  <span className="font-bold">जोनल प्रभारी:</span> <strong className="text-blue-900">{effectiveZonalIncharge}</strong>
                 </div>
               )}
             </div>
@@ -612,14 +612,14 @@ export default function DutyCard({
             {/* Sector */}
             <div className="bg-white border border-slate-300 rounded-xl p-3 space-y-1">
               <div className="text-xs font-black text-slate-900 border-b border-slate-200 pb-1">
-                सेक्टर / प्रभारी
+                सेक्टर / सेक्टर प्रभारी
               </div>
-              <div className="text-xs text-slate-700">
+              <div className="text-xs text-slate-700 pb-1 border-b border-dotted border-slate-300">
                 <span className="font-bold">सेक्टर:</span> <strong className="text-slate-950">{effectiveSector || '-'}</strong>
               </div>
               {effectiveSectorIncharge && (
-                <div className="text-xs text-slate-700">
-                  <span className="font-bold">प्रभारी:</span> <strong className="text-blue-900">{effectiveSectorIncharge}</strong>
+                <div className="text-xs text-slate-700 pt-1">
+                  <span className="font-bold">सेक्टर प्रभारी:</span> <strong className="text-blue-900">{effectiveSectorIncharge}</strong>
                 </div>
               )}
             </div>

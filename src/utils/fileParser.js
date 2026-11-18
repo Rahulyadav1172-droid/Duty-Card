@@ -291,6 +291,7 @@ function processObjectRows(rows) {
       'zone incharge', 'zone in charge', 'zonal officer', 'zonal_officer',
       'zonal magistrate', 'जोनाल प्रभारी', 'जोनल प्रभारी', 'जोन प्रभारी',
       'जोनाल अधिकारी', 'जोनल अधिकारी', 'जोनाल मजिस्ट्रेट', 'जोनल मजिस्ट्रेट',
+      'जोन / जोनल प्रभारी', 'जोन/जोनल प्रभारी',
       'zonal', 'जोनाल', 'जोनल', 'जोनल प्रभारी (zonal incharge)', 'zonal incharge (जोनल प्रभारी)'
     ]);
 
@@ -307,6 +308,7 @@ function processObjectRows(rows) {
         'sector incharge', 'sectorincharge',
         'sector officer', 'sector_officer', 'sector magistrate', 'sector_magistrate',
         'सेक्टर प्रभारी', 'सेक्टर अधिकारी', 'सेक्टर मजिस्ट्रेट',
+        'सेक्टर / सेक्टर प्रभारी', 'सेक्टर/सेक्टर प्रभारी',
         'सेक्टर/प्रभारी', 'सेक्टर / प्रभारी', 'sector/incharge', 'sector / incharge',
         'प्रभारी सेक्टर', 'incharge', 'प्रभारी',
         'सेक्टर प्रभारी (sector incharge)', 'sector incharge (सेक्टर प्रभारी)'
