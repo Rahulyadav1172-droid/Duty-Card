@@ -361,10 +361,6 @@ export default function DutyCard({
     try {
       setIsDownloadingPDF(true);
 
-      if (document.fonts) {
-        await document.fonts.ready;
-      }
-
       const passHtml = generateIndividualPassHtml({
         duty: enrichedDuty,
         allRecords,
@@ -376,33 +372,35 @@ export default function DutyCard({
         isNoteEnabled,
         customBriefing,
         isBriefingEnabled,
-        includeBackSide: showBackSide
+        includeBackSide: showBackSide,
+        autoPrint: false
       });
 
-      // Create temporary offscreen container
-      const container = document.createElement('div');
-      container.style.position = 'fixed';
-      container.style.top = '-9999px';
-      container.style.left = '-9999px';
-      container.style.width = '740px';
-      container.style.backgroundColor = '#ffffff';
-      container.style.padding = '16px';
-      container.style.fontFamily = "'Kokila', 'Mangal', 'Noto Sans Devanagari', -apple-system, BlinkMacSystemFont, sans-serif";
-      container.innerHTML = DOMPurify.sanitize(passHtml);
+      // Create isolated offscreen iframe so all CSS styles, fonts, and images render 100% cleanly
+      const iframe = document.createElement('iframe');
+      iframe.style.position = 'fixed';
+      iframe.style.top = '-9999px';
+      iframe.style.left = '-9999px';
+      iframe.style.width = '780px';
+      iframe.style.height = '1200px';
+      iframe.style.border = 'none';
+      iframe.style.backgroundColor = '#ffffff';
+      document.body.appendChild(iframe);
 
-      const passBox = container.querySelector('.pass-container') || container;
-      document.body.appendChild(container);
+      const iframeDoc = iframe.contentWindow.document;
+      iframeDoc.open();
+      iframeDoc.write(passHtml);
+      iframeDoc.close();
 
-      const canvas = await html2canvas(passBox, {
-        scale: 2.5,
-        useCORS: true,
-        backgroundColor: '#ffffff',
-        logging: false
-      });
+      // Wait for fonts and images to load inside iframe
+      if (iframe.contentWindow.document.fonts) {
+        await iframe.contentWindow.document.fonts.ready;
+      }
+      await new Promise(resolve => setTimeout(resolve, 350));
 
-      document.body.removeChild(container);
+      const passContainers = iframeDoc.querySelectorAll('.pass-container');
+      const targets = passContainers.length > 0 ? Array.from(passContainers) : [iframeDoc.body];
 
-      const imgData = canvas.toDataURL('image/jpeg', 0.95);
       const pdf = new jsPDF({
         orientation: 'portrait',
         unit: 'mm',
@@ -414,11 +412,29 @@ export default function DutyCard({
       const pdfHeight = pdf.internal.pageSize.getHeight();
       const margin = 8;
       const printWidth = pdfWidth - (margin * 2);
-      const printHeight = (canvas.height * printWidth) / canvas.width;
 
-      pdf.addImage(imgData, 'JPEG', margin, margin, printWidth, Math.min(printHeight, pdfHeight - (margin * 2)));
+      for (let i = 0; i < targets.length; i++) {
+        if (i > 0) {
+          pdf.addPage();
+        }
+
+        const targetEl = targets[i];
+        const canvas = await html2canvas(targetEl, {
+          scale: 2.5,
+          useCORS: true,
+          backgroundColor: '#ffffff',
+          logging: false
+        });
+
+        const imgData = canvas.toDataURL('image/jpeg', 0.95);
+        const printHeight = (canvas.height * printWidth) / canvas.width;
+        pdf.addImage(imgData, 'JPEG', margin, margin, printWidth, Math.min(printHeight, pdfHeight - (margin * 2)));
+      }
+
+      document.body.removeChild(iframe);
+
       const safeName = (duty.name || 'DutyPass').replace(/\s+/g, '_');
-      pdf.save(`Duty_Card_${duty.id || 'Pass'}_${safeName}_सहयोगार्थ.pdf`);
+      pdf.save(`Duty_Card_${duty.id || 'Pass'}_${safeName}.pdf`);
     } catch (err) {
       console.error('PDF Download Error:', err);
       alert('PDF डाउनलोड करने में त्रुटि: ' + err.message);
