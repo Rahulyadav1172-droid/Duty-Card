@@ -1,4 +1,4 @@
-const CACHE_NAME = 'police-duty-app-v4';
+const CACHE_NAME = 'police-duty-app-v5';
 const STATIC_ASSETS = [
   '/',
   '/index.html',

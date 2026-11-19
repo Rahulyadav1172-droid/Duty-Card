@@ -34,6 +34,7 @@ import ScanDutyPassModal from './components/ScanDutyPassModal';
 import ElectionBoothDutyHub from './components/ElectionBoothDutyHub';
 
 import initialData from './data/duty_data.json';
+import panchKosiData from './data/panch_kosi_data.json';
 import {
   fetchEventsFromSupabase,
   fetchSingleEventRecords,
@@ -58,7 +59,7 @@ import {
   clearAuthenticatedSession
 } from './utils/authManager';
 
-const EVENTS_STORAGE_KEY = 'police_portal_events_v3';
+const EVENTS_STORAGE_KEY = 'police_portal_events_v4';
 const ACTIVE_EVENT_ID_KEY = 'police_portal_active_event_id';
 const FORCE_STORAGE_KEY = 'police_master_force_records';
 const ROLE_SESSION_KEY = 'police_portal_user_role';
@@ -72,59 +73,98 @@ const KNOWN_ARCHIVED_EVENT_IDS = new Set([
   'event-1794828464383', // empty duplicate
 ]);
 
-const PRIMARY_ACTIVE_EVENT_ID = 'event-1794807177472';
+export const PANCH_KOSI_EVENT_ID = 'event-1795032010127';
+export const CHAUDAH_KOSI_EVENT_ID = 'event-1794807177472';
+const PRIMARY_ACTIVE_EVENT_ID = PANCH_KOSI_EVENT_ID;
 
-// Helper to seed initial default event
+export const getBundledRecordsForEvent = (id) => {
+  if (id === PANCH_KOSI_EVENT_ID && Array.isArray(panchKosiData) && panchKosiData.length > 0) {
+    return panchKosiData;
+  }
+  if (id === CHAUDAH_KOSI_EVENT_ID && Array.isArray(initialData) && initialData.length > 0) {
+    return initialData;
+  }
+  return [];
+};
+
+const defaultPanchKosiEvent = {
+  id: PANCH_KOSI_EVENT_ID,
+  title: 'पंचकोसी परिक्रमा मेला',
+  subtitle: 'ड्यूटी कार्ड अयोध्या-2026',
+  startDate: '19.11.2026 से 21.11.2026 तक',
+  status: 'active',
+  created_at: '2026-11-18T18:40:10.127000+00:00',
+  signatoryText: 'वरिष्ठ पुलिस अधीक्षक, अयोध्या',
+  signatureImg: '',
+  note: '',
+  isNoteEnabled: false,
+  briefing: '',
+  isBriefingEnabled: false,
+  helplineList: [
+    { id: '1', title: 'पुलिस कंट्रोल रूम (अयोध्या)', number: '9454417465' },
+    { id: '2', title: 'पुलिस सिटी कन्ट्रोल रुम (अयोध्या)', number: '9454402648' },
+    { id: '3', title: 'मेला नियंत्रण कक्ष / ड्यूटी हेल्पडेस्क', number: '9454402655' }
+  ],
+  isHelplineEnabled: true,
+  records: Array.isArray(panchKosiData) ? panchKosiData : [],
+  attendanceMap: {}
+};
+
+const defaultChaudahKosiEvent = {
+  id: CHAUDAH_KOSI_EVENT_ID,
+  title: 'मेला चौदह कोसी परिक्रमा',
+  subtitle: 'ड्यूटी कार्ड अयोध्या-2026',
+  startDate: '16.11.2026 से 19.11.2026 तक',
+  status: 'active',
+  created_at: '2026-11-16T05:32:57.713609+00:00',
+  signatoryText: 'वरिष्ठ पुलिस अधीक्षक, अयोध्या',
+  signatureImg: '',
+  note: '14 कोसी परिक्रमा में ड्यूटीरत कर्मी 14 कोसी परिक्रमा समाप्ति के बाद दिनांक 19.11.2026 को अपना अगला ड्यूटी कार्ड मेला कार्यालय सिंचाई डाक बंगला नया घाट अयोध्या से प्राप्त करना सुनिश्चित करेंगे । व 14 कोसी परिक्रमा के अतिरिक्त अन्य प्रकार की ड्यूटियों के कार्ड यथावत अग्रिम आदेश तक प्रभावी रहेंगे ।',
+  isNoteEnabled: true,
+  briefing: 'दिनांक 16.11.2026 को समय 14.00 बजे पुलिस लाइन्स आर0टी0सी0 सभागार जनपद अयोध्या',
+  isBriefingEnabled: true,
+  helplineList: [
+    { id: '1', title: 'पुलिस कंट्रोल रूम (अयोध्या)', number: '9454417465' },
+    { id: '2', title: 'पुलिस सिटी कन्ट्रोल रुम (अयोध्या)', number: '9454402648' },
+    { id: '3', title: 'मेला नियंत्रण कक्ष / ड्यूटी हेल्पडेस्क', number: '9454402655' }
+  ],
+  isHelplineEnabled: true,
+  records: Array.isArray(initialData) ? initialData : [],
+  attendanceMap: {}
+};
+
+// Helper to seed initial default events (guarantees both Panch Kosi and 14 Kosi are instantly ready)
 function getInitialEvents() {
-  const defaultEvent = {
-    id: PRIMARY_ACTIVE_EVENT_ID,
-    title: 'मेला चौदह कोसी परिक्रमा',
-    subtitle: 'ड्यूटी कार्ड अयोध्या-2026',
-    startDate: '16.11.2026 से 19.11.2026 तक',
-    status: 'active',
-    created_at: '2026-11-16T05:32:57.713609+00:00',
-    signatoryText: 'वरिष्ठ पुलिस अधीक्षक, अयोध्या',
-    signatureImg: '',
-    note: '14 कोसी परिक्रमा में ड्यूटीरत कर्मी 14 कोसी परिक्रमा समाप्ति के बाद दिनांक 19.11.2026 को अपना अगला ड्यूटी कार्ड मेला कार्यालय सिंचाई डाक बंगला नया घाट अयोध्या से प्राप्त करना सुनिश्चित करेंगे । व 14 कोसी परिक्रमा के अतिरिक्त अन्य प्रकार की ड्यूटियों के कार्ड यथावत अग्रिम आदेश तक प्रभावी रहेंगे ।',
-    isNoteEnabled: true,
-    briefing: 'दिनांक 16.11.2026 को समय 14.00 बजे पुलिस लाइन्स आर0टी0सी0 सभागार जनपद अयोध्या',
-    isBriefingEnabled: true,
-    helplineList: [
-      { id: '1', title: 'पुलिस कंट्रोल रूम (अयोध्या)', number: '9454417465' },
-      { id: '2', title: 'पुलिस सिटी कन्ट्रोल रुम (अयोध्या)', number: '9454402648' },
-      { id: '3', title: 'मेला नियंत्रण कक्ष / ड्यूटी हेल्पडेस्क', number: '9454402655' }
-    ],
-    isHelplineEnabled: true,
-    records: Array.isArray(initialData) ? initialData : [],
-    attendanceMap: {}
-  };
-
   try {
-    const saved = localStorage.getItem(EVENTS_STORAGE_KEY);
+    const saved = localStorage.getItem(EVENTS_STORAGE_KEY) || localStorage.getItem('police_portal_events_v3');
     if (saved) {
       const parsed = JSON.parse(saved);
       if (Array.isArray(parsed) && parsed.length > 0) {
         // Enforce archive status on past completed events to prevent stale cache lock on mobile phones
-        const sanitized = parsed.map(ev => {
+        let sanitized = parsed.map(ev => {
           if (KNOWN_ARCHIVED_EVENT_IDS.has(ev.id)) {
             return { ...ev, status: 'archived' };
           }
-          if (ev.id === PRIMARY_ACTIVE_EVENT_ID && (!Array.isArray(ev.records) || ev.records.length === 0)) {
-            return { ...ev, records: Array.isArray(initialData) ? initialData : [] };
+          const bundled = getBundledRecordsForEvent(ev.id);
+          if (bundled.length > 0 && (!Array.isArray(ev.records) || ev.records.length === 0)) {
+            return { ...ev, records: bundled };
           }
           return ev;
         });
 
-        // Ensure primary active event exists
-        if (!sanitized.some(e => e.id === PRIMARY_ACTIVE_EVENT_ID)) {
-          sanitized.unshift(defaultEvent);
+        // Ensure both primary active events exist
+        if (!sanitized.some(e => e.id === PANCH_KOSI_EVENT_ID)) {
+          sanitized.unshift(defaultPanchKosiEvent);
+        }
+        if (!sanitized.some(e => e.id === CHAUDAH_KOSI_EVENT_ID)) {
+          sanitized.push(defaultChaudahKosiEvent);
         }
         return sanitized;
       }
     }
   } catch (e) {}
 
-  return [defaultEvent];
+  return [defaultPanchKosiEvent, defaultChaudahKosiEvent];
 }
 
 export default function App() {
@@ -235,44 +275,24 @@ export default function App() {
 
   const currentEvent = useMemo(() => {
     if (!Array.isArray(events) || events.length === 0) {
-      return {
-        id: 'event-1794807177472',
-        title: 'मेला चौदह कोसी परिक्रमा',
-        subtitle: 'ड्यूटी कार्ड अयोध्या-2026',
-        status: 'active',
-        signatoryText: 'वरिष्ठ पुलिस अधीक्षक, अयोध्या',
-        signatureImg: '',
-        note: '',
-        isNoteEnabled: false,
-        briefing: '',
-        isBriefingEnabled: false,
-        records: Array.isArray(initialData) ? initialData : [],
-        attendanceMap: {}
-      };
+      return defaultPanchKosiEvent;
     }
 
-    // 1. If currently selected event exists, is active, and has records, use it
+    // 1. If currently selected event exists and is not archived, prioritize it directly
     const matched = events.find(e => e.id === activeEventId && e.status !== 'archived');
-    if (matched && Array.isArray(matched.records) && matched.records.length > 0) {
+    if (matched) {
       return matched;
     }
 
-    // 2. If matched exists but its records are empty, check if another active event has records
-    if (matched && (!matched.records || matched.records.length === 0)) {
-      const activeWithRecords = events.find(e => e.status !== 'archived' && Array.isArray(e.records) && e.records.length > 0);
-      if (activeWithRecords) return activeWithRecords;
-      return matched;
-    }
-
-    // 3. Otherwise default to first active non-archived event with records
+    // 2. Otherwise default to first active non-archived event with records
     const firstActiveWithRecords = events.find(e => e.status !== 'archived' && Array.isArray(e.records) && e.records.length > 0);
     if (firstActiveWithRecords) return firstActiveWithRecords;
 
     const firstActive = events.find(e => e.status !== 'archived');
     if (firstActive) return firstActive;
 
-    // 4. Fallback to matched event or first event
-    return events.find(e => e.id === activeEventId) || events[0];
+    // 3. Fallback to matched event or first event or default
+    return events.find(e => e.id === activeEventId) || events[0] || defaultPanchKosiEvent;
   }, [events, activeEventId]);
 
   const eventsRef = useRef(events);
@@ -320,8 +340,8 @@ export default function App() {
         } catch (e) {}
       }
 
-      // 2. 2-Tier Event Fetch from Cloud using determined active event ID
-      const targetId = cloudActiveId || activeEventId || 'event-1794807177472';
+      // 2. High-Reliability Event Fetch from Cloud
+      const targetId = cloudActiveId || activeEventId || PRIMARY_ACTIVE_EVENT_ID;
       const cloudEvents = await fetchEventsFromSupabase(targetId);
 
       if (cloudEvents && cloudEvents.length > 0) {
@@ -330,7 +350,7 @@ export default function App() {
           const localMatch = (eventsRef.current || []).find(e => e.id === cloudEv.id);
           const cloudRecs = Array.isArray(cloudEv.records) && cloudEv.records.length > 0 ? cloudEv.records : null;
           const localRecs = localMatch && Array.isArray(localMatch.records) && localMatch.records.length > 0 ? localMatch.records : null;
-          const bundledRecs = (cloudEv.id === 'event-1794807177472' && Array.isArray(initialData) && initialData.length > 0) ? initialData : [];
+          const bundledRecs = getBundledRecordsForEvent(cloudEv.id);
           return {
             ...cloudEv,
             records: cloudRecs || localRecs || bundledRecs
@@ -357,7 +377,7 @@ export default function App() {
               const localMatch = prev.find(p => p.id === fe.id);
               const cloudRecs = Array.isArray(fe.records) && fe.records.length > 0 ? fe.records : null;
               const localRecs = localMatch && Array.isArray(localMatch.records) && localMatch.records.length > 0 ? localMatch.records : null;
-              const bundledRecs = (fe.id === 'event-1794807177472' && Array.isArray(initialData) && initialData.length > 0) ? initialData : [];
+              const bundledRecs = getBundledRecordsForEvent(fe.id);
               return {
                 ...fe,
                 records: cloudRecs || localRecs || bundledRecs
@@ -416,9 +436,10 @@ export default function App() {
                 const existing = prev.find(p => p.id === ce.id);
                 const cloudRecs = Array.isArray(ce.records) && ce.records.length > 0 ? ce.records : null;
                 const existingRecs = existing && Array.isArray(existing.records) && existing.records.length > 0 ? existing.records : null;
+                const bundledRecs = getBundledRecordsForEvent(ce.id);
                 return {
                   ...ce,
-                  records: cloudRecs || existingRecs || (ce.id === 'event-1794807177472' ? initialData : [])
+                  records: cloudRecs || existingRecs || bundledRecs
                 };
               });
               try {
@@ -481,9 +502,10 @@ export default function App() {
             const existing = prev.find(p => p.id === ce.id);
             const cloudRecs = Array.isArray(ce.records) && ce.records.length > 0 ? ce.records : null;
             const existingRecs = existing && Array.isArray(existing.records) && existing.records.length > 0 ? existing.records : null;
+            const bundledRecs = getBundledRecordsForEvent(ce.id);
             return {
               ...ce,
-              records: cloudRecs || existingRecs || (ce.id === 'event-1794807177472' ? initialData : [])
+              records: cloudRecs || existingRecs || bundledRecs
             };
           });
         });
@@ -596,6 +618,7 @@ export default function App() {
     const updatedObj = { ...currentEvent, records: newRecords };
     const updated = events.map(e => e.id === currentEvent.id ? updatedObj : e);
     saveEvents(updated, updatedObj);
+    saveGlobalActiveEventId(currentEvent.id);
 
     // Sync Master Force deployed/reserve status
     if (Array.isArray(forceRecords) && forceRecords.length > 0) {
@@ -860,6 +883,9 @@ export default function App() {
           const crossMatches = ev.records.filter(isRecordMatch);
           if (crossMatches.length > 0) {
             setActiveEventId(ev.id);
+            try {
+              localStorage.setItem(ACTIVE_EVENT_ID_KEY, ev.id);
+            } catch (e) {}
             matches = crossMatches;
             break;
           }
