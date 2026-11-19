@@ -15,8 +15,6 @@ import {
   X
 } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
 import DOMPurify from 'dompurify';
 import VerifyModal from './VerifyModal';
 import { printIndividualPass, generateIndividualPassHtml, cleanOfficerNameAndTitle, formatCleanPosting } from '../utils/printLegalBulk';
@@ -42,7 +40,6 @@ export default function DutyCard({
   isOffline = false,
   eventId = ''
 }) {
-  const [isDownloadingPDF, setIsDownloadingPDF] = useState(false);
   const [showBackSide, setShowBackSide] = useState(false);
   const [isVerifyModalOpen, setIsVerifyModalOpen] = useState(false);
   const [isPhotoZoomOpen, setIsPhotoZoomOpen] = useState(false);
@@ -356,115 +353,9 @@ export default function DutyCard({
     });
   };
 
-  // Download Individual Duty Pass PDF in Official Sahyogarth Layout
-  const handleDownloadDirectPDF = async () => {
-    try {
-      setIsDownloadingPDF(true);
-
-      const passHtml = generateIndividualPassHtml({
-        duty: enrichedDuty,
-        allRecords,
-        eventTitle,
-        eventSubtitle,
-        signatureImg,
-        signatoryText,
-        customNote,
-        isNoteEnabled,
-        customBriefing,
-        isBriefingEnabled,
-        includeBackSide: showBackSide,
-        autoPrint: false
-      });
-
-      // Ensure Kokila font is loaded in host document
-      if (document.fonts) {
-        try {
-          await document.fonts.load('16px Kokila');
-          await document.fonts.load('bold 16px Kokila');
-          await document.fonts.ready;
-        } catch (e) {
-          console.warn('Font load warning:', e);
-        }
-      }
-
-      // Create temporary offscreen container directly in document.body
-      // This ensures html2canvas renders in the active document where Kokila is loaded with full glyph and space metrics
-      const container = document.createElement('div');
-      container.style.position = 'fixed';
-      container.style.top = '0px';
-      container.style.left = '-9999px';
-      container.style.width = '720px';
-      container.style.backgroundColor = '#ffffff';
-      container.style.zIndex = '-9999';
-      container.innerHTML = passHtml;
-      document.body.appendChild(container);
-
-      // Allow browser layout engine to render styles
-      await new Promise(resolve => setTimeout(resolve, 200));
-
-      const passContainers = container.querySelectorAll('.pass-container');
-      const targets = passContainers.length > 0 ? Array.from(passContainers) : [container];
-
-      const pdf = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'a4',
-        compress: true
-      });
-
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = pdf.internal.pageSize.getHeight();
-      const margin = 8;
-      const availWidth = pdfWidth - (margin * 2);
-      const availHeight = pdfHeight - (margin * 2);
-
-      for (let i = 0; i < targets.length; i++) {
-        if (i > 0) {
-          pdf.addPage();
-        }
-
-        const targetEl = targets[i];
-        const canvas = await html2canvas(targetEl, {
-          scale: 3.2,
-          useCORS: true,
-          backgroundColor: '#ffffff',
-          logging: false,
-          width: targetEl.offsetWidth,
-          height: targetEl.offsetHeight,
-          scrollX: 0,
-          scrollY: 0,
-          x: 0,
-          y: 0
-        });
-
-        // Use lossless PNG instead of lossy JPEG to guarantee zero compression noise & razor-sharp typography
-        const imgData = canvas.toDataURL('image/png');
-        let renderWidth = availWidth;
-        let renderHeight = (canvas.height * availWidth) / canvas.width;
-
-        // If rendered height exceeds single A4 printable page, scale down proportionally so NOTHING is ever cut off!
-        if (renderHeight > availHeight) {
-          renderHeight = availHeight;
-          renderWidth = (canvas.width * availHeight) / canvas.height;
-        }
-
-        // Center both horizontally AND vertically on A4 page for a balanced, prestigious official certificate appearance
-        const offsetX = margin + (availWidth - renderWidth) / 2;
-        const offsetY = Math.max(margin, margin + (availHeight - renderHeight) / 2);
-
-        pdf.addImage(imgData, 'PNG', offsetX, offsetY, renderWidth, renderHeight, undefined, 'FAST');
-      }
-
-      document.body.removeChild(container);
-
-      const safeName = (duty.name || 'DutyPass').replace(/\s+/g, '_');
-      pdf.save(`Duty_Card_${duty.id || 'Pass'}_${safeName}.pdf`);
-    } catch (err) {
-      console.error('PDF Download Error:', err);
-      alert('PDF डाउनलोड करने में त्रुटि: ' + err.message);
-    } finally {
-      setIsDownloadingPDF(false);
-    }
+  // Download/Print Individual Duty Pass in 100% Vector Official Sahyogarth Layout
+  const handleDownloadDirectPDF = () => {
+    handlePrintIndividualPass();
   };
 
   // Direct live verification URL so scanning with any phone camera opens the verified card directly
@@ -543,12 +434,11 @@ export default function DutyCard({
           {/* Direct PDF Download (Official Sahyogarth Layout) */}
           <button
             onClick={handleDownloadDirectPDF}
-            disabled={isDownloadingPDF}
             className="h-9 px-3.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-xs transition active:scale-95 cursor-pointer"
-            title="सहयोगार्थ बल सहित आधिकारिक PDF डाउनलोड करें"
+            title="सहयोगार्थ बल सहित आधिकारिक 100% वेक्टर PDF सेव / डाउनलोड करें"
           >
             <FileDown className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-            <span>{isDownloadingPDF ? 'बना रहा है...' : 'PDF डाउनलोड'}</span>
+            <span>PDF डाउनलोड</span>
           </button>
 
           {/* Official Sahyogarth Print Trigger */}
@@ -1264,11 +1154,10 @@ export default function DutyCard({
       <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-slate-900/95 backdrop-blur-md border-t border-slate-800 p-2 px-3 grid grid-cols-4 gap-1.5 shadow-2xl safe-area-bottom no-print">
         <button
           onClick={handleDownloadDirectPDF}
-          disabled={isDownloadingPDF}
-          className="py-2 px-1 bg-slate-800 hover:bg-slate-700 active:bg-slate-950 text-white rounded-xl text-xs font-bold flex flex-col items-center justify-center gap-0.5 shadow-xs transition active:scale-95 cursor-pointer disabled:opacity-50"
+          className="py-2 px-1 bg-slate-800 hover:bg-slate-700 active:bg-slate-950 text-white rounded-xl text-xs font-bold flex flex-col items-center justify-center gap-0.5 shadow-xs transition active:scale-95 cursor-pointer"
         >
           <FileDown className="w-4 h-4 text-amber-400" />
-          <span className="text-[10px] truncate max-w-full">{isDownloadingPDF ? 'तैयार...' : 'PDF पास'}</span>
+          <span className="text-[10px] truncate max-w-full">PDF पास</span>
         </button>
 
         <button

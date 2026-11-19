@@ -2820,9 +2820,35 @@ export function generateIndividualPassHtml({
           text-align: right;
           margin-top: 2px;
         }
+        @media print {
+          .no-print-bar {
+            display: none !important;
+          }
+          body {
+            padding: 0 !important;
+            margin: 0 !important;
+            background: #ffffff !important;
+          }
+        }
       </style>
     </head>
     <body>
+      <!-- Sticky Action Bar (Hidden automatically when saving to PDF or printing) -->
+      <div class="no-print-bar" style="position:sticky; top:0; z-index:9999; background:#0f172a; color:#ffffff; padding:10px 16px; display:flex; align-items:center; justify-content:space-between; box-shadow:0 4px 12px rgba(0,0,0,0.15); margin-bottom:12px; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; border-radius:6px;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#10b981;"></span>
+          <span style="font-size:13px; font-weight:700;">आधिकारिक डिजिटल ड्यूटी पास (100% वेक्टर PDF)</span>
+        </div>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <button onclick="window.print()" style="background:linear-gradient(to right, #d97706, #b45309); color:#ffffff; border:none; padding:8px 16px; border-radius:6px; font-weight:700; font-size:12.5px; cursor:pointer; display:flex; align-items:center; gap:6px; box-shadow:0 2px 4px rgba(0,0,0,0.2);">
+            <span>📥 PDF सेव करें / प्रिंट करें</span>
+          </button>
+          <button onclick="window.close()" style="background:#334155; color:#ffffff; border:none; padding:8px 14px; border-radius:6px; font-weight:700; font-size:12px; cursor:pointer;">
+            <span>✕ बंद करें</span>
+          </button>
+        </div>
+      </div>
+
       <div class="pass-container" style="width:100%; max-width:720px; margin:0 auto; border:3px double #0f172a; padding:16px 20px; background:#ffffff; box-sizing:border-box;">
         <!-- 1. Header -->
         <div class="header-bar" style="display:flex; align-items:center; justify-content:space-between; border-bottom:2px solid #0f172a; padding-bottom:8px; margin-bottom:10px; width:100%;">
@@ -3066,9 +3092,18 @@ export function generateIndividualPassHtml({
 
       ${autoPrint ? `
       <script>
-        window.onload = function() {
-          window.print();
-        };
+        window.addEventListener('DOMContentLoaded', async function() {
+          if (document.fonts) {
+            try {
+              await document.fonts.load('16px Kokila');
+              await document.fonts.load('bold 16px Kokila');
+              await document.fonts.ready;
+            } catch (e) {}
+          }
+          setTimeout(function() {
+            window.print();
+          }, 300);
+        });
       </script>
       ` : ''}
     </body>
