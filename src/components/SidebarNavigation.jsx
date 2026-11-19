@@ -1,4 +1,5 @@
 import React from 'react';
+import VisitorCounter from './VisitorCounter';
 import {
   Search,
   MapPin,
@@ -26,7 +27,8 @@ function SidebarNavigation({
   isMobileOpen,
   onCloseMobile,
   eventTitle = '',
-  totalPersonnelCount = 0
+  totalPersonnelCount = 0,
+  visitorCount = null
 }) {
   const { language } = useLanguage();
   const isAdmin = userRole === 'admin';
@@ -203,8 +205,11 @@ function SidebarNavigation({
         })}
       </div>
 
-      {/* Sidebar Footer: Smart Cell Badge */}
-      <div className="p-3 border-t border-slate-800/80 bg-slate-950/60 text-center">
+      {/* Sidebar Footer: Visitor Counter & Smart Cell Badge */}
+      <div className="p-3 border-t border-slate-800/80 bg-slate-950/60 text-center space-y-2">
+        {visitorCount !== null && (
+          <VisitorCounter count={visitorCount} variant="sidebar" />
+        )}
         <div className="simple-glowing-badge inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-900 border border-amber-500/50 shadow-xs cursor-default">
           <span className="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
           <span className="text-[10px] font-bold text-amber-200 tracking-wide font-sans">

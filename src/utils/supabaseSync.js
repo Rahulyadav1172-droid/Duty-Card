@@ -479,13 +479,8 @@ export function subscribeToEventsRealtime(onUpdateCallback) {
         'postgres_changes',
         { event: '*', schema: 'public', table: EVENTS_TABLE },
         async (payload) => {
-          // If master force row updated
-          if (payload?.new?.id === CLOUD_MASTER_FORCE_ID) {
-            // Handled by master force listener
-            return;
-          }
-          // If auth row updated
-          if (payload?.new?.id === CLOUD_AUTH_CONFIG_ID) {
+          // If any global registry row updated (master force, auth, visitor counter, active event id, booklets)
+          if (payload?.new?.id && String(payload.new.id).startsWith('global-')) {
             return;
           }
 
@@ -735,5 +730,170 @@ export function enrichEventsWithMasterForce(eventsList = [], masterForceList = [
   });
 
   return { enrichedEvents, hasChanges: globalChanged };
+}
+
+const CLOUD_VISITOR_COUNTER_ID = 'global-visitor-counter';
+const DEFAULT_BASELINE_VISITS = 10427;
+const DEFAULT_BASELINE_UNIQUE = 8121;
+const VISITOR_CACHE_KEY = 'ayodhya_police_visitor_count';
+const VISITOR_SESSION_KEY = 'ayodhya_police_visited_session';
+const VISITOR_DEVICE_KEY = 'ayodhya_police_unique_visitor_id';
+
+/**
+ * Fetch current Visitor Counter from Supabase Cloud with local fallback
+ */
+export async function fetchVisitorCountFromSupabase() {
+  let fallback = { totalVisits: DEFAULT_BASELINE_VISITS, uniqueVisitors: DEFAULT_BASELINE_UNIQUE };
+  try {
+    const cached = localStorage.getItem(VISITOR_CACHE_KEY);
+    if (cached) {
+      const parsed = JSON.parse(cached);
+      if (typeof parsed?.totalVisits === 'number') {
+        fallback = parsed;
+      }
+    }
+  } catch (e) {}
+
+  try {
+    const { data, error } = await supabase
+      .from(EVENTS_TABLE)
+      .select('id, subtitle, attendance_map')
+      .eq('id', CLOUD_VISITOR_COUNTER_ID)
+      .maybeSingle();
+
+    if (error || !data) {
+      return fallback;
+    }
+
+    let totalVisits = fallback.totalVisits;
+    let uniqueVisitors = fallback.uniqueVisitors;
+
+    if (data.attendance_map && typeof data.attendance_map.totalVisits === 'number') {
+      totalVisits = data.attendance_map.totalVisits;
+      uniqueVisitors = data.attendance_map.uniqueVisitors || uniqueVisitors;
+    } else if (data.subtitle && !isNaN(Number(data.subtitle))) {
+      totalVisits = Number(data.subtitle);
+    }
+
+    const result = { totalVisits, uniqueVisitors };
+    try {
+      localStorage.setItem(VISITOR_CACHE_KEY, JSON.stringify(result));
+    } catch (e) {}
+
+    return result;
+  } catch (err) {
+    return fallback;
+  }
+}
+
+/**
+ * Record a new visitor session and increment count in Supabase
+ */
+export async function recordVisitorSessionToSupabase() {
+  let fallback = { totalVisits: DEFAULT_BASELINE_VISITS, uniqueVisitors: DEFAULT_BASELINE_UNIQUE };
+  try {
+    const cached = localStorage.getItem(VISITOR_CACHE_KEY);
+    if (cached) {
+      const parsed = JSON.parse(cached);
+      if (typeof parsed?.totalVisits === 'number') {
+        fallback = parsed;
+      }
+    }
+  } catch (e) {}
+
+  try {
+    const alreadyVisitedSession = sessionStorage.getItem(VISITOR_SESSION_KEY);
+    if (alreadyVisitedSession) {
+      // Just fetch latest count
+      return await fetchVisitorCountFromSupabase();
+    }
+
+    // Mark current session as visited
+    sessionStorage.setItem(VISITOR_SESSION_KEY, 'true');
+
+    // Check if new unique device
+    let isNewUnique = false;
+    let deviceId = localStorage.getItem(VISITOR_DEVICE_KEY);
+    if (!deviceId) {
+      deviceId = `dev_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+      localStorage.setItem(VISITOR_DEVICE_KEY, deviceId);
+      isNewUnique = true;
+    }
+
+    // Fetch current count to increment
+    const current = await fetchVisitorCountFromSupabase();
+    const nextTotal = (current.totalVisits || DEFAULT_BASELINE_VISITS) + 1;
+    const nextUnique = isNewUnique ? ((current.uniqueVisitors || DEFAULT_BASELINE_UNIQUE) + 1) : (current.uniqueVisitors || DEFAULT_BASELINE_UNIQUE);
+
+    const row = {
+      id: CLOUD_VISITOR_COUNTER_ID,
+      title: 'GLOBAL_VISITOR_COUNTER',
+      subtitle: String(nextTotal),
+      status: 'active',
+      attendance_map: {
+        totalVisits: nextTotal,
+        uniqueVisitors: nextUnique,
+        lastVisitedAt: new Date().toISOString()
+      },
+      updated_at: new Date().toISOString()
+    };
+
+    // Upsert with retry
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      const { error } = await supabase
+        .from(EVENTS_TABLE)
+        .upsert(row, { onConflict: 'id' });
+      if (!error) break;
+      if (attempt < 2) await new Promise(r => setTimeout(r, 600));
+    }
+
+    const updatedResult = { totalVisits: nextTotal, uniqueVisitors: nextUnique };
+    try {
+      localStorage.setItem(VISITOR_CACHE_KEY, JSON.stringify(updatedResult));
+    } catch (e) {}
+
+    return updatedResult;
+  } catch (err) {
+    console.warn('Visitor counter recording error:', err);
+    return fallback;
+  }
+}
+
+/**
+ * Subscribe to realtime changes on Visitor Counter across all devices
+ */
+export function subscribeToVisitorCounterRealtime(onUpdateCallback) {
+  try {
+    const channel = supabase
+      .channel('public:visitor_counter_realtime')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: EVENTS_TABLE, filter: `id=eq.${CLOUD_VISITOR_COUNTER_ID}` },
+        (payload) => {
+          if (payload?.new) {
+            const raw = payload.new;
+            let totalVisits = null;
+            let uniqueVisitors = null;
+            if (raw.attendance_map && typeof raw.attendance_map.totalVisits === 'number') {
+              totalVisits = raw.attendance_map.totalVisits;
+              uniqueVisitors = raw.attendance_map.uniqueVisitors;
+            } else if (raw.subtitle && !isNaN(Number(raw.subtitle))) {
+              totalVisits = Number(raw.subtitle);
+            }
+            if (totalVisits !== null) {
+              onUpdateCallback({ totalVisits, uniqueVisitors });
+            }
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  } catch (err) {
+    console.warn('Visitor counter realtime subscription error:', err);
+    return () => {};
+  }
 }
 

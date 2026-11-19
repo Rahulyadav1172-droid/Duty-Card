@@ -32,6 +32,7 @@ import AuditLogModal from './components/AuditLogModal';
 import InstallPwaModal from './components/InstallPwaModal';
 import ScanDutyPassModal from './components/ScanDutyPassModal';
 import ElectionBoothDutyHub from './components/ElectionBoothDutyHub';
+import VisitorCounter from './components/VisitorCounter';
 
 import initialData from './data/duty_data.json';
 import panchKosiData from './data/panch_kosi_data.json';
@@ -50,7 +51,10 @@ import {
   subscribeToActiveEventIdRealtime,
   checkSupabaseHealth,
   checkIfEventsUpdated,
-  enrichEventsWithMasterForce
+  enrichEventsWithMasterForce,
+  fetchVisitorCountFromSupabase,
+  recordVisitorSessionToSupabase,
+  subscribeToVisitorCounterRealtime
 } from './utils/supabaseSync';
 import {
   initCloudAuthConfig,
@@ -229,6 +233,16 @@ export default function App() {
   const [cloudStatus, setCloudStatus] = useState('checking'); // 'checking' | 'connected' | 'error'
   const [cloudErrorDetail, setCloudErrorDetail] = useState(null);
   const [pendingTab, setPendingTab] = useState(null);
+  const [visitorCount, setVisitorCount] = useState(() => {
+    try {
+      const cached = localStorage.getItem('ayodhya_police_visitor_count');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (typeof parsed?.totalVisits === 'number') return parsed.totalVisits;
+      }
+    } catch (e) {}
+    return 10427;
+  });
 
   const [searchQuery, setSearchQuery] = useState(() => {
     try {
@@ -305,8 +319,22 @@ export default function App() {
     let unsubscribeEvents = () => {};
     let unsubscribeForce = () => {};
     let unsubscribeActiveEventId = () => {};
+    let unsubscribeVisitor = () => {};
 
     async function initSupabase() {
+      // 0. Visitor Session Counter: Record visit & sync realtime
+      recordVisitorSessionToSupabase().then(res => {
+        if (res && typeof res.totalVisits === 'number') {
+          setVisitorCount(res.totalVisits);
+        }
+      }).catch(() => {});
+
+      unsubscribeVisitor = subscribeToVisitorCounterRealtime((fresh) => {
+        if (fresh && typeof fresh.totalVisits === 'number') {
+          setVisitorCount(fresh.totalVisits);
+        }
+      });
+
       // 0. Verify Supabase Cloud connection status & Auth Config
       checkSupabaseHealth().then(health => {
         if (health.ok) {
@@ -483,6 +511,7 @@ export default function App() {
       unsubscribeEvents();
       unsubscribeForce();
       unsubscribeActiveEventId();
+      unsubscribeVisitor();
       window.removeEventListener('focus', handleVisibilityOrFocus);
       document.removeEventListener('visibilitychange', handleVisibilityOrFocus);
       clearInterval(heartbeatInterval);
@@ -921,6 +950,7 @@ export default function App() {
         onCloseMobile={handleCloseMobileSidebar}
         eventTitle={currentEvent.title}
         totalPersonnelCount={currentEvent.records?.length || 0}
+        visitorCount={visitorCount}
       />
 
       {/* 2. Main Content Wrapper */}
@@ -980,6 +1010,9 @@ export default function App() {
                 <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
                 <span>लाइव सिंक</span>
               </div>
+
+              {/* Visitor Counter in Header */}
+              <VisitorCounter count={visitorCount} variant="header" />
 
               {/* Quick 1-Tap QR Duty Pass Scanner Button for Senior Officers & Admins */}
               {(userRole === 'admin' || userRole === 'senior') && (
@@ -1532,7 +1565,10 @@ export default function App() {
       )}
 
       {/* Footer */}
-      <footer className="bg-slate-900 border-t border-slate-800 py-4 px-4 text-center text-xs text-slate-400 space-y-2 mt-auto no-print">
+      <footer className="bg-slate-900 border-t border-slate-800 py-6 px-4 text-center text-xs text-slate-400 space-y-3 mt-auto no-print">
+        {/* Official Visitor Counter Widget */}
+        <VisitorCounter count={visitorCount} variant="footer" />
+
         <p className="font-bold text-slate-300 tracking-wide text-xs">अयोध्या पुलिस ड्यूटी व पास प्रबंधन प्रणाली © 2026</p>
         <div className="flex justify-center items-center">
           <div className="simple-glowing-badge inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-950/80 border border-amber-500/50 shadow-xs cursor-default">
