@@ -83,54 +83,114 @@ export default function ScanDutyPassModal({
     await stopScanner();
     setScannedRawData(decodedText);
 
-    // 1. Extract search term or parsed object
-    let searchTerm = '';
+    // 1. Robust Multiformat Extractor (Handles URLs, QR Codes, JSON, & Multiline Printed Passes)
+    let extractedPno = '';
+    let extractedMobile = '';
+    let extractedId = '';
+    let extractedName = '';
     let parsedJson = null;
 
-    try {
-      if (decodedText.trim().startsWith('{') && decodedText.trim().endsWith('}')) {
-        parsedJson = JSON.parse(decodedText);
-      }
-    } catch (e) {}
+    const raw = String(decodedText || '').trim();
 
-    if (parsedJson) {
-      searchTerm = parsedJson.pno || parsedJson.mobile || parsedJson.id || parsedJson.name || '';
-    } else {
-      // Check if it is a URL with search parameter
+    // Check JSON
+    if (raw.startsWith('{') && raw.endsWith('}')) {
       try {
-        if (decodedText.includes('?search=')) {
-          const urlObj = new URL(decodedText);
-          searchTerm = urlObj.searchParams.get('search') || '';
-        } else if (decodedText.includes('/')) {
-          const urlParts = decodedText.split('/');
-          searchTerm = urlParts[urlParts.length - 1];
-        } else {
-          searchTerm = decodedText.trim();
+        parsedJson = JSON.parse(raw);
+        if (parsedJson) {
+          extractedPno = parsedJson.pno || '';
+          extractedMobile = parsedJson.mobile || '';
+          extractedId = parsedJson.id || '';
+          extractedName = parsedJson.name || '';
         }
-      } catch (e) {
-        searchTerm = decodedText.trim();
+      } catch (e) {}
+    }
+
+    // Check URL
+    if (!parsedJson && (raw.includes('http://') || raw.includes('https://') || raw.includes('?'))) {
+      try {
+        const urlStr = raw.startsWith('http') ? raw : `https://dutycard.ayodhyapolice.in/${raw.replace(/^\//, '')}`;
+        const urlObj = new URL(urlStr);
+        extractedPno = urlObj.searchParams.get('pno') || '';
+        extractedId = urlObj.searchParams.get('id') || '';
+        const searchParam = urlObj.searchParams.get('search') || '';
+        if (searchParam) {
+          const numOnly = searchParam.replace(/\D/g, '');
+          if (numOnly.length === 10) {
+            extractedMobile = numOnly;
+          } else if (numOnly.length >= 6) {
+            if (!extractedPno) extractedPno = numOnly;
+          } else {
+            extractedName = searchParam;
+          }
+        }
+      } catch (e) {}
+    }
+
+    // Check Multiline text (e.g. from printLegalBulk.js or standard printed pass text format)
+    if (!parsedJson) {
+      // Extract mobile via regex (10 digits starting with 6-9)
+      const mobMatch = raw.match(/\b([6-9]\d{9})\b/);
+      if (mobMatch) extractedMobile = mobMatch[1];
+
+      // Extract ID or PNO (e.g. ID: DUTY-1234 or PNO: 123456789)
+      const idMatch = raw.match(/\bID\s*[:=-]\s*([A-Za-z0-9_-]+)/i);
+      if (idMatch) extractedId = idMatch[1];
+
+      const pnoMatch = raw.match(/\b(?:PNO|P\.NO|पीएनओ)\s*[:=-]\s*([0-9]{6,12})/i);
+      if (pnoMatch) extractedPno = pnoMatch[1];
+
+      // Extract Name (e.g. नाम: ...)
+      const nameMatch = raw.match(/\b(?:नाम|Name)\s*[:=-]\s*([^\n\r,]+)/i);
+      if (nameMatch) extractedName = nameMatch[1].trim();
+
+      // If still nothing extracted, and raw is purely digits
+      const rawDigits = raw.replace(/\D/g, '');
+      if (rawDigits.length === 10 && !extractedMobile) {
+        extractedMobile = rawDigits;
+      } else if (rawDigits.length >= 6 && rawDigits.length <= 12 && !extractedPno) {
+        extractedPno = rawDigits;
       }
     }
 
-    const cleanTerm = searchTerm.replace(/\D/g, '');
-    const cleanRaw = searchTerm.trim().toLowerCase();
+    // Clean terms
+    const cleanPno = extractedPno.trim().toLowerCase();
+    const cleanMob = extractedMobile.replace(/\D/g, '');
+    const cleanId = extractedId.trim().toLowerCase();
+    const cleanName = extractedName.trim().toLowerCase();
+    const rawLower = raw.toLowerCase();
 
     // Find match in current event records
     const matched = (Array.isArray(allRecords) ? allRecords : []).find((rec) => {
+      if (!rec) return false;
       const recMob = String(rec.mobile || '').replace(/\D/g, '');
       const recPno = String(rec.pno || '').trim().toLowerCase();
       const recId = String(rec.id || '').trim().toLowerCase();
       const recName = String(rec.name || '').trim().toLowerCase();
 
-      if (cleanTerm && cleanTerm.length >= 6 && recMob.includes(cleanTerm)) return true;
-      if (cleanTerm && cleanTerm.length >= 6 && recPno.includes(cleanTerm)) return true;
-      if (cleanRaw && recId === cleanRaw) return true;
-      if (cleanRaw && recPno === cleanRaw) return true;
-      if (cleanRaw && recName && (recName === cleanRaw || recName.includes(cleanRaw))) return true;
+      // 1. Exact PNO match
+      if (cleanPno && recPno && (recPno === cleanPno || recPno.endsWith(cleanPno))) return true;
 
-      // Also check if parsed JSON matched
-      if (parsedJson && parsedJson.id && rec.id === parsedJson.id) return true;
-      if (parsedJson && parsedJson.name && rec.name === parsedJson.name && rec.duty_place === parsedJson.duty_place) return true;
+      // 2. Exact Mobile match
+      if (cleanMob && cleanMob.length === 10 && recMob.includes(cleanMob)) return true;
+
+      // 3. Exact Duty ID match
+      if (cleanId && recId === cleanId) return true;
+
+      // 4. JSON match
+      if (parsedJson) {
+        if (parsedJson.id && recId === String(parsedJson.id).toLowerCase()) return true;
+        if (parsedJson.name && recName.includes(String(parsedJson.name).toLowerCase())) return true;
+      }
+
+      // 5. Name match (only if cleanName length >= 3)
+      if (cleanName && cleanName.length >= 3 && recName.includes(cleanName)) return true;
+
+      // 6. Direct fallback match against raw scanned string
+      if (rawLower) {
+        if (recPno && rawLower.includes(recPno)) return true;
+        if (recId && rawLower.includes(recId)) return true;
+        if (recMob && recMob.length === 10 && rawLower.includes(recMob)) return true;
+      }
 
       return false;
     });

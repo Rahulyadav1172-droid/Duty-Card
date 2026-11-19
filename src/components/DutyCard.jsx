@@ -431,24 +431,14 @@ export default function DutyCard({
             </button>
           )}
 
-          {/* Direct PDF Download (Official Sahyogarth Layout) */}
+          {/* Official Sahyogarth 100% Vector PDF & Print Trigger */}
           <button
             onClick={handleDownloadDirectPDF}
             className="h-9 px-3.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-xs transition active:scale-95 cursor-pointer"
-            title="सहयोगार्थ बल सहित आधिकारिक 100% वेक्टर PDF सेव / डाउनलोड करें"
+            title="सहयोगार्थ बल सहित आधिकारिक 100% वेक्टर PDF सेव अथवा प्रिंट करें"
           >
             <FileDown className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-            <span>PDF डाउनलोड</span>
-          </button>
-
-          {/* Official Sahyogarth Print Trigger */}
-          <button
-            onClick={handlePrintIndividualPass}
-            className="h-9 px-3.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-xs transition active:scale-95 cursor-pointer"
-            title="सहयोगार्थ बल सहित आधिकारिक पास प्रिंट करें"
-          >
-            <Printer className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-            <span>प्रिंट करें</span>
+            <span>PDF पास / प्रिंट</span>
           </button>
 
           {/* WhatsApp Share */}

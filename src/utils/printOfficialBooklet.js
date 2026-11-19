@@ -592,6 +592,20 @@ export function printOfficialBookletDocument({
   <link rel="preconnect" href="https://fonts.gstatic.com">
   <link href="https://fonts.googleapis.com/css2?family=Mukta:wght@400;500;600;700;800;900&family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <style>
+    @font-face {
+      font-family: 'Kokila';
+      src: url('/fonts/kokila.ttf') format('truetype'),
+           local('Kokila'), local('Kokila-Regular'), local('kokila');
+      font-weight: 400;
+      font-style: normal;
+    }
+    @font-face {
+      font-family: 'Kokila';
+      src: url('/fonts/kokilab.ttf') format('truetype'),
+           local('Kokila Bold'), local('Kokila-Bold'), local('kokilab');
+      font-weight: 700 900;
+      font-style: normal;
+    }
     @page {
       size: A4 landscape;
       margin: 6mm 8mm;
@@ -600,14 +614,15 @@ export function printOfficialBookletDocument({
       box-sizing: border-box;
       -webkit-print-color-adjust: exact !important;
       print-color-adjust: exact !important;
+      font-family: 'Kokila', 'Mangal', 'Mukta', 'Noto Sans Devanagari', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
     }
     html, body {
       margin: 0;
       padding: 0;
       background: #fff;
       color: #000;
-      font-family: 'Mukta', 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      font-size: 12.5px;
+      font-family: 'Kokila', 'Mangal', 'Mukta', 'Noto Sans Devanagari', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+      font-size: 13.5px;
       line-height: 1.4;
       width: 100%;
     }

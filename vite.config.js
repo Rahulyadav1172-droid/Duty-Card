@@ -11,12 +11,17 @@ export default defineConfig({
     outDir: 'dist',
     rollupOptions: {
       output: {
-        manualChunks: {
-          'vendor-react': ['react', 'react-dom'],
-          'vendor-icons': ['lucide-react'],
-          'vendor-pdf': ['jspdf', 'html2canvas'],
-          'vendor-excel': ['xlsx', 'mammoth'],
-          'vendor-supabase': ['@supabase/supabase-js']
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (id.includes('react') || id.includes('react-dom')) return 'vendor-react';
+            if (id.includes('lucide-react')) return 'vendor-icons';
+            if (id.includes('jspdf') || id.includes('html2canvas')) return 'vendor-pdf';
+            if (id.includes('xlsx') || id.includes('mammoth')) return 'vendor-excel';
+            if (id.includes('@supabase')) return 'vendor-supabase';
+          }
+          if (id.includes('duty_data.json')) return 'data-chaudah-kosi';
+          if (id.includes('panch_kosi_data.json')) return 'data-panch-kosi';
+          if (id.includes('electionStandardData.js')) return 'data-election-standards';
         }
       }
     },

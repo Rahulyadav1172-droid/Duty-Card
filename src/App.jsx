@@ -19,20 +19,31 @@ import { useLanguage } from './context/LanguageContext';
 import SidebarNavigation from './components/SidebarNavigation';
 import SearchSection from './components/SearchSection';
 import DutyCard from './components/DutyCard';
-import AdminUpload from './components/AdminUpload';
-import BookletSection from './components/BookletSection';
 import SingleWindowLogin from './components/SingleWindowLogin';
-import DutyPointFilterSection from './components/DutyPointFilterSection';
-import MasterForceManager from './components/MasterForceManager';
-import EventManager from './components/EventManager';
-import DutyAllocationHub from './components/DutyAllocationHub';
-import ForceAamadManager from './components/ForceAamadManager';
-import ChangePasswordModal from './components/ChangePasswordModal';
-import AuditLogModal from './components/AuditLogModal';
 import InstallPwaModal from './components/InstallPwaModal';
-import ScanDutyPassModal from './components/ScanDutyPassModal';
-import ElectionBoothDutyHub from './components/ElectionBoothDutyHub';
 import VisitorCounter from './components/VisitorCounter';
+
+// Lazy-loaded Admin Modules & Modals (Code-Split for sub-second mobile page loads)
+const AdminUpload = React.lazy(() => import('./components/AdminUpload'));
+const BookletSection = React.lazy(() => import('./components/BookletSection'));
+const DutyPointFilterSection = React.lazy(() => import('./components/DutyPointFilterSection'));
+const MasterForceManager = React.lazy(() => import('./components/MasterForceManager'));
+const EventManager = React.lazy(() => import('./components/EventManager'));
+const DutyAllocationHub = React.lazy(() => import('./components/DutyAllocationHub'));
+const ForceAamadManager = React.lazy(() => import('./components/ForceAamadManager'));
+const ChangePasswordModal = React.lazy(() => import('./components/ChangePasswordModal'));
+const AuditLogModal = React.lazy(() => import('./components/AuditLogModal'));
+const ScanDutyPassModal = React.lazy(() => import('./components/ScanDutyPassModal'));
+const ElectionBoothDutyHub = React.lazy(() => import('./components/ElectionBoothDutyHub'));
+
+function AdminModuleFallback() {
+  return (
+    <div className="flex flex-col items-center justify-center p-12 space-y-3 bg-white rounded-2xl border border-slate-200 shadow-sm max-w-md mx-auto my-8">
+      <div className="w-8 h-8 border-3 border-amber-500 border-t-transparent rounded-full animate-spin"></div>
+      <p className="text-xs font-bold text-slate-700 font-devanagari">मॉड्यूल लोड हो रहा है, कृपया प्रतीक्षा करें...</p>
+    </div>
+  );
+}
 
 import initialData from './data/duty_data.json';
 import panchKosiData from './data/panch_kosi_data.json';
@@ -545,18 +556,37 @@ export default function App() {
     }
   };
 
-  // Sync events to localStorage and Supabase Cloud
-  const saveEvents = (newEvents, affectedEvent = null) => {
+  // Sync events to localStorage and Supabase Cloud with quota protection & sync status feedback
+  const saveEvents = async (newEvents, affectedEvent = null) => {
     setEvents(newEvents);
     try {
       localStorage.setItem(EVENTS_STORAGE_KEY, JSON.stringify(newEvents));
-    } catch (e) {}
+    } catch (e) {
+      console.warn('LocalStorage quota limit reached, saving stripped lightweight events cache:', e);
+      try {
+        // Fallback: Strip huge records array from inactive events to fit within 5MB quota
+        const stripped = newEvents.map(ev => ({
+          ...ev,
+          records: ev.id === activeEventId ? (ev.records || []) : []
+        }));
+        localStorage.setItem(EVENTS_STORAGE_KEY, JSON.stringify(stripped));
+      } catch (innerErr) {
+        console.warn('LocalStorage save failed completely:', innerErr);
+      }
+    }
 
     // Async sync to Supabase
-    if (affectedEvent) {
-      upsertEventToSupabase(affectedEvent);
-    } else {
-      newEvents.forEach(evt => upsertEventToSupabase(evt));
+    try {
+      if (affectedEvent) {
+        const ok = await upsertEventToSupabase(affectedEvent);
+        if (!ok) {
+          console.warn('Cloud sync error for affected event:', affectedEvent.id);
+        }
+      } else {
+        await Promise.all(newEvents.map(evt => upsertEventToSupabase(evt)));
+      }
+    } catch (err) {
+      console.warn('Supabase saveEvents error:', err);
     }
   };
 
@@ -1094,41 +1124,6 @@ export default function App() {
                         </div>
                       </div>
 
-                      {/* Language Switcher Inside Profile Menu */}
-                      <div className="p-2.5 bg-slate-800/60 rounded-xl border border-slate-700/50 space-y-1.5">
-                        <div className="flex items-center justify-between text-[11px] font-bold text-slate-300">
-                          <div className="flex items-center gap-1.5">
-                            <Globe className="w-3.5 h-3.5 text-amber-400" />
-                            <span>{t('switchLanguage', 'भाषा')}</span>
-                          </div>
-                          <span className="text-[10px] text-amber-400 font-mono font-bold uppercase">{language}</span>
-                        </div>
-                        <div className="grid grid-cols-2 gap-1.5">
-                          <button
-                            type="button"
-                            onClick={() => setLanguage('hi')}
-                            className={`py-1.5 px-2 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1 cursor-pointer ${
-                              language === 'hi'
-                                ? 'bg-amber-500 text-slate-950 shadow-xs'
-                                : 'bg-slate-700/70 text-slate-300 hover:bg-slate-700'
-                            }`}
-                          >
-                            <span>🇮🇳 हिन्दी</span>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setLanguage('en')}
-                            className={`py-1.5 px-2 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1 cursor-pointer ${
-                              language === 'en'
-                                ? 'bg-amber-500 text-slate-950 shadow-xs'
-                                : 'bg-slate-700/70 text-slate-300 hover:bg-slate-700'
-                            }`}
-                          >
-                            <span>🇬🇧 English</span>
-                          </button>
-                        </div>
-                      </div>
-
                       {/* Menu Options */}
                       <div className="space-y-1 text-xs font-bold">
                         {/* 1. Change Password */}
@@ -1398,129 +1393,132 @@ export default function App() {
           </div>
         )}
 
-        {/* ADMIN ONLY: ELECTION BOOTH DUTY HUB */}
-        {activeTab === 'election_duty' && userRole === 'admin' && (
-          <ElectionBoothDutyHub
-            masterForce={forceRecords}
-            activeEvent={currentEvent}
-            onUpdateEventRecords={handleUpdateActiveEventRecords}
-            onUpdateAllocationData={handleUpdateActiveEventAllocationData}
-            events={events}
-            activeEventId={activeEventId}
-            onSelectActiveEvent={handleSelectActiveEvent}
-            onOpenBooklet={handleOpenBooklet}
-          />
-        )}
+        {/* LAZY-LOADED ADMIN WORKFLOW TABS */}
+        <React.Suspense fallback={<AdminModuleFallback />}>
+          {/* ADMIN ONLY: ELECTION BOOTH DUTY HUB */}
+          {activeTab === 'election_duty' && userRole === 'admin' && (
+            <ElectionBoothDutyHub
+              masterForce={forceRecords}
+              activeEvent={currentEvent}
+              onUpdateEventRecords={handleUpdateActiveEventRecords}
+              onUpdateAllocationData={handleUpdateActiveEventAllocationData}
+              events={events}
+              activeEventId={activeEventId}
+              onSelectActiveEvent={handleSelectActiveEvent}
+              onOpenBooklet={handleOpenBooklet}
+            />
+          )}
 
-        {/* ADMIN ONLY: LAW & ORDER DUTY ALLOCATION HUB */}
-        {(activeTab === 'allocation' || activeTab === 'law_order') && userRole === 'admin' && (
-          <DutyAllocationHub
-            masterForce={forceRecords}
-            activeEvent={currentEvent}
-            onUpdateEventRecords={handleUpdateActiveEventRecords}
-            onUpdateAllocationData={handleUpdateActiveEventAllocationData}
-            events={events}
-            activeEventId={activeEventId}
-            onSelectActiveEvent={handleSelectActiveEvent}
-            onOpenBooklet={handleOpenBooklet}
-          />
-        )}
+          {/* ADMIN ONLY: LAW & ORDER DUTY ALLOCATION HUB */}
+          {(activeTab === 'allocation' || activeTab === 'law_order') && userRole === 'admin' && (
+            <DutyAllocationHub
+              masterForce={forceRecords}
+              activeEvent={currentEvent}
+              onUpdateEventRecords={handleUpdateActiveEventRecords}
+              onUpdateAllocationData={handleUpdateActiveEventAllocationData}
+              events={events}
+              activeEventId={activeEventId}
+              onSelectActiveEvent={handleSelectActiveEvent}
+              onOpenBooklet={handleOpenBooklet}
+            />
+          )}
 
-        {/* ADMIN ONLY: MULTI-EVENT MANAGER */}
-        {activeTab === 'events' && userRole === 'admin' && (
-          <EventManager
-            events={events}
-            activeEventId={activeEventId}
-            onSelectActiveEvent={handleSelectActiveEvent}
-            onCreateEvent={handleCreateEvent}
-            onUpdateEvent={handleUpdateEvent}
-            onDeleteEvent={handleDeleteEvent}
-            onToggleEventStatus={handleToggleEventStatus}
-            masterForce={forceRecords}
-            onRestoreDatabase={handleRestoreDatabase}
-          />
-        )}
+          {/* ADMIN ONLY: MULTI-EVENT MANAGER */}
+          {activeTab === 'events' && userRole === 'admin' && (
+            <EventManager
+              events={events}
+              activeEventId={activeEventId}
+              onSelectActiveEvent={handleSelectActiveEvent}
+              onCreateEvent={handleCreateEvent}
+              onUpdateEvent={handleUpdateEvent}
+              onDeleteEvent={handleDeleteEvent}
+              onToggleEventStatus={handleToggleEventStatus}
+              masterForce={forceRecords}
+              onRestoreDatabase={handleRestoreDatabase}
+            />
+          )}
 
-        {/* SENIOR OFFICER / ADMIN: DUTY POINT FILTER */}
-        {activeTab === 'filter' && (userRole === 'admin' || userRole === 'senior') && (
-          <DutyPointFilterSection
-            records={currentEvent.records || []}
-            events={events}
-            activeEventId={activeEventId}
-            onSelectActiveEvent={handleSelectActiveEvent}
-            eventTitle={currentEvent.title}
-            eventSubtitle={currentEvent.subtitle}
-            attendanceMap={currentEvent.attendanceMap || {}}
-            attendanceByDate={currentEvent.attendanceByDate || {}}
-            onMarkAttendance={handleMarkAttendance}
-            userRole={userRole}
-          />
-        )}
+          {/* SENIOR OFFICER / ADMIN: DUTY POINT FILTER */}
+          {activeTab === 'filter' && (userRole === 'admin' || userRole === 'senior') && (
+            <DutyPointFilterSection
+              records={currentEvent.records || []}
+              events={events}
+              activeEventId={activeEventId}
+              onSelectActiveEvent={handleSelectActiveEvent}
+              eventTitle={currentEvent.title}
+              eventSubtitle={currentEvent.subtitle}
+              attendanceMap={currentEvent.attendanceMap || {}}
+              attendanceByDate={currentEvent.attendanceByDate || {}}
+              onMarkAttendance={handleMarkAttendance}
+              userRole={userRole}
+            />
+          )}
 
-        {/* SENIOR OFFICER / ADMIN: DUTY BOOKLET PDF */}
-        {activeTab === 'booklet' && (userRole === 'admin' || userRole === 'senior') && (
-          <BookletSection
-            records={currentEvent.records || []}
-            isAdminAuthenticated={userRole === 'admin'}
-            onRequestAdminAuth={handleRequestAdminAuth}
-            events={events}
-            activeEventId={activeEventId}
-            onSelectActiveEvent={handleSelectActiveEvent}
-            eventTitle={currentEvent.title}
-            eventSubtitle={currentEvent.subtitle}
-            eventStartDate={currentEvent.startDate || currentEvent.created_at || '16.08.2026 से अग्रिम आदेश तक'}
-            masterForce={forceRecords}
-            onUpdateEventRecords={handleUpdateActiveEventRecords}
-            activeEvent={currentEvent}
-            onUpdateEvent={handleUpdateEvent}
-          />
-        )}
+          {/* SENIOR OFFICER / ADMIN: DUTY BOOKLET PDF */}
+          {activeTab === 'booklet' && (userRole === 'admin' || userRole === 'senior') && (
+            <BookletSection
+              records={currentEvent.records || []}
+              isAdminAuthenticated={userRole === 'admin'}
+              onRequestAdminAuth={handleRequestAdminAuth}
+              events={events}
+              activeEventId={activeEventId}
+              onSelectActiveEvent={handleSelectActiveEvent}
+              eventTitle={currentEvent.title}
+              eventSubtitle={currentEvent.subtitle}
+              eventStartDate={currentEvent.startDate || currentEvent.created_at || '16.08.2026 से अग्रिम आदेश तक'}
+              masterForce={forceRecords}
+              onUpdateEventRecords={handleUpdateActiveEventRecords}
+              activeEvent={currentEvent}
+              onUpdateEvent={handleUpdateEvent}
+            />
+          )}
 
-        {/* ADMIN ONLY: FORCE AAMAD REGISTER */}
-        {activeTab === 'aamad' && userRole === 'admin' && (
-          <ForceAamadManager
-            forceRecords={forceRecords}
-            onUpdateForce={handleUpdateForce}
-          />
-        )}
+          {/* ADMIN ONLY: FORCE AAMAD REGISTER */}
+          {activeTab === 'aamad' && userRole === 'admin' && (
+            <ForceAamadManager
+              forceRecords={forceRecords}
+              onUpdateForce={handleUpdateForce}
+            />
+          )}
 
-        {/* ADMIN ONLY: MASTER FORCE REGISTER */}
-        {activeTab === 'force' && userRole === 'admin' && (
-          <MasterForceManager
-            forceRecords={forceRecords}
-            onUpdateForce={handleUpdateForce}
-          />
-        )}
+          {/* ADMIN ONLY: MASTER FORCE REGISTER */}
+          {activeTab === 'force' && userRole === 'admin' && (
+            <MasterForceManager
+              forceRecords={forceRecords}
+              onUpdateForce={handleUpdateForce}
+            />
+          )}
 
-        {/* ADMIN ONLY: EVENT-SCOPED BULK EXCEL UPLOAD & SETTINGS */}
-        {activeTab === 'upload' && userRole === 'admin' && (
-          <AdminUpload
-            records={currentEvent.records || []}
-            onUpdateRecords={handleUpdateActiveEventRecords}
-            onResetToDefault={handleResetActiveEventToDefault}
-            customNote={currentEvent.note || ''}
-            isNoteEnabled={currentEvent.isNoteEnabled}
-            onUpdateNote={handleUpdateActiveEventNote}
-            customBriefing={currentEvent.briefing || ''}
-            isBriefingEnabled={currentEvent.isBriefingEnabled}
-            onUpdateBriefing={handleUpdateActiveEventBriefing}
-            helplineList={currentEvent.helplineList || []}
-            isHelplineEnabled={currentEvent.isHelplineEnabled !== false}
-            onUpdateHelpline={handleUpdateActiveEventHelpline}
-            attendanceMap={currentEvent.attendanceMap || {}}
-            eventTitle={currentEvent.title}
-            eventSubtitle={currentEvent.subtitle}
-            onUpdateEventHeadings={handleUpdateActiveEventHeadings}
-            signatureImg={currentEvent.signatureImg || ''}
-            signatoryText={currentEvent.signatoryText || 'वरिष्ठ पुलिस अधीक्षक, अयोध्या'}
-            onUpdateSignature={handleUpdateActiveEventSignature}
-            events={events}
-            activeEventId={activeEventId}
-            onSelectActiveEvent={handleSelectActiveEvent}
-            customLabels={currentEvent.customLabels || {}}
-            onUpdateCustomLabels={handleUpdateActiveEventCustomLabels}
-          />
-        )}
+          {/* ADMIN ONLY: EVENT-SCOPED BULK EXCEL UPLOAD & SETTINGS */}
+          {activeTab === 'upload' && userRole === 'admin' && (
+            <AdminUpload
+              records={currentEvent.records || []}
+              onUpdateRecords={handleUpdateActiveEventRecords}
+              onResetToDefault={handleResetActiveEventToDefault}
+              customNote={currentEvent.note || ''}
+              isNoteEnabled={currentEvent.isNoteEnabled}
+              onUpdateNote={handleUpdateActiveEventNote}
+              customBriefing={currentEvent.briefing || ''}
+              isBriefingEnabled={currentEvent.isBriefingEnabled}
+              onUpdateBriefing={handleUpdateActiveEventBriefing}
+              helplineList={currentEvent.helplineList || []}
+              isHelplineEnabled={currentEvent.isHelplineEnabled !== false}
+              onUpdateHelpline={handleUpdateActiveEventHelpline}
+              attendanceMap={currentEvent.attendanceMap || {}}
+              eventTitle={currentEvent.title}
+              eventSubtitle={currentEvent.subtitle}
+              onUpdateEventHeadings={handleUpdateActiveEventHeadings}
+              signatureImg={currentEvent.signatureImg || ''}
+              signatoryText={currentEvent.signatoryText || 'वरिष्ठ पुलिस अधीक्षक, अयोध्या'}
+              onUpdateSignature={handleUpdateActiveEventSignature}
+              events={events}
+              activeEventId={activeEventId}
+              onSelectActiveEvent={handleSelectActiveEvent}
+              customLabels={currentEvent.customLabels || {}}
+              onUpdateCustomLabels={handleUpdateActiveEventCustomLabels}
+            />
+          )}
+        </React.Suspense>
       </main>
 
       {/* Single Window Login Modal */}
@@ -1533,33 +1531,40 @@ export default function App() {
         onLoginSuccess={handleLoginSuccess}
       />
 
-      {/* In-App Change Password Modal */}
-      <ChangePasswordModal
-        isOpen={isChangePasswordOpen}
-        onClose={() => setIsChangePasswordOpen(false)}
-        userRole={userRole}
-      />
+      {/* Lazy-Loaded Modals */}
+      <React.Suspense fallback={null}>
+        {/* In-App Change Password Modal */}
+        {isChangePasswordOpen && (
+          <ChangePasswordModal
+            isOpen={isChangePasswordOpen}
+            onClose={() => setIsChangePasswordOpen(false)}
+            userRole={userRole}
+          />
+        )}
 
-      {/* Transparency System Audit Log Modal */}
-      <AuditLogModal
-        isOpen={isAuditLogModalOpen}
-        onClose={() => setIsAuditLogModalOpen(false)}
-      />
+        {/* Transparency System Audit Log Modal */}
+        {isAuditLogModalOpen && (
+          <AuditLogModal
+            isOpen={isAuditLogModalOpen}
+            onClose={() => setIsAuditLogModalOpen(false)}
+          />
+        )}
 
-      {/* In-App Digital QR Duty Pass Scanner Modal */}
-      {isScanModalOpen && (
-        <ScanDutyPassModal
-          isOpen={isScanModalOpen}
-          onClose={() => setIsScanModalOpen(false)}
-          allRecords={currentEvent.records || []}
-          currentEvent={currentEvent}
-          onSelectDuty={(rec) => {
-            setActiveDuty(rec);
-            setActiveTab('search');
-          }}
-          onMarkAttendance={handleMarkAttendance}
-        />
-      )}
+        {/* In-App Digital QR Duty Pass Scanner Modal */}
+        {isScanModalOpen && (
+          <ScanDutyPassModal
+            isOpen={isScanModalOpen}
+            onClose={() => setIsScanModalOpen(false)}
+            allRecords={currentEvent.records || []}
+            currentEvent={currentEvent}
+            onSelectDuty={(rec) => {
+              setActiveDuty(rec);
+              setActiveTab('search');
+            }}
+            onMarkAttendance={handleMarkAttendance}
+          />
+        )}
+      </React.Suspense>
 
       {/* Footer */}
       <footer className="bg-slate-900 border-t border-slate-800/80 py-3.5 px-4 text-xs text-slate-400 mt-auto no-print">
