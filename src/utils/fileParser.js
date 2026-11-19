@@ -490,11 +490,16 @@ function processObjectRows(rows) {
     const assignedTime = timeCol || currentTime;
     const assignedBriefing = briefingCol || currentBriefing;
 
+    // Pre-calculate mutually resolvable IDs for Police and Companion Home Guard
+    const policeId = cleanPnoVal ? cleanPnoVal : `DUTY-${String(records.length + 1).padStart(4, '0')}`;
+    const hgId = hgNameCol ? `DUTY-HG-${String(records.length + (finalName || finalMobile ? 2 : 1)).padStart(4, '0')}` : null;
+
     // Co-force details
     let coForceObj = null;
     let coForceDesc = '';
     if (hgNameCol) {
       coForceObj = {
+        id: hgId,
         name: hgNameCol,
         mobile: hgMobCol,
         posting: hgPostingCol,
@@ -505,7 +510,7 @@ function processObjectRows(rows) {
 
     if (finalName || finalMobile) {
       records.push({
-        id: cleanPnoVal ? cleanPnoVal : `DUTY-${String(records.length + 1).padStart(4, '0')}`,
+        id: policeId,
         pno: cleanPnoVal,
         name: finalName || nameCol || compositeCol || '-',
         raw_name: nameCol,
@@ -535,7 +540,7 @@ function processObjectRows(rows) {
     // Companion Home Guard Record
     if (hgNameCol) {
       records.push({
-        id: `DUTY-HG-${String(records.length + 1).padStart(4, '0')}`,
+        id: hgId,
         pno: '',
         name: hgNameCol,
         raw_name: hgNameCol,
@@ -556,12 +561,14 @@ function processObjectRows(rows) {
         booth_no: assignedBooth ? String(assignedBooth).trim() : '',
         vehicle_no: vehicleCol ? String(vehicleCol).trim() : '',
         co_force: finalName ? {
+          id: policeId,
+          pno: cleanPnoVal,
           name: finalName,
           mobile: finalMobile,
           posting: assignedThana,
           rank: rank
         } : null,
-        co_force_details: finalName ? `पुलिसकर्मी: ${finalName} (${rank})${finalMobile ? ' - ' + finalMobile : ''}` : '',
+        co_force_details: finalName ? `पुलिसकर्मी: ${finalName} (${rank})${cleanPnoVal ? ' [PNO: ' + cleanPnoVal + ']' : ''}${finalMobile ? ' - ' + finalMobile : ''}` : '',
         status: "Active"
       });
     }
@@ -895,11 +902,16 @@ function processRawRows(rawRows) {
     const assignedTime = rawTime || currentTime;
     const assignedBriefing = rawBriefing || currentBriefing;
 
+    // Pre-calculate mutually resolvable IDs for Police and Companion Home Guard
+    const policeId = cleanPno ? cleanPno : `DUTY-${String(records.length + 1).padStart(4, '0')}`;
+    const hgId = rawHgName ? `DUTY-HG-${String(records.length + (finalName || mobNumber ? 2 : 1)).padStart(4, '0')}` : null;
+
     // Co-force object
     let coForceObj = null;
     let coForceDesc = '';
     if (rawHgName) {
       coForceObj = {
+        id: hgId,
         name: rawHgName,
         mobile: rawHgMob,
         posting: rawHgPosting,
@@ -910,7 +922,7 @@ function processRawRows(rawRows) {
 
     if (finalName || mobNumber) {
       records.push({
-        id: cleanPno ? cleanPno : `DUTY-${String(records.length + 1).padStart(4, '0')}`,
+        id: policeId,
         pno: cleanPno,
         name: finalName || rawName || rawComposite || '-',
         raw_name: rawName,
@@ -941,7 +953,7 @@ function processRawRows(rawRows) {
     // Add Companion Home Guard Record
     if (rawHgName) {
       records.push({
-        id: `DUTY-HG-${String(records.length + 1).padStart(4, '0')}`,
+        id: hgId,
         pno: '',
         name: rawHgName,
         raw_name: rawHgName,
@@ -963,12 +975,14 @@ function processRawRows(rawRows) {
         booth_no: assignedBooth ? String(assignedBooth).trim() : '',
         vehicle_no: rawVehicle ? rawVehicle.trim() : '',
         co_force: finalName ? {
+          id: policeId,
+          pno: cleanPno,
           name: finalName,
           mobile: mobNumber,
           posting: assignedThana,
           rank: rank
         } : null,
-        co_force_details: finalName ? `पुलिसकर्मी: ${finalName} (${rank})${mobNumber ? ' - ' + mobNumber : ''}` : '',
+        co_force_details: finalName ? `पुलिसकर्मी: ${finalName} (${rank})${cleanPno ? ' [PNO: ' + cleanPno + ']' : ''}${mobNumber ? ' - ' + mobNumber : ''}` : '',
         status: "Active"
       });
     }

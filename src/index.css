@@ -231,20 +231,20 @@ input[type="file"] {
     visibility: visible !important;
   }
 
-  /* Official Checking Report A4 Print Styling */
+  /* Official Checking Report A4 Multi-Page Print Styling */
   #printable-checking-report {
     display: block !important;
     visibility: visible !important;
     width: 100% !important;
     max-width: 100% !important;
     margin: 0 !important;
-    padding: 10mm !important;
+    padding: 6mm 8mm !important;
     border: none !important;
     box-shadow: none !important;
     background-color: #ffffff !important;
     color: #000000 !important;
-    page-break-inside: avoid !important;
-    break-inside: avoid !important;
+    page-break-inside: auto !important;
+    break-inside: auto !important;
   }
 
   #printable-checking-report * {

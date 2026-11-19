@@ -5,8 +5,6 @@ import {
   X,
   ShieldCheck
 } from 'lucide-react';
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
 
 /**
  * Helper to clean raw name
@@ -61,7 +59,6 @@ export default function CheckingReportModal({
   const [checkingOfficerName, setCheckingOfficerName] = useState('');
   const [reportType, setReportType] = useState('live'); // 'live' (only absent) | 'blank' (empty lines for field checking) | 'all'
   const [blankRowsCount, setBlankRowsCount] = useState(15);
-  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
 
   const reportRef = useRef(null);
 
@@ -148,45 +145,22 @@ export default function CheckingReportModal({
     )
   ).sort();
 
+  // 100% Native Vector Print & Multi-page PDF Engine
   const handlePrint = () => {
     window.print();
   };
 
-  const handleDownloadPDF = async () => {
-    const element = reportRef.current;
-    if (!element) return;
-
-    try {
-      setIsGeneratingPDF(true);
-      if (document.fonts) await document.fonts.ready;
-
-      const canvas = await html2canvas(element, {
-        scale: 2.5,
-        useCORS: true,
-        backgroundColor: '#ffffff'
-      });
-
-      const imgData = canvas.toDataURL('image/jpeg', 0.98);
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-
-      pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
-      pdf.save(`Checking_Report_${reportDate || 'Date'}.pdf`);
-    } catch (err) {
-      console.error('Error generating PDF:', err);
-      alert('PDF तैयार करने में समस्या आई। कृपया सीधे प्रिंट बटन का उपयोग करें।');
-    } finally {
-      setIsGeneratingPDF(false);
-    }
+  const handleDownloadPDF = () => {
+    // Native print engine produces 100% crisp vector PDF with selectable Hindi text without canvas blur
+    window.print();
   };
 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4 font-devanagari text-slate-900">
+    <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4 font-devanagari text-slate-900 print:bg-transparent print:p-0 print:static print:inset-auto print:block">
       {/* Modal Card */}
-      <div className="bg-white rounded-3xl max-w-4xl w-full max-h-[95vh] shadow-2xl border border-slate-200 flex flex-col overflow-hidden animate-in fade-in zoom-in-95">
+      <div className="bg-white rounded-3xl max-w-4xl w-full max-h-[95vh] shadow-2xl border border-slate-200 flex flex-col overflow-hidden animate-in fade-in zoom-in-95 print:border-none print:shadow-none print:max-h-none print:overflow-visible">
         
         {/* Modal Header (Hidden on Print) */}
         <div className="p-4 sm:p-5 bg-slate-900 text-white flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 no-print shrink-0">
@@ -208,18 +182,10 @@ export default function CheckingReportModal({
             <button
               onClick={handlePrint}
               className="px-4 py-2 bg-white hover:bg-slate-100 text-slate-900 font-bold text-xs rounded-xl shadow-xs flex items-center gap-1.5 transition active:scale-95 cursor-pointer"
+              title="A4 शीट पर आधिकारिक रिपोर्ट प्रिंट करें अथवा PDF के रूप में सेव करें"
             >
               <Printer className="w-4 h-4 text-slate-900" />
-              <span>प्रिंट A4</span>
-            </button>
-
-            <button
-              onClick={handleDownloadPDF}
-              disabled={isGeneratingPDF}
-              className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs rounded-xl border border-slate-700 shadow flex items-center gap-1.5 transition active:scale-95 cursor-pointer"
-            >
-              <FileDown className="w-4 h-4 text-amber-400" />
-              <span>{isGeneratingPDF ? '...' : 'PDF'}</span>
+              <span>A4 प्रिंट / PDF सेव करें</span>
             </button>
 
             <button

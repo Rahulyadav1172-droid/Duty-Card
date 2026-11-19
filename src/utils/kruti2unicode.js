@@ -103,10 +103,10 @@ export function convertKrutiToUnicode(text) {
     return str;
   }
 
-  // 2. Pure alphanumeric identifiers, codes, phones, or system tags
+  // 2. Pure alphanumeric identifiers, codes, phones, or system tags (without blocking short Kruti Dev Hindi words)
   if (/^[A-Z0-9_\-\.\s\/]+$/i.test(str)) {
-    // If it's a short code or standard pattern (e.g., CS1, HG1, DUTY-0001, 141, 1/1)
-    if (str.length <= 4 || /^\d+$/.test(str) || /^CS\d+$/i.test(str) || /^HG\d+$/i.test(str) || /^DUTY/i.test(str) || /^\d+\/\d+$/.test(str)) {
+    // Specifically preserve pure digits, booth/point numbers, system tags (CS1, HG1, DUTY-0001, 141, 1/1), and standard uppercase acronyms
+    if (/^\d+$/.test(str) || /^CS\d+$/i.test(str) || /^HG\d+$/i.test(str) || /^DUTY/i.test(str) || /^\d+[\/\-]\d+$/.test(str) || /^(?:SBI|GIC|NSS|UPP|VIP|VVIP|ECI|PNO|CUG)$/i.test(str)) {
       return str;
     }
   }
