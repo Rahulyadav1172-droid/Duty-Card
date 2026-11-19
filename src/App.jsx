@@ -1011,9 +1011,6 @@ export default function App() {
                 <span>लाइव सिंक</span>
               </div>
 
-              {/* Visitor Counter in Header */}
-              <VisitorCounter count={visitorCount} variant="header" />
-
               {/* Quick 1-Tap QR Duty Pass Scanner Button for Senior Officers & Admins */}
               {(userRole === 'admin' || userRole === 'senior') && (
                 <button
@@ -1565,17 +1562,26 @@ export default function App() {
       )}
 
       {/* Footer */}
-      <footer className="bg-slate-900 border-t border-slate-800 py-6 px-4 text-center text-xs text-slate-400 space-y-3 mt-auto no-print">
-        {/* Official Visitor Counter Widget */}
-        <VisitorCounter count={visitorCount} variant="footer" />
+      <footer className="bg-slate-900 border-t border-slate-800/80 py-3.5 px-4 text-xs text-slate-400 mt-auto no-print">
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
+          {/* Left: Copyright */}
+          <p className="font-medium text-slate-400 text-xs select-none">
+            अयोध्या पुलिस ड्यूटी व पास प्रबंधन प्रणाली © 2026
+          </p>
 
-        <p className="font-bold text-slate-300 tracking-wide text-xs">अयोध्या पुलिस ड्यूटी व पास प्रबंधन प्रणाली © 2026</p>
-        <div className="flex justify-center items-center">
-          <div className="simple-glowing-badge inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-950/80 border border-amber-500/50 shadow-xs cursor-default">
-            <span className="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
-            <span className="text-[11px] font-bold text-amber-200 tracking-wide font-sans">
-              Designed & Developed by Smart Cell, Ayodhya Police
-            </span>
+          {/* Center: Smart Cell Credit */}
+          <div className="flex justify-center items-center">
+            <div className="simple-glowing-badge inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-950/80 border border-amber-500/50 shadow-xs cursor-default">
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+              <span className="text-[10px] font-bold text-amber-200 tracking-wide font-sans">
+                Designed & Developed by Smart Cell, Ayodhya Police
+              </span>
+            </div>
+          </div>
+
+          {/* Right Corner: Small, Unobtrusive Visitor Counter */}
+          <div className="flex items-center justify-center sm:justify-end">
+            <VisitorCounter count={visitorCount} variant="corner" />
           </div>
         </div>
       </footer>
